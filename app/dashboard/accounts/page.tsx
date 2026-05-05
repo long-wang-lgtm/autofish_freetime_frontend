@@ -8,6 +8,7 @@ import { AccountRow } from "@/components/accounts/AccountTable"
 import { AccountForm } from "@/components/accounts/AccountForm"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import QrLoginModal from "@/components/accounts/QrLoginModal"
+import LinkLoginModal from "@/components/accounts/LinkLoginModal"
 import { useToast } from "@/components/ui/toaster"
 
 export default function AccountsPage() {
@@ -15,6 +16,7 @@ export default function AccountsPage() {
   const { addToast } = useToast()
   const [showAddForm, setShowAddForm] = useState(false)
   const [showQrModal, setShowQrModal] = useState(false)
+  const [showLinkModal, setShowLinkModal] = useState(false)
   const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [bulkLoading, setBulkLoading] = useState<"start" | "stop" | null>(null)
 
@@ -142,6 +144,23 @@ export default function AccountsPage() {
                   <div className="text-left">
                     <div className="font-medium">扫码登录</div>
                     <div className="text-xs text-gray-400">自动获取账号信息</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowLinkModal(true)
+                    setAddMenuOpen(false)
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-fuchsia-50 hover:text-purple-700 transition-colors rounded-lg mx-1"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium">链接登录</div>
+                    <div className="text-xs text-gray-400">分享给他人扫码</div>
                   </div>
                 </button>
                 <button
@@ -279,6 +298,15 @@ export default function AccountsPage() {
       <QrLoginModal
         open={showQrModal}
         onClose={() => setShowQrModal(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["accounts"] })
+        }}
+      />
+
+      {/* 链接登录弹窗 */}
+      <LinkLoginModal
+        open={showLinkModal}
+        onClose={() => setShowLinkModal(false)}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["accounts"] })
         }}
