@@ -9,6 +9,7 @@ import { AccountForm } from "@/components/accounts/AccountForm"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import QrLoginModal from "@/components/accounts/QrLoginModal"
 import LinkLoginModal from "@/components/accounts/LinkLoginModal"
+import LinkManagement from "@/components/accounts/LinkManagement"
 import { useToast } from "@/components/ui/toaster"
 
 export default function AccountsPage() {
@@ -17,6 +18,7 @@ export default function AccountsPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [showQrModal, setShowQrModal] = useState(false)
   const [showLinkModal, setShowLinkModal] = useState(false)
+  const [showLinkManage, setShowLinkManage] = useState(false)
   const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [reloginUid, setReloginUid] = useState<string | null>(null)
   const [bulkLoading, setBulkLoading] = useState<"start" | "stop" | null>(null)
@@ -35,7 +37,6 @@ export default function AccountsPage() {
     setShowAddForm(false)
   }
 
-  // 一键启动
   const handleBulkStart = async () => {
     if (!data?.accounts) return
     const offlineAccounts = data.accounts.filter((acc) => !acc.im_running)
@@ -63,7 +64,6 @@ export default function AccountsPage() {
     }
   }
 
-  // 一键停止
   const handleBulkStop = async () => {
     if (!data?.accounts) return
     const onlineAccounts = data.accounts.filter((acc) => acc.im_running)
@@ -93,7 +93,6 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-4">
-      {/* 页面标题 */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">账号管理</h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -101,9 +100,7 @@ export default function AccountsPage() {
         </p>
       </div>
 
-      {/* 操作按钮区 - 左对齐，在表格上方 */}
       <div className="flex items-center gap-2 flex-wrap">
-        {/* 添加账号按钮组 */}
         <div className="relative">
           <button
             onClick={() => setAddMenuOpen(!addMenuOpen)}
@@ -186,7 +183,17 @@ export default function AccountsPage() {
           )}
         </div>
 
-        {/* 一键启动按钮 */}
+        {/* 链接管理按钮 */}
+        <button
+          onClick={() => setShowLinkManage(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          链接管理
+        </button>
+
         <button
           onClick={handleBulkStart}
           disabled={bulkLoading === "start"}
@@ -203,7 +210,6 @@ export default function AccountsPage() {
           一键启动
         </button>
 
-        {/* 一键停止按钮 */}
         <button
           onClick={handleBulkStop}
           disabled={bulkLoading === "stop"}
@@ -221,7 +227,6 @@ export default function AccountsPage() {
         </button>
       </div>
 
-      {/* 表格 */}
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
@@ -264,7 +269,6 @@ export default function AccountsPage() {
 
       {!isLoading && !error && data && data.accounts.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          {/* 表头 */}
           <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600">
             <div className="col-span-1">账号信息</div>
             <div className="col-span-1 text-center">状态</div>
@@ -277,7 +281,6 @@ export default function AccountsPage() {
             <div className="col-span-1 text-center">重新登录</div>
           </div>
 
-          {/* 数据行 */}
           {data.accounts.map((account, index) => (
             <AccountRow
               key={account.uid}
@@ -289,7 +292,6 @@ export default function AccountsPage() {
         </div>
       )}
 
-      {/* 添加账号表单 */}
       {showAddForm && (
         <AccountForm
           onClose={handleFormClose}
@@ -297,7 +299,6 @@ export default function AccountsPage() {
         />
       )}
 
-      {/* 扫码登录弹窗 */}
       <QrLoginModal
         open={showQrModal || reloginUid !== null}
         onClose={() => {
@@ -311,13 +312,17 @@ export default function AccountsPage() {
         uid={reloginUid || undefined}
       />
 
-      {/* 链接登录弹窗 */}
       <LinkLoginModal
         open={showLinkModal}
         onClose={() => setShowLinkModal(false)}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["accounts"] })
         }}
+      />
+
+      <LinkManagement
+        open={showLinkManage}
+        onClose={() => setShowLinkManage(false)}
       />
     </div>
   )
