@@ -216,8 +216,36 @@ export function AccountRow({ account, index }: AccountRowProps) {
         </div>
         
         {/* 状态 */}
-        <div className={`col-span-1 text-center font-medium ${statusColors[account.status] || "text-gray-500"}`}>
-          {statusLabels[account.status] || "未知"}
+        <div className="col-span-1 text-center">
+          <button
+            onClick={() => {
+              if (account.status === 3) {
+                addToast({ title: "无法切换", description: "账号处于异常状态，请先处理", variant: "warning" })
+                return
+              }
+              if (loading) return
+              setLoading("status")
+              const newStatus = account.status === 1 ? 2 : 1
+              updateAccount(account.uid, { status: newStatus })
+                .then(() => {
+                  addToast({ title: newStatus === 1 ? "账号已启用" : "账号已禁用" })
+                  queryClient.invalidateQueries({ queryKey: ["accounts"] })
+                })
+                .catch((e) => {
+                  addToast({ title: "切换失败", description: String(e), variant: "error" })
+                })
+                .finally(() => setLoading(null))
+            }}
+            disabled={loading === "status"}
+            className={`font-medium transition-colors ${
+              account.status === 3
+                ? `${statusColors[account.status]} cursor-not-allowed`
+                : `${statusColors[account.status]} cursor-pointer hover:opacity-80`
+            }`}
+            title={account.status === 3 ? "异常状态无法自行切换" : "点击切换状态"}
+          >
+            {loading === "status" ? <LoadingSpinner size="sm" /> : statusLabels[account.status]}
+          </button>
         </div>
 
         {/* IM控制 */}

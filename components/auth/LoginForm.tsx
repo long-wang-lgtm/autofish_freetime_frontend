@@ -80,10 +80,6 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
           {isLoading ? '登录中...' : '登录'}
         </button>
       </div>
-
-      <div className="text-sm text-center text-gray-500">
-        <p>测试账户: admin / admin123</p>
-      </div>
     </form>
   )
 }
