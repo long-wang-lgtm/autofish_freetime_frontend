@@ -83,7 +83,7 @@ export default function LinkLoginPage() {
       setHintMsg(null)
       setCanRetry(false)
       setCancelled(false)
-      saveState(getStoredSession(), { qrImage: `data:image/png;base64,${data.qr_image}`, scanStatus: "qr_ready" })
+      saveState(getStoredSession() || '', { qrImage: `data:image/png;base64,${data.qr_image}`, scanStatus: "qr_ready" })
     })
 
     eventSource.addEventListener("qr_verify", (e) => {
@@ -94,21 +94,21 @@ export default function LinkLoginPage() {
       setHintMsg("安全验证，请再次扫码")
       setCanRetry(false)
       setCancelled(false)
-      saveState(getStoredSession(), { qrImage: `data:image/png;base64,${data.qr_image}`, scanStatus: "qr_ready", hintMsg: "安全验证，请再次扫码" })
+      saveState(getStoredSession() || '', { qrImage: `data:image/png;base64,${data.qr_image}`, scanStatus: "qr_ready", hintMsg: "安全验证，请再次扫码" })
     })
 
     eventSource.addEventListener("qr_scanned", () => {
       setScanStatus("scaned")
       setOverlayMsg("扫码成功\n请确认")
       setCancelled(false)
-      saveState(getStoredSession(), { scanStatus: "scaned", overlayMsg: "扫码成功\n请确认" })
+      saveState(getStoredSession() || '', { scanStatus: "scaned", overlayMsg: "扫码成功\n请确认" })
     })
 
     eventSource.addEventListener("qr_confirmed", () => {
       setScanStatus("confirmed")
       setOverlayMsg(null)
       setCancelled(false)
-      saveState(getStoredSession(), { scanStatus: "confirmed" })
+      saveState(getStoredSession() || '', { scanStatus: "confirmed" })
     })
 
     eventSource.addEventListener("login_success", () => {
