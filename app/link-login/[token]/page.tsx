@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams } from "next/navigation"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
+export const runtime = 'edge'
+
 type ScanStatus = "loading" | "qr_ready" | "scaned" | "confirmed" | "success" | "failed" | "expired" | "cancelled"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
