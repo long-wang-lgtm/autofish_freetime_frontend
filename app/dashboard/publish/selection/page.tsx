@@ -64,18 +64,15 @@ export default function SelectionPage() {
   // 默认选择最新日期
   useEffect(() => {
     if (dates.length > 0) {
-      // 如果没有选中任何日期（单选或多选），则选择最新日期
       if (selectedDates.length === 0 && activeDateIndex !== dates.length - 1) {
         setActiveDateIndex(dates.length - 1)
       }
-      // 如果当前选中索引超出范围，调整到有效范围
       if (activeDateIndex >= dates.length) {
         setActiveDateIndex(dates.length - 1)
       }
     }
   }, [dates, selectedDates, activeDateIndex])
 
-  // 格式化日期标签
   const formatDateLabel = (dateStr: string): string => {
     const date = new Date(dateStr)
     const month = (date.getMonth() + 1).toString().padStart(2, '0')
@@ -86,17 +83,15 @@ export default function SelectionPage() {
   const filteredProducts = useMemo(() => {
     let result = products
 
-    // 关键词搜索筛选
     if (searchKeyword) {
       result = result.filter((p) =>
         p.title.toLowerCase().includes(searchKeyword.toLowerCase())
       )
     }
 
-    // 日期多选筛选
     if (selectedDates.length > 0) {
       result = result.filter(product => {
-        const productDate = product.date || '2026-04-14' // 使用假数据日期
+        const productDate = product.date || '2026-04-14'
         return selectedDates.includes(productDate)
       })
     }
@@ -108,24 +103,21 @@ export default function SelectionPage() {
     setSelectedCategory(cat)
     setActiveTab('content')
     setActiveDateIndex(0)
-    setSelectedDates([]) // 切换分类时清空日期筛选
+    setSelectedDates([])
   }
 
-  // 在第70行附近添加日期切换处理函数
   const handleDateToggle = (date: string) => {
     setSelectedDates(prev =>
       prev.includes(date)
-        ? prev.filter(d => d !== date)  // 取消选中
-        : [...prev, date]               // 添加选中
+        ? prev.filter(d => d !== date)
+        : [...prev, date]
     )
   }
 
-  // 重置选中状态函数
   const clearSelectedDates = () => {
     setSelectedDates([])
   }
 
-  // 左侧关键词卡片
   const renderCategoryItem = (cat: Category) => {
     const isSelected = selectedCategory?.id === cat.id
     return (
@@ -134,11 +126,10 @@ export default function SelectionPage() {
         onClick={() => selectCategory(cat)}
         className={`w-full text-left p-2.5 rounded-lg transition-all duration-150 ${
           isSelected
-            ? 'bg-blue-50 shadow-sm border border-blue-100 transform scale-[1.02]'  // 轻微放大
+            ? 'bg-blue-50 shadow-sm border border-blue-100 transform scale-[1.02]'
             : 'hover:bg-gray-50 hover:shadow-xs'
         }`}
       >
-        {/* 第一行：关键词名称和总收藏数 */}
         <div className="flex items-center justify-between gap-2 mb-1.5">
           <h3 className={`text-sm font-semibold truncate ${
             isSelected ? 'text-blue-700' : 'text-gray-900'
@@ -150,7 +141,6 @@ export default function SelectionPage() {
           </span>
         </div>
 
-        {/* 第二行：统计指标 */}
         <div className="flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 text-gray-500">
             <span className="flex items-center gap-1">
@@ -172,9 +162,7 @@ export default function SelectionPage() {
 
   return (
     <div className="space-y-3">
-      {/* 两栏布局 */}
       <div className="grid grid-cols-12 gap-3">
-        {/* 左侧：关键词列表 */}
         <div className="col-span-2 space-y-3">
           <div className="bg-white rounded-xl p-3.5 shadow-sm border border-gray-200">
             <div className="pb-2.5 border-b border-gray-100">
@@ -182,7 +170,6 @@ export default function SelectionPage() {
               <p className="text-xs text-gray-400 mt-0.5">选择关键词查看相关商品</p>
             </div>
 
-            {/* 关键词列表滚动区域 */}
             <div className="max-h-[calc(100vh-220px)] overflow-y-auto custom-scrollbar mt-2 space-y-1">
               {isLoading ? (
                 <div className="flex justify-center py-6">
@@ -200,13 +187,11 @@ export default function SelectionPage() {
             </div>
           </div>
 
-          {/* 新建关键词按钮 */}
           <button className="w-full py-2.5 text-sm text-gray-400 hover:text-blue-600 transition-colors text-left pl-2">
             + 新建关键词
           </button>
         </div>
 
-        {/* 右侧：选品区 */}
         <div className="col-span-10 bg-white rounded-xl border border-gray-200 shadow-sm p-3.5">
           {!selectedCategory ? (
             <div className="flex flex-col items-center justify-center h-96">
@@ -215,13 +200,10 @@ export default function SelectionPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Tab 切换 */}
               <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
-              {/* 时间轴 + 内容布局 - 只在商品采集和选品分析时显示 */}
               {(activeTab === 'content' || activeTab === 'report') ? (
                 <div className="grid grid-cols-12 gap-3">
-                  {/* 左侧：时间轴 */}
                   <div className="col-span-2">
                     <div className="bg-white border-r border-gray-200 p-2 h-full">
                       <VerticalTimeline
@@ -238,9 +220,7 @@ export default function SelectionPage() {
                     </div>
                   </div>
 
-                  {/* 右侧：内容区 */}
                   <div className="col-span-10">
-                    {/* 日期筛选状态提示 */}
                     {selectedDates.length > 0 && (
                       <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
                         <div className="flex items-center justify-between">
@@ -262,10 +242,8 @@ export default function SelectionPage() {
                       </div>
                     )}
 
-                    {/* ===== Tab 1: 商品采集 ===== */}
                     {activeTab === 'content' && (
                       <div className="space-y-4">
-                        {/* 搜索与视图切换 */}
                         <div className="flex items-center gap-4">
                           <div className="relative flex-1 max-w-sm">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -284,7 +262,6 @@ export default function SelectionPage() {
                           <ViewToggle view={view} onChange={setView} />
                         </div>
 
-                        {/* 内容区 - 商品列表是主体 */}
                         <div className="max-h-[calc(100vh-300px)] overflow-y-auto custom-scrollbar">
                           {view === 'grid' ? (
                             <ContentGrid products={filteredProducts} />
@@ -295,13 +272,10 @@ export default function SelectionPage() {
                       </div>
                     )}
 
-                    {/* ===== Tab 2: 选品分析 ===== */}
                     {activeTab === 'report' && (
                       <div className="space-y-4">
-                        {/* 子标签切换 */}
                         <ReportSubTabs activeSubTab={reportSubTab} onSubTabChange={setReportSubTab} />
 
-                        {/* 子标签内容 */}
                         {reportSubTab === 'daily' ? (
                           <div className="space-y-4">
                             <ReportControlBar />
@@ -323,7 +297,6 @@ export default function SelectionPage() {
                               <div className="bg-white rounded-xl shadow-sm p-6">
                                 <h3 className="font-medium text-gray-900 mb-4">选品汇总</h3>
                                 <p className="text-sm text-gray-500">从采集商品中精选的高潜力商品将展示在这里。</p>
-                                {/* TODO: 实现选品汇总内容 */}
                               </div>
                             </div>
                           </div>
@@ -333,7 +306,6 @@ export default function SelectionPage() {
                   </div>
                 </div>
               ) : (
-                /* ===== Tab 3: 监控设置 ===== */
                 <div className="space-y-5">
                   <div className="max-h-[calc(100vh-300px)] overflow-y-auto custom-scrollbar">
                     <div className="space-y-5">

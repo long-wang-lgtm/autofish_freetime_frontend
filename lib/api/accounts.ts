@@ -12,6 +12,8 @@ export interface Account {
   auto_reply: boolean
   ai_auto_reply: boolean
   auto_delivery: boolean
+  auto_free: boolean              // 是否自动免拼
+  auto_positive_review: boolean   // 是否自动评价
   reply_pause_seconds: number
   full_deliveryContent: string
   full_receiptAfter: string
@@ -41,6 +43,8 @@ export interface AccountCreate {
   auto_reply?: boolean
   ai_auto_reply?: boolean
   auto_delivery?: boolean
+  auto_free?: boolean
+  auto_positive_review?: boolean
   reply_pause_seconds?: number
   full_deliveryContent?: string
   full_receiptAfter?: string
@@ -55,6 +59,8 @@ export interface AccountUpdate {
   auto_reply?: boolean
   ai_auto_reply?: boolean
   auto_delivery?: boolean
+  auto_free?: boolean
+  auto_positive_review?: boolean
   reply_pause_seconds?: number
   full_deliveryContent?: string
   full_receiptAfter?: string

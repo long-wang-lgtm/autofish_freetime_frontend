@@ -17,6 +17,8 @@ const accountSchema = z.object({
   auto_reply: z.boolean().optional(),
   ai_auto_reply: z.boolean().optional(),
   auto_delivery: z.boolean().optional(),
+  auto_free: z.boolean().optional(),
+  auto_positive_review: z.boolean().optional(),
   reply_pause_seconds: z.number().min(0).optional(),
   full_deliveryContent: z.string().optional(),
   full_receiptAfter: z.string().optional(),
@@ -53,6 +55,8 @@ export function AccountForm({ account, onClose, onSuccess }: AccountFormProps) {
       auto_reply: account?.auto_reply || false,
       ai_auto_reply: account?.ai_auto_reply || false,
       auto_delivery: account?.auto_delivery || false,
+      auto_free: account?.auto_free || false,
+      auto_positive_review: account?.auto_positive_review || false,
       reply_pause_seconds: account?.reply_pause_seconds || 600,
       full_deliveryContent: account?.full_deliveryContent || "",
       full_receiptAfter: account?.full_receiptAfter || "",
@@ -73,6 +77,8 @@ export function AccountForm({ account, onClose, onSuccess }: AccountFormProps) {
           auto_reply: data.auto_reply,
           ai_auto_reply: data.ai_auto_reply,
           auto_delivery: data.auto_delivery,
+          auto_free: data.auto_free,
+          auto_positive_review: data.auto_positive_review,
           reply_pause_seconds: data.reply_pause_seconds,
           full_deliveryContent: data.full_deliveryContent,
           full_receiptAfter: data.full_receiptAfter,
@@ -98,6 +104,8 @@ export function AccountForm({ account, onClose, onSuccess }: AccountFormProps) {
           auto_reply: data.auto_reply,
           ai_auto_reply: data.ai_auto_reply,
           auto_delivery: data.auto_delivery,
+          auto_free: data.auto_free,
+          auto_positive_review: data.auto_positive_review,
           reply_pause_seconds: data.reply_pause_seconds,
           full_deliveryContent: data.full_deliveryContent,
           full_receiptAfter: data.full_receiptAfter,
@@ -246,6 +254,30 @@ export function AccountForm({ account, onClose, onSuccess }: AccountFormProps) {
                 />
                 <label htmlFor="auto_delivery" className="text-sm text-gray-700">
                   启用自动发货
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  {...register("auto_free")}
+                  id="auto_free"
+                  className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                />
+                <label htmlFor="auto_free" className="text-sm text-gray-700">
+                  启用自动免拼
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  {...register("auto_positive_review")}
+                  id="auto_positive_review"
+                  className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                />
+                <label htmlFor="auto_positive_review" className="text-sm text-gray-700">
+                  启用自动评价
                 </label>
               </div>
 

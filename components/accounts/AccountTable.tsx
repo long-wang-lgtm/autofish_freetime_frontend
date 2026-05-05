@@ -5,7 +5,7 @@ import { Account, startAccountIm, stopAccountIm, updateAccount } from "@/lib/api
 import { useQueryClient } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
-import { Bot, Truck, QrCode } from "lucide-react"
+import { Bot, Truck, QrCode, Zap, Star } from "lucide-react"
 
 type ConfigField = "full_ai_reply_system_prompt" | "full_default_reply_content"
 
@@ -147,7 +147,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
     3: "text-red-600",
   }
 
-  const handleToggle = async (field: "auto_reply" | "auto_delivery") => {
+  const handleToggle = async (field: "auto_reply" | "auto_delivery" | "auto_free" | "auto_positive_review") => {
     try {
       await updateAccount(account.uid, { [field]: !account[field] })
       queryClient.invalidateQueries({ queryKey: ["accounts"] })
@@ -279,16 +279,16 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
           </span>
         </div>
 
-        {/* 自动回复开关 */}
+        {/* 自动免拼开关 */}
         <div className="col-span-1 flex items-center justify-center">
           <button
-            onClick={() => handleToggle("auto_reply")}
+            onClick={() => handleToggle("auto_free")}
             className={`p-1.5 rounded transition-colors ${
-              account.auto_reply ? "text-purple-500 bg-purple-50" : "text-gray-300 bg-gray-100"
+              account.auto_free ? "text-amber-500 bg-amber-50" : "text-gray-300 bg-gray-100"
             }`}
-            title={account.auto_reply ? "自动回复：开" : "自动回复：关"}
+            title={account.auto_free ? "自动免拼：开" : "自动免拼：关"}
           >
-            <Bot className="w-4 h-4" />
+            <Zap className="w-4 h-4" />
           </button>
         </div>
 
@@ -302,6 +302,32 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
             title={account.auto_delivery ? "自动发货：开" : "自动发货：关"}
           >
             <Truck className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* 自动回复开关 */}
+        <div className="col-span-1 flex items-center justify-center">
+          <button
+            onClick={() => handleToggle("auto_reply")}
+            className={`p-1.5 rounded transition-colors ${
+              account.auto_reply ? "text-purple-500 bg-purple-50" : "text-gray-300 bg-gray-100"
+            }`}
+            title={account.auto_reply ? "自动回复：开" : "自动回复：关"}
+          >
+            <Bot className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* 自动评价开关 */}
+        <div className="col-span-1 flex items-center justify-center">
+          <button
+            onClick={() => handleToggle("auto_positive_review")}
+            className={`p-1.5 rounded transition-colors ${
+              account.auto_positive_review ? "text-pink-500 bg-pink-50" : "text-gray-300 bg-gray-100"
+            }`}
+            title={account.auto_positive_review ? "自动评价：开" : "自动评价：关"}
+          >
+            <Star className="w-4 h-4" />
           </button>
         </div>
 

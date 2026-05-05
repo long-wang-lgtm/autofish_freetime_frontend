@@ -6,8 +6,21 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/stores/auth.store'
 import { useRouter } from 'next/navigation'
 
+// 可展开的子导航配置
+interface ChildItem {
+  label: string
+  path: string
+}
+
+interface NavItem {
+  label: string
+  path: string
+  icon: React.ReactNode
+  children?: ChildItem[]
+}
+
 // 导航菜单配置
-const navItems = [
+const navItems: NavItem[] = [
   {
     label: '仪表板',
     path: '/dashboard',
@@ -45,13 +58,17 @@ const navItems = [
     ),
   },
   {
-    label: '选品监控',
-    path: '/dashboard/selection',
+    label: '商品发布',
+    path: '/dashboard/publish',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
       </svg>
     ),
+    children: [
+      { label: '商品发布页', path: '/dashboard/publish' },
+      { label: '选品监控页', path: '/dashboard/publish/selection' },
+    ],
   },
   {
     label: '设置',
@@ -70,15 +87,151 @@ interface SidebarProps {
   onToggle: () => void
 }
 
+// 判断当前路径是否是某个导航项的子路径
+function isChildOfPath(pathname: string, parentPath: string): boolean {
+  return pathname === parentPath || pathname.startsWith(parentPath + '/')
+}
+
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuth()
 
+  // 切换展开/收起
+  const toggleExpand = (path: string) => {
+    setExpandedItems((prev) => {
+      const next = new Set(prev)
+      if (next.has(path)) {
+        next.delete(path)
+      } else {
+        next.add(path)
+      }
+      return next
+    })
+  }
+
+  // 判断项是否激活（用于高亮）
+  const isItemActive = (item: NavItem): boolean => {
+    if (item.children) {
+      return isChildOfPath(pathname, item.path) || pathname.startsWith(item.path + '/')
+    }
+    return pathname === item.path || pathname.startsWith(item.path + '/')
+  }
+
+  // 判断子项是否激活
+  const isChildActive = (childPath: string): boolean => {
+    return pathname === childPath
+  }
+
   const handleLogout = async () => {
     await logout()
     router.push('/login')
+  }
+
+  // 渲染单个导航项
+  const renderNavItem = (item: NavItem) => {
+    const hasChildren = item.children && item.children.length > 0
+    const isActive = isItemActive(item)
+    const isExpanded = expandedItems.has(item.path)
+
+    if (collapsed) {
+      return (
+        <li key={item.path}>
+          {hasChildren ? (
+            <div
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
+                isActive
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+              onClick={() => toggleExpand(item.path)}
+              title={item.label}
+            >
+              <span className="flex-shrink-0">{item.icon}</span>
+            </div>
+          ) : (
+            <Link
+              href={item.path}
+              onClick={() => setMobileOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                isActive
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+              title={item.label}
+            >
+              <span className="flex-shrink-0">{item.icon}</span>
+            </Link>
+          )}
+        </li>
+      )
+    }
+
+    return (
+      <li key={item.path}>
+        {hasChildren ? (
+          <>
+            <div
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
+                isActive
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+              onClick={() => toggleExpand(item.path)}
+            >
+              <span className="flex-shrink-0">{item.icon}</span>
+              <span className="truncate flex-1">{item.label}</span>
+              <svg
+                className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            {/* 子导航 */}
+            {isExpanded && (
+              <ul className="ml-4 mt-1 space-y-0.5 border-l border-gray-700 pl-3">
+                {item.children!.map((child) => {
+                  const isChildAct = isChildActive(child.path)
+                  return (
+                    <li key={child.path}>
+                      <Link
+                        href={child.path}
+                        onClick={() => setMobileOpen(false)}
+                        className={`block px-3 py-2 text-sm rounded-lg transition-colors ${
+                          isChildAct
+                            ? 'bg-blue-600/20 text-blue-400 font-medium'
+                            : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
+                        }`}
+                      >
+                        {child.label}
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </>
+        ) : (
+          <Link
+            href={item.path}
+            onClick={() => setMobileOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+              isActive
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+            }`}
+          >
+            <span className="flex-shrink-0">{item.icon}</span>
+            <span className="truncate">{item.label}</span>
+          </Link>
+        )}
+      </li>
+    )
   }
 
   return (
@@ -120,26 +273,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {/* 导航菜单 */}
         <nav className="flex-1 py-4 overflow-y-auto">
           <ul className="space-y-1 px-2">
-            {navItems.map((item) => {
-              const isActive = pathname === item.path || pathname.startsWith(item.path + '/')
-              return (
-                <li key={item.path}>
-                  <Link
-                    href={item.path}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                    title={collapsed ? item.label : undefined}
-                  >
-                    <span className="flex-shrink-0">{item.icon}</span>
-                    {!collapsed && <span className="truncate">{item.label}</span>}
-                  </Link>
-                </li>
-              )
-            })}
+            {navItems.map((item) => renderNavItem(item))}
           </ul>
         </nav>
 
