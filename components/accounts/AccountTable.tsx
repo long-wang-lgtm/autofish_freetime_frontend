@@ -5,13 +5,14 @@ import { Account, startAccountIm, stopAccountIm, updateAccount } from "@/lib/api
 import { useQueryClient } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
-import { Bot, Truck } from "lucide-react"
+import { Bot, Truck, QrCode } from "lucide-react"
 
 type ConfigField = "full_ai_reply_system_prompt" | "full_default_reply_content"
 
 interface AccountRowProps {
   account: Account
   index: number
+  onRelogin: (uid: string) => void
 }
 
 const fieldLabels: Record<ConfigField, string> = {
@@ -133,7 +134,7 @@ function ConfigCell({
   )
 }
 
-export function AccountRow({ account, index }: AccountRowProps) {
+export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
   const queryClient = useQueryClient()
   const { addToast } = useToast()
   const [loading, setLoading] = useState<string | null>(null)
@@ -305,7 +306,7 @@ export function AccountRow({ account, index }: AccountRowProps) {
         </div>
 
         {/* AI提示词 */}
-        <div className="col-span-2">
+        <div className="col-span-1">
           <ConfigCell
             value={account.full_ai_reply_system_prompt || ""}
             onClick={() => setConfigField("full_ai_reply_system_prompt")}
@@ -313,11 +314,23 @@ export function AccountRow({ account, index }: AccountRowProps) {
         </div>
 
         {/* 默认回复 */}
-        <div className="col-span-2">
+        <div className="col-span-1">
           <ConfigCell
             value={account.full_default_reply_content || ""}
             onClick={() => setConfigField("full_default_reply_content")}
           />
+        </div>
+
+        {/* 重新登录 */}
+        <div className="col-span-1 flex items-center justify-center">
+          <button
+            onClick={() => onRelogin(account.uid)}
+            disabled={loading === "relogin"}
+            className="p-1.5 rounded transition-colors text-gray-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+            title="重新登录"
+          >
+            {loading === "relogin" ? <LoadingSpinner size="sm" /> : <QrCode className="w-4 h-4" />}
+          </button>
         </div>
 
 

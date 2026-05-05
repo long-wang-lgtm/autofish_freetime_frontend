@@ -18,6 +18,7 @@ export default function AccountsPage() {
   const [showQrModal, setShowQrModal] = useState(false)
   const [showLinkModal, setShowLinkModal] = useState(false)
   const [addMenuOpen, setAddMenuOpen] = useState(false)
+  const [reloginUid, setReloginUid] = useState<string | null>(null)
   const [bulkLoading, setBulkLoading] = useState<"start" | "stop" | null>(null)
 
   const { data, isLoading, error } = useQuery({
@@ -271,8 +272,9 @@ export default function AccountsPage() {
             <div className="col-span-1 text-center">商品数量</div>
             <div className="col-span-1 text-center">自动回复</div>
             <div className="col-span-1 text-center">自动发货</div>
-            <div className="col-span-2 text-center">AI提示词</div>
-            <div className="col-span-2 text-center">默认回复</div>
+            <div className="col-span-1 text-center">AI提示词</div>
+            <div className="col-span-1 text-center">默认回复</div>
+            <div className="col-span-1 text-center">重新登录</div>
           </div>
 
           {/* 数据行 */}
@@ -281,6 +283,7 @@ export default function AccountsPage() {
               key={account.uid}
               account={account}
               index={index}
+              onRelogin={(uid) => setReloginUid(uid)}
             />
           ))}
         </div>
@@ -296,11 +299,16 @@ export default function AccountsPage() {
 
       {/* 扫码登录弹窗 */}
       <QrLoginModal
-        open={showQrModal}
-        onClose={() => setShowQrModal(false)}
+        open={showQrModal || reloginUid !== null}
+        onClose={() => {
+          setShowQrModal(false)
+          setReloginUid(null)
+        }}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["accounts"] })
+          setReloginUid(null)
         }}
+        uid={reloginUid || undefined}
       />
 
       {/* 链接登录弹窗 */}

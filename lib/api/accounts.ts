@@ -153,8 +153,9 @@ export async function refreshAccountToken(uid: string): Promise<OperationRespons
 }
 
 // 扫码登录 API
-export async function startQrLogin(): Promise<{ session_id: string; sse_url: string }> {
-  return fetchApi<{ session_id: string; sse_url: string }>("/api/login/qr/start", {
+export async function startQrLogin(uid?: string): Promise<{ session_id: string; sse_url: string }> {
+  const params = uid ? `?uid=${encodeURIComponent(uid)}` : ""
+  return fetchApi<{ session_id: string; sse_url: string }>(`/api/login/qr/start${params}`, {
     method: "POST",
   })
 }

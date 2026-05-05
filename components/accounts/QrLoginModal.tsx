@@ -8,11 +8,12 @@ interface QrLoginModalProps {
   open: boolean
   onClose: () => void
   onSuccess: () => void
+  uid?: string  // 指定账号uid，为空则添加新账号
 }
 
 type ScanStatus = "connecting" | "qr_ready" | "scaned" | "confirmed" | "success" | "failed"
 
-export default function QrLoginModal({ open, onClose, onSuccess }: QrLoginModalProps) {
+export default function QrLoginModal({ open, onClose, onSuccess, uid }: QrLoginModalProps) {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [sseUrl, setSseUrl] = useState<string | null>(null)
   const [qrImage, setQrImage] = useState<string | null>(null)
@@ -31,7 +32,7 @@ export default function QrLoginModal({ open, onClose, onSuccess }: QrLoginModalP
     setCanRetry(false)
     inRetryRef.current = false
     try {
-      const data = await startQrLogin()
+      const data = await startQrLogin(uid)
       setSessionId(data.session_id)
       const fullSseUrl = data.sse_url.startsWith("http")
         ? data.sse_url
@@ -42,7 +43,7 @@ export default function QrLoginModal({ open, onClose, onSuccess }: QrLoginModalP
       setScanStatus("failed")
       setCanRetry(true)
     }
-  }, [])
+  }, [uid])
 
   useEffect(() => {
     if (!sessionId || !sseUrl) return
@@ -96,6 +97,23 @@ export default function QrLoginModal({ open, onClose, onSuccess }: QrLoginModalP
         inRetryRef.current = false
         onClose()
       }, 1500)
+    })
+
+    eventSource.addEventListener("login_no_need", () => {
+      setScanStatus("success")
+      setOverlayMsg("账号已登录\n无需重新登录")
+      setTimeout(() => {
+        onSuccess()
+        setSessionId(null)
+        setSseUrl(null)
+        setQrImage(null)
+        setScanStatus("connecting")
+        setOverlayMsg(null)
+        setHintMsg(null)
+        setCanRetry(false)
+        inRetryRef.current = false
+        onClose()
+      }, 3000)
     })
 
     eventSource.addEventListener("login_failed", (e) => {
@@ -181,7 +199,7 @@ export default function QrLoginModal({ open, onClose, onSuccess }: QrLoginModalP
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">添加闲鱼账号</h2>
+          <h2 className="text-lg font-semibold">{uid ? "重新登录" : "添加闲鱼账号"}</h2>
           <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -190,32 +208,30 @@ export default function QrLoginModal({ open, onClose, onSuccess }: QrLoginModalP
         </div>
         <div className="p-6 flex flex-col items-center">
           {scanStatus === "connecting" && <LoadingSpinner size="lg" />}
-          {qrImage && (
-            <div
-              className={`relative w-48 h-48 ${canRetry ? "cursor-pointer" : ""}`}
-              onClick={canRetry ? handleRetry : undefined}
-            >
-              <img src={qrImage} alt="二维码" className="w-full h-full" />
-              {/* 蒙版 */}
-              {overlayMsg && (
-                <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-sm text-center rounded">
-                  {canRetry && (
-                    <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  )}
-                  <span className="whitespace-pre-line">{overlayMsg}</span>
-                </div>
-              )}
-              {/* 确认中 / 成功 无文字蒙版 */}
-              {!overlayMsg && (scanStatus === "confirmed" || scanStatus === "success") && (
-                <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-sm rounded">
-                  <LoadingSpinner size="sm" />
-                  <span className="mt-2">{scanStatus === "success" ? "登录成功" : "登录中..."}</span>
-                </div>
-              )}
-            </div>
-          )}
+          <div
+            className={`relative w-48 h-48 ${canRetry && qrImage ? "cursor-pointer" : ""}`}
+            onClick={canRetry && qrImage ? handleRetry : undefined}
+          >
+            {qrImage && <img src={qrImage} alt="二维码" className="w-full h-full" />}
+            {/* 蒙版 */}
+            {overlayMsg && (
+              <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-sm text-center rounded">
+                {canRetry && qrImage && (
+                  <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+                <span className="whitespace-pre-line">{overlayMsg}</span>
+              </div>
+            )}
+            {/* 确认中 / 成功 无文字蒙版 */}
+            {!overlayMsg && scanStatus === "confirmed" && qrImage && (
+              <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-sm rounded">
+                <LoadingSpinner size="sm" />
+                <span className="mt-2">登录中...</span>
+              </div>
+            )}
+          </div>
           {hintMsg && (
             <p className="mt-3 text-amber-600 text-sm font-medium">{hintMsg}</p>
           )}
