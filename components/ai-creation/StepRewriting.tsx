@@ -23,8 +23,11 @@ export function StepRewriting({ taskId, onComplete }: StepRewritingProps) {
           r[item.uid] = item.content
         }
         setResults(r)
-      }
-      if (data.status === 'completed') {
+        if (data.status === 'completed') {
+          onComplete(taskId, r)
+          return false
+        }
+      } else if (data.status === 'completed') {
         onComplete(taskId, results)
         return false
       }
@@ -37,7 +40,7 @@ export function StepRewriting({ taskId, onComplete }: StepRewritingProps) {
       alert('查询失败: ' + String(err))
       return false
     }
-  }, [taskId, results, onComplete])
+  }, [taskId, onComplete])
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>
