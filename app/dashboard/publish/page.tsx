@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import AICreationTab from './components/ai-creation/AICreationTab'
 
 export default function PublishPage() {
-  const [activeTab, setActiveTab] = useState<'publish' | 'draft'>('publish')
+  const [activeTab, setActiveTab] = useState<'publish' | 'draft' | 'ai'>('ai')
 
   return (
     <div className="space-y-4">
@@ -36,7 +37,20 @@ export default function PublishPage() {
         >
           草稿箱
         </button>
+        <button
+          onClick={() => setActiveTab('ai')}
+          className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-all ${
+            activeTab === 'ai'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          AI创作
+        </button>
       </div>
+
+      {/* 内容区域 */}
+      {activeTab === 'ai' && <AICreationTab />}
 
       {/* 内容区域 */}
       {activeTab === 'publish' && (
