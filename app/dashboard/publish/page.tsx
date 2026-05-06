@@ -99,7 +99,6 @@ export default function PublishPage() {
       case 'cover-plan':
         return (
           <StepCoverPlan
-            taskId={coverTaskId!}
             rewriteResults={rewriteResults}
             onConfirm={handleCoverPlanComplete}
           />
