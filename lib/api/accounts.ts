@@ -82,7 +82,7 @@ export interface OperationResponse {
   data?: Record<string, unknown>
 }
 
-async function fetchApi<T>(
+export async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
