@@ -342,9 +342,16 @@ export default function LinkLoginPage() {
             </div>
           )}
         </div>
-        {/* <div className="px-6 py-4 bg-gray-50 text-center">
-          <p className="text-xs text-gray-400">登录成功后，闲鱼账号将自动绑定到分享链接的用户</p>
-        </div> */}
+        <div className="px-6 py-4 bg-red-50 text-center rounded-lg border border-red-200">
+          <p className="text-sm text-amber-700 font-semibold flex items-center justify-center gap-1">
+            <span>⚠️</span> 重要提示
+          </p>
+          <p className="text-sm text-red-600 font-semibold leading-relaxed">
+            🔔 扫码后请不要关闭此页面，请等待验证通过
+            <br />
+            登录成功后，闲鱼账号将自动绑定到分享链接的用户
+          </p>
+        </div>
       </div>
     </div>
   )
