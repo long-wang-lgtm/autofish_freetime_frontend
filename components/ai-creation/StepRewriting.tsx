@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getRewriteStatus } from '@/lib/api/publish'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
@@ -12,9 +12,6 @@ interface StepRewritingProps {
 export function StepRewriting({ taskId, onComplete }: StepRewritingProps) {
   const [progress, setProgress] = useState<Record<string, string>>({})
   const [results, setResults] = useState<Record<string, string>>({})
-  const resultsRef = useRef<Record<string, string>>({})
-  const onCompleteRef = useRef(onComplete)
-  onCompleteRef.current = onComplete
 
   const checkStatus = useCallback(async () => {
     try {
@@ -22,22 +19,26 @@ export function StepRewriting({ taskId, onComplete }: StepRewritingProps) {
       setProgress(data.progress || {})
 
       if (data.results && data.results.length > 0) {
+        // 流式追加：每完成一个就追加到列表，不等全部完成
+        const r: Record<string, string> = {}
+        for (const item of data.results) {
+          r[item.uid] = item.content
+        }
         setResults(prev => {
           const next = { ...prev }
-          for (const item of data.results) {
-            if (item.content) {
-              next[item.uid] = item.content
-              resultsRef.current[item.uid] = item.content
-            }
+          for (const [uid, content] of Object.entries(r)) {
+            if (content) next[uid] = content
           }
           return next
         })
-      }
-
-      const statuses = Object.values(data.progress || {})
-      const allDone = statuses.every(s => s === 'completed' || s === 'failed')
-      if (allDone && statuses.length > 0) {
-        onCompleteRef.current(taskId, resultsRef.current)
+        // 当 backend 标记 completed 时才进入下一步
+        if (data.status === 'completed') {
+          onComplete(taskId, r)
+          return false
+        }
+      } else if (data.status === 'completed') {
+        // fallback：backend 已完成但 results 为空（不应该发生）
+        onComplete(taskId, results)
         return false
       }
       if (data.status === 'failed') {
@@ -49,7 +50,7 @@ export function StepRewriting({ taskId, onComplete }: StepRewritingProps) {
       alert('查询失败: ' + String(err))
       return false
     }
-  }, [taskId])
+  }, [taskId, onComplete])
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>
