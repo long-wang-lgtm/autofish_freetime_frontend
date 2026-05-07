@@ -8,12 +8,13 @@ import { StepAccounts } from '@/components/ai-creation/StepAccounts'
 import { StepRewriting } from '@/components/ai-creation/StepRewriting'
 import { StepRewritePreview } from '@/components/ai-creation/StepRewritePreview'
 import { StepCoverPlan } from '@/components/ai-creation/StepCoverPlan'
+import { StepCoverPlanReview } from '@/components/ai-creation/StepCoverPlanReview'
 import { StepCoverHtml } from '@/components/ai-creation/StepCoverHtml'
 import { StepCoverPreview } from '@/components/ai-creation/StepCoverPreview'
 import { StepPublish } from '@/components/ai-creation/StepPublish'
 
 type Tab = 'publish' | 'draft' | 'ai'
-type AIStep = 'accounts' | 'rewriting' | 'rewrite-preview' | 'cover-plan' | 'cover-html' | 'cover-preview' | 'publish'
+type AIStep = 'accounts' | 'rewriting' | 'rewrite-preview' | 'cover-plan' | 'cover-plan-review' | 'cover-html' | 'cover-preview' | 'publish'
 
 export default function PublishPage() {
   const [activeTab, setActiveTab] = useState<Tab>('ai')
@@ -53,10 +54,15 @@ export default function PublishPage() {
     setAiStep('cover-plan')
   }
 
-  // ===== Step4: cover plan complete → generate html =====
-  const handleCoverPlanComplete = (taskId: string, plans: Record<string, string>) => {
+  // ===== Step4: cover plan complete → user reviews → generate html =====
+  const handleCoverPlanReady = (taskId: string, plans: Record<string, string>) => {
     setCoverTaskId(taskId)
     setCoverPlans(plans)
+    setAiStep('cover-plan-review')
+  }
+
+  // ===== Step5: user confirmed plans → generate html =====
+  const handlePlanReviewConfirm = (taskId: string) => {
     setAiStep('cover-html')
   }
 
@@ -100,7 +106,16 @@ export default function PublishPage() {
         return (
           <StepCoverPlan
             rewriteResults={rewriteResults}
-            onConfirm={handleCoverPlanComplete}
+            onPlansReady={handleCoverPlanReady}
+          />
+        )
+      case 'cover-plan-review':
+        return (
+          <StepCoverPlanReview
+            taskId={coverTaskId!}
+            plans={coverPlans}
+            onConfirm={handlePlanReviewConfirm}
+            onBack={() => setAiStep('cover-plan')}
           />
         )
       case 'cover-html':
@@ -115,7 +130,7 @@ export default function PublishPage() {
           <StepCoverPreview
             htmlCodes={htmlCodes}
             onConfirm={handleConfirmCover}
-            onBack={() => setAiStep('cover-html')}
+            onBack={() => setAiStep('cover-plan-review')}
           />
         )
       case 'publish':
@@ -200,11 +215,13 @@ export default function PublishPage() {
             <span>›</span>
             <span className={`font-medium ${aiStep === 'cover-plan' ? 'text-blue-600' : ''}`}>4.封面规划</span>
             <span>›</span>
-            <span className={`font-medium ${aiStep === 'cover-html' ? 'text-blue-600' : ''}`}>5.生成封面</span>
+            <span className={`font-medium ${aiStep === 'cover-plan-review' ? 'text-blue-600' : ''}`}>5.规划审核</span>
             <span>›</span>
-            <span className={`font-medium ${aiStep === 'cover-preview' ? 'text-blue-600' : ''}`}>6.封面预览</span>
+            <span className={`font-medium ${aiStep === 'cover-html' ? 'text-blue-600' : ''}`}>6.生成封面</span>
             <span>›</span>
-            <span className={`font-medium ${aiStep === 'publish' ? 'text-blue-600' : ''}`}>7.发布</span>
+            <span className={`font-medium ${aiStep === 'cover-preview' ? 'text-blue-600' : ''}`}>7.封面预览</span>
+            <span>›</span>
+            <span className={`font-medium ${aiStep === 'publish' ? 'text-blue-600' : ''}`}>8.发布</span>
           </div>
           {renderAIStep()}
         </div>
