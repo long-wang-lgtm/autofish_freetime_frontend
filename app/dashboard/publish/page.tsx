@@ -1,30 +1,25 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listAccounts } from '@/lib/api/accounts'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { StepAccounts } from '@/components/ai-creation/StepAccounts'
-import { StepRewriting } from '@/components/ai-creation/StepRewriting'
-import { StepRewritePreview } from '@/components/ai-creation/StepRewritePreview'
-import { StepCoverPlan } from '@/components/ai-creation/StepCoverPlan'
-import { StepCoverPlanReview } from '@/components/ai-creation/StepCoverPlanReview'
-import { StepCoverHtml } from '@/components/ai-creation/StepCoverHtml'
-import { StepCoverPreview } from '@/components/ai-creation/StepCoverPreview'
-import { StepPublish } from '@/components/ai-creation/StepPublish'
+import { createRewriteTask } from '@/lib/api/publish'
+import { StepProgressBar, AIStep } from '@/components/ai-creation/StepProgressBar'
+import { Step1Account } from '@/components/ai-creation/Step1Account'
+import { Step2Rewrite } from '@/components/ai-creation/Step2Rewrite'
+import { Step3Cover } from '@/components/ai-creation/Step3Cover'
+import { Step4Publish } from '@/components/ai-creation/Step4Publish'
 
 type Tab = 'publish' | 'draft' | 'ai'
-type AIStep = 'accounts' | 'rewriting' | 'rewrite-preview' | 'cover-plan' | 'cover-plan-review' | 'cover-html' | 'cover-preview' | 'publish'
 
 export default function PublishPage() {
   const [activeTab, setActiveTab] = useState<Tab>('ai')
-  const [aiStep, setAiStep] = useState<AIStep>('accounts')
-  const [sourceDescription, setSourceDescription] = useState('')
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
-  const [rewriteResults, setRewriteResults] = useState<Record<string, string>>({})
+  const [aiStep, setAiStep] = useState<AIStep>('account')
+  const [completedSteps, setCompletedSteps] = useState<Set<AIStep>>(new Set())
   const [rewriteTaskId, setRewriteTaskId] = useState<string | null>(null)
-  const [coverTaskId, setCoverTaskId] = useState<string | null>(null)
-  const [coverPlans, setCoverPlans] = useState<Record<string, string>>({})
+  const [sourceDescription, setSourceDescription] = useState('')
+  const [selectedAccountUids, setSelectedAccountUids] = useState<string[]>([])
+  const [rewriteResults, setRewriteResults] = useState<Record<string, string>>({})
   const [htmlCodes, setHtmlCodes] = useState<Record<string, string>>({})
   const [coverImages, setCoverImages] = useState<Record<string, string>>({})
 
@@ -33,118 +28,55 @@ export default function PublishPage() {
     queryFn: listAccounts,
   })
 
-  // ===== Step1: accounts → start rewrite =====
-  const handleStartRewrite = (description: string, accountUids: string[], taskId: string) => {
-    setSourceDescription(description)
-    setSelectedAccounts(accountUids)
-    setRewriteTaskId(taskId)
-    setAiStep('rewriting')
-  }
-
-  // ===== Step2: rewriting complete → preview =====
-  const handleRewriteComplete = (taskId: string, results: Record<string, string>) => {
-    setRewriteTaskId(taskId)
-    setRewriteResults(results)
-    setAiStep('rewrite-preview')
-  }
-
-  // ===== Step3: confirm rewrite → cover plan =====
-  const handleConfirmRewrite = (confirmedResults: Record<string, string>) => {
-    setRewriteResults(confirmedResults)
-    setAiStep('cover-plan')
-  }
-
-  // ===== Step4: cover plan complete → user reviews → generate html =====
-  const handleCoverPlanReady = (taskId: string, plans: Record<string, string>) => {
-    setCoverTaskId(taskId)
-    setCoverPlans(plans)
-    setAiStep('cover-plan-review')
-  }
-
-  // ===== Step5: user confirmed plans → generate html =====
-  const handlePlanReviewConfirm = (taskId: string) => {
-    setAiStep('cover-html')
-  }
-
-  // ===== Step5: html generation complete → screenshot =====
-  const handleHtmlComplete = (htmls: Record<string, string>) => {
-    setHtmlCodes(htmls)
-    setAiStep('cover-preview')
-  }
-
-  // ===== Step6: cover confirmed → publish =====
-  const handleConfirmCover = (images: Record<string, string>) => {
-    setCoverImages(images)
-    setAiStep('publish')
-  }
-
-  const renderAIStep = () => {
-    switch (aiStep) {
-      case 'accounts':
-        return (
-          <StepAccounts
-            accounts={accountsData?.accounts || []}
-            onStart={handleStartRewrite}
-          />
-        )
-      case 'rewriting':
-        return (
-          <StepRewriting
-            taskId={rewriteTaskId!}
-            onComplete={handleRewriteComplete}
-          />
-        )
-      case 'rewrite-preview':
-        return (
-          <StepRewritePreview
-            results={rewriteResults}
-            onConfirm={handleConfirmRewrite}
-            onBack={() => setAiStep('accounts')}
-          />
-        )
-      case 'cover-plan':
-        return (
-          <StepCoverPlan
-            rewriteResults={rewriteResults}
-            onPlansReady={handleCoverPlanReady}
-          />
-        )
-      case 'cover-plan-review':
-        return (
-          <StepCoverPlanReview
-            taskId={coverTaskId!}
-            plans={coverPlans}
-            onConfirm={handlePlanReviewConfirm}
-            onBack={() => setAiStep('cover-plan')}
-          />
-        )
-      case 'cover-html':
-        return (
-          <StepCoverHtml
-            taskId={coverTaskId!}
-            onComplete={handleHtmlComplete}
-          />
-        )
-      case 'cover-preview':
-        return (
-          <StepCoverPreview
-            htmlCodes={htmlCodes}
-            onConfirm={handleConfirmCover}
-            onBack={() => setAiStep('cover-plan-review')}
-          />
-        )
-      case 'publish':
-        return (
-          <StepPublish
-            sourceDescription={sourceDescription}
-            selectedAccounts={selectedAccounts}
-            rewriteResults={rewriteResults}
-            coverImages={coverImages}
-          />
-        )
+  // 获取账号名称映射
+  const accountNames: Record<string, string> = {}
+  for (const acc of accountsData?.accounts || []) {
+    if (selectedAccountUids.includes(acc.uid)) {
+      accountNames[acc.uid] = acc.name
     }
   }
 
+  // 步骤完成时记录
+  const completeStep = (step: AIStep) => {
+    setCompletedSteps(prev => {
+      const next = new Set(Array.from(prev))
+      next.add(step)
+      return next
+    })
+  }
+
+  // 步骤点击跳转
+  const handleStepClick = (step: AIStep) => {
+    if (completedSteps.has(step) || step === aiStep) {
+      setAiStep(step)
+    }
+  }
+
+  // ========== 阶段1: 账号选择 → 开始改写 ==========
+  const handleStartRewrite = async (description: string, accountUids: string[]) => {
+    setSourceDescription(description)
+    setSelectedAccountUids(accountUids)
+    const taskId = await createRewriteTask(description, accountUids)
+    setRewriteTaskId(taskId)
+    setAiStep('rewrite')
+  }
+
+  // ========== 阶段2: 改写完成 → 封面规划 ==========
+  const handleRewriteComplete = (results: Record<string, string>) => {
+    setRewriteResults(results)
+    completeStep('rewrite')
+    setAiStep('cover')
+  }
+
+  // ========== 阶段3: 封面完成 → 发布 ==========
+  const handleCoverComplete = (htmls: Record<string, string>, images: Record<string, string>) => {
+    setHtmlCodes(htmls)
+    setCoverImages(images)
+    completeStep('cover')
+    setAiStep('publish')
+  }
+
+  // ========== 渲染 ==========
   return (
     <div className="space-y-4">
       <div>
@@ -186,44 +118,59 @@ export default function PublishPage() {
         </button>
       </div>
 
-      {/* 内容区域 */}
-      {activeTab === 'publish' && (
+      {/* 发布商品/草稿箱占位 */}
+      {activeTab !== 'ai' && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
-          <div className="text-6xl mb-4">📦</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">商品发布功能</h3>
+          <div className="text-6xl mb-4">{activeTab === 'publish' ? '📦' : '📝'}</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {activeTab === 'publish' ? '商品发布功能' : '草稿箱'}
+          </h3>
           <p className="text-sm text-gray-500">开发中...</p>
         </div>
       )}
 
-      {activeTab === 'draft' && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
-          <div className="text-6xl mb-4">📝</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">草稿箱</h3>
-          <p className="text-sm text-gray-500">暂无草稿</p>
-        </div>
-      )}
-
+      {/* AI创作主内容 */}
       {activeTab === 'ai' && (
         <div className="space-y-4">
-          {/* 步骤指示器 */}
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className={`font-medium ${aiStep === 'accounts' ? 'text-blue-600' : ''}`}>1.选择账号</span>
-            <span>›</span>
-            <span className={`font-medium ${aiStep === 'rewriting' ? 'text-blue-600' : ''}`}>2.改写中</span>
-            <span>›</span>
-            <span className={`font-medium ${aiStep === 'rewrite-preview' ? 'text-blue-600' : ''}`}>3.改写预览</span>
-            <span>›</span>
-            <span className={`font-medium ${aiStep === 'cover-plan' ? 'text-blue-600' : ''}`}>4.封面规划</span>
-            <span>›</span>
-            <span className={`font-medium ${aiStep === 'cover-plan-review' ? 'text-blue-600' : ''}`}>5.规划审核</span>
-            <span>›</span>
-            <span className={`font-medium ${aiStep === 'cover-html' ? 'text-blue-600' : ''}`}>6.生成HTML</span>
-            <span>›</span>
-            <span className={`font-medium ${aiStep === 'cover-preview' ? 'text-blue-600' : ''}`}>7.封面预览</span>
-            <span>›</span>
-            <span className={`font-medium ${aiStep === 'publish' ? 'text-blue-600' : ''}`}>8.发布</span>
-          </div>
-          {renderAIStep()}
+          {/* 横向步骤条 */}
+          <StepProgressBar
+            currentStep={aiStep}
+            completedSteps={completedSteps}
+            onStepClick={handleStepClick}
+          />
+
+          {/* 阶段内容 */}
+          {aiStep === 'account' && (
+            <Step1Account
+              accounts={accountsData?.accounts || []}
+              onStart={handleStartRewrite}
+            />
+          )}
+
+          {aiStep === 'rewrite' && rewriteTaskId && (
+            <Step2Rewrite
+              taskId={rewriteTaskId}
+              accountNames={accountNames}
+              onComplete={handleRewriteComplete}
+            />
+          )}
+
+          {aiStep === 'cover' && Object.keys(rewriteResults).length > 0 && (
+            <Step3Cover
+              rewriteResults={rewriteResults}
+              accountNames={accountNames}
+              onComplete={handleCoverComplete}
+            />
+          )}
+
+          {aiStep === 'publish' && Object.keys(htmlCodes).length > 0 && (
+            <Step4Publish
+              accountNames={accountNames}
+              rewriteResults={rewriteResults}
+              sourceDescription={sourceDescription}
+              coverImages={coverImages}
+            />
+          )}
         </div>
       )}
     </div>
