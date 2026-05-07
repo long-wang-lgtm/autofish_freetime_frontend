@@ -217,7 +217,7 @@ export default function PublishPage() {
             <span>›</span>
             <span className={`font-medium ${aiStep === 'cover-plan-review' ? 'text-blue-600' : ''}`}>5.规划审核</span>
             <span>›</span>
-            <span className={`font-medium ${aiStep === 'cover-html' ? 'text-blue-600' : ''}`}>6.生成封面</span>
+            <span className={`font-medium ${aiStep === 'cover-html' ? 'text-blue-600' : ''}`}>6.生成HTML</span>
             <span>›</span>
             <span className={`font-medium ${aiStep === 'cover-preview' ? 'text-blue-600' : ''}`}>7.封面预览</span>
             <span>›</span>
