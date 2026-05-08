@@ -56,7 +56,7 @@ export default function PublishPage() {
   const handleStartRewrite = async (description: string, accountUids: string[]) => {
     setSourceDescription(description)
     setSelectedAccountUids(accountUids)
-    const taskId = await createRewriteTask(description, accountUids)
+    const { taskId } = await createRewriteTask(description, accountUids)
     setRewriteTaskId(taskId)
     setAiStep('rewrite')
   }

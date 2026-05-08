@@ -35,7 +35,7 @@ export function StepAccounts({ accounts, onStart }: StepAccountsProps) {
     }
     setIsSubmitting(true)
     try {
-      const taskId = await createRewriteTask(description, Array.from(selected))
+      const { taskId } = await createRewriteTask(description, Array.from(selected))
       onStart(description, Array.from(selected), taskId)
     } catch (err) {
       alert('提交失败: ' + String(err))
