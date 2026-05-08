@@ -300,11 +300,11 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
                 <h4 className="text-sm font-medium text-gray-700">
                   {accountNames[selectedUid] || selectedUid} 的封面
                 </h4>
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center" style={{ height: '350px' }}>
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden relative" style={{ width: '400px', height: '400px' }}>
                   <div
                     dangerouslySetInnerHTML={{ __html: htmlCodes[selectedUid] }}
-                    className="w-full h-full flex items-center justify-center"
-                    style={{ transform: 'scale(0.45)', transformOrigin: 'center center' }}
+                    className="absolute"
+                    style={{ width: '750px', height: '750px', left: '50%', top: '50%', transform: 'translate(-50%, -50%) scale(0.53)' }}
                   />
                 </div>
               </div>
@@ -359,8 +359,8 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
               >
                 <div
                   dangerouslySetInnerHTML={{ __html: html }}
-                  className="w-full h-full flex items-center justify-center"
-                  style={{ transform: 'scale(0.33)', transformOrigin: 'center center' }}
+                  className="absolute"
+                  style={{ width: '750px', height: '750px', left: '50%', top: '50%', transform: 'translate(-50%, -50%) scale(0.33)' }}
                 />
               </div>
               <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
