@@ -1,26 +1,43 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import html2canvas from 'html2canvas'
-import { createCoverTask, getCoverStatus, confirmCoverAndGenerateHtml, getHtmlStatus } from '@/lib/api/publish'
+import {
+  createCoverPlanTask,
+  getCoverPlanStatus,
+  confirmCoverPlan,
+  getImageGenerateStatus,
+} from '@/lib/api/publish'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { AccountListPanel, AccountItem, AccountStatus } from './AccountListPanel'
 import { MasterDetailLayout } from './MasterDetailLayout'
 
 type CoverSubStep = 'planning' | 'review' | 'generating' | 'preview'
 
+interface PlanData {
+  style_id: string
+  style_name: string
+  plan_prompt: string
+}
+
 interface Step3CoverProps {
   rewriteResults: Record<string, string>
   accountNames: Record<string, string>
-  onComplete: (htmlCodes: Record<string, string>, images: Record<string, string>) => void
+  recordId: number
+  rewriteTaskId: string
+  onComplete: (images: Record<string, string>) => void
 }
 
-export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3CoverProps) {
+export function Step3Cover({
+  rewriteResults,
+  accountNames,
+  recordId,
+  rewriteTaskId,
+  onComplete,
+}: Step3CoverProps) {
   const [subStep, setSubStep] = useState<CoverSubStep>('planning')
-  const [coverTaskId, setCoverTaskId] = useState<string | null>(null)
-  const [plans, setPlans] = useState<Record<string, string>>({})
-  const [htmlCodes, setHtmlCodes] = useState<Record<string, string>>({})
-  const [capturedImages, setCapturedImages] = useState<Record<string, string>>({})
+  const [coverPlanTaskId, setCoverPlanTaskId] = useState<string | null>(null)
+  const [plans, setPlans] = useState<Record<string, PlanData>>({})
+  const [images, setImages] = useState<Record<string, string>>({})
   const [selectedUid, setSelectedUid] = useState<string | 'all'>('all')
   const [generatingUids, setGeneratingUids] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -29,8 +46,8 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
   const accountList: AccountItem[] = Object.entries(accountNames).map(([uid, name]) => ({
     uid,
     name,
-    status: htmlCodes[uid] ? 'completed' : generatingUids.includes(uid) ? 'running' : 'idle',
-    thumbnail: capturedImages[uid],
+    status: images[uid] ? 'completed' : generatingUids.includes(uid) ? 'running' : 'idle',
+    thumbnail: images[uid] ? `data:image/png;base64,${images[uid]}` : undefined,
   }))
 
   // ========== 阶段1: 封面规划生成 ==========
@@ -43,12 +60,12 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
         uid,
         content,
       }))
-      const taskId = await createCoverTask(rewriteResultsList)
-      setCoverTaskId(taskId)
+      const taskId = await createCoverPlanTask(rewriteTaskId, rewriteResultsList, recordId)
+      setCoverPlanTaskId(taskId)
     } catch (err) {
       setError(String(err))
     }
-  }, [rewriteResults])
+  }, [rewriteResults, rewriteTaskId, recordId])
 
   useEffect(() => {
     if (subStep !== 'planning') return
@@ -56,13 +73,17 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
 
     let timeoutId: ReturnType<typeof setTimeout>
     const poll = async () => {
-      if (!coverTaskId) return
+      if (!coverPlanTaskId) return
       try {
-        const data = await getCoverStatus(coverTaskId)
+        const data = await getCoverPlanStatus(coverPlanTaskId)
         if (data.status === 'planned' || data.status === 'completed') {
-          const newPlans: Record<string, string> = {}
+          const newPlans: Record<string, PlanData> = {}
           for (const item of data.plans || []) {
-            newPlans[item.uid] = item.plan_text || ''
+            newPlans[item.uid] = {
+              style_id: item.style_id || 'default',
+              style_name: item.style_name || '默认风格',
+              plan_prompt: item.plan_prompt || '',
+            }
           }
           setPlans(newPlans)
           setSubStep('review')
@@ -77,56 +98,46 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
     }
     poll()
     return () => clearTimeout(timeoutId)
-  }, [subStep, coverTaskId, startPlanning])
+  }, [subStep, coverPlanTaskId, startPlanning])
 
-  // ========== 阶段2: 用户审核 → 生成HTML ==========
+  // ========== 阶段2: 用户审核 → 生图 ==========
   const handleReviewConfirm = async () => {
-    if (!coverTaskId) return
+    if (!coverPlanTaskId) return
     try {
-      const confirmedPlans = Object.entries(plans).map(([uid, plan_text]) => ({
+      const confirmedPlans = Object.entries(plans).map(([uid, plan]) => ({
         uid,
-        image_index: 0,
-        plan_text,
+        plan_prompt: plan.plan_prompt,
       }))
-      await confirmCoverAndGenerateHtml(coverTaskId, confirmedPlans)
+      await confirmCoverPlan(coverPlanTaskId, confirmedPlans, recordId)
       setSubStep('generating')
     } catch (err) {
       alert('操作失败: ' + String(err))
     }
   }
 
-  // ========== 阶段3: HTML生成（流式）==========
+  // ========== 阶段3: AI生图（流式）==========
   useEffect(() => {
-    if (subStep !== 'generating' || !coverTaskId) return
+    if (subStep !== 'generating' || !coverPlanTaskId) return
 
     let timeoutId: ReturnType<typeof setTimeout>
     const poll = async () => {
       try {
-        const data = await getHtmlStatus(coverTaskId)
+        const data = await getImageGenerateStatus(coverPlanTaskId)
 
-        // 流式更新：每完成一个立即追加
-        const newHtmlCodes: Record<string, string> = {}
+        const newImages: Record<string, string> = {}
         const stillGenerating: string[] = []
 
-        for (const plan of data.plans || []) {
-          if (plan.html_code) {
-            newHtmlCodes[plan.uid] = plan.html_code
-          } else if (data.status !== 'failed') {
-            // html_code 为空且整体状态未失败，说明还在生成中
-            stillGenerating.push(plan.uid)
+        for (const img of data.images || []) {
+          if (img.b64_image) {
+            newImages[img.uid] = img.b64_image
+          }
+          if (img.status === 'generating' || (!img.b64_image && img.status !== 'failed')) {
+            stillGenerating.push(img.uid)
           }
         }
 
-        if (Object.keys(newHtmlCodes).length > 0) {
-          setHtmlCodes(prev => {
-            const next = { ...prev, ...newHtmlCodes }
-            // 如果有新的完成，自动切换到该账号
-            const newCompleted = Object.keys(newHtmlCodes).find(uid => !prev[uid])
-            if (newCompleted && Object.keys(prev).length === 0) {
-              setSelectedUid(newCompleted)
-            }
-            return next
-          })
+        if (Object.keys(newImages).length > 0) {
+          setImages(prev => ({ ...prev, ...newImages }))
         }
 
         setGeneratingUids(stillGenerating)
@@ -136,7 +147,7 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
           return
         }
         if (data.status === 'failed') {
-          setError('HTML生成失败')
+          setError('图片生成失败')
           return
         }
       } catch {}
@@ -144,48 +155,11 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
     }
     poll()
     return () => clearTimeout(timeoutId)
-  }, [subStep, coverTaskId])
+  }, [subStep, coverPlanTaskId])
 
-  // ========== 阶段4: 封面预览/截图 ==========
-  const handleCapture = useCallback(async (uid: string, html: string) => {
-    try {
-      const tempDiv = document.createElement('div')
-      tempDiv.style.cssText = 'width:750px;height:750px;position:absolute;left:-9999px;top:-9999px;overflow:hidden;background:#fff'
-      tempDiv.innerHTML = html
-      document.body.appendChild(tempDiv)
-
-      const canvas = await html2canvas(tempDiv, {
-        width: 750,
-        height: 750,
-        scale: 1,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-      })
-
-      const dataUrl = canvas.toDataURL('image/png')
-      setCapturedImages(prev => ({ ...prev, [uid]: dataUrl.split(',')[1] }))
-      document.body.removeChild(tempDiv)
-    } catch (err) {
-      console.error(`截图失败 uid=${uid}:`, err)
-    }
-  }, [])
-
-  const handleCaptureAll = useCallback(async () => {
-    for (const [uid, html] of Object.entries(htmlCodes)) {
-      await handleCapture(uid, html)
-    }
-  }, [htmlCodes, handleCapture])
-
-  const handleDownload = (uid: string, base64: string) => {
-    const link = document.createElement('a')
-    link.download = `cover_${uid}.png`
-    link.href = `data:image/png;base64,${base64}`
-    link.click()
-  }
-
+  // ========== 阶段4: 预览 ==========
   const handleConfirm = () => {
-    onComplete(htmlCodes, capturedImages)
+    onComplete(images)
   }
 
   // ========== 渲染 ==========
@@ -214,7 +188,7 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
 
   // 封面规划审核
   if (subStep === 'review') {
-    const currentPlan = selectedUid === 'all' ? '' : (plans[selectedUid] || '')
+    const currentPlan = selectedUid === 'all' ? '' : (plans[selectedUid]?.plan_prompt || '')
 
     return (
       <MasterDetailLayout
@@ -233,7 +207,7 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
                 onClick={handleReviewConfirm}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg"
               >
-                确认规划，生成HTML
+                确认规划，生成封面图
               </button>
             </div>
 
@@ -241,19 +215,35 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
               <div className="space-y-3">
                 {Object.entries(plans).map(([uid, plan]) => (
                   <div key={uid} className="p-3 border border-gray-200 rounded-lg">
-                    <div className="text-sm font-medium text-gray-700 mb-1">{accountNames[uid] || uid}</div>
-                    <p className="text-sm text-gray-600 line-clamp-2">{plan}</p>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-gray-700">
+                        {accountNames[uid] || uid}
+                      </span>
+                      <span className="text-xs px-2 py-0.5 bg-gray-100 rounded">{plan.style_name}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 line-clamp-2">{plan.plan_prompt}</p>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="space-y-3">
-                <h4 className="text-sm font-medium text-gray-700">
-                  {accountNames[selectedUid] || selectedUid} 的封面规划
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-gray-700">
+                    {accountNames[selectedUid] || selectedUid} 的封面规划
+                  </h4>
+                  <span className="text-xs px-2 py-0.5 bg-gray-100 rounded">
+                    {plans[selectedUid]?.style_name || ''}
+                  </span>
+                </div>
                 <textarea
                   value={currentPlan}
-                  onChange={(e) => setPlans(prev => ({ ...prev, [selectedUid]: e.target.value }))}
+                  onChange={(e) => setPlans(prev => ({
+                    ...prev,
+                    [selectedUid]: {
+                      ...prev[selectedUid],
+                      plan_prompt: e.target.value,
+                    },
+                  }))}
                   rows={8}
                   className="w-full p-4 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
@@ -265,9 +255,9 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
     )
   }
 
-  // HTML生成中（流式）
+  // AI生图中（流式）
   if (subStep === 'generating') {
-    const doneCount = Object.keys(htmlCodes).length
+    const doneCount = Object.keys(images).length
     const total = Object.keys(accountNames).length
 
     return (
@@ -282,7 +272,7 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
         rightPanel={
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-gray-900">HTML生成中...</h3>
+              <h3 className="font-medium text-gray-900">AI 生成封面图中...</h3>
               <span className="text-sm text-gray-500">{doneCount}/{total} 完成</span>
             </div>
 
@@ -290,27 +280,29 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className="bg-blue-600 h-2 rounded-full transition-all"
-                style={{ width: `${(doneCount / total) * 100}%` }}
+                style={{ width: `${total > 0 ? (doneCount / total) * 100 : 0}%` }}
               />
             </div>
 
-            {/* 当前选中的账号HTML预览 */}
-            {selectedUid !== 'all' && htmlCodes[selectedUid] && (
+            {/* 当前选中的账号图片预览 */}
+            {selectedUid !== 'all' && images[selectedUid] && (
               <div className="space-y-3">
                 <h4 className="text-sm font-medium text-gray-700">
                   {accountNames[selectedUid] || selectedUid} 的封面
                 </h4>
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden relative" style={{ width: '400px', height: '400px' }}>
-                  <div
-                    dangerouslySetInnerHTML={{ __html: htmlCodes[selectedUid] }}
-                    className="absolute"
-                    style={{ width: '750px', height: '750px', left: '50%', top: '50%', transform: 'translate(-50%, -50%) scale(0.53)' }}
-                  />
+                <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+                  <div className="absolute inset-0 flex items-center justify-center bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <img
+                      src={`data:image/png;base64,${images[selectedUid]}`}
+                      alt="封面图"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                 </div>
               </div>
             )}
 
-            {selectedUid !== 'all' && !htmlCodes[selectedUid] && (
+            {selectedUid !== 'all' && !images[selectedUid] && (
               <div className="flex items-center justify-center py-12">
                 <LoadingSpinner size="md" />
                 <span className="ml-3 text-gray-500">生成中...</span>
@@ -320,7 +312,7 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
             {selectedUid === 'all' && doneCount === 0 && (
               <div className="flex items-center justify-center py-12">
                 <LoadingSpinner size="md" />
-                <span className="ml-3 text-gray-500">HTML生成中...</span>
+                <span className="ml-3 text-gray-500">AI生图中...</span>
               </div>
             )}
           </div>
@@ -334,53 +326,27 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-medium text-gray-900">封面预览</h3>
-        <button
-          onClick={handleCaptureAll}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg"
-        >
-          一键截图全部
-        </button>
       </div>
 
       {/* 网格展示 */}
       <div className="grid grid-cols-3 gap-4">
-        {Object.entries(htmlCodes).map(([uid, html]) => {
-          const captured = capturedImages[uid]
-          return (
-            <div key={uid} className="border border-gray-200 rounded-xl overflow-hidden">
-              <div className="px-3 py-2 bg-gray-50 flex items-center justify-between border-b border-gray-200">
-                <span className="text-xs font-medium text-gray-600 truncate">{accountNames[uid] || uid}</span>
-                {captured && <span className="text-green-600 text-xs">✅</span>}
-              </div>
-              <div
-                className="w-full aspect-square bg-white flex items-center justify-center cursor-pointer relative overflow-hidden"
-                onClick={() => !captured && handleCapture(uid, html)}
-                title={captured ? '已截图' : '点击截图'}
-              >
-                <div
-                  dangerouslySetInnerHTML={{ __html: html }}
-                  className="absolute"
-                  style={{ width: '750px', height: '750px', left: '50%', top: '50%', transform: 'translate(-50%, -50%) scale(0.33)' }}
-                />
-              </div>
-              <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-                {captured ? (
-                  <>
-                    <span className="text-xs text-green-600">已截图</span>
-                    <button
-                      onClick={() => handleDownload(uid, captured)}
-                      className="text-xs text-blue-600 hover:text-blue-700"
-                    >
-                      下载
-                    </button>
-                  </>
-                ) : (
-                  <span className="text-xs text-gray-400">点击截图</span>
-                )}
-              </div>
+        {Object.entries(images).map(([uid, b64Image]) => (
+          <div key={uid} className="border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-3 py-2 bg-gray-50 flex items-center justify-between border-b border-gray-200">
+              <span className="text-xs font-medium text-gray-600 truncate">
+                {accountNames[uid] || uid}
+              </span>
+              <span className="text-green-600 text-xs">✅</span>
             </div>
-          )
-        })}
+            <div className="w-full aspect-square bg-white flex items-center justify-center">
+              <img
+                src={`data:image/png;base64,${b64Image}`}
+                alt="封面图"
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* 确认按钮 */}
@@ -388,7 +354,7 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
         onClick={handleConfirm}
         className="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl"
       >
-        确认 {Object.keys(capturedImages).length} 张封面，开始发布
+        确认 {Object.keys(images).length} 张封面，开始发布
       </button>
     </div>
   )
