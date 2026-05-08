@@ -15,11 +15,23 @@ interface Step2RewriteProps {
 export function Step2Rewrite({ taskId, accountNames, onComplete }: Step2RewriteProps) {
   const [progress, setProgress] = useState<Record<string, AccountStatus>>({})
   const [results, setResults] = useState<Record<string, string>>({})
+  const [editedResults, setEditedResults] = useState<Record<string, string>>({})
   const [selectedUid, setSelectedUid] = useState<string | 'all'>('all')
   const [doneCount, setDoneCount] = useState(0)
+  const [allDone, setAllDone] = useState(false)
   const totalCount = Object.keys(accountNames).length
-  const onCompleteRef = useRef(onComplete)
-  onCompleteRef.current = onComplete
+
+  // 构建账号列表数据
+  const accountList: AccountItem[] = Object.entries(accountNames).map(([uid, name]) => ({
+    uid,
+    name,
+    status: progress[uid] || 'idle',
+  }))
+
+  // 当前选中的内容（优先显示编辑后的）
+  const currentContent = selectedUid === 'all'
+    ? null
+    : (editedResults[selectedUid] || results[selectedUid]) || ''
 
   const checkStatus = useCallback(async () => {
     try {
@@ -40,17 +52,15 @@ export function Step2Rewrite({ taskId, accountNames, onComplete }: Step2RewriteP
 
       setProgress(newProgress)
       setResults(prev => ({ ...prev, ...newResults }))
-      setDoneCount(Object.values(newProgress).filter(s => s === 'completed').length)
+      const completed = Object.values(newProgress).filter(s => s === 'completed').length
+      setDoneCount(completed)
+      setAllDone(data.status === 'completed')
 
-      if (data.status === 'completed') {
-        onCompleteRef.current(newResults)
-        return false
-      }
       if (data.status === 'failed') {
         alert('改写失败: ' + (data.error || '未知错误'))
         return false
       }
-      return true
+      return data.status !== 'completed'
     } catch (err) {
       alert('查询失败: ' + String(err))
       return false
@@ -69,17 +79,15 @@ export function Step2Rewrite({ taskId, accountNames, onComplete }: Step2RewriteP
     return () => clearTimeout(timeoutId)
   }, [checkStatus])
 
-  // 构建账号列表数据
-  const accountList: AccountItem[] = Object.entries(accountNames).map(([uid, name]) => ({
-    uid,
-    name,
-    status: progress[uid] || 'idle',
-  }))
+  const handleEditContent = (uid: string, value: string) => {
+    setEditedResults(prev => ({ ...prev, [uid]: value }))
+  }
 
-  // 当前选中的内容
-  const currentContent = selectedUid === 'all'
-    ? null
-    : results[selectedUid] || ''
+  const handleConfirm = () => {
+    // 合并：编辑过的用编辑的，没编辑过的用原始的
+    const finalResults = { ...results, ...editedResults }
+    onComplete(finalResults)
+  }
 
   return (
     <div className="h-full">
@@ -96,12 +104,14 @@ export function Step2Rewrite({ taskId, accountNames, onComplete }: Step2RewriteP
             {/* 进度头部 */}
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium text-gray-900">AI改写进行中</h3>
+                <h3 className="font-medium text-gray-900">
+                  {allDone ? 'AI改写完成' : 'AI改写进行中'}
+                </h3>
                 <p className="text-sm text-gray-500 mt-1">
                   {doneCount}/{totalCount} 完成
                 </p>
               </div>
-              <LoadingSpinner size="sm" />
+              {!allDone && <LoadingSpinner size="sm" />}
             </div>
 
             {/* 进度条 */}
@@ -131,8 +141,10 @@ export function Step2Rewrite({ taskId, accountNames, onComplete }: Step2RewriteP
                         {progress[acc.uid] === 'failed' && <span className="text-red-600">❌ 失败</span>}
                       </span>
                     </div>
-                    {results[acc.uid] && (
-                      <p className="text-sm text-gray-600 line-clamp-2">{results[acc.uid]}</p>
+                    {(editedResults[acc.uid] || results[acc.uid]) && (
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {editedResults[acc.uid] || results[acc.uid]}
+                      </p>
                     )}
                   </div>
                 ))}
@@ -153,12 +165,28 @@ export function Step2Rewrite({ taskId, accountNames, onComplete }: Step2RewriteP
                   </span>
                 </div>
                 <textarea
-                  value={currentContent || ''}
-                  onChange={() => {}}
-                  rows={12}
+                  value={currentContent ?? ''}
+                  onChange={(e) => handleEditContent(selectedUid, e.target.value)}
+                  rows={10}
                   className="w-full p-4 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 resize-none"
                   placeholder="改写中..."
+                  readOnly={progress[selectedUid] !== 'completed'}
                 />
+                {editedResults[selectedUid] && editedResults[selectedUid] !== results[selectedUid] && (
+                  <p className="text-xs text-orange-500">已编辑</p>
+                )}
+              </div>
+            )}
+
+            {/* 确认按钮 */}
+            {allDone && (
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleConfirm}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all"
+                >
+                  确认改写结果，开始封面规划
+                </button>
               </div>
             )}
           </div>

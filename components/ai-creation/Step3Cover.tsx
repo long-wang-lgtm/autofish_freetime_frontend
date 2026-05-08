@@ -300,11 +300,15 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
                 <h4 className="text-sm font-medium text-gray-700">
                   {accountNames[selectedUid] || selectedUid} 的封面
                 </h4>
-                <div
-                  className="w-full aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center"
-                  dangerouslySetInnerHTML={{ __html: htmlCodes[selectedUid] }}
-                  style={{ transform: 'scale(0.3)', transformOrigin: 'center', width: '333%', height: '333%', pointerEvents: 'none' }}
-                />
+                <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+                  <div className="absolute inset-0 flex items-center justify-center bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div
+                      dangerouslySetInnerHTML={{ __html: htmlCodes[selectedUid] }}
+                      className="w-full h-full"
+                      style={{ transform: 'scale(0.4)', transformOrigin: 'center', pointerEvents: 'none' }}
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
