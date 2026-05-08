@@ -300,14 +300,12 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
                 <h4 className="text-sm font-medium text-gray-700">
                   {accountNames[selectedUid] || selectedUid} 的封面
                 </h4>
-                <div className="relative w-full" style={{ paddingBottom: '100%' }}>
-                  <div className="absolute inset-0 flex items-center justify-center bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <div
-                      dangerouslySetInnerHTML={{ __html: htmlCodes[selectedUid] }}
-                      className="w-full h-full"
-                      style={{ transform: 'scale(0.4)', transformOrigin: 'center', pointerEvents: 'none' }}
-                    />
-                  </div>
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center" style={{ height: '350px' }}>
+                  <div
+                    dangerouslySetInnerHTML={{ __html: htmlCodes[selectedUid] }}
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ transform: 'scale(0.45)', transformOrigin: 'center center' }}
+                  />
                 </div>
               </div>
             )}
@@ -355,14 +353,14 @@ export function Step3Cover({ rewriteResults, accountNames, onComplete }: Step3Co
                 {captured && <span className="text-green-600 text-xs">✅</span>}
               </div>
               <div
-                className="w-full aspect-square bg-white flex items-center justify-center cursor-pointer relative"
+                className="w-full aspect-square bg-white flex items-center justify-center cursor-pointer relative overflow-hidden"
                 onClick={() => !captured && handleCapture(uid, html)}
                 title={captured ? '已截图' : '点击截图'}
               >
                 <div
                   dangerouslySetInnerHTML={{ __html: html }}
                   className="w-full h-full flex items-center justify-center"
-                  style={{ transform: 'scale(0.2)', transformOrigin: 'center', width: '500%', height: '500%', pointerEvents: 'none' }}
+                  style={{ transform: 'scale(0.33)', transformOrigin: 'center center' }}
                 />
               </div>
               <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
