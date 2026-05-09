@@ -17,6 +17,7 @@ export default function PublishPage() {
   const [aiStep, setAiStep] = useState<AIStep>('account')
   const [completedSteps, setCompletedSteps] = useState<Set<AIStep>>(new Set())
   const [rewriteTaskId, setRewriteTaskId] = useState<string | null>(null)
+  const [recordId, setRecordId] = useState<number | null>(null)
   const [sourceDescription, setSourceDescription] = useState('')
   const [selectedAccountUids, setSelectedAccountUids] = useState<string[]>([])
   const [rewriteResults, setRewriteResults] = useState<Record<string, string>>({})
@@ -56,8 +57,9 @@ export default function PublishPage() {
   const handleStartRewrite = async (description: string, accountUids: string[]) => {
     setSourceDescription(description)
     setSelectedAccountUids(accountUids)
-    const { taskId } = await createRewriteTask(description, accountUids)
+    const { taskId, recordId } = await createRewriteTask(description, accountUids)
     setRewriteTaskId(taskId)
+    setRecordId(recordId)
     setAiStep('rewrite')
   }
 
@@ -159,6 +161,8 @@ export default function PublishPage() {
             <Step3Cover
               rewriteResults={rewriteResults}
               accountNames={accountNames}
+              recordId={recordId ?? 0}
+              rewriteTaskId={rewriteTaskId ?? ''}
               onComplete={handleCoverComplete}
             />
           )}
