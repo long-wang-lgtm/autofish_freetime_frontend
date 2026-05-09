@@ -1,11 +1,13 @@
 'use client'
 import { useState, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { type Opportunity } from '@/lib/api/opportunities'
 import { type PublishedItem } from '@/lib/api/publish-items'
 import { PublishInstanceList } from './PublishInstanceList'
 import { EditorPanel } from './EditorPanel'
 import { ResizableDivider } from './ResizableDivider'
 import { PromptTemplateModal } from './PromptTemplateModal'
+import { NewPublishedItemModal } from './NewPublishedItemModal'
 
 const LIST_DEFAULT_HEIGHT = 300
 const LIST_MIN_HEIGHT = 150
@@ -18,6 +20,7 @@ interface PublishWorkspaceProps {
 }
 
 export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities }: PublishWorkspaceProps) {
+  const queryClient = useQueryClient()
   const [selectedItem, setSelectedItem] = useState<PublishedItem | null>(null)
   const [listHeight, setListHeight] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -28,6 +31,7 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
   })
   const [editorSaveStatus, setEditorSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [showPromptModal, setShowPromptModal] = useState(false)
+  const [showNewItemModal, setShowNewItemModal] = useState(false)
 
   const handleListHeightChange = useCallback((delta: number) => {
     setListHeight(prev => {
@@ -50,26 +54,29 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* 顶部：商机信息 + 商品组 */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b bg-gray-50">
-        <div className="flex-1">
-          <span className="font-medium text-gray-900">商机：{opportunity.name}</span>
+      {/* 顶部：商机信息 + 操作按钮 */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b bg-gray-50">
+        <div className="flex-1 min-w-0">
+          <span className="font-medium text-gray-900 truncate">商机：{opportunity.name}</span>
           {opportunity.item_group_id && (
-            <span className="ml-3 text-sm text-gray-500">
+            <span className="ml-2 text-sm text-gray-500">
               商品组：{opportunity.item_group_id}
             </span>
           )}
         </div>
-        {/* 元提示词编辑入口 */}
+        {/* 新增实例 */}
+        <button
+          onClick={() => setShowNewItemModal(true)}
+          className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-white text-gray-600 whitespace-nowrap"
+        >
+          + 新增实例
+        </button>
+        {/* 元提示词 */}
         <button
           onClick={() => setShowPromptModal(true)}
-          className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-white text-gray-600"
+          className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-white text-gray-600 whitespace-nowrap"
         >
           [AI prompt]
-        </button>
-        {/* 批量发布按钮 */}
-        <button className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-          批量发布 ▶
         </button>
       </div>
 
@@ -103,6 +110,18 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
         <PromptTemplateModal
           opportunity={opportunity}
           onClose={() => setShowPromptModal(false)}
+        />
+      )}
+
+      {/* 新增发布实例弹窗 */}
+      {showNewItemModal && (
+        <NewPublishedItemModal
+          opportunityId={opportunity.id}
+          defaultPrice={opportunity.price}
+          onClose={() => setShowNewItemModal(false)}
+          onCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ['published-items', opportunity.id] })
+          }}
         />
       )}
     </div>
