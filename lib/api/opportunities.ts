@@ -15,6 +15,7 @@ export interface Opportunity {
   item_group_id: string | null
   allowed_accounts: string[]
   status: 'active' | 'archived'
+  rewrite_prompt_template: string | null
   item_count: number
   created_at: string
   updated_at: string
