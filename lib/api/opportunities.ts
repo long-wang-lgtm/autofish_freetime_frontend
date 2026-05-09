@@ -61,6 +61,7 @@ export async function createOpportunity(data: {
   tags?: string[]
   item_group_id?: string
   allowed_accounts?: string[]
+  rewrite_prompt_template?: string
 }) {
   return fetchApi<Opportunity>('/api/publish/opportunities', {
     method: 'POST',

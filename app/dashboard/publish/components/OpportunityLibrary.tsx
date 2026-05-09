@@ -1,6 +1,9 @@
 'use client'
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { OpportunityCard } from './OpportunityCard'
+import { NewOpportunityModal } from './NewOpportunityModal'
+import { elevateFromCollection } from '@/lib/api/opportunities'
 import { type Opportunity } from '@/lib/api/opportunities'
 
 interface OpportunityLibraryProps {
@@ -16,11 +19,21 @@ export function OpportunityLibrary({
   selectedOpportunity,
   onSelectOpportunity,
 }: OpportunityLibraryProps) {
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
+  const [showNewModal, setShowNewModal] = useState(false)
 
   const filtered = opportunities.filter(opp =>
     opp.name.toLowerCase().includes(search.toLowerCase())
   )
+
+  // 升品：提示用户前往选品监控选择商品
+  const handleElevate = () => {
+    const msg = '升品功能需要从选品监控中选择商品。\n\n请前往「选品监控」页面，勾选要升品的商品后，再执行升品操作。'
+    if (window.confirm(msg)) {
+      window.open('/dashboard/selection', '_blank')
+    }
+  }
 
   return (
     <div className="h-full flex flex-col bg-gray-50 border-r">
@@ -37,10 +50,16 @@ export function OpportunityLibrary({
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
         </div>
         <div className="flex gap-2">
-          <button className="flex-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="flex-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
             + 新建
           </button>
-          <button className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">
+          <button
+            onClick={handleElevate}
+            className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50"
+          >
             ↑ 升品
           </button>
         </div>
@@ -65,6 +84,11 @@ export function OpportunityLibrary({
           ))
         )}
       </div>
+
+      {/* 新建商机弹窗 */}
+      {showNewModal && (
+        <NewOpportunityModal onClose={() => setShowNewModal(false)} />
+      )}
     </div>
   )
 }
