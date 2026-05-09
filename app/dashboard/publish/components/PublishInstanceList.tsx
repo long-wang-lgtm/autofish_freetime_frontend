@@ -57,13 +57,17 @@ export function PublishInstanceList({
         case 'cover_plan': return triggerCoverPlan(itemId)
         case 'image_gen': return triggerImageGenerate(itemId)
         case 'publish': return triggerPublish(itemId)
-        default: throw new Error(`Unknown action: ${action}`)
+        default: throw new Error('Unknown action: ' + action)
       }
     },
     onSuccess: () => refetch(),
   })
 
   const handleStageClick = (item: PublishedItem, stage: 'rewrite' | 'cover_plan' | 'image_gen' | 'publish') => {
+    if (stage === 'publish' && !item.account_uid) {
+      window.alert('请先在编辑区为该实例选择目标账号，再执行发布。')
+      return
+    }
     const actionMap: Record<string, string> = {
       rewrite: 'rewrite',
       cover_plan: 'cover_plan',
@@ -90,12 +94,19 @@ export function PublishInstanceList({
 
   const handleBatchPublish = () => {
     const selectedItems = items.filter(i => selectedIds.has(i.id))
-    const confirmMsg = `确认批量发布 ${selectedItems.length} 个商品？\n\n${
-      selectedItems.map(i =>
-        `- ${i.title || `#${i.id}`} → ${accounts.find(a => a.uid === i.account_uid)?.name ?? i.account_uid}`
-      ).join('\n')
-    }`
-    if (window.confirm(confirmMsg)) {
+
+    const withoutAccount = selectedItems.filter(i => !i.account_uid)
+    if (withoutAccount.length > 0) {
+      const lines = withoutAccount.map(i => '  - ' + (i.title || '#' + i.id)).join('\n')
+      window.alert('以下 ' + withoutAccount.length + ' 个实例尚未选择账号，无法发布：\n\n' + lines + '\n\n请先在编辑区为每个实例选择目标账号。')
+      return
+    }
+
+    const lines = selectedItems.map(i => {
+      const accName = accounts.find(a => a.uid === i.account_uid)?.name ?? i.account_uid
+      return '  - ' + (i.title || '#' + i.id) + ' -> ' + accName
+    }).join('\n')
+    if (window.confirm('确认批量发布 ' + selectedItems.length + ' 个商品？\n\n' + lines)) {
       selectedItems.forEach(item => {
         triggerMutation.mutate({ itemId: item.id, action: 'publish' })
       })
@@ -140,11 +151,11 @@ export function PublishInstanceList({
             return (
               <div
                 key={item.id}
-                className={`
-                  flex items-center gap-3 px-4 py-2 border-b text-xs
-                  ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}
-                  ${selectedIds.has(item.id) ? 'bg-blue-50/50' : ''}
-                `}
+                className={
+                  'flex items-center gap-3 px-4 py-2 border-b text-xs' +
+                  (isSelected ? ' bg-blue-50' : ' hover:bg-gray-50') +
+                  (selectedIds.has(item.id) ? ' bg-blue-50/50' : '')
+                }
               >
                 <input
                   type="checkbox"
@@ -158,7 +169,7 @@ export function PublishInstanceList({
                   {item.cover_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={item.cover_image.startsWith('data:') ? item.cover_image : `data:image/jpeg;base64,${item.cover_image}`}
+                      src={item.cover_image.startsWith('data:') ? item.cover_image : 'data:image/jpeg;base64,' + item.cover_image}
                       alt="封面"
                       className="w-12 h-12 object-cover rounded cursor-pointer hover:ring-2 hover:ring-blue-400"
                       onClick={() => setLightboxSrc(item.cover_image)}
@@ -179,7 +190,7 @@ export function PublishInstanceList({
 
                 {/* 价格 */}
                 <div className="w-16 flex-shrink-0 text-right text-gray-700">
-                  {item.price > 0 ? `￥${item.price}` : '-'}
+                  {item.price > 0 ? '￥' + item.price : '-'}
                 </div>
 
                 {/* 账号 */}
@@ -197,7 +208,7 @@ export function PublishInstanceList({
                 </div>
 
                 {/* 状态 */}
-                <div className={`w-16 flex-shrink-0 text-xs ${statusInfo.color}`}>
+                <div className={'w-16 flex-shrink-0 text-xs ' + statusInfo.color}>
                   {statusInfo.label}
                 </div>
 
@@ -229,7 +240,6 @@ export function PublishInstanceList({
         </div>
       )}
 
-      {/* 灯箱 */}
       {lightboxSrc && (
         <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
       )}

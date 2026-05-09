@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createOpportunity } from '@/lib/api/opportunities'
+import { createPublishedItem } from '@/lib/api/publish-items'
 
 interface NewOpportunityModalProps {
   onClose: () => void
@@ -12,18 +13,29 @@ export function NewOpportunityModal({ onClose }: NewOpportunityModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
+  const [instanceCount, setInstanceCount] = useState('1')
   const [error, setError] = useState('')
 
   const mutation = useMutation({
-    mutationFn: () =>
-      createOpportunity({
+    mutationFn: async () => {
+      const count = parseInt(instanceCount) || 1
+      const opp = await createOpportunity({
         name: name.trim(),
         source_type: 'manual',
         source_description: description,
         price: price ? parseFloat(price) : 0,
-      }),
+      })
+      // 批量创建发布实例（账号留空）
+      await Promise.all(
+        Array.from({ length: count }, () =>
+          createPublishedItem(opp.id, '', '', price ? parseFloat(price) : 0)
+        )
+      )
+      return opp
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['opportunities'] })
+      queryClient.invalidateQueries({ queryKey: ['published-items'] })
       onClose()
     },
     onError: (err: Error) => {
@@ -35,6 +47,11 @@ export function NewOpportunityModal({ onClose }: NewOpportunityModalProps) {
     e.preventDefault()
     if (!name.trim()) {
       setError('商机名称不能为空')
+      return
+    }
+    const count = parseInt(instanceCount)
+    if (isNaN(count) || count < 1 || count > 20) {
+      setError('发布实例数量需在 1~20 之间')
       return
     }
     setError('')
@@ -74,17 +91,34 @@ export function NewOpportunityModal({ onClose }: NewOpportunityModalProps) {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">价格</label>
-            <input
-              type="number"
-              value={price}
-              onChange={e => setPrice(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="0"
-              min="0"
-              step="0.01"
-            />
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">价格</label>
+              <input
+                type="number"
+                value={price}
+                onChange={e => setPrice(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="0"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                发布实例 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={instanceCount}
+                onChange={e => setInstanceCount(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="1"
+                min="1"
+                max="20"
+              />
+              <p className="text-xs text-gray-400 mt-0.5">1~20 个实例，账号后续选择</p>
+            </div>
           </div>
 
           {error && (
