@@ -1,8 +1,8 @@
 'use client'
 
-import { FileText, BarChart2, Settings } from 'lucide-react'
+import { Search, BarChart2, Users } from 'lucide-react'
 
-export type TabName = 'content' | 'report' | 'settings'
+export type TabName = 'keyword' | 'product' | 'merchant'
 
 interface TabBarProps {
   activeTab: TabName
@@ -10,9 +10,9 @@ interface TabBarProps {
 }
 
 const tabs: { name: TabName; label: string; icon: React.ReactNode }[] = [
-  { name: 'content', label: '商品采集', icon: <FileText className="w-4 h-4" /> },
-  { name: 'report', label: '选品分析', icon: <BarChart2 className="w-4 h-4" /> },
-  { name: 'settings', label: '监控设置', icon: <Settings className="w-4 h-4" /> },
+  { name: 'keyword', label: '关键词采集', icon: <Search className="w-4 h-4" /> },
+  { name: 'product', label: '商品监控', icon: <BarChart2 className="w-4 h-4" /> },
+  { name: 'merchant', label: '商家监控', icon: <Users className="w-4 h-4" /> },
 ]
 
 export function TabBar({ activeTab, onTabChange }: TabBarProps) {
