@@ -15,6 +15,7 @@ export interface PublishedItem {
   cover_plan_prompt: string
   cover_style_id: string
   cover_style_name: string
+  category: string
   status: string
   publish_task_id: string
   item_gid: string

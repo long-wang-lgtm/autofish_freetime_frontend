@@ -41,6 +41,18 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
     })
   }, [])
 
+  const handleItemChange = useCallback((updated: PublishedItem) => {
+    queryClient.setQueryData(['published-items', opportunity?.id], (old: any) => {
+      if (!old) return old
+      return {
+        ...old,
+        items: old.items.map((i: PublishedItem) =>
+          i.id === updated.id ? updated : i
+        ),
+      }
+    })
+  }, [queryClient, opportunity?.id])
+
   if (!opportunity) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50">
@@ -106,6 +118,7 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
           item={selectedItem}
           accounts={accounts}
           onSaveStatusChange={setEditorSaveStatus}
+          onItemChange={handleItemChange}
         />
       </div>
 

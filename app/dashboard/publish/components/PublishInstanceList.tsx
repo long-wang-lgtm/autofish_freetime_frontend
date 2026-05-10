@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   type PublishedItem,
   listPublishedItems,
+  updatePublishedItem,
   triggerRewrite,
   triggerCoverPlan,
   triggerImageGenerate,
@@ -12,17 +13,18 @@ import {
 import { CreationProgressBar } from './CreationProgressBar'
 import { ImageLightbox } from './ImageLightbox'
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: '未开始', color: 'text-gray-400' },
-  rewriting: { label: '改写中', color: 'text-blue-500' },
-  rewrite_done: { label: '改写完成', color: 'text-blue-500' },
-  cover_planning: { label: '封面规划中', color: 'text-purple-500' },
-  cover_plan_done: { label: '封面完成', color: 'text-purple-500' },
-  image_generating: { label: '生图中', color: 'text-orange-500' },
-  image_done: { label: '生图完成', color: 'text-orange-500' },
-  publishing: { label: '发布中', color: 'text-teal-500' },
-  published: { label: '已发布', color: 'text-green-600' },
-  publish_failed: { label: '失败', color: 'text-red-500' },
+function getStatusLabel(item: PublishedItem): { label: string; color: string } {
+  if (item.status === 'publish_failed') return { label: '失败', color: 'text-red-500' }
+  if (item.item_gid) return { label: '已发布', color: 'text-green-600' }
+  if (item.status === 'publishing') return { label: '发布中', color: 'text-teal-500' }
+  if (item.cover_image) return { label: '生图完成', color: 'text-orange-500' }
+  if (item.status === 'image_generating') return { label: '生图中', color: 'text-orange-500' }
+  if (item.cover_plan_prompt) return { label: '封面完成', color: 'text-purple-500' }
+  if (item.status === 'cover_planning') return { label: '封面规划中', color: 'text-purple-500' }
+  if (item.description) return { label: '改写完成', color: 'text-blue-500' }
+  if (item.status === 'rewriting') return { label: '改写中', color: 'text-blue-500' }
+  if (item.status === 'rewrite_done') return { label: '改写完成', color: 'text-blue-500' }
+  return { label: item.status, color: 'text-gray-400' }
 }
 
 interface PublishInstanceListProps {
@@ -41,14 +43,27 @@ export function PublishInstanceList({
   const queryClient = useQueryClient()
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editForm, setEditForm] = useState<Partial<PublishedItem>>({})
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['published-items', opportunityId],
     queryFn: () => listPublishedItems({ opportunity_id: opportunityId, page_size: 100 }),
-    refetchInterval: 5000,
   })
 
   const items: PublishedItem[] = data?.items ?? []
+
+  const saveEditMutation = useMutation({
+    mutationFn: (payload: { id: number; data: Partial<PublishedItem> }) =>
+      updatePublishedItem(payload.id, payload.data),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+        if (!old) return old
+        return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+      })
+      setEditingId(null)
+    },
+  })
 
   const triggerMutation = useMutation({
     mutationFn: async ({ itemId, action }: { itemId: number; action: string }) => {
@@ -77,6 +92,27 @@ export function PublishInstanceList({
     triggerMutation.mutate({ itemId: item.id, action: actionMap[stage] })
   }
 
+  const handleStartEdit = (item: PublishedItem) => {
+    setEditingId(item.id)
+    setEditForm({
+      description: item.description,
+      cover_plan_prompt: item.cover_plan_prompt,
+      price: item.price,
+      account_uid: item.account_uid,
+      category: item.category,
+    })
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingId) return
+    saveEditMutation.mutate({ id: editingId, data: editForm })
+  }
+
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setEditForm({})
+  }
+
   const toggleSelect = (id: number) => {
     setSelectedIds(prev => {
       const next = new Set(prev)
@@ -94,14 +130,12 @@ export function PublishInstanceList({
 
   const handleBatchPublish = () => {
     const selectedItems = items.filter(i => selectedIds.has(i.id))
-
     const withoutAccount = selectedItems.filter(i => !i.account_uid)
     if (withoutAccount.length > 0) {
       const lines = withoutAccount.map(i => '  - ' + (i.title || '#' + i.id)).join('\n')
-      window.alert('以下 ' + withoutAccount.length + ' 个实例尚未选择账号，无法发布：\n\n' + lines + '\n\n请先在编辑区为每个实例选择目标账号。')
+      window.alert('以下 ' + withoutAccount.length + ' 个实例尚未选择账号，无法发布：\n\n' + lines + '\n\n请先选择目标账号。')
       return
     }
-
     const lines = selectedItems.map(i => {
       const accName = accounts.find(a => a.uid === i.account_uid)?.name ?? i.account_uid
       return '  - ' + (i.title || '#' + i.id) + ' -> ' + accName
@@ -114,26 +148,27 @@ export function PublishInstanceList({
     }
   }
 
-  const truncateDescription = (desc: string, maxLen = 50) =>
-    desc.length > maxLen ? desc.slice(0, maxLen) + '...' : desc
-
   return (
     <div className="flex flex-col h-full">
       {/* 表头 */}
-      <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 border-b text-xs font-medium text-gray-500">
-        <input
-          type="checkbox"
-          checked={selectedIds.size === items.length && items.length > 0}
-          onChange={toggleSelectAll}
-          className="rounded flex-shrink-0"
-        />
-        <span className="w-14 flex-shrink-0">封面</span>
-        <span className="flex-1 min-w-0">改写内容</span>
-        <span className="w-16 flex-shrink-0 text-right">价格</span>
-        <span className="w-20 flex-shrink-0">账号</span>
-        <span className="w-44 flex-shrink-0">创作进度</span>
-        <span className="w-16 flex-shrink-0">状态</span>
-        <span className="w-12 flex-shrink-0 text-right">操作</span>
+      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border-b text-xs font-medium text-gray-500 min-w-[900px]">
+        <div className="w-[18px] flex-shrink-0">
+          <input
+            type="checkbox"
+            checked={selectedIds.size === items.length && items.length > 0}
+            onChange={toggleSelectAll}
+            className="rounded"
+          />
+        </div>
+        <div className="w-[48px] flex-shrink-0">封面</div>
+        <div className="w-[160px] flex-shrink-0">改写内容</div>
+        <div className="w-[200px] flex-shrink-0">封面规划</div>
+        <div className="w-[70px] flex-shrink-0 text-right">价格</div>
+        <div className="w-[90px] flex-shrink-0">账号</div>
+        <div className="w-[100px] flex-shrink-0">类目</div>
+        <div className="w-[130px] flex-shrink-0">创作进度</div>
+        <div className="w-[60px] flex-shrink-0">状态</div>
+        <div className="w-[40px] flex-shrink-0 text-right">操作</div>
       </div>
 
       {/* 列表 */}
@@ -144,82 +179,176 @@ export function PublishInstanceList({
           <div className="text-center py-8 text-gray-400">暂无发布实例</div>
         ) : (
           items.map(item => {
-            const statusInfo = STATUS_LABELS[item.status] ?? { label: item.status, color: 'text-gray-400' }
+            const statusInfo = getStatusLabel(item)
             const accountName = accounts.find(a => a.uid === item.account_uid)?.name ?? item.account_uid
             const isSelected = selectedItemId === item.id
+            const isEditing = editingId === item.id
 
             return (
               <div
                 key={item.id}
                 className={
-                  'flex items-center gap-3 px-4 py-2 border-b text-xs' +
-                  (isSelected ? ' bg-blue-50' : ' hover:bg-gray-50') +
-                  (selectedIds.has(item.id) ? ' bg-blue-50/50' : '')
+                  'flex items-center gap-1.5 px-3 py-1.5 border-b text-xs min-w-[900px]' +
+                  (isEditing ? ' bg-blue-50' : isSelected ? ' bg-blue-50/50' : ' hover:bg-gray-50')
                 }
               >
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(item.id)}
-                  onChange={() => toggleSelect(item.id)}
-                  className="rounded flex-shrink-0"
-                />
+                {/* checkbox */}
+                <div className="w-[18px] flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(item.id)}
+                    onChange={() => toggleSelect(item.id)}
+                    className="rounded"
+                  />
+                </div>
 
                 {/* 封面图 */}
-                <div className="w-14 flex-shrink-0">
+                <div className="w-[48px] flex-shrink-0">
                   {item.cover_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.cover_image.startsWith('data:') ? item.cover_image : 'data:image/jpeg;base64,' + item.cover_image}
                       alt="封面"
-                      className="w-12 h-12 object-cover rounded cursor-pointer hover:ring-2 hover:ring-blue-400"
+                      className="w-11 h-11 object-cover rounded cursor-pointer hover:ring-2 hover:ring-blue-400"
                       onClick={() => setLightboxSrc(item.cover_image)}
                     />
                   ) : (
-                    <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-lg">
-                      📷
-                    </div>
+                    <div className="w-11 h-11 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-lg">📷</div>
                   )}
                 </div>
 
-                {/* 改写内容摘要 */}
-                <div className="flex-1 min-w-0 text-gray-700 truncate" title={item.description}>
-                  {item.description ? truncateDescription(item.description) : (
-                    <span className="text-gray-300">（空）</span>
-                  )}
-                </div>
+                {/* 改写内容 */}
+                {isEditing ? (
+                  <div className="w-[160px] flex-shrink-0">
+                    <textarea
+                      value={editForm.description ?? ''}
+                      onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                      className="w-full p-1 border border-blue-400 rounded text-xs resize-none"
+                      rows={3}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="w-[160px] flex-shrink-0 truncate text-gray-700"
+                    title={item.description}
+                  >
+                    {item.description ? item.description.slice(0, 30) + '...' : <span className="text-gray-300">（空）</span>}
+                  </div>
+                )}
+
+                {/* 封面规划 */}
+                {isEditing ? (
+                  <div className="w-[200px] flex-shrink-0">
+                    <textarea
+                      value={editForm.cover_plan_prompt ?? ''}
+                      onChange={e => setEditForm(f => ({ ...f, cover_plan_prompt: e.target.value }))}
+                      className="w-full p-1 border border-blue-400 rounded text-xs resize-none"
+                      rows={3}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="w-[200px] flex-shrink-0 truncate text-gray-400"
+                    title={item.cover_plan_prompt}
+                  >
+                    {item.cover_plan_prompt ? item.cover_plan_prompt.slice(0, 40) + '...' : <span className="text-gray-300">（空）</span>}
+                  </div>
+                )}
 
                 {/* 价格 */}
-                <div className="w-16 flex-shrink-0 text-right text-gray-700">
-                  {item.price > 0 ? '￥' + item.price : '-'}
-                </div>
+                {isEditing ? (
+                  <div className="w-[70px] flex-shrink-0">
+                    <input
+                      type="number"
+                      value={editForm.price ?? 0}
+                      onChange={e => setEditForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))}
+                      className="w-full p-1 border border-blue-400 rounded text-xs text-right"
+                      step="0.01"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-[70px] flex-shrink-0 text-right text-gray-700">
+                    {item.price > 0 ? '￥' + item.price : '-'}
+                  </div>
+                )}
 
                 {/* 账号 */}
-                <div className="w-20 flex-shrink-0 text-gray-600 truncate" title={accountName}>
-                  {accountName}
-                </div>
+                {isEditing ? (
+                  <div className="w-[90px] flex-shrink-0">
+                    <select
+                      value={editForm.account_uid ?? ''}
+                      onChange={e => setEditForm(f => ({ ...f, account_uid: e.target.value }))}
+                      className="w-full p-1 border border-blue-400 rounded text-xs"
+                    >
+                      <option value="">未选择</option>
+                      {accounts.map(acc => (
+                        <option key={acc.uid} value={acc.uid}>{acc.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="w-[90px] flex-shrink-0 truncate text-gray-600" title={accountName}>
+                    {accountName || <span className="text-gray-300">-</span>}
+                  </div>
+                )}
 
-                {/* 创作进度 */}
-                <div className="w-44 flex-shrink-0">
+                {/* 类目 */}
+                {isEditing ? (
+                  <div className="w-[100px] flex-shrink-0">
+                    <input
+                      type="text"
+                      value={editForm.category ?? ''}
+                      onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}
+                      className="w-full p-1 border border-blue-400 rounded text-xs"
+                      placeholder="类目"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-[100px] flex-shrink-0 truncate text-gray-500" title={item.category}>
+                    {item.category || <span className="text-gray-300">-</span>}
+                  </div>
+                )}
+
+                {/* 创作进度（只读） */}
+                <div className="w-[130px] flex-shrink-0">
                   <CreationProgressBar
-                    status={item.status}
+                    item={item}
                     onStageClick={stage => handleStageClick(item, stage)}
                     size="sm"
                   />
                 </div>
 
-                {/* 状态 */}
-                <div className={'w-16 flex-shrink-0 text-xs ' + statusInfo.color}>
+                {/* 状态（只读） */}
+                <div className={'w-[60px] flex-shrink-0 text-xs ' + statusInfo.color}>
                   {statusInfo.label}
                 </div>
 
                 {/* 操作 */}
-                <div className="w-12 flex-shrink-0 text-right">
-                  <button
-                    onClick={() => onEditItem(item)}
-                    className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-xs"
-                  >
-                    编辑
-                  </button>
+                <div className="w-[40px] flex-shrink-0 text-right flex gap-1 justify-end">
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={handleSaveEdit}
+                        disabled={saveEditMutation.isPending}
+                        className="text-green-600 hover:bg-green-50 px-1 rounded text-xs"
+                      >
+                        {saveEditMutation.isPending ? '...' : '保存'}
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="text-gray-400 hover:text-gray-600 px-1 rounded text-xs"
+                      >
+                        ✕
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => handleStartEdit(item)}
+                      className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-xs"
+                    >
+                      编辑
+                    </button>
+                  )}
                 </div>
               </div>
             )
