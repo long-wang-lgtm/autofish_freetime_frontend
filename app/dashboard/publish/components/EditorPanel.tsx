@@ -24,9 +24,9 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
   })
   const coverRef = useRef<HTMLDivElement>(null)
 
-  const handleCoverWidthResize = useCallback((delta: number) => {
-    setCoverWidth(prev => {
-      const next = Math.max(80, Math.min(300, prev + delta))
+  const handleCoverWidthResize = useCallback((newWidth: number) => {
+    setCoverWidth(() => {
+      const next = Math.max(80, Math.min(400, newWidth))
       localStorage.setItem('editor_cover_width', String(next))
       return next
     })
@@ -125,10 +125,14 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
         className="w-1 flex-shrink-0 bg-gray-200 hover:bg-blue-400 cursor-col-resize rounded transition-colors"
         onMouseDown={e => {
           e.preventDefault()
+          e.stopPropagation()
+          const rect = e.currentTarget.getBoundingClientRect()
           const startX = e.clientX
           const startW = coverWidth
           const onMove = (ev: MouseEvent) => {
-            handleCoverWidthResize(ev.clientX - startX)
+            ev.preventDefault()
+            const delta = startX - ev.clientX
+            handleCoverWidthResize(startW + delta)
           }
           const onUp = () => {
             window.removeEventListener('mousemove', onMove)
@@ -152,7 +156,7 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
             <img
               src={item.cover_image.startsWith('data:') ? item.cover_image : 'data:image/jpeg;base64,' + item.cover_image}
               alt="封面"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">📷</div>
