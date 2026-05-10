@@ -1,25 +1,32 @@
 'use client'
-import { type PublishedItemStatus } from '@/lib/api/publish-items'
+import { type PublishedItem } from '@/lib/api/publish-items'
 
 type Stage = 'rewrite' | 'cover_plan' | 'image_gen' | 'publish'
 
-function getStageStatus(status: string, stage: Stage): 'pending' | 'active' | 'done' | 'failed' {
-  const doneMap: Record<Stage, string[]> = {
-    rewrite: ['rewrite_done', 'cover_planning', 'cover_plan_done', 'image_generating', 'image_done', 'publishing', 'published'],
-    cover_plan: ['cover_plan_done', 'image_generating', 'image_done', 'publishing', 'published'],
-    image_gen: ['image_done', 'publishing', 'published'],
-    publish: ['published'],
-  }
-  const activeMap: Record<Stage, string[]> = {
-    rewrite: ['rewriting'],
-    cover_plan: ['cover_planning'],
-    image_gen: ['image_generating'],
-    publish: ['publishing'],
-  }
+interface CreationProgressBarProps {
+  item: Pick<PublishedItem, 'status' | 'description' | 'cover_plan_prompt' | 'cover_image' | 'item_gid'>
+  onStageClick?: (stage: Stage) => void
+  size?: 'sm' | 'md'
+}
 
-  if (doneMap[stage].includes(status)) return 'done'
-  if (activeMap[stage].includes(status)) return 'active'
+function getStageStatus(item: CreationProgressBarProps['item'], stage: Stage): 'pending' | 'active' | 'done' | 'failed' {
+  const { status, description, cover_plan_prompt, cover_image, item_gid } = item
+
+  // 先按字段内容判断 done / failed（字段优先于状态）
+  if (stage === 'rewrite' && description) return 'done'
+  if (stage === 'cover_plan' && cover_plan_prompt) return 'done'
+  if (stage === 'image_gen' && cover_image) return 'done'
+  if (stage === 'publish' && item_gid) return 'done'
+
+  // 发布失败
   if (status === 'publish_failed') return 'failed'
+
+  // 进行中
+  if (stage === 'rewrite' && status === 'rewriting') return 'active'
+  if (stage === 'cover_plan' && status === 'cover_planning') return 'active'
+  if (stage === 'image_gen' && status === 'image_generating') return 'active'
+  if (stage === 'publish' && status === 'publishing') return 'active'
+
   return 'pending'
 }
 
@@ -32,17 +39,11 @@ const STAGE_LABELS: Record<Stage, string> = {
 
 const STAGE_ORDER: Stage[] = ['rewrite', 'cover_plan', 'image_gen', 'publish']
 
-interface CreationProgressBarProps {
-  status: string
-  onStageClick?: (stage: Stage) => void
-  size?: 'sm' | 'md'
-}
-
-export function CreationProgressBar({ status, onStageClick, size = 'md' }: CreationProgressBarProps) {
+export function CreationProgressBar({ item, onStageClick, size = 'md' }: CreationProgressBarProps) {
   return (
     <div className={`flex items-center gap-0.5 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>
       {STAGE_ORDER.map(stage => {
-        const stageStatus = getStageStatus(status, stage)
+        const stageStatus = getStageStatus(item, stage)
         const icons: Record<string, string> = {
           pending: '○',
           active: '🔄',

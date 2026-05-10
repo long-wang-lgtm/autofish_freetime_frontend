@@ -61,7 +61,7 @@ export default function PublishPage() {
 
   return (
     <div className="flex h-full overflow-hidden">
-      <div style={{ width: leftWidth, flexShrink: 0 }} className="overflow-hidden">
+      <div style={{ width: leftWidth, flexShrink: 0 }} className="overflow-hidden h-full">
         <OpportunityLibrary
           opportunities={opportunitiesData?.items || []}
           isLoading={opportunitiesLoading}
@@ -75,7 +75,7 @@ export default function PublishPage() {
         onResize={handleLeftWidthChange}
       />
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 h-full overflow-hidden">
         <PublishWorkspace
           opportunity={selectedOpportunity}
           accounts={accountsData?.accounts || []}

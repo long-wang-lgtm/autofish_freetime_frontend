@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   type PublishedItem,
@@ -43,8 +43,8 @@ export function PublishInstanceList({
   const queryClient = useQueryClient()
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [editForm, setEditForm] = useState<Partial<PublishedItem>>({})
+  const [form, setForm] = useState<Partial<PublishedItem>>({})
+  const [editingField, setEditingField] = useState<{ itemId: number; field: 'description' | 'cover_plan_prompt' } | null>(null)
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['published-items', opportunityId],
@@ -53,7 +53,7 @@ export function PublishInstanceList({
 
   const items: PublishedItem[] = data?.items ?? []
 
-  const saveEditMutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: (payload: { id: number; data: Partial<PublishedItem> }) =>
       updatePublishedItem(payload.id, payload.data),
     onSuccess: (updated) => {
@@ -61,7 +61,7 @@ export function PublishInstanceList({
         if (!old) return old
         return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
       })
-      setEditingId(null)
+      setSavingId(null)
     },
   })
 
@@ -80,7 +80,7 @@ export function PublishInstanceList({
 
   const handleStageClick = (item: PublishedItem, stage: 'rewrite' | 'cover_plan' | 'image_gen' | 'publish') => {
     if (stage === 'publish' && !item.account_uid) {
-      window.alert('请先在编辑区为该实例选择目标账号，再执行发布。')
+      window.alert('请先选择目标账号，再执行发布。')
       return
     }
     const actionMap: Record<string, string> = {
@@ -92,9 +92,9 @@ export function PublishInstanceList({
     triggerMutation.mutate({ itemId: item.id, action: actionMap[stage] })
   }
 
-  const handleStartEdit = (item: PublishedItem) => {
-    setEditingId(item.id)
-    setEditForm({
+  const initForm = (item: PublishedItem) => {
+    setForm({
+      id: item.id,
       description: item.description,
       cover_plan_prompt: item.cover_plan_prompt,
       price: item.price,
@@ -103,14 +103,17 @@ export function PublishInstanceList({
     })
   }
 
-  const handleSaveEdit = async () => {
-    if (!editingId) return
-    saveEditMutation.mutate({ id: editingId, data: editForm })
-  }
-
-  const handleCancelEdit = () => {
-    setEditingId(null)
-    setEditForm({})
+  const saveField = (itemId: number, field: 'description' | 'cover_plan_prompt') => {
+    const data: Partial<PublishedItem> = {}
+    if (field === 'description') data.description = form.description
+    if (field === 'cover_plan_prompt') data.cover_plan_prompt = form.cover_plan_prompt
+    if (Object.keys(data).length === 0) return
+    updatePublishedItem(itemId, data).then(updated => {
+      queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+        if (!old) return old
+        return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+      })
+    })
   }
 
   const toggleSelect = (id: number) => {
@@ -168,7 +171,6 @@ export function PublishInstanceList({
         <div className="w-[100px] flex-shrink-0">类目</div>
         <div className="w-[130px] flex-shrink-0">创作进度</div>
         <div className="w-[60px] flex-shrink-0">状态</div>
-        <div className="w-[40px] flex-shrink-0 text-right">操作</div>
       </div>
 
       {/* 列表 */}
@@ -180,20 +182,23 @@ export function PublishInstanceList({
         ) : (
           items.map(item => {
             const statusInfo = getStatusLabel(item)
-            const accountName = accounts.find(a => a.uid === item.account_uid)?.name ?? item.account_uid
             const isSelected = selectedItemId === item.id
-            const isEditing = editingId === item.id
+            const isEditing = form.id === item.id || editingField?.itemId === item.id
 
             return (
               <div
                 key={item.id}
+                onClick={() => {
+                  // 单击选中行，触发右侧编辑面板（不进入行内编辑模式）
+                  onEditItem(item)
+                }}
                 className={
-                  'flex items-stretch gap-1.5 px-3 py-1.5 border-b text-xs min-w-[900px]' +
-                  (isEditing ? ' bg-blue-50' : isSelected ? ' bg-blue-50/50' : ' hover:bg-gray-50')
+                  'flex items-stretch gap-1.5 px-3 min-h-[72px] border-b text-xs min-w-[900px] cursor-pointer select-none' +
+                  (isEditing ? ' bg-blue-50 ring-1 ring-blue-300' : isSelected ? ' bg-blue-50/50' : ' hover:bg-gray-50')
                 }
               >
                 {/* checkbox */}
-                <div className="w-[18px] flex-shrink-0">
+                <div className="w-[18px] flex-shrink-0 flex items-center" onClick={e => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     checked={selectedIds.has(item.id)}
@@ -203,7 +208,7 @@ export function PublishInstanceList({
                 </div>
 
                 {/* 封面图 */}
-                <div className="w-[48px] flex-shrink-0">
+                <div className="w-[48px] flex-shrink-0 flex items-center justify-center" onClick={e => e.stopPropagation()}>
                   {item.cover_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -217,100 +222,192 @@ export function PublishInstanceList({
                   )}
                 </div>
 
-                {/* 改写内容 */}
-                {isEditing ? (
-                  <div className="flex-1 min-w-[160px]">
+                {/* 改写内容 — 双击进入编辑 */}
+                <div
+                  className="flex-1 min-w-[160px] flex items-center"
+                  onDoubleClick={e => {
+                    e.stopPropagation()
+                    initForm(item)
+                    setEditingField({ itemId: item.id, field: 'description' })
+                  }}
+                  title={item.description || '双击编辑改写内容'}
+                >
+                  {editingField?.itemId === item.id && editingField?.field === 'description' ? (
                     <textarea
-                      value={editForm.description ?? ''}
-                      onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                      value={form.description ?? ''}
+                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                      onClick={e => e.stopPropagation()}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { e.preventDefault(); saveField(item.id, 'description'); setEditingField(null) }
+                      }}
+                      onBlur={e => {
+                        e.stopPropagation()
+                        saveField(item.id, 'description')
+                        setEditingField(null)
+                      }}
                       className="w-full p-1 border border-blue-400 rounded text-xs resize-none"
                       rows={3}
+                      autoFocus
                     />
-                  </div>
-                ) : (
-                  <div
-                    className="flex-1 min-w-[160px] truncate text-gray-700"
-                    title={item.description}
-                  >
-                    {item.description ? item.description.slice(0, 30) + '...' : <span className="text-gray-300">（空）</span>}
-                  </div>
-                )}
-
-                {/* 封面规划 */}
-                {isEditing ? (
-                  <div className="flex-1 min-w-[200px]">
-                    <textarea
-                      value={editForm.cover_plan_prompt ?? ''}
-                      onChange={e => setEditForm(f => ({ ...f, cover_plan_prompt: e.target.value }))}
-                      className="w-full p-1 border border-blue-400 rounded text-xs resize-none"
-                      rows={3}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    className="flex-1 min-w-[200px] truncate text-gray-400"
-                    title={item.cover_plan_prompt}
-                  >
-                    {item.cover_plan_prompt ? item.cover_plan_prompt.slice(0, 40) + '...' : <span className="text-gray-300">（空）</span>}
-                  </div>
-                )}
-
-                {/* 价格 */}
-                {isEditing ? (
-                  <div className="w-[70px] flex-shrink-0">
-                    <input
-                      type="number"
-                      value={editForm.price ?? 0}
-                      onChange={e => setEditForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))}
-                      className="w-full p-1 border border-blue-400 rounded text-xs text-right"
-                      step="0.01"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-[70px] flex-shrink-0 text-right text-gray-700">
-                    {item.price > 0 ? '￥' + item.price : '-'}
-                  </div>
-                )}
-
-                {/* 账号 */}
-                {isEditing ? (
-                  <div className="w-[90px] flex-shrink-0">
-                    <select
-                      value={editForm.account_uid ?? ''}
-                      onChange={e => setEditForm(f => ({ ...f, account_uid: e.target.value }))}
-                      className="w-full p-1 border border-blue-400 rounded text-xs"
+                  ) : (
+                    <div
+                      className="w-full text-gray-700 leading-tight"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
                     >
-                      <option value="">未选择</option>
-                      {accounts.map(acc => (
-                        <option key={acc.uid} value={acc.uid}>{acc.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <div className="w-[90px] flex-shrink-0 truncate text-gray-600" title={accountName}>
-                    {accountName || <span className="text-gray-300">-</span>}
-                  </div>
-                )}
+                      {item.description || <span className="text-gray-300">（空）</span>}
+                    </div>
+                  )}
+                </div>
 
-                {/* 类目 */}
-                {isEditing ? (
-                  <div className="w-[100px] flex-shrink-0">
-                    <input
-                      type="text"
-                      value={editForm.category ?? ''}
-                      onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}
-                      className="w-full p-1 border border-blue-400 rounded text-xs"
-                      placeholder="类目"
+                {/* 封面规划 — 双击进入编辑 */}
+                <div
+                  className="flex-1 min-w-[200px] flex items-center"
+                  onDoubleClick={e => {
+                    e.stopPropagation()
+                    initForm(item)
+                    setEditingField({ itemId: item.id, field: 'cover_plan_prompt' })
+                  }}
+                  title={item.cover_plan_prompt || '双击编辑封面规划'}
+                >
+                  {editingField?.itemId === item.id && editingField?.field === 'cover_plan_prompt' ? (
+                    <textarea
+                      value={form.cover_plan_prompt ?? ''}
+                      onChange={e => setForm(f => ({ ...f, cover_plan_prompt: e.target.value }))}
+                      onClick={e => e.stopPropagation()}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { e.preventDefault(); saveField(item.id, 'cover_plan_prompt'); setEditingField(null) }
+                      }}
+                      onBlur={e => {
+                        e.stopPropagation()
+                        saveField(item.id, 'cover_plan_prompt')
+                        setEditingField(null)
+                      }}
+                      className="w-full p-1 border border-blue-400 rounded text-xs resize-none"
+                      rows={3}
+                      autoFocus
                     />
-                  </div>
-                ) : (
-                  <div className="w-[100px] flex-shrink-0 truncate text-gray-500" title={item.category}>
-                    {item.category || <span className="text-gray-300">-</span>}
-                  </div>
-                )}
+                  ) : (
+                    <div
+                      className="w-full text-gray-400 leading-tight"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {item.cover_plan_prompt || <span className="text-gray-300">（空）</span>}
+                    </div>
+                  )}
+                </div>
 
-                {/* 创作进度（只读） */}
-                <div className="w-[130px] flex-shrink-0">
+                {/* 价格 — 点击编辑 */}
+                <div className="w-[70px] flex-shrink-0 flex items-center">
+                  <input
+                    type="number"
+                    value={isEditing ? (form.price ?? 0) : item.price}
+                    onChange={e => {
+                      if (form.id !== item.id) initForm(item)
+                      setForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))
+                    }}
+                    onClick={e => {
+                      e.stopPropagation()
+                      if (form.id !== item.id) initForm(item)
+                    }}
+                    onBlur={e => {
+                      e.stopPropagation()
+                      if (form.id === item.id && form.price !== undefined) {
+                        updatePublishedItem(item.id, { price: form.price }).then(updated => {
+                          queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+                            if (!old) return old
+                            return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+                          })
+                        })
+                      }
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        if (form.id === item.id && form.price !== undefined) {
+                          updatePublishedItem(item.id, { price: form.price }).then(updated => {
+                            queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+                              if (!old) return old
+                              return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+                            })
+                          })
+                        }
+                      }
+                    }}
+                    className="w-full p-1 border border-blue-400 rounded text-xs text-right bg-white"
+                    step="0.01"
+                  />
+                </div>
+
+                {/* 账号 — 下拉即时保存 */}
+                <div className="w-[90px] flex-shrink-0 flex items-center">
+                  <select
+                    value={isEditing ? (form.account_uid ?? '') : (item.account_uid ?? '')}
+                    onChange={e => {
+                      e.stopPropagation()
+                      if (form.id !== item.id) initForm(item)
+                      setForm(f => ({ ...f, account_uid: e.target.value }))
+                      updatePublishedItem(item.id, { account_uid: e.target.value }).then(updated => {
+                        queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+                          if (!old) return old
+                          return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+                        })
+                      })
+                    }}
+                    onClick={e => {
+                      e.stopPropagation()
+                      if (form.id !== item.id) initForm(item)
+                    }}
+                    className="w-full p-1 border border-blue-400 rounded text-xs bg-white cursor-pointer"
+                  >
+                    <option value="">未选择</option>
+                    {accounts.map(acc => (
+                      <option key={acc.uid} value={acc.uid}>{acc.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 类目 — 下拉即时保存 */}
+                <div className="w-[100px] flex-shrink-0 flex items-center">
+                  <select
+                    value={isEditing ? (form.category ?? '') : (item.category ?? '')}
+                    onChange={e => {
+                      e.stopPropagation()
+                      if (form.id !== item.id) initForm(item)
+                      setForm(f => ({ ...f, category: e.target.value }))
+                      updatePublishedItem(item.id, { category: e.target.value }).then(updated => {
+                        queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+                          if (!old) return old
+                          return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+                        })
+                      })
+                    }}
+                    onClick={e => {
+                      e.stopPropagation()
+                      if (form.id !== item.id) initForm(item)
+                    }}
+                    className="w-full p-1 border border-blue-400 rounded text-xs bg-white cursor-pointer"
+                  >
+                    <option value="">未选择</option>
+                    <option value="手机/数码/手机">手机/数码/手机</option>
+                    <option value="数码配件">数码配件</option>
+                    <option value="平板电脑">平板电脑</option>
+                    <option value="笔记本电脑">笔记本电脑</option>
+                  </select>
+                </div>
+
+                {/* 创作进度 */}
+                <div className="w-[130px] flex-shrink-0 flex items-center">
                   <CreationProgressBar
                     item={item}
                     onStageClick={stage => handleStageClick(item, stage)}
@@ -318,37 +415,9 @@ export function PublishInstanceList({
                   />
                 </div>
 
-                {/* 状态（只读） */}
-                <div className={'w-[60px] flex-shrink-0 text-xs ' + statusInfo.color}>
+                {/* 状态 */}
+                <div className={'w-[60px] flex-shrink-0 flex items-center text-xs ' + statusInfo.color}>
                   {statusInfo.label}
-                </div>
-
-                {/* 操作 */}
-                <div className="w-[40px] flex-shrink-0 text-right flex gap-1 justify-end">
-                  {isEditing ? (
-                    <>
-                      <button
-                        onClick={handleSaveEdit}
-                        disabled={saveEditMutation.isPending}
-                        className="text-green-600 hover:bg-green-50 px-1 rounded text-xs"
-                      >
-                        {saveEditMutation.isPending ? '...' : '保存'}
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        className="text-gray-400 hover:text-gray-600 px-1 rounded text-xs"
-                      >
-                        ✕
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => handleStartEdit(item)}
-                      className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-xs"
-                    >
-                      编辑
-                    </button>
-                  )}
                 </div>
               </div>
             )

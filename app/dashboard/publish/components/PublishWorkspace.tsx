@@ -112,8 +112,8 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
         onResize={handleListHeightChange}
       />
 
-      {/* 编辑区 */}
-      <div className="flex-1 overflow-auto">
+      {/* 编辑区 — 直接填满剩余空间 */}
+      <div className="flex-1 min-h-0 overflow-hidden">
         <EditorPanel
           item={selectedItem}
           accounts={accounts}

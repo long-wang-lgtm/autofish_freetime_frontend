@@ -18,7 +18,7 @@ export default function DashboardLayout({
   if (!isAuthenticated) redirect('/login')
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen bg-gray-50 overflow-hidden flex">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -26,12 +26,10 @@ export default function DashboardLayout({
 
       {/* 主内容区域 - 左侧留出sidebar宽度，填满剩余空间 */}
       <main
-        className={`transition-all duration-300 p-4 lg:p-6 ${
-          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
-        }`}
+        className={`transition-all duration-300 p-4 lg:p-6 h-full overflow-hidden ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}
       >
         {/* 移除最大宽度限制，让内容区域填满可用空间 */}
-        <div className="w-full">
+        <div className="w-full h-full">
           {children}
         </div>
       </main>

@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { createPublishedItem } from '@/lib/api/publish-items'
+import { createPublishedItem, triggerRewrite } from '@/lib/api/publish-items'
 
 interface NewPublishedItemModalProps {
   opportunityId: number
@@ -25,11 +25,15 @@ export function NewPublishedItemModal({
       const n = parseInt(count)
       if (isNaN(n) || n < 1 || n > 20) throw new Error('数量需在 1~20 之间')
       const p = price ? parseFloat(price) : 0
-      await Promise.all(
+      const items = await Promise.all(
         Array.from({ length: n }, () =>
           createPublishedItem(opportunityId, '', '', p)
         )
       )
+      // 每个新建的实例自动触发改写
+      for (const item of items) {
+        await triggerRewrite(item.id)
+      }
     },
     onSuccess: () => {
       onCreated()
