@@ -113,7 +113,7 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
       />
 
       {/* 编辑区 */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-auto">
         <EditorPanel
           item={selectedItem}
           accounts={accounts}

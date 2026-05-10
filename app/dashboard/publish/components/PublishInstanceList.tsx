@@ -161,8 +161,8 @@ export function PublishInstanceList({
           />
         </div>
         <div className="w-[48px] flex-shrink-0">封面</div>
-        <div className="w-[160px] flex-shrink-0">改写内容</div>
-        <div className="w-[200px] flex-shrink-0">封面规划</div>
+        <div className="flex-1 min-w-[160px]">改写内容</div>
+        <div className="flex-1 min-w-[200px]">封面规划</div>
         <div className="w-[70px] flex-shrink-0 text-right">价格</div>
         <div className="w-[90px] flex-shrink-0">账号</div>
         <div className="w-[100px] flex-shrink-0">类目</div>
@@ -188,7 +188,7 @@ export function PublishInstanceList({
               <div
                 key={item.id}
                 className={
-                  'flex items-center gap-1.5 px-3 py-1.5 border-b text-xs min-w-[900px]' +
+                  'flex items-stretch gap-1.5 px-3 py-1.5 border-b text-xs min-w-[900px]' +
                   (isEditing ? ' bg-blue-50' : isSelected ? ' bg-blue-50/50' : ' hover:bg-gray-50')
                 }
               >
@@ -219,7 +219,7 @@ export function PublishInstanceList({
 
                 {/* 改写内容 */}
                 {isEditing ? (
-                  <div className="w-[160px] flex-shrink-0">
+                  <div className="flex-1 min-w-[160px]">
                     <textarea
                       value={editForm.description ?? ''}
                       onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
@@ -229,7 +229,7 @@ export function PublishInstanceList({
                   </div>
                 ) : (
                   <div
-                    className="w-[160px] flex-shrink-0 truncate text-gray-700"
+                    className="flex-1 min-w-[160px] truncate text-gray-700"
                     title={item.description}
                   >
                     {item.description ? item.description.slice(0, 30) + '...' : <span className="text-gray-300">（空）</span>}
@@ -238,7 +238,7 @@ export function PublishInstanceList({
 
                 {/* 封面规划 */}
                 {isEditing ? (
-                  <div className="w-[200px] flex-shrink-0">
+                  <div className="flex-1 min-w-[200px]">
                     <textarea
                       value={editForm.cover_plan_prompt ?? ''}
                       onChange={e => setEditForm(f => ({ ...f, cover_plan_prompt: e.target.value }))}
@@ -248,7 +248,7 @@ export function PublishInstanceList({
                   </div>
                 ) : (
                   <div
-                    className="w-[200px] flex-shrink-0 truncate text-gray-400"
+                    className="flex-1 min-w-[200px] truncate text-gray-400"
                     title={item.cover_plan_prompt}
                   >
                     {item.cover_plan_prompt ? item.cover_plan_prompt.slice(0, 40) + '...' : <span className="text-gray-300">（空）</span>}
