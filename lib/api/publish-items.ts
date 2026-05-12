@@ -7,7 +7,7 @@ export interface PublishedItem {
   id: number
   opportunity_id: number
   item_group_id: string | null
-  account_uid: string
+  account_id: string
   title: string
   description: string
   price: number
@@ -24,6 +24,23 @@ export interface PublishedItem {
   updated_at: string
 }
 
+/** 部分字段响应 — 用于合并缓存，不可覆盖整个 item */
+export interface RewriteResponse {
+  id: number
+  description: string
+}
+
+export interface CoverPlanResponse {
+  id: number
+  cover_plan_prompt: string
+}
+
+export interface ImageGenResponse {
+  id: number
+  cover_image: string
+  status: string
+}
+
 export type PublishedItemStatus =
   | 'pending'
   | 'rewriting'
@@ -38,14 +55,14 @@ export type PublishedItemStatus =
 
 export async function listPublishedItems(params: {
   opportunity_id?: number
-  account_uid?: string
+  account_id?: string
   status?: string
   page?: number
   page_size?: number
 }) {
   const searchParams = new URLSearchParams()
   if (params.opportunity_id) searchParams.set('opportunity_id', String(params.opportunity_id))
-  if (params.account_uid) searchParams.set('account_uid', params.account_uid)
+  if (params.account_id) searchParams.set('account_id', params.account_id)
   if (params.status) searchParams.set('status', params.status)
   if (params.page) searchParams.set('page', String(params.page))
   if (params.page_size) searchParams.set('page_size', String(params.page_size))
@@ -54,12 +71,12 @@ export async function listPublishedItems(params: {
   return fetchApi<{ total: number; items: PublishedItem[] }>(`/api/publish/items${query}`)
 }
 
-export async function createPublishedItem(opportunityId: number, accountUid: string, title?: string, price?: number) {
+export async function createPublishedItem(opportunityId: number, accountId: string, title?: string, price?: number) {
   return fetchApi<PublishedItem>('/api/publish/items', {
     method: 'POST',
     body: JSON.stringify({
       opportunity_id: opportunityId,
-      account_uid: accountUid,
+      account_id: accountId,
       title: title || '',
       price: price || 0,
     }),
@@ -84,21 +101,21 @@ export async function deletePublishedItem(id: number) {
 }
 
 export async function triggerRewrite(itemId: number) {
-  return fetchApi<{ success: boolean; message: string; status: string }>(
+  return fetchApi<RewriteResponse>(
     `/api/publish/items/${itemId}/rewrite`,
     { method: 'POST' }
   )
 }
 
 export async function triggerCoverPlan(itemId: number) {
-  return fetchApi<{ success: boolean; message: string; status: string }>(
+  return fetchApi<CoverPlanResponse>(
     `/api/publish/items/${itemId}/cover-plan`,
     { method: 'POST' }
   )
 }
 
 export async function triggerImageGenerate(itemId: number) {
-  return fetchApi<{ success: boolean; message: string; status: string }>(
+  return fetchApi<ImageGenResponse>(
     `/api/publish/items/${itemId}/generate-image`,
     { method: 'POST' }
   )
@@ -109,6 +126,17 @@ export async function triggerPublish(itemId: number) {
     `/api/publish/items/${itemId}/publish`,
     { method: 'POST' }
   )
+}
+
+export interface ChannelCategory {
+  channelCateName: string
+  channelCateId: string
+}
+
+export async function getChannelCategories(itemId: number) {
+  return fetchApi<ChannelCategory[]>(`/api/publish/items/${itemId}/channel`, {
+    method: 'POST',
+  })
 }
 
 export async function retryPublishedItem(itemId: number) {

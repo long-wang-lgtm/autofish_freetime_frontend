@@ -1,14 +1,16 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   type PublishedItem,
+  type ChannelCategory,
   listPublishedItems,
   updatePublishedItem,
   triggerRewrite,
   triggerCoverPlan,
   triggerImageGenerate,
   triggerPublish,
+  getChannelCategories,
 } from '@/lib/api/publish-items'
 import { CreationProgressBar } from './CreationProgressBar'
 import { ImageLightbox } from './ImageLightbox'
@@ -45,13 +47,58 @@ export function PublishInstanceList({
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [form, setForm] = useState<Partial<PublishedItem>>({})
   const [editingField, setEditingField] = useState<{ itemId: number; field: 'description' | 'cover_plan_prompt' } | null>(null)
+  const [channelCategories, setChannelCategories] = useState<Record<number, ChannelCategory[]>>({})
+  const fetchedChannelRef = useRef<Set<number>>(new Set())
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['published-items', opportunityId],
     queryFn: () => listPublishedItems({ opportunity_id: opportunityId, page_size: 100 }),
   })
 
   const items: PublishedItem[] = data?.items ?? []
+
+  // 轮询：检测进行中任务，每 3 秒刷新一次（仅用于 image_gen/publish 等异步任务）
+  const activeRef = useRef(false)
+  useEffect(() => {
+    const hasActive = items.some(item =>
+      ['image_generating', 'publishing'].includes(item.status)
+    )
+    if (hasActive && !activeRef.current) {
+      activeRef.current = true
+      const interval = setInterval(() => {
+        queryClient.invalidateQueries({ queryKey: ['published-items', opportunityId] })
+      }, 3000)
+      return () => {
+        clearInterval(interval)
+        activeRef.current = false
+      }
+    }
+  }, [items, queryClient, opportunityId])
+
+  // 自动拉取渠道类目：封面图 + 改写内容 + 账号 三者就绪时触发
+  useEffect(() => {
+    items.forEach(item => {
+      if (
+        item.cover_image &&
+        item.description &&
+        item.account_id &&
+        !fetchedChannelRef.current.has(item.id)
+      ) {
+        fetchedChannelRef.current.add(item.id)
+        getChannelCategories(item.id).then(cats => {
+          setChannelCategories(prev => ({ ...prev, [item.id]: cats }))
+        }).catch(() => {})
+      }
+    })
+  }, [items])
+
+  // 缓存中选中项变更时，通知上层编辑器同步
+  useEffect(() => {
+    if (selectedItemId != null) {
+      const current = items.find(i => i.id === selectedItemId)
+      if (current) onEditItem(current)
+    }
+  }, [items, selectedItemId, onEditItem])
 
   const saveMutation = useMutation({
     mutationFn: (payload: { id: number; data: Partial<PublishedItem> }) =>
@@ -59,37 +106,69 @@ export function PublishInstanceList({
     onSuccess: (updated) => {
       queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
         if (!old) return old
-        return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+        return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
       })
-      setSavingId(null)
     },
   })
 
-  const triggerMutation = useMutation({
-    mutationFn: async ({ itemId, action }: { itemId: number; action: string }) => {
-      switch (action) {
-        case 'rewrite': return triggerRewrite(itemId)
-        case 'cover_plan': return triggerCoverPlan(itemId)
-        case 'image_gen': return triggerImageGenerate(itemId)
-        case 'publish': return triggerPublish(itemId)
-        default: throw new Error('Unknown action: ' + action)
-      }
+  // 改写和封面规划：同步接口，返回部分字段，需合并到缓存
+  const rewriteMutation = useMutation({
+    mutationFn: (itemId: number) => triggerRewrite(itemId),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+        if (!old) return old
+        return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
+      })
     },
-    onSuccess: () => refetch(),
+  })
+
+  const coverPlanMutation = useMutation({
+    mutationFn: (itemId: number) => triggerCoverPlan(itemId),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+        if (!old) return old
+        return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
+      })
+    },
+  })
+
+  // 图片生成和发布：同步接口，直接合并返回的部分字段到缓存
+  const imageGenMutation = useMutation({
+    mutationFn: (itemId: number) => triggerImageGenerate(itemId),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+        if (!old) return old
+        return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
+      })
+    },
+  })
+
+  const publishMutation = useMutation({
+    mutationFn: (itemId: number) => triggerPublish(itemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['published-items', opportunityId] })
+    },
   })
 
   const handleStageClick = (item: PublishedItem, stage: 'rewrite' | 'cover_plan' | 'image_gen' | 'publish') => {
-    if (stage === 'publish' && !item.account_uid) {
+    if (stage === 'publish' && !item.account_id) {
       window.alert('请先选择目标账号，再执行发布。')
       return
     }
-    const actionMap: Record<string, string> = {
-      rewrite: 'rewrite',
-      cover_plan: 'cover_plan',
-      image_gen: 'image_gen',
-      publish: 'publish',
+    switch (stage) {
+      case 'rewrite':
+        rewriteMutation.mutate(item.id)
+        break
+      case 'cover_plan':
+        coverPlanMutation.mutate(item.id)
+        break
+      case 'image_gen':
+        imageGenMutation.mutate(item.id)
+        break
+      case 'publish':
+        publishMutation.mutate(item.id)
+        break
     }
-    triggerMutation.mutate({ itemId: item.id, action: actionMap[stage] })
   }
 
   const initForm = (item: PublishedItem) => {
@@ -98,7 +177,7 @@ export function PublishInstanceList({
       description: item.description,
       cover_plan_prompt: item.cover_plan_prompt,
       price: item.price,
-      account_uid: item.account_uid,
+      account_id: item.account_id,
       category: item.category,
     })
   }
@@ -111,7 +190,7 @@ export function PublishInstanceList({
     updatePublishedItem(itemId, data).then(updated => {
       queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
         if (!old) return old
-        return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+        return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
       })
     })
   }
@@ -133,19 +212,19 @@ export function PublishInstanceList({
 
   const handleBatchPublish = () => {
     const selectedItems = items.filter(i => selectedIds.has(i.id))
-    const withoutAccount = selectedItems.filter(i => !i.account_uid)
+    const withoutAccount = selectedItems.filter(i => !i.account_id)
     if (withoutAccount.length > 0) {
       const lines = withoutAccount.map(i => '  - ' + (i.title || '#' + i.id)).join('\n')
       window.alert('以下 ' + withoutAccount.length + ' 个实例尚未选择账号，无法发布：\n\n' + lines + '\n\n请先选择目标账号。')
       return
     }
     const lines = selectedItems.map(i => {
-      const accName = accounts.find(a => a.uid === i.account_uid)?.name ?? i.account_uid
+      const accName = accounts.find(a => a.uid === i.account_id)?.name ?? i.account_id
       return '  - ' + (i.title || '#' + i.id) + ' -> ' + accName
     }).join('\n')
     if (window.confirm('确认批量发布 ' + selectedItems.length + ' 个商品？\n\n' + lines)) {
       selectedItems.forEach(item => {
-        triggerMutation.mutate({ itemId: item.id, action: 'publish' })
+        publishMutation.mutate(item.id)
       })
       setSelectedIds(new Set())
     }
@@ -166,7 +245,7 @@ export function PublishInstanceList({
         <div className="w-[48px] flex-shrink-0">封面</div>
         <div className="flex-1 min-w-[160px]">改写内容</div>
         <div className="flex-1 min-w-[200px]">封面规划</div>
-        <div className="w-[70px] flex-shrink-0 text-right">价格</div>
+        <div className="w-[70px] flex-shrink-0">价格</div>
         <div className="w-[90px] flex-shrink-0">账号</div>
         <div className="w-[100px] flex-shrink-0">类目</div>
         <div className="w-[130px] flex-shrink-0">创作进度</div>
@@ -325,7 +404,7 @@ export function PublishInstanceList({
                         updatePublishedItem(item.id, { price: form.price }).then(updated => {
                           queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
                             if (!old) return old
-                            return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+                            return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
                           })
                         })
                       }
@@ -338,13 +417,13 @@ export function PublishInstanceList({
                           updatePublishedItem(item.id, { price: form.price }).then(updated => {
                             queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
                               if (!old) return old
-                              return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+                              return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
                             })
                           })
                         }
                       }
                     }}
-                    className="w-full p-1 border border-blue-400 rounded text-xs text-right bg-white"
+                    className="w-full p-1 border border-blue-400 rounded text-xs bg-white"
                     step="0.01"
                   />
                 </div>
@@ -352,15 +431,15 @@ export function PublishInstanceList({
                 {/* 账号 — 下拉即时保存 */}
                 <div className="w-[90px] flex-shrink-0 flex items-center">
                   <select
-                    value={isEditing ? (form.account_uid ?? '') : (item.account_uid ?? '')}
+                    value={isEditing ? (form.account_id ?? '') : (item.account_id ?? '')}
                     onChange={e => {
                       e.stopPropagation()
                       if (form.id !== item.id) initForm(item)
-                      setForm(f => ({ ...f, account_uid: e.target.value }))
-                      updatePublishedItem(item.id, { account_uid: e.target.value }).then(updated => {
+                      setForm(f => ({ ...f, account_id: e.target.value }))
+                      updatePublishedItem(item.id, { account_id: e.target.value }).then(updated => {
                         queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
                           if (!old) return old
-                          return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+                          return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
                         })
                       })
                     }}
@@ -388,7 +467,7 @@ export function PublishInstanceList({
                       updatePublishedItem(item.id, { category: e.target.value }).then(updated => {
                         queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
                           if (!old) return old
-                          return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? updated : i) }
+                          return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
                         })
                       })
                     }}
@@ -399,10 +478,18 @@ export function PublishInstanceList({
                     className="w-full p-1 border border-blue-400 rounded text-xs bg-white cursor-pointer"
                   >
                     <option value="">未选择</option>
-                    <option value="手机/数码/手机">手机/数码/手机</option>
-                    <option value="数码配件">数码配件</option>
-                    <option value="平板电脑">平板电脑</option>
-                    <option value="笔记本电脑">笔记本电脑</option>
+                    {(channelCategories[item.id]?.length
+                      ? channelCategories[item.id].map(cat => (
+                          <option key={cat.channelCateId} value={cat.channelCateName}>{cat.channelCateName}</option>
+                        ))
+                      : (
+                        <>
+                          <option value="手机/数码/手机">手机/数码/手机</option>
+                          <option value="数码配件">数码配件</option>
+                          <option value="平板电脑">平板电脑</option>
+                          <option value="笔记本电脑">笔记本电脑</option>
+                        </>
+                      ))}
                   </select>
                 </div>
 

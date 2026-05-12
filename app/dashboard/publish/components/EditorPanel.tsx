@@ -34,11 +34,17 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
 
   useEffect(() => {
     if (item) {
-      setDescription(item.description)
-      setCoverPlanPrompt(item.cover_plan_prompt)
+      const focusedEl = document.activeElement
+      const isEditing = focusedEl instanceof HTMLTextAreaElement && focusedEl.closest('.editor-panel')
+      if (!isEditing || focusedEl?.getAttribute('data-field') !== 'description') {
+        setDescription(prev => prev !== item.description ? item.description : prev)
+      }
+      if (!isEditing || focusedEl?.getAttribute('data-field') !== 'cover_plan_prompt') {
+        setCoverPlanPrompt(prev => prev !== item.cover_plan_prompt ? item.cover_plan_prompt : prev)
+      }
       setSaveStatus('idle')
     }
-  }, [item?.id])
+  }, [item])
 
   const saveMutation = useMutation({
     mutationFn: (data: { description?: string; cover_plan_prompt?: string }) =>
@@ -83,7 +89,7 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
   }
 
   return (
-    <div className="flex gap-3 p-3 h-full min-h-0 overflow-hidden">
+    <div className="editor-panel flex gap-3 p-3 h-full min-h-0 overflow-hidden">
 
       {/* 右：改写 + 封面两栏 */}
       <div className="flex-1 flex flex-col gap-2 min-w-0 min-h-0 h-full overflow-hidden">
@@ -93,6 +99,7 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
             <label className="text-xs text-gray-500 uppercase flex-shrink-0">改写内容</label>
             <textarea
               value={description}
+              data-field="description"
               onChange={e => handleDescriptionChange(e.target.value)}
               className="flex-1 w-full p-2 border border-gray-200 rounded-lg text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-[120px]"
               placeholder="输入改写内容..."
@@ -103,6 +110,7 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
             <label className="text-xs text-gray-500 uppercase flex-shrink-0">封面规划</label>
             <textarea
               value={coverPlanPrompt}
+              data-field="cover_plan_prompt"
               onChange={e => handleCoverPlanPromptChange(e.target.value)}
               className="flex-1 w-full p-2 border border-gray-200 rounded-lg text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-[120px]"
               placeholder="输入封面规划..."

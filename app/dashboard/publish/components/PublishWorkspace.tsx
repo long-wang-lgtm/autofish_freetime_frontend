@@ -42,6 +42,7 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
   }, [])
 
   const handleItemChange = useCallback((updated: PublishedItem) => {
+    setSelectedItem(updated)
     queryClient.setQueryData(['published-items', opportunity?.id], (old: any) => {
       if (!old) return old
       return {
