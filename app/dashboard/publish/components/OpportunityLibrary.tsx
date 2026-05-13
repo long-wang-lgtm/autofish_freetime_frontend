@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { OpportunityCard } from './OpportunityCard'
 import { NewOpportunityModal } from './NewOpportunityModal'
-import { elevateFromCollection } from '@/lib/api/opportunities'
+import { elevateFromCollection, deleteOpportunity } from '@/lib/api/opportunities'
 import { type Opportunity } from '@/lib/api/opportunities'
 
 interface OpportunityLibraryProps {
@@ -22,6 +22,23 @@ export function OpportunityLibrary({
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [showNewModal, setShowNewModal] = useState(false)
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteOpportunity(id),
+    onSuccess: (_, id) => {
+      queryClient.setQueryData(['opportunities'], (old: any) => {
+        if (!old) return old
+        return { ...old, items: old.items.filter((o: Opportunity) => o.id !== id) }
+      })
+      if (selectedOpportunity?.id === id) onSelectOpportunity(null)
+    },
+  })
+
+  const handleDeleteOpp = (id: number) => {
+    if (window.confirm('确认删除该商机？删除后将无法恢复。')) {
+      deleteMutation.mutate(id)
+    }
+  }
 
   const filtered = opportunities.filter(opp =>
     opp.name.toLowerCase().includes(search.toLowerCase())
@@ -80,6 +97,7 @@ export function OpportunityLibrary({
               opportunity={opp}
               isSelected={selectedOpportunity?.id === opp.id}
               onClick={() => onSelectOpportunity(selectedOpportunity?.id === opp.id ? null : opp)}
+              onDelete={handleDeleteOpp}
             />
           ))
         )}

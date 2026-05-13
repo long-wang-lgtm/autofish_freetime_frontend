@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { updatePublishedItem, type PublishedItem } from '@/lib/api/publish-items'
+import { updatePublishedItem, type PublishedItem, coverImageUrl } from '@/lib/api/publish-items'
+import { ImageLightbox } from './ImageLightbox'
 
 interface EditorPanelProps {
   item: PublishedItem | null
@@ -14,6 +15,7 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
   const [description, setDescription] = useState('')
   const [coverPlanPrompt, setCoverPlanPrompt] = useState('')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [coverWidth, setCoverWidth] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -162,9 +164,10 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
           {item.cover_image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={item.cover_image.startsWith('data:') ? item.cover_image : 'data:image/jpeg;base64,' + item.cover_image}
+              src={coverImageUrl(item.cover_image)}
               alt="封面"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain cursor-pointer hover:opacity-90"
+              onClick={() => setLightboxSrc(coverImageUrl(item.cover_image))}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">📷</div>
@@ -174,6 +177,10 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
           重新生成封面
         </button>
       </div>
+
+      {lightboxSrc && (
+        <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      )}
 
     </div>
   )

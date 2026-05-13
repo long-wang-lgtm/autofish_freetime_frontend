@@ -5,9 +5,10 @@ interface OpportunityCardProps {
   opportunity: Opportunity
   isSelected: boolean
   onClick: () => void
+  onDelete: (id: number) => void
 }
 
-export function OpportunityCard({ opportunity, isSelected, onClick }: OpportunityCardProps) {
+export function OpportunityCard({ opportunity, isSelected, onClick, onDelete }: OpportunityCardProps) {
   const statusBadge = {
     active: { label: '活跃', color: 'bg-green-100 text-green-700' },
     archived: { label: '已归档', color: 'bg-gray-100 text-gray-500' },
@@ -41,8 +42,17 @@ export function OpportunityCard({ opportunity, isSelected, onClick }: Opportunit
             </span>
           </div>
         </div>
-        <div className="text-xs text-gray-400 whitespace-nowrap">
-          {opportunity.item_count > 0 ? `${opportunity.item_count} 实例` : '无实例'}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 whitespace-nowrap">
+            {opportunity.item_count > 0 ? `${opportunity.item_count} 实例` : '无实例'}
+          </span>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete(opportunity.id) }}
+            className="text-gray-300 hover:text-red-500 text-sm"
+            title="删除商机"
+          >
+            🗑
+          </button>
         </div>
       </div>
     </div>

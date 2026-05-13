@@ -1,7 +1,15 @@
 /**
  * 发布实例 API 客户端
  */
-import { fetchApi } from './accounts'
+import { fetchApi, API_BASE } from './accounts'
+
+/** 将 DB 中的 cover_image 路径转换为可访问的 URL */
+export function coverImageUrl(path: string): string {
+  if (!path) return ''
+  // path 格式: data/images/xxx.png → /images/xxx.png
+  const filename = path.replace(/^data\//, '')
+  return `${API_BASE}/${filename}`
+}
 
 export interface PublishedItem {
   id: number
@@ -121,8 +129,14 @@ export async function triggerImageGenerate(itemId: number) {
   )
 }
 
+export interface PublishResultResponse {
+  id: number
+  success: boolean
+  error?: string
+}
+
 export async function triggerPublish(itemId: number) {
-  return fetchApi<{ success: boolean; message: string; status: string }>(
+  return fetchApi<PublishResultResponse>(
     `/api/publish/items/${itemId}/publish`,
     { method: 'POST' }
   )

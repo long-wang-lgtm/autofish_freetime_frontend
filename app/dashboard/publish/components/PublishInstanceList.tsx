@@ -6,11 +6,13 @@ import {
   type ChannelCategory,
   listPublishedItems,
   updatePublishedItem,
+  deletePublishedItem,
   triggerRewrite,
   triggerCoverPlan,
   triggerImageGenerate,
   triggerPublish,
   getChannelCategories,
+  coverImageUrl,
 } from '@/lib/api/publish-items'
 import { CreationProgressBar } from './CreationProgressBar'
 import { ImageLightbox } from './ImageLightbox'
@@ -50,9 +52,36 @@ export function PublishInstanceList({
   const [channelCategories, setChannelCategories] = useState<Record<number, ChannelCategory[]>>({})
   const fetchedChannelRef = useRef<Set<number>>(new Set())
 
+  const fetchChannelIfReady = (itemId: number) => {
+    const cached = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
+    const item = cached?.items.find(i => i.id === itemId)
+    if (!item) return
+    if (
+      item.cover_image &&
+      item.description &&
+      item.account_id &&
+      !item.category &&
+      !fetchedChannelRef.current.has(item.id)
+    ) {
+      fetchedChannelRef.current.add(item.id)
+      getChannelCategories(itemId).then(cats => {
+        setChannelCategories(prev => ({ ...prev, [itemId]: cats }))
+        // 首次拉取到渠道类目时，若类目字段为空，自动设为第一项
+        if (cats.length > 0 && !item.category) {
+          updatePublishedItem(itemId, { category: cats[0].channelCateName }).then(updated => {
+            queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+              if (!old) return old
+              return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
+            })
+          })
+        }
+      }).catch(() => {})
+    }
+  }
+
   const { data, isLoading } = useQuery({
     queryKey: ['published-items', opportunityId],
-    queryFn: () => listPublishedItems({ opportunity_id: opportunityId, page_size: 100 }),
+    queryFn: () => listPublishedItems({ opportunity_id: opportunityId, page_size: 20 }),
   })
 
   const items: PublishedItem[] = data?.items ?? []
@@ -75,21 +104,9 @@ export function PublishInstanceList({
     }
   }, [items, queryClient, opportunityId])
 
-  // 自动拉取渠道类目：封面图 + 改写内容 + 账号 三者就绪时触发
+  // 自动拉取渠道类目：封面图 + 改写内容 + 账号 三者就绪时触发（初始化）
   useEffect(() => {
-    items.forEach(item => {
-      if (
-        item.cover_image &&
-        item.description &&
-        item.account_id &&
-        !fetchedChannelRef.current.has(item.id)
-      ) {
-        fetchedChannelRef.current.add(item.id)
-        getChannelCategories(item.id).then(cats => {
-          setChannelCategories(prev => ({ ...prev, [item.id]: cats }))
-        }).catch(() => {})
-      }
-    })
+    items.forEach(item => fetchChannelIfReady(item.id))
   }, [items])
 
   // 缓存中选中项变更时，通知上层编辑器同步
@@ -119,6 +136,7 @@ export function PublishInstanceList({
         if (!old) return old
         return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
       })
+      fetchChannelIfReady(updated.id)
     },
   })
 
@@ -140,6 +158,7 @@ export function PublishInstanceList({
         if (!old) return old
         return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
       })
+      fetchChannelIfReady(updated.id)
     },
   })
 
@@ -147,6 +166,17 @@ export function PublishInstanceList({
     mutationFn: (itemId: number) => triggerPublish(itemId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['published-items', opportunityId] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (itemId: number) => deletePublishedItem(itemId),
+    onSuccess: (_, itemId) => {
+      queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+        if (!old) return old
+        return { ...old, items: old.items.filter((i: PublishedItem) => i.id !== itemId) }
+      })
+      if (selectedItemId === itemId) onEditItem(null as any)
     },
   })
 
@@ -250,6 +280,7 @@ export function PublishInstanceList({
         <div className="w-[100px] flex-shrink-0">类目</div>
         <div className="w-[130px] flex-shrink-0">创作进度</div>
         <div className="w-[60px] flex-shrink-0">状态</div>
+        <div className="w-[40px] flex-shrink-0">操作</div>
       </div>
 
       {/* 列表 */}
@@ -291,10 +322,10 @@ export function PublishInstanceList({
                   {item.cover_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={item.cover_image.startsWith('data:') ? item.cover_image : 'data:image/jpeg;base64,' + item.cover_image}
+                      src={coverImageUrl(item.cover_image)}
                       alt="封面"
                       className="w-11 h-11 object-cover rounded cursor-pointer hover:ring-2 hover:ring-blue-400"
-                      onClick={() => setLightboxSrc(item.cover_image)}
+                      onClick={() => setLightboxSrc(coverImageUrl(item.cover_image))}
                     />
                   ) : (
                     <div className="w-11 h-11 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-lg">📷</div>
@@ -441,6 +472,7 @@ export function PublishInstanceList({
                           if (!old) return old
                           return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
                         })
+                        fetchChannelIfReady(item.id)
                       })
                     }}
                     onClick={e => {
@@ -459,7 +491,7 @@ export function PublishInstanceList({
                 {/* 类目 — 下拉即时保存 */}
                 <div className="w-[100px] flex-shrink-0 flex items-center">
                   <select
-                    value={isEditing ? (form.category ?? '') : (item.category ?? '')}
+                    value={item.category ?? ''}
                     onChange={e => {
                       e.stopPropagation()
                       if (form.id !== item.id) initForm(item)
@@ -478,18 +510,12 @@ export function PublishInstanceList({
                     className="w-full p-1 border border-blue-400 rounded text-xs bg-white cursor-pointer"
                   >
                     <option value="">未选择</option>
-                    {(channelCategories[item.id]?.length
-                      ? channelCategories[item.id].map(cat => (
-                          <option key={cat.channelCateId} value={cat.channelCateName}>{cat.channelCateName}</option>
-                        ))
-                      : (
-                        <>
-                          <option value="手机/数码/手机">手机/数码/手机</option>
-                          <option value="数码配件">数码配件</option>
-                          <option value="平板电脑">平板电脑</option>
-                          <option value="笔记本电脑">笔记本电脑</option>
-                        </>
-                      ))}
+                    {item.category && !channelCategories[item.id]?.some(c => c.channelCateName === item.category) && (
+                      <option value={item.category}>{item.category}</option>
+                    )}
+                    {channelCategories[item.id]?.map(cat => (
+                      <option key={cat.channelCateId} value={cat.channelCateName}>{cat.channelCateName}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -505,6 +531,21 @@ export function PublishInstanceList({
                 {/* 状态 */}
                 <div className={'w-[60px] flex-shrink-0 flex items-center text-xs ' + statusInfo.color}>
                   {statusInfo.label}
+                </div>
+
+                {/* 删除 */}
+                <div className="w-[40px] flex-shrink-0 flex items-center justify-center" onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('确认删除该发布实例？')) {
+                        deleteMutation.mutate(item.id)
+                      }
+                    }}
+                    className="text-gray-300 hover:text-red-500 text-sm"
+                    title="删除"
+                  >
+                    🗑
+                  </button>
                 </div>
               </div>
             )

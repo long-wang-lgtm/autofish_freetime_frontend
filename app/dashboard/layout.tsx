@@ -12,7 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const { isAuthenticated, isLoading } = useAuth()
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
 
   if (isLoading) return <LoadingSpinner />
   if (!isAuthenticated) redirect('/login')

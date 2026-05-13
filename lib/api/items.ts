@@ -28,6 +28,7 @@ export interface Item {
   collectCount: number
   itemType: string
   createTime: string | null
+  publishTime: string | null
 }
 
 export interface ItemListResponse {

@@ -12,6 +12,29 @@ import { listKeywordRules } from "@/lib/api/keywords"
 import { MessageCircle, Bot, Truck, RefreshCw } from "lucide-react"
 import { useDebounce } from "@/hooks/useDebounce"
 
+function formatPublishTime(timestamp: string | null): string {
+  if (!timestamp) return "-"
+  const date = new Date(Number(timestamp) * 1000)
+  return date.toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+function SortIcon({ field, sortField, sortDirection }: {
+  field: string
+  sortField: string | null
+  sortDirection: "asc" | "desc" | null
+}) {
+  if (sortField !== field) {
+    return <span className="text-gray-300">↕</span>
+  }
+  return sortDirection === "asc" ? <span className="text-blue-600">↑</span> : <span className="text-blue-600">↓</span>
+}
+
 function RefreshButton({
   uid,
   onSuccess,
@@ -150,6 +173,51 @@ export default function ItemsPage() {
     setSearchInput({ uid: "", title: "", gid: "" })
     setFilters({ status: 0 })
   }
+
+  // 排序状态
+  const [sortField, setSortField] = useState<"title" | "price" | "publishTime" | "status" | null>(null)
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null)
+
+  const handleSort = (field: "title" | "price" | "publishTime" | "status") => {
+    if (sortField !== field) {
+      setSortField(field)
+      setSortDirection("asc")
+    } else if (sortDirection === "asc") {
+      setSortDirection("desc")
+    } else {
+      setSortField(null)
+      setSortDirection(null)
+    }
+  }
+
+  // 排序后的数据
+  const sortedItems = useMemo(() => {
+    if (!sortField || !sortDirection || !data?.items) {
+      return data?.items || []
+    }
+    return [...data.items].sort((a, b) => {
+      let aVal: any = a[sortField]
+      let bVal: any = b[sortField]
+
+      if (sortField === "publishTime") {
+        aVal = aVal ? Number(aVal) : 0
+        bVal = bVal ? Number(bVal) : 0
+      } else if (sortField === "price") {
+        aVal = Number(aVal) || 0
+        bVal = Number(bVal) || 0
+      } else if (sortField === "status") {
+        aVal = Number(aVal) || 0
+        bVal = Number(bVal) || 0
+      } else {
+        aVal = String(aVal || "")
+        bVal = String(bVal || "")
+      }
+
+      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1
+      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1
+      return 0
+    })
+  }, [data?.items, sortField, sortDirection])
 
   const stats = {
     total: data?.items.length || 0,
@@ -292,10 +360,26 @@ export default function ItemsPage() {
 
         {!isLoading && !error && data && data.items.length > 0 && (
           <>
-            {/* 表头 */}
-            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600">
-              <div className="col-span-2">商品信息</div>
-              <div className="col-span-1 text-right">价格</div>
+            {/* 表头 - 固定 */}
+            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600 shrink-0">
+              <div className="col-span-2">
+                <button className="flex items-center gap-1 hover:text-blue-600" onClick={() => handleSort("title")}>
+                  商品信息
+                  <SortIcon field="title" sortField={sortField} sortDirection={sortDirection} />
+                </button>
+              </div>
+              <div className="col-span-1 text-right">
+                <button className="flex items-center gap-1 ml-auto hover:text-blue-600" onClick={() => handleSort("price")}>
+                  价格
+                  <SortIcon field="price" sortField={sortField} sortDirection={sortDirection} />
+                </button>
+              </div>
+              <div className="col-span-1 text-center">
+                <button className="flex items-center gap-1 mx-auto hover:text-blue-600" onClick={() => handleSort("publishTime")}>
+                  发布时间
+                  <SortIcon field="publishTime" sortField={sortField} sortDirection={sortDirection} />
+                </button>
+              </div>
               <div className="col-span-1 text-center">数据</div>
               {/*<div className="col-span-1 text-center">自动回复</div>*/}
               <div className="col-span-1 text-center">AI回复</div>
@@ -307,9 +391,9 @@ export default function ItemsPage() {
               <div className="col-span-1 text-center">AI提示词</div>
             </div>
 
-            {/* 数据行 */}
-            <div className="overflow-auto">
-              {data.items.map((item, index) => (
+            {/* 内容区域 - 可滚动 */}
+            <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 380px)", minHeight: "200px" }}>
+              {sortedItems.map((item, index) => (
                 <ItemRow
                   key={item.gid}
                   item={item}
@@ -546,6 +630,11 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
         {/* 价格 */}
         <div className="col-span-1 text-right">
           <span className="text-orange-600 font-semibold">¥{item.price}</span>
+        </div>
+
+        {/* 发布时间 */}
+        <div className="col-span-1 text-center text-[11px] text-gray-500">
+          {formatPublishTime(item.publishTime)}
         </div>
 
         {/* 浏览/想要/收藏 */}
