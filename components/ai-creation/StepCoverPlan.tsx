@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { createCoverTask, getCoverStatus } from '@/lib/api/publish'
+import { createCoverTask, getCoverPlanStatus } from '@/lib/api/publish'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 interface StepCoverPlanProps {
@@ -46,7 +46,7 @@ export function StepCoverPlan({ rewriteResults, onPlansReady }: StepCoverPlanPro
         if (!taskId) return
       }
       try {
-        const data = await getCoverStatus(taskId)
+        const data = await getCoverPlanStatus(taskId)
         if (data.status === 'planned' || data.status === 'completed') {
           const plans: Record<string, string> = {}
           for (const item of data.plans || []) {

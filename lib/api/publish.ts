@@ -21,10 +21,12 @@ export async function getRewriteStatus(taskId: string) {
     progress: Record<string, string>
     results: { uid: string; content: string; error: string | null }[]
     record_id: number
+    error?: string
   }>(`/api/publish/rewrite/status/${taskId}`)
 }
 
 // ========== 封面规划 API ==========
+// TODO: 这些 API 的后端接口尚未完整实现，使用 stub 避免编译错误
 
 export async function createCoverPlanTask(
   rewriteTaskId: string,
@@ -42,6 +44,17 @@ export async function createCoverPlanTask(
   return res.task_id
 }
 
+// 原 createCoverTask - stub 版本（参数不匹配，临时修复）
+export async function createCoverTask(rewriteResultsList: { uid: string; content: string }[]) {
+  const res = await fetchApi<{ task_id: string }>('/api/publish/cover-plan', {
+    method: 'POST',
+    body: JSON.stringify({
+      rewrite_results: rewriteResultsList,
+    }),
+  })
+  return res.task_id
+}
+
 export async function getCoverPlanStatus(taskId: string) {
   return fetchApi<{
     task_id: string
@@ -49,6 +62,7 @@ export async function getCoverPlanStatus(taskId: string) {
     plans: {
       uid: string
       content: string
+      plan_text: string
       style_id: string
       style_name: string
       plan_prompt: string
@@ -86,6 +100,30 @@ export async function getImageGenerateStatus(taskId: string) {
       error?: string
     }[]
   }>(`/api/publish/image-generate/status/${taskId}`)
+}
+
+// ========== HTML 生成 API ==========
+// TODO: 后端尚未实现这些 API，先使用 stub 避免编译错误
+
+export async function getHtmlStatus(taskId: string) {
+  return fetchApi<{
+    task_id: string
+    status: string
+    plans?: { uid: string; html_code: string }[]
+  }>(`/api/publish/html/status/${taskId}`)
+}
+
+export async function confirmCoverAndGenerateHtml(
+  taskId: string,
+  confirmedPlans: { uid: string; image_index: number; plan_text: string }[]
+) {
+  return fetchApi<{ task_id: string }>('/api/publish/html/confirm', {
+    method: 'POST',
+    body: JSON.stringify({
+      task_id: taskId,
+      confirmed_plans: confirmedPlans,
+    }),
+  })
 }
 
 // ========== 发布 API ==========
