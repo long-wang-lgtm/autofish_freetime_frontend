@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import AIConfigForm from '@/components/ai-config/AIConfigForm'
-import { createAIConfig, AIConfigCreate } from '@/lib/api/ai-config'
+import { createAIConfig, AIConfigCreate, AIConfigUpdate } from '@/lib/api/ai-config'
 
 export default function AddConfigPage() {
   const router = useRouter()
@@ -17,8 +17,8 @@ export default function AddConfigPage() {
     },
   })
 
-  const handleSubmit = async (data: AIConfigCreate) => {
-    await createMutation.mutateAsync(data)
+  const handleSubmit = async (data: AIConfigCreate | AIConfigUpdate) => {
+    await createMutation.mutateAsync(data as AIConfigCreate)
   }
 
   return (
