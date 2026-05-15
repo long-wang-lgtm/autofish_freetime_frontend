@@ -1,5 +1,7 @@
 'use client'
 
+export const runtime = 'edge'
+
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import AIConfigForm from '@/components/ai-config/AIConfigForm'
