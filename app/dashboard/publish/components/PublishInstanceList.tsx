@@ -57,7 +57,7 @@ export function PublishInstanceList({
     const item = cached?.items.find(i => i.id === itemId)
     if (!item) return
     if (
-      item.cover_image &&
+      // item.cover_image &&
       item.description &&
       item.account_id &&
       !item.category &&

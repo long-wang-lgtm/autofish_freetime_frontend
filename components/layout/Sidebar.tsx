@@ -66,8 +66,8 @@ const navItems: NavItem[] = [
       </svg>
     ),
     children: [
-      { label: '商品发布页', path: '/dashboard/publish' },
-      { label: '选品监控页', path: '/dashboard/publish/selection' },
+      { label: '商品发布', path: '/dashboard/publish' },
+      { label: '选品监控', path: '/dashboard/publish/selection' },
     ],
   },
   {
