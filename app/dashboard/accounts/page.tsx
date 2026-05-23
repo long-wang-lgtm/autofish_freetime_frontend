@@ -37,59 +37,59 @@ export default function AccountsPage() {
     setShowAddForm(false)
   }
 
-  const handleBulkStart = async () => {
-    if (!data?.accounts) return
-    const offlineAccounts = data.accounts.filter((acc) => !acc.im_running)
-    if (offlineAccounts.length === 0) {
-      addToast({ title: "提示", description: "没有离线账号需要启动" })
-      return
-    }
-    setBulkLoading("start")
-    let success = 0
-    let failed = 0
-    for (const acc of offlineAccounts) {
-      try {
-        await startAccountIm(acc.uid)
-        success++
-      } catch {
-        failed++
-      }
-    }
-    queryClient.invalidateQueries({ queryKey: ["accounts"] })
-    setBulkLoading(null)
-    if (failed === 0) {
-      addToast({ title: "一键启动完成", description: `成功启动 ${success} 个账号` })
-    } else {
-      addToast({ title: "一键启动完成", description: `成功 ${success}，失败 ${failed}`, variant: "error" })
-    }
-  }
+  // const handleBulkStart = async () => {
+  //   if (!data?.accounts) return
+  //   const offlineAccounts = data.accounts.filter((acc) => !acc.im_running)
+  //   if (offlineAccounts.length === 0) {
+  //     addToast({ title: "提示", description: "没有离线账号需要启动" })
+  //     return
+  //   }
+  //   setBulkLoading("start")
+  //   let success = 0
+  //   let failed = 0
+  //   for (const acc of offlineAccounts) {
+  //     try {
+  //       await startAccountIm(acc.uid)
+  //       success++
+  //     } catch {
+  //       failed++
+  //     }
+  //   }
+  //   queryClient.invalidateQueries({ queryKey: ["accounts"] })
+  //   setBulkLoading(null)
+  //   if (failed === 0) {
+  //     addToast({ title: "一键启动完成", description: `成功启动 ${success} 个账号` })
+  //   } else {
+  //     addToast({ title: "一键启动完成", description: `成功 ${success}，失败 ${failed}`, variant: "error" })
+  //   }
+  // }
 
-  const handleBulkStop = async () => {
-    if (!data?.accounts) return
-    const onlineAccounts = data.accounts.filter((acc) => acc.im_running)
-    if (onlineAccounts.length === 0) {
-      addToast({ title: "提示", description: "没有在线账号需要停止" })
-      return
-    }
-    setBulkLoading("stop")
-    let success = 0
-    let failed = 0
-    for (const acc of onlineAccounts) {
-      try {
-        await stopAccountIm(acc.uid)
-        success++
-      } catch {
-        failed++
-      }
-    }
-    queryClient.invalidateQueries({ queryKey: ["accounts"] })
-    setBulkLoading(null)
-    if (failed === 0) {
-      addToast({ title: "一键停止完成", description: `成功停止 ${success} 个账号` })
-    } else {
-      addToast({ title: "一键停止完成", description: `成功 ${success}，失败 ${failed}`, variant: "error" })
-    }
-  }
+  // const handleBulkStop = async () => {
+  //   if (!data?.accounts) return
+  //   const onlineAccounts = data.accounts.filter((acc) => acc.im_running)
+  //   if (onlineAccounts.length === 0) {
+  //     addToast({ title: "提示", description: "没有在线账号需要停止" })
+  //     return
+  //   }
+  //   setBulkLoading("stop")
+  //   let success = 0
+  //   let failed = 0
+  //   for (const acc of onlineAccounts) {
+  //     try {
+  //       await stopAccountIm(acc.uid)
+  //       success++
+  //     } catch {
+  //       failed++
+  //     }
+  //   }
+  //   queryClient.invalidateQueries({ queryKey: ["accounts"] })
+  //   setBulkLoading(null)
+  //   if (failed === 0) {
+  //     addToast({ title: "一键停止完成", description: `成功停止 ${success} 个账号` })
+  //   } else {
+  //     addToast({ title: "一键停止完成", description: `成功 ${success}，失败 ${failed}`, variant: "error" })
+  //   }
+  // }
 
   return (
     <div className="space-y-4">
@@ -194,7 +194,7 @@ export default function AccountsPage() {
           链接管理
         </button>
 
-        <button
+        {/* <button
           onClick={handleBulkStart}
           disabled={bulkLoading === "start"}
           className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2"
@@ -208,9 +208,9 @@ export default function AccountsPage() {
             </svg>
           )}
           一键启动
-        </button>
+        </button> */}
 
-        <button
+        {/* <button
           onClick={handleBulkStop}
           disabled={bulkLoading === "stop"}
           className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2"
@@ -224,7 +224,7 @@ export default function AccountsPage() {
             </svg>
           )}
           一键停止
-        </button>
+        </button> */}
       </div>
 
       {isLoading && (
@@ -272,11 +272,12 @@ export default function AccountsPage() {
           <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600">
             <div className="col-span-1">账号信息</div>
             <div className="col-span-1 text-center">状态</div>
-            <div className="col-span-1 text-center">IM</div>
+            {/* <div className="col-span-1 text-center">IM</div> */}
             <div className="col-span-1 text-center">商品数量</div>
             <div className="col-span-1 text-center">自动免拼</div>
             <div className="col-span-1 text-center">自动发货</div>
             <div className="col-span-1 text-center">自动回复</div>
+            <div className="col-span-1 text-center">AI回复</div>
             <div className="col-span-1 text-center">自动评价</div>
             <div className="col-span-1 text-center">AI提示词</div>
             <div className="col-span-1 text-center">默认回复</div>

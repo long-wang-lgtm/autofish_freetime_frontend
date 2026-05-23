@@ -5,7 +5,7 @@ import { Account, startAccountIm, stopAccountIm, updateAccount } from "@/lib/api
 import { useQueryClient } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
-import { Bot, Truck, QrCode, Zap, Star } from "lucide-react"
+import { Bot, Truck, QrCode, Zap, Star, Sparkles } from "lucide-react"
 
 type ConfigField = "full_ai_reply_system_prompt" | "full_default_reply_content"
 
@@ -147,7 +147,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
     3: "text-red-600",
   }
 
-  const handleToggle = async (field: "auto_reply" | "auto_delivery" | "auto_free" | "auto_positive_review") => {
+  const handleToggle = async (field: "auto_reply" | "auto_delivery" | "auto_free" | "auto_positive_review" | "ai_auto_reply") => {
     try {
       await updateAccount(account.uid, { [field]: !account[field] })
       queryClient.invalidateQueries({ queryKey: ["accounts"] })
@@ -250,7 +250,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
         </div>
 
         {/* IM控制 */}
-        <div className="col-span-1 flex items-center justify-center">
+        {/* <div className="col-span-1 flex items-center justify-center">
           {!account.im_running ? (
             <button
               onClick={handleStart}
@@ -268,7 +268,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
               {loading === "stop" ? <LoadingSpinner size="sm" /> : "停止"}
             </button>
           )}
-        </div>
+        </div> */}
 
         {/* 商品数量 */}
         <div className="col-span-1 text-center">
@@ -315,6 +315,19 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
             title={account.auto_reply ? "自动回复：开" : "自动回复：关"}
           >
             <Bot className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* AI回复开关 */}
+        <div className="col-span-1 flex items-center justify-center">
+          <button
+            onClick={() => handleToggle("ai_auto_reply")}
+            className={`p-1.5 rounded transition-colors ${
+              account.ai_auto_reply ? "text-cyan-500 bg-cyan-50" : "text-gray-300 bg-gray-100"
+            }`}
+            title={account.ai_auto_reply ? "AI回复：开" : "AI回复：关"}
+          >
+            <Sparkles className="w-4 h-4" />
           </button>
         </div>
 
