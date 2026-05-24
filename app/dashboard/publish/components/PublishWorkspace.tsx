@@ -6,9 +6,12 @@ import { type PublishedItem } from '@/lib/api/publish-items'
 import { PublishInstanceList } from './PublishInstanceList'
 import { EditorPanel } from './EditorPanel'
 import { ResizableDivider } from './ResizableDivider'
-import { PromptTemplateModal } from './PromptTemplateModal'
 import { NewPublishedItemModal } from './NewPublishedItemModal'
+import { OpportunityDetailCard } from './OpportunityDetailCard'
 
+const DETAIL_DEFAULT_HEIGHT = 140
+const DETAIL_MIN_HEIGHT = 120
+const DETAIL_MAX_HEIGHT = 500
 const LIST_DEFAULT_HEIGHT = 300
 const LIST_MIN_HEIGHT = 150
 const LIST_MAX_HEIGHT = 600
@@ -22,6 +25,13 @@ interface PublishWorkspaceProps {
 export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities }: PublishWorkspaceProps) {
   const queryClient = useQueryClient()
   const [selectedItem, setSelectedItem] = useState<PublishedItem | null>(null)
+  const [detailHeight, setDetailHeight] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('publish_detail_height')
+      return stored ? parseInt(stored) : DETAIL_DEFAULT_HEIGHT
+    }
+    return DETAIL_DEFAULT_HEIGHT
+  })
   const [listHeight, setListHeight] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('publish_list_height')
@@ -30,8 +40,15 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
     return LIST_DEFAULT_HEIGHT
   })
   const [editorSaveStatus, setEditorSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [showPromptModal, setShowPromptModal] = useState(false)
   const [showNewItemModal, setShowNewItemModal] = useState(false)
+
+  const handleDetailHeightChange = useCallback((delta: number) => {
+    setDetailHeight(prev => {
+      const next = Math.max(DETAIL_MIN_HEIGHT, Math.min(DETAIL_MAX_HEIGHT, prev + delta))
+      localStorage.setItem('publish_detail_height', String(next))
+      return next
+    })
+  }, [])
 
   const handleListHeightChange = useCallback((delta: number) => {
     setListHeight(prev => {
@@ -67,37 +84,35 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* 顶部：商机信息 + 操作按钮 */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b bg-gray-50">
-        <div className="flex-1 min-w-0">
-          <span className="font-medium text-gray-900 truncate">商机：{opportunity.name}</span>
-          {opportunity.item_group_id && (
-            <span className="ml-2 text-sm text-gray-500">
-              商品组：{opportunity.item_group_id}
-            </span>
-          )}
-        </div>
-        {/* 新增实例 */}
+      {/* 上部：商机详情卡片（可调高度） */}
+      <div style={{ height: detailHeight, flexShrink: 0 }} className="overflow-hidden border-b">
+        <OpportunityDetailCard
+          opportunity={opportunity}
+          accounts={accounts}
+          onRefreshOpportunities={onRefreshOpportunities}
+        />
+      </div>
+
+      {/* 可拖拽分隔线 */}
+      <ResizableDivider
+        direction="vertical"
+        onResize={handleDetailHeightChange}
+      />
+
+      {/* 操作按钮栏 */}
+      <div className="flex items-center gap-2 px-4 py-1.5 border-b bg-gray-50">
+        <span className="text-xs text-gray-400">
+          商机操作
+        </span>
         <button
           onClick={() => setShowNewItemModal(true)}
           className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-white text-gray-600 whitespace-nowrap"
         >
           + 新增实例
         </button>
-        {/* 元提示词 */}
-        <button
-          onClick={() => setShowPromptModal(true)}
-          className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-white text-gray-600 whitespace-nowrap"
-        >
-          [AI prompt]
-        </button>
-        {/* 批量发布 */}
-        <button className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap">
-          批量发布 ▶
-        </button>
       </div>
 
-      {/* 发布实例列表（可调高度） */}
+      {/* 中部：发布实例列表（可调高度） */}
       <div style={{ height: listHeight, flexShrink: 0 }} className="overflow-hidden border-b">
         <PublishInstanceList
           opportunityId={opportunity.id}
@@ -113,7 +128,7 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
         onResize={handleListHeightChange}
       />
 
-      {/* 编辑区 — 直接填满剩余空间 */}
+      {/* 下部：编辑区 — 直接填满剩余空间 */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <EditorPanel
           item={selectedItem}
@@ -122,14 +137,6 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
           onItemChange={handleItemChange}
         />
       </div>
-
-      {/* 元提示词弹窗 */}
-      {showPromptModal && opportunity && (
-        <PromptTemplateModal
-          opportunity={opportunity}
-          onClose={() => setShowPromptModal(false)}
-        />
-      )}
 
       {/* 新增发布实例弹窗 */}
       {showNewItemModal && (
