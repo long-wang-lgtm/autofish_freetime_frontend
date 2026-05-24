@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   type PublishedItem,
@@ -13,6 +13,10 @@ import {
   triggerPublish,
   getChannelCategories,
   coverImageUrl,
+  imageDisplayUrl,
+  uploadImage,
+  sortImages,
+  reuploadImages,
 } from '@/lib/api/publish-items'
 import { CreationProgressBar } from './CreationProgressBar'
 import { ImageLightbox } from './ImageLightbox'
@@ -51,32 +55,133 @@ export function PublishInstanceList({
   const [editingField, setEditingField] = useState<{ itemId: number; field: 'description' | 'cover_plan_prompt' } | null>(null)
   const [channelCategories, setChannelCategories] = useState<Record<number, ChannelCategory[]>>({})
   const fetchedChannelRef = useRef<Set<number>>(new Set())
+  const sortTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [uploadingItemIds, setUploadingItemIds] = useState<Set<number>>(new Set())
 
   const fetchChannelIfReady = (itemId: number) => {
     const cached = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
     const item = cached?.items.find(i => i.id === itemId)
     if (!item) return
-    if (
-      // item.cover_image &&
-      item.description &&
-      item.account_id &&
-      !item.category &&
-      !fetchedChannelRef.current.has(item.id)
-    ) {
-      fetchedChannelRef.current.add(item.id)
-      getChannelCategories(itemId).then(cats => {
-        setChannelCategories(prev => ({ ...prev, [itemId]: cats }))
-        // 首次拉取到渠道类目时，若类目字段为空，自动设为第一项
-        if (cats.length > 0 && !item.category) {
-          updatePublishedItem(itemId, { category: cats[0].channelCateName }).then(updated => {
-            queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
-              if (!old) return old
-              return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
+
+    // 改写内容非空 + 已选账号 → 拉取类目 + 上传未CDN图片
+    if (item.description && item.account_id) {
+      reuploadImagesIfReady(itemId)
+      if (!item.category && !fetchedChannelRef.current.has(item.id)) {
+        fetchedChannelRef.current.add(item.id)
+        getChannelCategories(itemId).then(cats => {
+          setChannelCategories(prev => ({ ...prev, [itemId]: cats }))
+          if (cats.length > 0 && !item.category) {
+            updatePublishedItem(itemId, { category: cats[0].channelCateName }).then(updated => {
+              queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+                if (!old) return old
+                return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
+              })
             })
-          })
-        }
-      }).catch(() => {})
+          }
+        }).catch(() => {})
+      }
     }
+  }
+
+  // 当改写内容 + 账号均就绪时，将本地未上传图片推至 CDN
+  const reuploadImagesIfReady = (itemId: number) => {
+    const cached = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
+    const item = cached?.items.find(i => i.id === itemId)
+    if (!item || !item.description || !item.account_id) return
+    const hasUnuploaded = (item.images || []).some(img => !img.is_uploaded)
+    if (!hasUnuploaded) return
+    reuploadImages(itemId).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['published-items', opportunityId] })
+    }).catch(() => {})
+  }
+
+  // 图片上传处理
+  const handleImageUpload = useCallback(async (itemId: number, files: FileList | null) => {
+    if (!files?.length) return
+    const cached = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
+    const item = cached?.items.find(i => i.id === itemId)
+    if ((item?.images || []).length + files.length > 8) {
+      window.alert('最多8张附加图片')
+      return
+    }
+
+    setUploadingItemIds(prev => new Set(prev).add(itemId))
+    for (const file of Array.from(files)) {
+      try {
+        const uploaded = await uploadImage(itemId, file)
+        queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+          if (!old) return old
+          return {
+            ...old,
+            items: old.items.map((i: PublishedItem) =>
+              i.id === itemId
+                ? { ...i, images: [...(i.images || []), uploaded] }
+                : i
+            ),
+          }
+        })
+      } catch (err) {
+        console.error('图片上传失败:', err)
+      }
+    }
+    setUploadingItemIds(prev => {
+      const next = new Set(prev)
+      next.delete(itemId)
+      return next
+    })
+  }, [opportunityId, queryClient])
+
+  // 删除图片
+  const handleImageDelete = (itemId: number, idx: number) => {
+    queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+      if (!old) return old
+      return {
+        ...old,
+        items: old.items.map((i: PublishedItem) => {
+          if (i.id !== itemId || !i.images) return i
+          const newImages = i.images.filter((_, i) => i !== idx)
+          sortImages(itemId, newImages)
+          return { ...i, images: newImages }
+        }),
+      }
+    })
+  }
+
+  // 拖拽排序
+  const handleImageDragStart = (e: React.DragEvent, itemId: number, dragIndex: number) => {
+    e.dataTransfer.setData('application/x-img-index', String(dragIndex))
+    e.dataTransfer.setData('application/x-img-itemid', String(itemId))
+  }
+
+  const handleImageDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleImageDrop = (e: React.DragEvent, itemId: number, dropIndex: number) => {
+    e.preventDefault()
+    const dragIndex = Number(e.dataTransfer.getData('application/x-img-index'))
+    const dragItemId = Number(e.dataTransfer.getData('application/x-img-itemid'))
+    if (isNaN(dragIndex) || isNaN(dragItemId) || dragItemId !== itemId || dragIndex === dropIndex) return
+
+    queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+      if (!old) return old
+      return {
+        ...old,
+        items: old.items.map((i: PublishedItem) => {
+          if (i.id !== itemId || !i.images) return i
+          const newImages = [...i.images]
+          const [moved] = newImages.splice(dragIndex, 1)
+          newImages.splice(dropIndex, 0, moved)
+
+          if (sortTimerRef.current) clearTimeout(sortTimerRef.current)
+          sortTimerRef.current = setTimeout(() => {
+            sortImages(itemId, newImages)
+          }, 500)
+
+          return { ...i, images: newImages }
+        }),
+      }
+    })
   }
 
   const { data, isLoading } = useQuery({
@@ -272,7 +377,7 @@ export function PublishInstanceList({
             className="rounded"
           />
         </div>
-        <div className="w-[48px] flex-shrink-0">封面</div>
+        <div className="w-[280px] flex-shrink-0">封面</div>
         <div className="flex-1 min-w-[160px]">改写内容</div>
         <div className="flex-1 min-w-[200px]">封面规划</div>
         <div className="w-[70px] flex-shrink-0">价格</div>
@@ -299,11 +404,10 @@ export function PublishInstanceList({
               <div
                 key={item.id}
                 onClick={() => {
-                  // 单击选中行，触发右侧编辑面板（不进入行内编辑模式）
                   onEditItem(item)
                 }}
                 className={
-                  'flex items-stretch gap-1.5 px-3 min-h-[72px] border-b text-xs min-w-[900px] cursor-pointer select-none' +
+                  'flex items-stretch gap-1.5 px-3 min-h-[96px] border-b text-xs min-w-[900px] cursor-pointer select-none' +
                   (isEditing ? ' bg-blue-50 ring-1 ring-blue-300' : isSelected ? ' bg-blue-50/50' : ' hover:bg-gray-50')
                 }
               >
@@ -317,19 +421,79 @@ export function PublishInstanceList({
                   />
                 </div>
 
-                {/* 封面图 */}
-                <div className="w-[48px] flex-shrink-0 flex items-center justify-center" onClick={e => e.stopPropagation()}>
+                {/* 封面图 + 附加图片 */}
+                <div className="w-[280px] flex-shrink-0 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                  {/* 封面 */}
                   {item.cover_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={coverImageUrl(item.cover_image)}
                       alt="封面"
-                      className="w-11 h-11 object-cover rounded cursor-pointer hover:ring-2 hover:ring-blue-400"
+                      className="w-14 h-14 object-cover rounded cursor-pointer hover:ring-2 hover:ring-blue-400 flex-shrink-0"
                       onClick={() => setLightboxSrc(coverImageUrl(item.cover_image))}
                     />
                   ) : (
-                    <div className="w-11 h-11 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-lg">📷</div>
+                    <div className="w-14 h-14 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-xl flex-shrink-0">📷</div>
                   )}
+
+                  {/* + 号上传入口 */}
+                  {(item.images || []).length < 8 ? (
+                    <label className={
+                      'w-14 h-14 flex-shrink-0 flex items-center justify-center rounded border border-dashed cursor-pointer ' +
+                      (uploadingItemIds.has(item.id)
+                        ? 'border-blue-300 bg-blue-50 text-blue-400'
+                        : 'border-gray-300 text-gray-400 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-500')
+                    }>
+                      {uploadingItemIds.has(item.id) ? (
+                        <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={e => {
+                          handleImageUpload(item.id, e.target.files)
+                          e.target.value = ''
+                        }}
+                      />
+                    </label>
+                  ) : null}
+
+                  {/* 附加图片缩略图（可拖拽排序） */}
+                  {(item.images || []).map((img, idx) => (
+                    <div
+                      key={img.md5 || idx}
+                      draggable
+                      onDragStart={e => handleImageDragStart(e, item.id, idx)}
+                      onDragOver={handleImageDragOver}
+                      onDrop={e => handleImageDrop(e, item.id, idx)}
+                      className="relative w-14 h-14 flex-shrink-0 group cursor-grab active:cursor-grabbing"
+                      onClick={() => setLightboxSrc(imageDisplayUrl(img))}
+                    >
+                      <img
+                        src={imageDisplayUrl(img)}
+                        alt=""
+                        className="w-14 h-14 object-cover rounded border border-gray-200"
+                      />
+                      <button
+                        onClick={e => {
+                          e.stopPropagation()
+                          handleImageDelete(item.id, idx)
+                        }}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center leading-none text-[9px]"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
                 </div>
 
                 {/* 改写内容 — 双击进入编辑 */}

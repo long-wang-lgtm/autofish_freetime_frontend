@@ -2,12 +2,29 @@
  * 发布实例 API 客户端
  */
 import { fetchApi, API_BASE } from './accounts'
+import { getAuthHeader } from './auth'
+
+/** 素材图片 */
+export interface MaterialImage {
+  md5: string
+  path: string
+  is_uploaded?: boolean
+  cdn_url?: string
+}
 
 /** 将 DB 中的 cover_image 路径转换为可访问的 URL */
 export function coverImageUrl(path: string): string {
   if (!path) return ''
-  // path 格式: data/images/xxx.png → /images/xxx.png
   const filename = path.replace(/^data\//, '')
+  return `${API_BASE}/${filename}`
+}
+
+/** 图片展示 URL：优先 CDN，无 CDN 则用本地 path */
+export function imageDisplayUrl(image: MaterialImage | undefined | null): string {
+  if (!image) return ''
+  if (image.cdn_url) return image.cdn_url
+  if (!image.path) return ''
+  const filename = image.path.replace(/^data\//, '')
   return `${API_BASE}/${filename}`
 }
 
@@ -28,6 +45,7 @@ export interface PublishedItem {
   publish_task_id: string
   item_gid: string
   error_message: string
+  images: MaterialImage[]
   created_at: string
   updated_at: string
 }
@@ -158,4 +176,34 @@ export async function retryPublishedItem(itemId: number) {
     `/api/publish/items/${itemId}/retry`,
     { method: 'POST' }
   )
+}
+
+export async function uploadImage(itemId: number, file: File): Promise<MaterialImage> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const authHeaders = await getAuthHeader()
+  const response = await fetch(`${API_BASE}/api/publish/items/${itemId}/image/upload`, {
+    method: 'POST',
+    headers: { ...authHeaders },
+    body: formData,
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Upload failed' }))
+    throw new Error(error.detail || `HTTP ${response.status}`)
+  }
+  const result = await response.json()
+  return Array.isArray(result.data) ? result.data[0] : result.data
+}
+
+export async function sortImages(itemId: number, images: MaterialImage[]): Promise<void> {
+  return fetchApi(`/api/publish/items/${itemId}/image/sort`, {
+    method: 'POST',
+    body: JSON.stringify({ images }),
+  })
+}
+
+export async function reuploadImages(itemId: number): Promise<void> {
+  return fetchApi(`/api/publish/items/${itemId}/image/reupload`, {
+    method: 'POST',
+  })
 }
