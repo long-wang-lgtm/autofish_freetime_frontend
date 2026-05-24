@@ -422,7 +422,16 @@ export function PublishInstanceList({
                 </div>
 
                 {/* 封面图 + 附加图片 */}
-                <div className="w-[280px] flex-shrink-0 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                <div
+                  className="w-[280px] flex-shrink-0 flex items-center gap-1.5 overflow-x-auto"
+                  onClick={e => e.stopPropagation()}
+                  onWheel={e => {
+                    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                      e.currentTarget.scrollLeft += e.deltaY
+                      e.preventDefault()
+                    }
+                  }}
+                >
                   {/* 封面 */}
                   {item.cover_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -436,7 +445,35 @@ export function PublishInstanceList({
                     <div className="w-14 h-14 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-xl flex-shrink-0">📷</div>
                   )}
 
-                  {/* + 号上传入口 */}
+                  {/* 附加图片缩略图（可拖拽排序） */}
+                  {(item.images || []).map((img, idx) => (
+                    <div
+                      key={img.md5 || idx}
+                      draggable
+                      onDragStart={e => handleImageDragStart(e, item.id, idx)}
+                      onDragOver={handleImageDragOver}
+                      onDrop={e => handleImageDrop(e, item.id, idx)}
+                      className="relative w-14 h-14 flex-shrink-0 group cursor-grab active:cursor-grabbing"
+                      onClick={() => setLightboxSrc(imageDisplayUrl(img))}
+                    >
+                      <img
+                        src={imageDisplayUrl(img)}
+                        alt=""
+                        className="w-14 h-14 object-cover rounded border border-gray-200"
+                      />
+                      <button
+                        onClick={e => {
+                          e.stopPropagation()
+                          handleImageDelete(item.id, idx)
+                        }}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center leading-none text-[9px]"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* + 号上传入口（末尾） */}
                   {(item.images || []).length < 8 ? (
                     <label className={
                       'w-14 h-14 flex-shrink-0 flex items-center justify-center rounded border border-dashed cursor-pointer ' +
@@ -466,34 +503,6 @@ export function PublishInstanceList({
                       />
                     </label>
                   ) : null}
-
-                  {/* 附加图片缩略图（可拖拽排序） */}
-                  {(item.images || []).map((img, idx) => (
-                    <div
-                      key={img.md5 || idx}
-                      draggable
-                      onDragStart={e => handleImageDragStart(e, item.id, idx)}
-                      onDragOver={handleImageDragOver}
-                      onDrop={e => handleImageDrop(e, item.id, idx)}
-                      className="relative w-14 h-14 flex-shrink-0 group cursor-grab active:cursor-grabbing"
-                      onClick={() => setLightboxSrc(imageDisplayUrl(img))}
-                    >
-                      <img
-                        src={imageDisplayUrl(img)}
-                        alt=""
-                        className="w-14 h-14 object-cover rounded border border-gray-200"
-                      />
-                      <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          handleImageDelete(item.id, idx)
-                        }}
-                        className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center leading-none text-[9px]"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
                 </div>
 
                 {/* 改写内容 — 双击进入编辑 */}
