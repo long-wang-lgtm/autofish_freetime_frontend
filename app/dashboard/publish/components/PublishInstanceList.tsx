@@ -57,6 +57,7 @@ export function PublishInstanceList({
   const fetchedChannelRef = useRef<Set<number>>(new Set())
   const sortTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [uploadingItemIds, setUploadingItemIds] = useState<Set<number>>(new Set())
+  const [dragKey, setDragKey] = useState<string | null>(null)
 
   const fetchChannelIfReady = (itemId: number) => {
     const cached = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
@@ -149,16 +150,24 @@ export function PublishInstanceList({
 
   // 拖拽排序
   const handleImageDragStart = (e: React.DragEvent, itemId: number, dragIndex: number) => {
+    e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('application/x-img-index', String(dragIndex))
     e.dataTransfer.setData('application/x-img-itemid', String(itemId))
+    setDragKey(`${itemId}-${dragIndex}`)
+  }
+
+  const handleImageDragEnd = () => {
+    setDragKey(null)
   }
 
   const handleImageDragOver = (e: React.DragEvent) => {
     e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
   }
 
   const handleImageDrop = (e: React.DragEvent, itemId: number, dropIndex: number) => {
     e.preventDefault()
+    setDragKey(null)
     const dragIndex = Number(e.dataTransfer.getData('application/x-img-index'))
     const dragItemId = Number(e.dataTransfer.getData('application/x-img-itemid'))
     if (isNaN(dragIndex) || isNaN(dragItemId) || dragItemId !== itemId || dragIndex === dropIndex) return
@@ -446,20 +455,25 @@ export function PublishInstanceList({
                   )}
 
                   {/* 附加图片缩略图（可拖拽排序） */}
-                  {(item.images || []).map((img, idx) => (
+                  {(item.images || []).map((img, idx) => {
+                    const key = `${item.id}-${idx}`
+                    const isDragging = dragKey === key
+                    return (
                     <div
                       key={img.md5 || idx}
                       draggable
                       onDragStart={e => handleImageDragStart(e, item.id, idx)}
                       onDragOver={handleImageDragOver}
+                      onDragEnd={handleImageDragEnd}
                       onDrop={e => handleImageDrop(e, item.id, idx)}
-                      className="relative w-14 h-14 flex-shrink-0 group cursor-grab active:cursor-grabbing"
+                      className={`relative w-14 h-14 flex-shrink-0 group cursor-grab active:cursor-grabbing transition-opacity ${isDragging ? 'opacity-30' : ''}`}
                       onClick={() => setLightboxSrc(imageDisplayUrl(img))}
                     >
                       <img
                         src={imageDisplayUrl(img)}
                         alt=""
-                        className="w-14 h-14 object-cover rounded border border-gray-200"
+                        draggable={false}
+                        className="w-14 h-14 object-cover rounded border border-gray-200 pointer-events-none"
                       />
                       <button
                         onClick={e => {
@@ -471,7 +485,8 @@ export function PublishInstanceList({
                         ✕
                       </button>
                     </div>
-                  ))}
+                    )
+                  })}
 
                   {/* + 号上传入口（末尾） */}
                   {(item.images || []).length < 8 ? (
