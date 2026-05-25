@@ -4,18 +4,18 @@ import { type PublishedItem } from '@/lib/api/publish-items'
 type Stage = 'rewrite' | 'cover_plan' | 'image_gen' | 'publish'
 
 interface CreationProgressBarProps {
-  item: Pick<PublishedItem, 'status' | 'description' | 'cover_plan_prompt' | 'cover_image' | 'item_gid'>
+  item: Pick<PublishedItem, 'status' | 'description' | 'cover_plan_prompt' | 'images' | 'item_gid'>
   onStageClick?: (stage: Stage) => void
   size?: 'sm' | 'md'
 }
 
 function getStageStatus(item: CreationProgressBarProps['item'], stage: Stage): 'pending' | 'active' | 'done' | 'failed' {
-  const { status, description, cover_plan_prompt, cover_image, item_gid } = item
+  const { status, description, cover_plan_prompt, images, item_gid } = item
 
   // 先按字段内容判断 done / failed（字段优先于状态）
   if (stage === 'rewrite' && description) return 'done'
   if (stage === 'cover_plan' && cover_plan_prompt) return 'done'
-  if (stage === 'image_gen' && cover_image) return 'done'
+  if (stage === 'image_gen' && images?.length) return 'done'
   if (stage === 'publish' && item_gid) return 'done'
 
   // 发布失败

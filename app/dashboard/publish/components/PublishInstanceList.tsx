@@ -12,7 +12,6 @@ import {
   triggerImageGenerate,
   triggerPublish,
   getChannelCategories,
-  coverImageUrl,
   imageDisplayUrl,
   uploadImage,
   sortImages,
@@ -25,7 +24,7 @@ function getStatusLabel(item: PublishedItem): { label: string; color: string } {
   if (item.status === 'publish_failed') return { label: '失败', color: 'text-red-500' }
   if (item.item_gid) return { label: '已发布', color: 'text-green-600' }
   if (item.status === 'publishing') return { label: '发布中', color: 'text-teal-500' }
-  if (item.cover_image) return { label: '生图完成', color: 'text-orange-500' }
+  if (item.images?.length) return { label: '生图完成', color: 'text-orange-500' }
   if (item.status === 'image_generating') return { label: '生图中', color: 'text-orange-500' }
   if (item.cover_plan_prompt) return { label: '封面完成', color: 'text-purple-500' }
   if (item.status === 'cover_planning') return { label: '封面规划中', color: 'text-purple-500' }
@@ -442,17 +441,17 @@ export function PublishInstanceList({
                   }}
                 >
                   {/* 封面 */}
-                  {item.cover_image ? (
+                  {/* {item.images?.[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={coverImageUrl(item.cover_image)}
+                      src={imageDisplayUrl(item.images[0])}
                       alt="封面"
                       className="w-14 h-14 object-cover rounded cursor-pointer hover:ring-2 hover:ring-blue-400 flex-shrink-0"
-                      onClick={() => setLightboxSrc(coverImageUrl(item.cover_image))}
+                      onClick={() => setLightboxSrc(imageDisplayUrl(item.images[0]))}
                     />
                   ) : (
                     <div className="w-14 h-14 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-xl flex-shrink-0">📷</div>
-                  )}
+                  )} */}
 
                   {/* 附加图片缩略图（可拖拽排序） */}
                   {(item.images || []).map((img, idx) => {

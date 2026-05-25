@@ -12,13 +12,6 @@ export interface MaterialImage {
   cdn_url?: string
 }
 
-/** 将 DB 中的 cover_image 路径转换为可访问的 URL */
-export function coverImageUrl(path: string): string {
-  if (!path) return ''
-  const filename = path.replace(/^data\//, '')
-  return `${API_BASE}/${filename}`
-}
-
 /** 图片展示 URL：优先 CDN，无 CDN 则用本地 path */
 export function imageDisplayUrl(image: MaterialImage | undefined | null): string {
   if (!image) return ''
@@ -36,7 +29,6 @@ export interface PublishedItem {
   title: string
   description: string
   price: number
-  cover_image: string
   cover_plan_prompt: string
   cover_style_id: string
   cover_style_name: string
@@ -63,7 +55,7 @@ export interface CoverPlanResponse {
 
 export interface ImageGenResponse {
   id: number
-  cover_image: string
+  images: MaterialImage[]
   status: string
 }
 

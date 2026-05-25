@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { updatePublishedItem, type PublishedItem, coverImageUrl } from '@/lib/api/publish-items'
+import { updatePublishedItem, type PublishedItem, imageDisplayUrl } from '@/lib/api/publish-items'
 import { ImageLightbox } from './ImageLightbox'
 
 interface EditorPanelProps {
@@ -161,13 +161,13 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
         style={{ width: coverWidth }}
       >
         <div className="flex-1 bg-gray-100 rounded-lg overflow-hidden min-h-0">
-          {item.cover_image ? (
+          {item.images?.[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={coverImageUrl(item.cover_image)}
+              src={imageDisplayUrl(item.images[0])}
               alt="封面"
               className="w-full h-full object-contain cursor-pointer hover:opacity-90"
-              onClick={() => setLightboxSrc(coverImageUrl(item.cover_image))}
+              onClick={() => setLightboxSrc(imageDisplayUrl(item.images[0]))}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">📷</div>
