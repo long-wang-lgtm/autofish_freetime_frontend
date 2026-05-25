@@ -3,23 +3,21 @@
 import { LoginForm } from '@/components/auth/LoginForm'
 import { useAuth } from '@/stores/auth.store'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 export default function LoginPage() {
   const { login, isLoading, isAuthenticated } = useAuth()
-  const router = useRouter()
 
   // 已登录则跳转到账号管理页
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard/accounts')
+      window.location.href = '/dashboard/accounts'
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated])
 
   const handleLogin = async (data: Parameters<typeof login>[0]) => {
     await login(data)
-    router.push('/dashboard/accounts')
+    window.location.href = '/dashboard/accounts'
   }
 
   return (

@@ -1,11 +1,15 @@
 import { z } from 'zod'
 
 export const loginSchema = z.object({
-  username_or_email: z.string().min(1, '用户名或邮箱不能为空'),
+  phone_or_email: z.string().min(1, '手机号或邮箱不能为空'),
   password: z.string().min(1, '密码不能为空'),
 })
 
 export const registerSchema = z.object({
+  phone: z
+    .string()
+    .length(11, '手机号必须为11位')
+    .regex(/^\d{11}$/, '手机号格式不正确'),
   username: z
     .string()
     .min(3, '用户名至少3个字符')

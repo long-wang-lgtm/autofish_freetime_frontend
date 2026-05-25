@@ -82,10 +82,11 @@ export const authApi = {
   },
 
   register: async (data: RegisterData): Promise<RegisterResponse> => {
+    const body = { ...data, email: data.email || undefined }
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(body),
     })
     return handleResponse<RegisterResponse>(response)
   },

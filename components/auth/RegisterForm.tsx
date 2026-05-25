@@ -22,6 +22,7 @@ export function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
   } = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      phone: '',
       username: '',
       email: '',
       password: '',
@@ -41,6 +42,26 @@ export function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      <div>
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+          手机号 *
+        </label>
+        <div className="mt-1">
+          <input
+            id="phone"
+            type="tel"
+            autoComplete="tel"
+            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            {...register('phone')}
+            disabled={isLoading}
+          />
+          {errors.phone && (
+            <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">11位手机号码</p>
+        </div>
+      </div>
+
       <div>
         <label htmlFor="username" className="block text-sm font-medium text-gray-700">
           用户名 *

@@ -3,9 +3,21 @@
 import { RegisterForm } from '@/components/auth/RegisterForm'
 import { useAuth } from '@/stores/auth.store'
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 export default function RegisterPage() {
-  const { register, isLoading } = useAuth()
+  const { register, isLoading, isAuthenticated } = useAuth()
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      window.location.href = '/dashboard/accounts'
+    }
+  }, [isAuthenticated])
+
+  const handleRegister = async (data: Parameters<typeof register>[0]) => {
+    await register(data)
+    window.location.href = '/dashboard/accounts'
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -16,7 +28,7 @@ export default function RegisterPage() {
         </div>
 
         <RegisterForm
-          onSubmit={register}
+          onSubmit={handleRegister}
           isLoading={isLoading}
         />
 

@@ -14,6 +14,7 @@ export default function Header() {
     try {
       await logout()
       toast.success('已成功退出登录')
+      window.location.href = '/login'
     } catch (error) {
       toast.error('退出登录失败')
     } finally {

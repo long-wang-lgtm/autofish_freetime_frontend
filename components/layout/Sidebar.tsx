@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/stores/auth.store'
-import { useRouter } from 'next/navigation'
 
 // 可展开的子导航配置
 interface ChildItem {
@@ -87,7 +86,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const pathname = usePathname()
-  const router = useRouter()
   const { user, logout } = useAuth()
 
   // 切换展开/收起
@@ -118,7 +116,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   const handleLogout = async () => {
     await logout()
-    router.push('/login')
+    window.location.href = '/login'
   }
 
   // 渲染单个导航项

@@ -89,7 +89,7 @@ export const useAuth = create<AuthState>((set, get) => ({
 
       // 注册成功后自动登录
       await get().login({
-        username_or_email: data.username,
+        phone_or_email: data.phone,
         password: data.password,
       })
     } catch (error) {
