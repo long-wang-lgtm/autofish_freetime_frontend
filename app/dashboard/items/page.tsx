@@ -621,7 +621,7 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
             {item.title || "无标题"}
           </button>
           <div className="flex items-center gap-1 mt-0.5 text-gray-400 truncate text-[11px]">
-            <span title={item.gid} className="min-w-[85px]">{item.gid.substring(0, 12)}</span>
+            <span title={item.gid} className="min-w-[85px]">{item.gid}</span>
             <span className="text-gray-300">|</span>
             <span title={item.uid} className="truncate">{item.account_name || item.uid}</span>
           </div>
