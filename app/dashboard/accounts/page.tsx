@@ -279,6 +279,7 @@ export default function AccountsPage() {
             <div className="col-span-1 text-center">自动回复</div>
             <div className="col-span-1 text-center">AI回复</div>
             <div className="col-span-1 text-center">自动评价</div>
+            <div className="col-span-1 text-center">自动通知</div>
             <div className="col-span-1 text-center">AI提示词</div>
             <div className="col-span-1 text-center">默认回复</div>
             <div className="col-span-1 text-center">重新登录</div>

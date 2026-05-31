@@ -14,6 +14,7 @@ export interface Account {
   auto_delivery: boolean
   auto_free: boolean              // 是否自动免拼
   auto_positive_review: boolean   // 是否自动评价
+  auto_notify: boolean              // 是否自动通知
   reply_pause_seconds: number
   full_deliveryContent: string
   full_receiptAfter: string

@@ -5,7 +5,7 @@ import { Account, startAccountIm, stopAccountIm, updateAccount } from "@/lib/api
 import { useQueryClient } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
-import { Bot, Truck, QrCode, Zap, Star, Sparkles } from "lucide-react"
+import { Bot, Truck, QrCode, Zap, Star, Sparkles, Bell, BellOff  } from "lucide-react"
 
 type ConfigField = "full_ai_reply_system_prompt" | "full_default_reply_content"
 
@@ -147,7 +147,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
     3: "text-red-600",
   }
 
-  const handleToggle = async (field: "auto_reply" | "auto_delivery" | "auto_free" | "auto_positive_review" | "ai_auto_reply") => {
+  const handleToggle = async (field: "auto_reply" | "auto_delivery" | "auto_free" | "auto_positive_review" | "auto_notify" | "ai_auto_reply") => {
     try {
       await updateAccount(account.uid, { [field]: !account[field] })
       queryClient.invalidateQueries({ queryKey: ["accounts"] })
@@ -341,6 +341,23 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
             title={account.auto_positive_review ? "自动评价：开" : "自动评价：关"}
           >
             <Star className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* 自动通知开关 */}
+        <div className="col-span-1 flex items-center justify-center">
+          <button
+            onClick={() => handleToggle("auto_notify")}
+            className={`p-1.5 rounded transition-colors ${
+              account.auto_notify ? "text-amber-500 bg-amber-50" : "text-gray-300 bg-gray-100"
+            }`}
+            title={account.auto_notify ? "自动通知：开" : "自动通知：关"}
+          >
+            {account.auto_notify ? (
+                <Bell className="w-4 h-4" />
+              ) : (
+                <BellOff className="w-4 h-4" />
+              )}
           </button>
         </div>
 
