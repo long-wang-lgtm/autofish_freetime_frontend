@@ -181,7 +181,7 @@ function getChunkSize(): number {
     const n = parseInt(raw, 10)
     if (!isNaN(n) && n > 0) return n
   }
-  return 10240 // 默认 10KB
+  return 102400 // 默认 10KB
 }
 
 /** 分块上传并发数 */
