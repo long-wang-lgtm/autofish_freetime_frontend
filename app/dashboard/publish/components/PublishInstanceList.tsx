@@ -88,14 +88,14 @@ export function PublishInstanceList({
     const cached = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
     const item = cached?.items.find(i => i.id === itemId)
     if (!item || !item.description || !item.account_id) return
-    const hasUnuploaded = (item.images || []).some(img => !img.is_uploaded)
+    const hasUnuploaded = (item.images || []).some(img => !img.url)
     if (!hasUnuploaded) return
     reuploadImages(itemId).then(() => {
       queryClient.invalidateQueries({ queryKey: ['published-items', opportunityId] })
     }).catch(() => {})
   }
 
-  // 图片上传处理
+  // 图片上传处理（多图并发）
   const handleImageUpload = useCallback(async (itemId: number, files: FileList | null) => {
     if (!files?.length) return
     const cached = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
@@ -106,24 +106,28 @@ export function PublishInstanceList({
     }
 
     setUploadingItemIds(prev => new Set(prev).add(itemId))
-    for (const file of Array.from(files)) {
-      try {
-        const uploaded = await uploadImage(itemId, file)
-        queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
-          if (!old) return old
-          return {
-            ...old,
-            items: old.items.map((i: PublishedItem) =>
-              i.id === itemId
-                ? { ...i, images: [...(i.images || []), uploaded] }
-                : i
-            ),
-          }
-        })
-      } catch (err) {
-        console.error('图片上传失败:', err)
-      }
-    }
+    const fileArray = Array.from(files)
+    // 并发上传所有图片，每张完成后独立更新缓存
+    await Promise.all(
+      fileArray.map(async (file) => {
+        try {
+          const uploaded = await uploadImage(itemId, file)
+          queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
+            if (!old) return old
+            return {
+              ...old,
+              items: old.items.map((i: PublishedItem) =>
+                i.id === itemId
+                  ? { ...i, images: [...(i.images || []), uploaded] }
+                  : i
+              ),
+            }
+          })
+        } catch (err) {
+          console.error('图片上传失败:', err)
+        }
+      })
+    )
     setUploadingItemIds(prev => {
       const next = new Set(prev)
       next.delete(itemId)
