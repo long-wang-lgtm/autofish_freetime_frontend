@@ -19,7 +19,7 @@ export function imageDisplayUrl(image: MaterialImage | undefined | null): string
   if (image.url) return image.url
   if (!image.filepath) return ''
   // 去掉 data/ 或 data\ 前缀，统一转为正斜杠
-  const filename = image.filepath.replace(/^data[\\/]/, '').replace(/\\/g, '/')
+  const filename = image.filepath.replace(/^data[\\/]/, 'api/').replace(/\\/g, '/')
   return `${API_BASE}/${filename}`
 }
 
