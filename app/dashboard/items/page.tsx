@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo, useEffect } from "react"
+import { useState, useCallback, useMemo, useEffect, useRef } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { listItems, Item, ItemFilters, updateItem, refreshItems } from "@/lib/api/items"
 import { listAccounts, Account } from "@/lib/api/accounts"
@@ -428,7 +428,7 @@ export default function ItemsPage() {
   )
 }
 
-type ConfigField = "deliveryContent" | "receiptAfter" | "positiveReviewAfter" | "ai_reply_item_prompt"
+type ConfigField = "deliveryContent" | "receiptAfter" | "positiveReviewAfter" | "ai_reply_item_prompt" | "sendCode"
 
 interface ItemRowProps {
   item: Item
@@ -476,7 +476,7 @@ function ConfigModal({
 }) {
   const [localValue, setLocalValue] = useState(value)
 
-  const fieldLabels: Record<ConfigField, string> = {
+  const fieldLabels: Partial<Record<ConfigField, string>> = {
     deliveryContent: "付款后发货内容",
     receiptAfter: "收货后赠送内容",
     positiveReviewAfter: "评价后赠送内容",
@@ -595,6 +595,77 @@ function ConfigCell({
       ) : (
         "未配置"
       )}
+    </button>
+  )
+}
+
+// 指令码原地编辑单元格
+function SendCodeCell({
+  gid,
+  sendCode,
+  onUpdateField,
+}: {
+  gid: string
+  sendCode: string | null
+  onUpdateField: (gid: string, field: "sendCode", value: string) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [editValue, setEditValue] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [editing])
+
+  const handleSave = () => {
+    const trimmed = editValue.trim()
+    const current = sendCode || ""
+    if (trimmed !== current) {
+      onUpdateField(gid, "sendCode", trimmed)
+    }
+    setEditing(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSave()
+    } else if (e.key === "Escape") {
+      setEditing(false)
+    }
+  }
+
+  const handleStartEdit = () => {
+    setEditValue(sendCode || "")
+    setEditing(true)
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        inputMode="numeric"
+        maxLength={6}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value.replace(/\D/g, ""))}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        className="w-full text-center text-xs px-1 py-0.5 border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+      />
+    )
+  }
+
+  const hasValue = sendCode && sendCode.trim().length > 0
+  return (
+    <button
+      onClick={handleStartEdit}
+      className={`w-full text-xs text-center hover:underline ${hasValue ? "text-gray-700" : "text-gray-400"}`}
+      title="此配置仅作为买家时生效"
+    >
+      {hasValue ? sendCode.trim() : "-"}
     </button>
   )
 }
@@ -733,9 +804,10 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
 
         {/* 指令码 */}
         <div className="col-span-1 text-center">
-          <ConfigCell
-            value={item.ai_reply_item_prompt}
-            onClick={() => setConfigField("ai_reply_item_prompt")}
+          <SendCodeCell
+            gid={item.gid}
+            sendCode={item.sendCode}
+            onUpdateField={onUpdateField}
           />
         </div>
       </div>

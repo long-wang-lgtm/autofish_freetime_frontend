@@ -29,6 +29,7 @@ export interface Item {
   itemType: string
   createTime: string | null
   publishTime: string | null
+  sendCode: string | null
 }
 
 export interface ItemListResponse {
@@ -62,6 +63,7 @@ export interface ItemUpdate {
   positiveReviewAfter?: string
   default_reply_content?: string
   ai_reply_item_prompt?: string
+  sendCode?: string
 }
 
 export interface ItemFilters {
