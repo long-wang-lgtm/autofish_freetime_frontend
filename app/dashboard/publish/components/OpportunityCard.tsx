@@ -44,7 +44,7 @@ export function OpportunityCard({ opportunity, isSelected, onClick, onDelete }: 
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 whitespace-nowrap">
-            {opportunity.item_count > 0 ? `${opportunity.item_count} 实例` : '无实例'}
+            {opportunity.item_count > 0 ? `${opportunity.item_count} 素材` : '无素材'}
           </span>
           <button
             onClick={e => { e.stopPropagation(); onDelete(opportunity.id) }}

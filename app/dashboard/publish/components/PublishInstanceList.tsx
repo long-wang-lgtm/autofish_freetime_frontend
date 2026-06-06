@@ -362,7 +362,7 @@ export function PublishInstanceList({
     const withoutAccount = selectedItems.filter(i => !i.account_id)
     if (withoutAccount.length > 0) {
       const lines = withoutAccount.map(i => '  - ' + (i.title || '#' + i.id)).join('\n')
-      window.alert('以下 ' + withoutAccount.length + ' 个实例尚未选择账号，无法发布：\n\n' + lines + '\n\n请先选择目标账号。')
+      window.alert('以下 ' + withoutAccount.length + ' 个素材尚未选择账号，无法发布：\n\n' + lines + '\n\n请先选择目标账号。')
       return
     }
     const lines = selectedItems.map(i => {
@@ -405,7 +405,7 @@ export function PublishInstanceList({
         {isLoading ? (
           <div className="text-center py-8 text-gray-400">加载中...</div>
         ) : items.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">暂无发布实例</div>
+          <div className="text-center py-8 text-gray-400">暂无发布素材</div>
         ) : (
           items.map(item => {
             const statusInfo = getStatusLabel(item)
@@ -728,7 +728,7 @@ export function PublishInstanceList({
                 <div className="w-[40px] flex-shrink-0 flex items-center justify-center" onClick={e => e.stopPropagation()}>
                   <button
                     onClick={() => {
-                      if (window.confirm('确认删除该发布实例？')) {
+                      if (window.confirm('确认删除该发布素材？')) {
                         deleteMutation.mutate(item.id)
                       }
                     }}

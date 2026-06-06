@@ -30,7 +30,7 @@ export function NewPublishedItemModal({
           createPublishedItem(opportunityId, '', '', p)
         )
       )
-      // 每个新建的实例自动触发改写
+      // 每个新建的发布素材自动触发改写
       for (const item of items) {
         await triggerRewrite(item.id)
       }
@@ -46,7 +46,7 @@ export function NewPublishedItemModal({
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl w-full max-w-sm shadow-xl">
         <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-medium text-gray-900">新增发布实例</h3>
+          <h3 className="font-medium text-gray-900">新增发布素材</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg">✕</button>
         </div>
         <div className="p-4 space-y-4">
@@ -61,7 +61,7 @@ export function NewPublishedItemModal({
               max="20"
               autoFocus
             />
-            <p className="text-xs text-gray-400 mt-0.5">每个实例账号留空，后续在编辑区选择</p>
+            <p className="text-xs text-gray-400 mt-0.5">每个发布素材账号留空，后续在编辑区选择</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">价格（可选）</label>

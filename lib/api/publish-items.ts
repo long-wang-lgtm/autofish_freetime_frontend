@@ -1,5 +1,5 @@
 /**
- * 发布实例 API 客户端
+ * 发布素材 API 客户端
  */
 import SparkMD5 from 'spark-md5'
 import { fetchApi, API_BASE } from './accounts'

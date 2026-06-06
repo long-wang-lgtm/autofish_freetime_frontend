@@ -97,7 +97,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
           <span className={`px-1.5 py-0.5 rounded border text-[11px] flex-shrink-0 ${sourceBadge.color}`}>
             {sourceBadge.label}
           </span>
-          <span className="text-gray-400 flex-shrink-0 tabular-nums">{opportunity.item_count} 实例</span>
+          <span className="text-gray-400 flex-shrink-0 tabular-nums">{opportunity.item_count} 素材</span>
         </div>
 
         {/* 固定行：价格 + 商品组 */}

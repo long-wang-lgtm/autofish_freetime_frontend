@@ -108,11 +108,11 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
           onClick={() => setShowNewItemModal(true)}
           className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-white text-gray-600 whitespace-nowrap"
         >
-          + 新增实例
+          + 新增素材
         </button>
       </div>
 
-      {/* 中部：发布实例列表（可调高度） */}
+      {/* 中部：发布素材列表（可调高度） */}
       <div style={{ height: listHeight, flexShrink: 0 }} className="overflow-hidden border-b">
         <PublishInstanceList
           opportunityId={opportunity.id}
@@ -138,7 +138,7 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
         />
       </div>
 
-      {/* 新增发布实例弹窗 */}
+      {/* 新增发布素材弹窗 */}
       {showNewItemModal && (
         <NewPublishedItemModal
           opportunityId={opportunity.id}

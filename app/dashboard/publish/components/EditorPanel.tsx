@@ -85,7 +85,7 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange }
   if (!item) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-        选择一个发布实例开始编辑
+        选择一个发布素材开始编辑
       </div>
     )
   }

@@ -25,7 +25,7 @@ export function NewOpportunityModal({ onClose }: NewOpportunityModalProps) {
         source_description: description,
         price: price ? parseFloat(price) : 0,
       })
-      // 批量创建发布实例（账号留空）
+      // 批量创建发布素材（账号留空）
       await Promise.all(
         Array.from({ length: count }, () =>
           createPublishedItem(opp.id, '', '', price ? parseFloat(price) : 0)
@@ -51,7 +51,7 @@ export function NewOpportunityModal({ onClose }: NewOpportunityModalProps) {
     }
     const count = parseInt(instanceCount)
     if (isNaN(count) || count < 1 || count > 20) {
-      setError('发布实例数量需在 1~20 之间')
+      setError('发布素材数量需在 1~20 之间')
       return
     }
     setError('')
@@ -106,7 +106,7 @@ export function NewOpportunityModal({ onClose }: NewOpportunityModalProps) {
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                发布实例 <span className="text-red-500">*</span>
+                发布素材 <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -117,7 +117,7 @@ export function NewOpportunityModal({ onClose }: NewOpportunityModalProps) {
                 min="1"
                 max="20"
               />
-              <p className="text-xs text-gray-400 mt-0.5">1~20 个实例，账号后续选择</p>
+              <p className="text-xs text-gray-400 mt-0.5">1~20 个素材，账号后续选择</p>
             </div>
           </div>
 
