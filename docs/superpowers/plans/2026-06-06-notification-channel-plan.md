@@ -111,17 +111,16 @@ export async function updateNotificationConfig(data: NotificationConfigUpdate): 
 }
 
 export async function deleteNotificationConfig(id: number): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>(`/api/setting/notify/delete`, {
+  return fetchApi<OperationResponse>("/api/setting/notify/delete", {
     method: "DELETE",
   })
 }
 ```
 
-- [ ] **Step 2: 提交**
+- [ ] **Step 2: 验证文件创建成功**
 
 ```bash
-git add lib/api/notification.ts
-git commit -m "feat: add notification config API client"
+ls -la lib/api/notification.ts
 ```
 
 ---
@@ -169,7 +168,7 @@ const [deletingId, setDeletingId] = useState<number | null>(null)
 在现有 `useQuery` 后添加:
 
 ```typescript
-const { data: notificationData, isLoading: notificationLoading, refetch: refetchNotifications } = useQuery({
+const { data: notificationData, isLoading: notificationLoading } = useQuery({
   queryKey: ['notification-configs'],
   queryFn: listNotificationConfigs,
 })
@@ -259,11 +258,8 @@ const copyJsonMessage = () => {
 {/* 通知渠道 Tab 内容 */}
 {activeMainTab === 'notification' && (
   <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-    {/* 工具栏 */}
-    <div className="flex items-center justify-between px-6 pt-4 pb-3 border-b border-gray-100">
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-gray-700">通知渠道</span>
-      </div>
+    {/* 工具栏 - 添加按钮在左上角 */}
+    <div className="flex items-center px-6 pt-4 pb-3 border-b border-gray-100">
       <button
         onClick={() => openDrawer()}
         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
@@ -303,12 +299,28 @@ const copyJsonMessage = () => {
                 <div className="text-sm text-gray-500 truncate max-w-md">{config.webhook}</div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+              {/* is_active 开关 */}
+              <button
+                onClick={() => notificationMutation.mutate({
+                  type: 'update',
+                  payload: { id: config.id, webhook: config.webhook, provider: 'lark', is_active: !config.is_active },
+                })}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  config.is_active ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                    config.is_active ? 'left-7' : 'left-1'
+                  }`}
+                />
+              </button>
               <button
                 onClick={() => openDrawer(config)}
                 className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
-                编辑
+                配置
               </button>
               {deletingId === config.id ? (
                 <div className="inline-flex items-center gap-2">
@@ -348,7 +360,7 @@ const copyJsonMessage = () => {
 在 `</div>` 结束标签之前添加:
 
 ```typescript
-{/* 侧边抽屉 */}
+{/* 侧边抽屉 - 宽度 500px */}
 {drawerOpen && (
   <>
     {/* 遮罩 */}
@@ -357,7 +369,7 @@ const copyJsonMessage = () => {
       onClick={closeDrawer}
     />
     {/* 抽屉 */}
-    <div className="fixed right-0 top-0 h-full w-[400px] bg-white shadow-xl z-50 flex flex-col">
+    <div className="fixed right-0 top-0 h-full w-[500px] bg-white shadow-xl z-50 flex flex-col">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900">飞书通知配置</h3>
         <button
@@ -446,19 +458,6 @@ const copyJsonMessage = () => {
 cd frontend && npx tsc --noEmit
 ```
 
-- [ ] **Step 10: 提交**
-
-```bash
-git add app/dashboard/settings/page.tsx lib/api/notification.ts
-git commit -m "feat: add notification channel tab in settings page
-
-- Add notification config API client
-- Add notification tab with drawer component
-- Support lark webhook configuration
-
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
-```
-
 ---
 
 ## 自检清单
@@ -466,8 +465,28 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 - [ ] API 端点与设计文档一致 (`/api/setting/notify/*`)
 - [ ] `provider` 默认值为 `lark`
 - [ ] `is_active` 参数已添加
-- [ ] 抽屉从右侧滑入，宽度 400px
+- [ ] 抽屉从右侧滑入，宽度 **500px**（修正）
 - [ ] 复制 JSON 使用 `navigator.clipboard.writeText`
 - [ ] 删除操作有两步确认
 - [ ] webhook 输入框有 placeholder 提示
 - [ ] 保存按钮在 webhook 为空时禁用
+- [ ] 添加按钮在卡片工具栏**左上角**（修正）
+- [ ] 卡片列表显示 is_active **开关**（修正）
+
+---
+
+## 代码完成后统一提交
+
+所有任务完成后，执行以下命令提交：
+
+```bash
+git add lib/api/notification.ts app/dashboard/settings/page.tsx
+git commit -m "feat: add notification channel tab in settings page
+
+- Add notification config API client
+- Add notification tab with drawer component
+- Support lark webhook configuration
+- Add is_active toggle in card list
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
+```
