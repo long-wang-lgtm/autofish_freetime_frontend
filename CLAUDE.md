@@ -1,6 +1,7 @@
 # CLAUDE.md
+**不允许探索上级目录**
 
-`autofish_freetime` 前端，Next.js + React + Tailwind CSS v3。
+前端项目，Next.js + React + Tailwind CSS v3。
 
 ## Tab 页面设计规范
 
