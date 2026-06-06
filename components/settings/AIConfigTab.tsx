@@ -178,6 +178,19 @@ export default function AIConfigTab() {
     await setDefaultMutation.mutateAsync(id)
   }
 
+  // 复制配置（不复制默认开关）
+  const handleCopy = (config: AIConfig) => {
+    setEditingConfig(null)
+    setFormName(`${config.name} (副本)`)
+    setFormProvider(config.provider)
+    setFormConfigType(config.config_type)
+    setFormBaseUrl(config.base_url)
+    setFormApiKey(config.api_key)
+    setFormModel(config.model)
+    setFormIsDefault(false) // 不复制默认开关
+    setDrawerOpen(true)
+  }
+
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -267,6 +280,12 @@ export default function AIConfigTab() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <button
+                      onClick={() => handleCopy(config)}
+                      className="text-gray-400 hover:text-blue-600 mr-4 transition-colors"
+                    >
+                      复制
+                    </button>
                     <button
                       onClick={() => openDrawer(config)}
                       className="text-blue-600 hover:text-blue-800 mr-4 transition-colors"
