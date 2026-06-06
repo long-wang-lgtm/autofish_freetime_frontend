@@ -60,8 +60,8 @@ async function fetchApi<T>(
   return response.json()
 }
 
-export async function listNotificationConfigs(): Promise<NotificationConfigListResponse> {
-  return fetchApi<NotificationConfigListResponse>("/api/setting/notify/get")
+export async function listNotificationConfigs(): Promise<NotificationConfig[]> {
+  return fetchApi<NotificationConfig[]>("/api/setting/notify/all")
 }
 
 export async function getNotificationConfig(id: number): Promise<NotificationConfig> {
