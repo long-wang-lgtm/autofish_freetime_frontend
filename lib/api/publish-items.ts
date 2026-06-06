@@ -387,9 +387,3 @@ export async function sortImages(itemId: number, images: MaterialImage[]): Promi
     body: JSON.stringify({ images }),
   })
 }
-
-export async function reuploadImages(itemId: number): Promise<void> {
-  return fetchApi(`/api/publish/items/${itemId}/image/reupload`, {
-    method: 'POST',
-  })
-}

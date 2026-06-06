@@ -15,7 +15,6 @@ import {
   imageDisplayUrl,
   uploadImage,
   sortImages,
-  reuploadImages,
 } from '@/lib/api/publish-items'
 import { CreationProgressBar } from './CreationProgressBar'
 import { ImageLightbox } from './ImageLightbox'
@@ -63,9 +62,8 @@ export function PublishInstanceList({
     const item = cached?.items.find(i => i.id === itemId)
     if (!item) return
 
-    // 改写内容非空 + 已选账号 → 拉取类目 + 上传未CDN图片
+    // 改写内容非空 + 已选账号 → 拉取类目
     if (item.description && item.account_id) {
-      reuploadImagesIfReady(itemId)
       if (!item.category && !fetchedChannelRef.current.has(item.id)) {
         fetchedChannelRef.current.add(item.id)
         getChannelCategories(itemId).then(cats => {
@@ -81,18 +79,6 @@ export function PublishInstanceList({
         }).catch(() => {})
       }
     }
-  }
-
-  // 当改写内容 + 账号均就绪时，将本地未上传图片推至 CDN
-  const reuploadImagesIfReady = (itemId: number) => {
-    const cached = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
-    const item = cached?.items.find(i => i.id === itemId)
-    if (!item || !item.description || !item.account_id) return
-    const hasUnuploaded = (item.images || []).some(img => !img.url)
-    if (!hasUnuploaded) return
-    reuploadImages(itemId).then(() => {
-      queryClient.invalidateQueries({ queryKey: ['published-items', opportunityId] })
-    }).catch(() => {})
   }
 
   // 图片上传处理（多图并发）
