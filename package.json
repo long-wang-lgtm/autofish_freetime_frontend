@@ -2,7 +2,7 @@
   "name": "freefish-admin-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "闲鱼自动化管理后台前端",
+  "description": "闲逸通智能回复自动发货系统",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -28,7 +28,7 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link href="/dashboard/accounts" className="text-xl font-bold text-gray-900">
-              闲鱼自动化管理后台
+              闲逸通智能回复自动发货系统
             </Link>
             <nav className="ml-10 flex space-x-4">
               <Link

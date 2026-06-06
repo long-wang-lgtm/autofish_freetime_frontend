@@ -8,8 +8,8 @@ import { Toaster } from '@/components/ui/toaster'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: '闲鱼自动化管理后台',
-  description: '闲鱼多账号自动化管理系统',
+  title: '闲逸通智能回复自动发货系统',
+  description: '闲逸通智能回复自动发货系统，多账号自动化管理',
 }
 
 export default function RootLayout({

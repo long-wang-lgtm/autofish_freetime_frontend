@@ -242,7 +242,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {/* Logo 区域 */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-700">
           {!collapsed && (
-            <span className="text-lg font-bold truncate">闲鱼自动化</span>
+            <span className="text-lg font-bold truncate">闲逸通</span>
           )}
           <button
             onClick={onToggle}
