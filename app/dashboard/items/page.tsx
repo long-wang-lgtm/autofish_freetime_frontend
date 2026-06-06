@@ -359,9 +359,9 @@ export default function ItemsPage() {
         )}
 
         {!isLoading && !error && data && data.items.length > 0 && (
-          <>
+          <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 380px)", minHeight: "200px" }}>
             {/* 表头 - 固定 */}
-            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600 shrink-0">
+            <div className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
               <div className="col-span-2">
                 <button className="flex items-center gap-1 hover:text-blue-600" onClick={() => handleSort("title")}>
                   商品信息
@@ -381,7 +381,6 @@ export default function ItemsPage() {
                 </button>
               </div>
               <div className="col-span-1 text-center">数据</div>
-              {/*<div className="col-span-1 text-center">自动回复</div>*/}
               <div className="col-span-1 text-center">AI回复</div>
               <div className="col-span-1 text-center">自动发货</div>
               <div className="col-span-1 text-center">付款后发货</div>
@@ -389,24 +388,23 @@ export default function ItemsPage() {
               <div className="col-span-1 text-center">评价后赠送</div>
               <div className="col-span-1 text-center">关键词回复</div>
               <div className="col-span-1 text-center">AI提示词</div>
+              <div className="col-span-1 text-center">指令码</div>
             </div>
 
-            {/* 内容区域 - 可滚动 */}
-            <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 380px)", minHeight: "200px" }}>
-              {sortedItems.map((item, index) => (
-                <ItemRow
-                  key={item.gid}
-                  item={item}
-                  isEven={index % 2 === 0}
-                  onToggle={handleToggle}
-                  onEdit={() => setEditingItem(item)}
-                  onKeywordClick={() => setKeywordItem(item)}
-                  keywordCount={itemKeywordCounts[item.gid] || 0}
-                  onUpdateField={(gid, field, value) => updateMutation.mutate({ gid, data: { [field]: value } })}
-                />
-              ))}
-            </div>
-          </>
+            {/* 内容区域 */}
+            {sortedItems.map((item, index) => (
+              <ItemRow
+                key={item.gid}
+                item={item}
+                isEven={index % 2 === 0}
+                onToggle={handleToggle}
+                onEdit={() => setEditingItem(item)}
+                onKeywordClick={() => setKeywordItem(item)}
+                keywordCount={itemKeywordCounts[item.gid] || 0}
+                onUpdateField={(gid, field, value) => updateMutation.mutate({ gid, data: { [field]: value } })}
+              />
+            ))}
+          </div>
         )}
       </div>
 
@@ -607,9 +605,10 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
   return (
     <>
       <div
-        className={`grid grid-cols-12 gap-2 px-4 py-2 items-center text-xs border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-colors ${
+        className={`grid gap-2 px-4 py-2 items-center text-xs border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-colors ${
           isEven ? "bg-white" : "bg-gray-50/30"
         }`}
+        style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}
       >
         {/* 商品信息 */}
         <div className="col-span-2 min-w-0">
@@ -686,7 +685,7 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
         </div>
 
         {/* 付款后发货 */}
-        <div className="col-span-1">
+        <div className="col-span-1 text-center">
           <ConfigCell
             value={item.deliveryContent}
             onClick={() => setConfigField("deliveryContent")}
@@ -694,7 +693,7 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
         </div>
 
         {/* 收货后 */}
-        <div className="col-span-1">
+        <div className="col-span-1 text-center">
           <ConfigCell
             value={item.receiptAfter}
             onClick={() => setConfigField("receiptAfter")}
@@ -702,7 +701,7 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
         </div>
 
         {/* 评价后 */}
-        <div className="col-span-1">
+        <div className="col-span-1 text-center">
           <ConfigCell
             value={item.positiveReviewAfter}
             onClick={() => setConfigField("positiveReviewAfter")}
@@ -725,7 +724,15 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
         </div>
 
         {/* AI提示词 */}
-        <div className="col-span-1">
+        <div className="col-span-1 text-center">
+          <ConfigCell
+            value={item.ai_reply_item_prompt}
+            onClick={() => setConfigField("ai_reply_item_prompt")}
+          />
+        </div>
+
+        {/* 指令码 */}
+        <div className="col-span-1 text-center">
           <ConfigCell
             value={item.ai_reply_item_prompt}
             onClick={() => setConfigField("ai_reply_item_prompt")}
