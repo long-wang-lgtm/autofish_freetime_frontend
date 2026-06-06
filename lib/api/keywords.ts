@@ -184,6 +184,17 @@ export async function getRulesForItem(item_id: string): Promise<KeywordRuleListR
   return fetchApi<KeywordRuleListResponse>(`/api/keywords/items/${item_id}`)
 }
 
+// 规则页专用：轻量商品列表（仅 gid / title / price）
+export interface RuleItem {
+  gid: string
+  title: string
+  price: number
+}
+
+export async function listRuleItems(): Promise<RuleItem[]> {
+  return fetchApi<RuleItem[]>("/api/keywords/items")
+}
+
 export async function listPredefinedKeywords(): Promise<{ keywords: { label: string; value: string }[] }> {
   return fetchApi<{ keywords: { label: string; value: string }[] }>("/api/keywords/predefined")
 }

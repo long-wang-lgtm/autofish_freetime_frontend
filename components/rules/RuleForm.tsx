@@ -16,8 +16,9 @@ import {
   unlinkItemFromRule,
   linkGroupToRule,
   unlinkGroupFromRule,
+  listRuleItems,
 } from "@/lib/api/keywords"
-import { listItems, listItemGroups, Item, ItemGroup } from "@/lib/api/items"
+import { listItemGroups, ItemGroup } from "@/lib/api/items"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
 import { useQueryClient } from "@tanstack/react-query"
@@ -68,10 +69,10 @@ export function RuleForm({ rule, onClose, onSuccess }: RuleFormProps) {
 
   const isEdit = !!rule
 
-  // 获取商品列表
+  // 获取商品列表（规则页专用轻量接口，独立 queryKey 避免与其他页面缓存冲突）
   const { data: itemsData } = useQuery({
-    queryKey: ["items"],
-    queryFn: () => listItems(),
+    queryKey: ["keyword-rule-items"],
+    queryFn: listRuleItems,
   })
 
   // 获取商品组列表
@@ -165,16 +166,15 @@ export function RuleForm({ rule, onClose, onSuccess }: RuleFormProps) {
 
   // 过滤商品列表
   const filteredItems = useMemo(() => {
-    if (!itemsData?.items) return []
-    if (!itemSearch.trim()) return itemsData.items
+    if (!itemsData) return []
+    if (!itemSearch.trim()) return itemsData
     const search = itemSearch.toLowerCase()
-    return itemsData.items.filter(
+    return itemsData.filter(
       (item) =>
         item.gid.toLowerCase().includes(search) ||
-        (item.title && item.title.toLowerCase().includes(search)) ||
-        (item.description && item.description.toLowerCase().includes(search))
+        (item.title && item.title.toLowerCase().includes(search))
     )
-  }, [itemsData?.items, itemSearch])
+  }, [itemsData, itemSearch])
 
   // 过滤商品组列表
   const filteredGroups = useMemo(() => {
@@ -190,16 +190,15 @@ export function RuleForm({ rule, onClose, onSuccess }: RuleFormProps) {
 
   // 商品选择器过滤
   const filteredPickerItems = useMemo(() => {
-    if (!itemsData?.items) return []
-    if (!itemPickerSearch.trim()) return itemsData.items
+    if (!itemsData) return []
+    if (!itemPickerSearch.trim()) return itemsData
     const search = itemPickerSearch.toLowerCase()
-    return itemsData.items.filter(
+    return itemsData.filter(
       (item) =>
         item.gid.toLowerCase().includes(search) ||
-        (item.title && item.title.toLowerCase().includes(search)) ||
-        (item.description && item.description.toLowerCase().includes(search))
+        (item.title && item.title.toLowerCase().includes(search))
     )
-  }, [itemsData?.items, itemPickerSearch])
+  }, [itemsData, itemPickerSearch])
 
   const onSubmit = async (data: FormData) => {
     setLoading(true)
@@ -306,8 +305,8 @@ export function RuleForm({ rule, onClose, onSuccess }: RuleFormProps) {
 
   // 获取关联商品的标题
   const getItemTitle = (itemId: string) => {
-    const item = itemsData?.items?.find((i) => i.gid === itemId)
-    return item?.title || item?.description?.slice(0, 15) || itemId.slice(0, 8)
+    const item = itemsData?.find((i) => i.gid === itemId)
+    return item?.title || itemId.slice(0, 8)
   }
 
   return (
