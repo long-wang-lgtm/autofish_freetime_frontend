@@ -4,6 +4,7 @@ import { useAuth } from '@/stores/auth.store'
 import { redirect } from 'next/navigation'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import Sidebar from '@/components/layout/Sidebar'
+import Header from '@/components/layout/Header'
 import { useState } from 'react'
 
 export default function DashboardLayout({
@@ -24,15 +25,20 @@ export default function DashboardLayout({
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
-      {/* 主内容区域 - 左侧留出sidebar宽度，填满剩余空间 */}
-      <main
-        className={`flex-1 min-w-0 transition-all duration-300 p-4 lg:p-6 h-full overflow-hidden ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}
+      {/* 右侧区域：顶部栏 + 主内容 */}
+      <div
+        className={`flex-1 min-w-0 flex flex-col transition-all duration-300 ${
+          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
+        }`}
       >
-        {/* 移除最大宽度限制，让内容区域填满可用空间 */}
-        <div className="w-full h-full">
+        {/* 顶部栏：用户信息 + 可扩展区域 */}
+        <Header />
+
+        {/* 主内容区域 */}
+        <main className="flex-1 min-h-0 p-4 lg:p-6 overflow-auto">
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }

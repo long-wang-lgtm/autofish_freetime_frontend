@@ -130,14 +130,14 @@ export const useAuth = create<AuthState>((set, get) => ({
     }
 
     try {
-      const user = await authApi.getCurrentUser()
+      const u = await authApi.getCurrentUser()
       set({
         user: {
-          userId: user.user_id,
-          username: user.username,
-          email: user.email,
-          role: user.role as 'admin' | 'user',
-          last_login: user.last_login,
+          userId: u.username, // 后端 /api/auth/me 无 user_id，用 username 代替
+          username: u.username,
+          email: null,
+          role: 'user',
+          last_login: u.last_login || '',
         },
         isAuthenticated: true,
         isLoading: false,

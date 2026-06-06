@@ -47,14 +47,18 @@ export interface RegisterResponse {
   }
 }
 
+/** /api/auth/me 返回的 data 字段 */
 export interface UserInfo {
-  user_id: string
   username: string
-  email: string | null
-  role: string
   last_login: string
   is_active: boolean
-  created_at: string
+}
+
+/** /api/auth/me 完整响应 */
+export interface GetCurrentUserResponse {
+  success: boolean
+  message: string
+  data: UserInfo
 }
 
 export interface ApiError {
@@ -98,7 +102,8 @@ export const authApi = {
     const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-    return handleResponse<UserInfo>(response)
+    const json = await handleResponse<GetCurrentUserResponse>(response)
+    return json.data
   },
 
   logout: async (): Promise<{ success: boolean; message: string }> => {
