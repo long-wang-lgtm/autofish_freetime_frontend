@@ -5,7 +5,7 @@ import { Account, startAccountIm, stopAccountIm, updateAccount } from "@/lib/api
 import { useQueryClient } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
-import { Bot, Truck, QrCode, Zap, Star, Sparkles, Bell, BellOff  } from "lucide-react"
+import { Bot, Truck, QrCode, Zap, Star, Sparkles, Bell, BellOff, AlertCircle  } from "lucide-react"
 
 type ConfigField = "full_ai_reply_system_prompt" | "full_default_reply_content"
 
@@ -112,11 +112,27 @@ function ConfigModal({
 function ConfigCell({
   value,
   onClick,
+  disabled,
+  disabledTooltip,
 }: {
   value: string
   onClick: () => void
+  disabled?: boolean
+  disabledTooltip?: string
 }) {
   const hasValue = value && value.trim().length > 0
+
+  if (disabled) {
+    return (
+      <div
+        className="w-full h-full min-h-[2.5rem] max-h-[2.5rem] flex items-center justify-center text-amber-500"
+        title={disabledTooltip || "自动回复未开启"}
+      >
+        <AlertCircle className="w-4 h-4" />
+      </div>
+    )
+  }
+
   return (
     <button
       onClick={onClick}
@@ -374,6 +390,8 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
           <ConfigCell
             value={account.full_default_reply_content || ""}
             onClick={() => setConfigField("full_default_reply_content")}
+            disabled={!account.auto_reply}
+            disabledTooltip="自动回复未开启，默认回复不会生效"
           />
         </div>
 

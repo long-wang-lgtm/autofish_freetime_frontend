@@ -37,60 +37,6 @@ export default function AccountsPage() {
     setShowAddForm(false)
   }
 
-  // const handleBulkStart = async () => {
-  //   if (!data?.accounts) return
-  //   const offlineAccounts = data.accounts.filter((acc) => !acc.im_running)
-  //   if (offlineAccounts.length === 0) {
-  //     addToast({ title: "提示", description: "没有离线账号需要启动" })
-  //     return
-  //   }
-  //   setBulkLoading("start")
-  //   let success = 0
-  //   let failed = 0
-  //   for (const acc of offlineAccounts) {
-  //     try {
-  //       await startAccountIm(acc.uid)
-  //       success++
-  //     } catch {
-  //       failed++
-  //     }
-  //   }
-  //   queryClient.invalidateQueries({ queryKey: ["accounts"] })
-  //   setBulkLoading(null)
-  //   if (failed === 0) {
-  //     addToast({ title: "一键启动完成", description: `成功启动 ${success} 个账号` })
-  //   } else {
-  //     addToast({ title: "一键启动完成", description: `成功 ${success}，失败 ${failed}`, variant: "error" })
-  //   }
-  // }
-
-  // const handleBulkStop = async () => {
-  //   if (!data?.accounts) return
-  //   const onlineAccounts = data.accounts.filter((acc) => acc.im_running)
-  //   if (onlineAccounts.length === 0) {
-  //     addToast({ title: "提示", description: "没有在线账号需要停止" })
-  //     return
-  //   }
-  //   setBulkLoading("stop")
-  //   let success = 0
-  //   let failed = 0
-  //   for (const acc of onlineAccounts) {
-  //     try {
-  //       await stopAccountIm(acc.uid)
-  //       success++
-  //     } catch {
-  //       failed++
-  //     }
-  //   }
-  //   queryClient.invalidateQueries({ queryKey: ["accounts"] })
-  //   setBulkLoading(null)
-  //   if (failed === 0) {
-  //     addToast({ title: "一键停止完成", description: `成功停止 ${success} 个账号` })
-  //   } else {
-  //     addToast({ title: "一键停止完成", description: `成功 ${success}，失败 ${failed}`, variant: "error" })
-  //   }
-  // }
-
   return (
     <div className="space-y-4">
       <div>
@@ -194,37 +140,6 @@ export default function AccountsPage() {
           链接管理
         </button>
 
-        {/* <button
-          onClick={handleBulkStart}
-          disabled={bulkLoading === "start"}
-          className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2"
-        >
-          {bulkLoading === "start" ? (
-            <LoadingSpinner size="sm" />
-          ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          )}
-          一键启动
-        </button> */}
-
-        {/* <button
-          onClick={handleBulkStop}
-          disabled={bulkLoading === "stop"}
-          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2"
-        >
-          {bulkLoading === "stop" ? (
-            <LoadingSpinner size="sm" />
-          ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-            </svg>
-          )}
-          一键停止
-        </button> */}
       </div>
 
       {isLoading && (
