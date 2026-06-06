@@ -4,14 +4,20 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { listAIConfigs, deleteAIConfig, setDefaultAIConfig, AIConfig } from '@/lib/api/ai-config'
+import {
+  listNotificationConfigs,
+  createNotificationConfig,
+  updateNotificationConfig,
+  deleteNotificationConfig,
+  NotificationConfig,
+} from '@/lib/api/notification'
 
-type MainTabType = 'ai-config' | 'tab-2' | 'tab-3'
+type MainTabType = 'ai-config' | 'notification'
 type SubTabType = 'all' | 'text' | 'image'
 
 const MAIN_TABS: { key: MainTabType; label: string; icon: string }[] = [
   { key: 'ai-config', label: 'AI 配置', icon: '🤖' },
-  { key: 'tab-2', label: 'Tab 2', icon: '📦' },
-  { key: 'tab-3', label: 'Tab 3', icon: '📦' },
+  { key: 'notification', label: '通知渠道', icon: '🔔' },
 ]
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -32,6 +38,11 @@ export default function SettingsPage() {
   const [activeMainTab, setActiveMainTab] = useState<MainTabType>('ai-config')
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>('all')
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingConfig, setEditingConfig] = useState<NotificationConfig | null>(null)
+  const [webhookInput, setWebhookInput] = useState('')
+  const [isActiveInput, setIsActiveInput] = useState(true)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['ai-configs'],
@@ -52,6 +63,76 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['ai-configs'] })
     },
   })
+
+  const { data: notificationData, isLoading: notificationLoading } = useQuery({
+    queryKey: ['notification-configs'],
+    queryFn: listNotificationConfigs,
+  })
+
+  const notificationMutation = useMutation({
+    mutationFn: async (data: { type: 'create' | 'update' | 'delete', payload?: any }) => {
+      if (data.type === 'create') return createNotificationConfig(data.payload)
+      if (data.type === 'update') return updateNotificationConfig(data.payload)
+      await deleteNotificationConfig(data.payload.id)
+      return null
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notification-configs'] })
+      setDrawerOpen(false)
+      setEditingConfig(null)
+      setWebhookInput('')
+      setIsActiveInput(true)
+    },
+  })
+
+  const openDrawer = (config?: NotificationConfig) => {
+    if (config) {
+      setEditingConfig(config)
+      setWebhookInput(config.webhook)
+      setIsActiveInput(config.is_active)
+    } else {
+      setEditingConfig(null)
+      setWebhookInput('')
+      setIsActiveInput(true)
+    }
+    setDrawerOpen(true)
+  }
+
+  const closeDrawer = () => {
+    setDrawerOpen(false)
+    setEditingConfig(null)
+    setWebhookInput('')
+    setIsActiveInput(true)
+  }
+
+  const handleSave = () => {
+    if (editingConfig) {
+      notificationMutation.mutate({
+        type: 'update',
+        payload: { id: editingConfig.id, webhook: webhookInput, provider: 'lark', is_active: isActiveInput },
+      })
+    } else {
+      notificationMutation.mutate({
+        type: 'create',
+        payload: { webhook: webhookInput, provider: 'lark', is_active: isActiveInput },
+      })
+    }
+  }
+
+  const handleNotificationDelete = (id: number) => {
+    notificationMutation.mutate({ type: 'delete', payload: { id } })
+  }
+
+  const copyJsonMessage = () => {
+    const json = {
+      level: "",
+      title: "",
+      session: "",
+      order: "",
+      content: ""
+    }
+    navigator.clipboard.writeText(JSON.stringify(json, null, 2))
+  }
 
   const filteredConfigs = data?.configs.filter((config) => {
     if (activeSubTab === 'all') return true
@@ -217,14 +298,191 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* 占位 Tab 内容 */}
-      {activeMainTab !== 'ai-config' && (
+      {/* 通知渠道 Tab 内容 */}
+      {activeMainTab === 'notification' && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-12 text-center">
-            <div className="text-4xl mb-3">🚧</div>
-            <p className="text-gray-500">即将上线</p>
+          {/* 工具栏 - 添加按钮在左上角 */}
+          <div className="flex items-center px-6 pt-4 pb-3 border-b border-gray-100">
+            <button
+              onClick={() => openDrawer()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              添加渠道
+            </button>
           </div>
+
+          {/* 数据区 */}
+          {notificationLoading ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-500">加载中...</p>
+            </div>
+          ) : notificationData?.configs.length === 0 ? (
+            <div className="p-8 text-center">
+              <div className="text-6xl mb-4">🔔</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">暂无通知渠道</h3>
+              <p className="text-sm text-gray-500 mb-4">点击上方按钮添加您的第一个通知渠道</p>
+              <button
+                onClick={() => openDrawer()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                添加渠道
+              </button>
+            </div>
+          ) : (
+            <div className="p-6">
+              {notificationData?.configs.map((config) => (
+                <div key={config.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg mb-3 last:mb-0">
+                  <div className="flex items-center gap-4">
+                    <div className="text-3xl">🔔</div>
+                    <div>
+                      <div className="font-medium text-gray-900">飞书通知</div>
+                      <div className="text-sm text-gray-500 truncate max-w-md">{config.webhook}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {/* is_active 开关 */}
+                    <button
+                      onClick={() => notificationMutation.mutate({
+                        type: 'update',
+                        payload: { id: config.id, webhook: config.webhook, provider: 'lark', is_active: !config.is_active },
+                      })}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${
+                        config.is_active ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                          config.is_active ? 'left-7' : 'left-1'
+                        }`}
+                      />
+                    </button>
+                    <button
+                      onClick={() => openDrawer(config)}
+                      className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      配置
+                    </button>
+                    {deletingId === config.id ? (
+                      <div className="inline-flex items-center gap-2">
+                        <button
+                          onClick={() => handleNotificationDelete(config.id)}
+                          className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          disabled={notificationMutation.isPending}
+                        >
+                          {notificationMutation.isPending ? '删除中...' : '确认'}
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(null)}
+                          className="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setDeletingId(config.id)}
+                        className="px-3 py-1.5 text-sm text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        删除
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+      )}
+
+      {/* 侧边抽屉 - 宽度 500px */}
+      {drawerOpen && (
+        <>
+          {/* 遮罩 */}
+          <div
+            className="fixed inset-0 bg-black/30 z-40"
+            onClick={closeDrawer}
+          />
+          {/* 抽屉 */}
+          <div className="fixed right-0 top-0 h-full w-[500px] bg-white shadow-xl z-50 flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">飞书通知配置</h3>
+              <button
+                onClick={closeDrawer}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* webhook 输入 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  飞书 Webhook 地址
+                </label>
+                <input
+                  type="text"
+                  value={webhookInput}
+                  onChange={(e) => setWebhookInput(e.target.value)}
+                  placeholder="请输入飞书机器人 Webhook 地址"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                />
+              </div>
+              {/* is_active 开关 */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-gray-700">启用通知</div>
+                  <div className="text-xs text-gray-500">关闭后将不会发送通知</div>
+                </div>
+                <button
+                  onClick={() => setIsActiveInput(!isActiveInput)}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                    isActiveInput ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                      isActiveInput ? 'left-7' : 'left-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              {/* 复制 JSON 按钮 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  消息 JSON 模板
+                </label>
+                <pre className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs text-gray-600 overflow-x-auto mb-3">{`{
+    "level": "",
+    "title": "",
+    "session": "",
+    "order": "",
+    "content": ""
+}`}</pre>
+                <button
+                  onClick={copyJsonMessage}
+                  className="w-full px-4 py-2.5 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
+                >
+                  复制 JSON 消息
+                </button>
+              </div>
+            </div>
+            {/* 底部保存按钮 */}
+            <div className="px-6 py-4 border-t border-gray-200">
+              <button
+                onClick={handleSave}
+                disabled={notificationMutation.isPending || !webhookInput.trim()}
+                className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {notificationMutation.isPending ? '保存中...' : '保存'}
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
