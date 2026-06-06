@@ -301,99 +301,52 @@ export default function SettingsPage() {
       {/* 通知渠道 Tab 内容 */}
       {activeMainTab === 'notification' && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          {/* 工具栏 - 添加按钮在左上角 */}
-          <div className="flex items-center px-6 pt-4 pb-3 border-b border-gray-100">
-            <button
-              onClick={() => openDrawer()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              添加渠道
-            </button>
-          </div>
-
-          {/* 数据区 */}
-          {notificationLoading ? (
-            <div className="p-8 text-center">
-              <p className="text-gray-500">加载中...</p>
-            </div>
-          ) : notificationData?.configs.length === 0 ? (
-            <div className="p-8 text-center">
-              <div className="text-6xl mb-4">🔔</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">暂无通知渠道</h3>
-              <p className="text-sm text-gray-500 mb-4">点击上方按钮添加您的第一个通知渠道</p>
-              <button
-                onClick={() => openDrawer()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                添加渠道
-              </button>
-            </div>
-          ) : (
-            <div className="p-6">
-              {notificationData?.configs.map((config) => (
-                <div key={config.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg mb-3 last:mb-0">
-                  <div className="flex items-center gap-4">
-                    <div className="text-3xl">🔔</div>
-                    <div>
-                      <div className="font-medium text-gray-900">飞书通知</div>
-                      <div className="text-sm text-gray-500 truncate max-w-md">{config.webhook}</div>
+          {/* 飞书通知渠道卡片 */}
+          <div className="p-6">
+            {notificationLoading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">加载中...</p>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl">🔔</div>
+                  <div>
+                    <div className="font-medium text-gray-900">飞书通知</div>
+                    <div className="text-sm text-gray-500 truncate max-w-md">
+                      {notificationData?.configs[0]?.webhook || '未配置'}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    {/* is_active 开关 */}
+                </div>
+                <div className="flex items-center gap-4">
+                  {/* is_active 开关 */}
+                  {notificationData?.configs[0] && (
                     <button
                       onClick={() => notificationMutation.mutate({
                         type: 'update',
-                        payload: { id: config.id, webhook: config.webhook, provider: 'lark', is_active: !config.is_active },
+                        payload: { id: notificationData.configs[0].id, webhook: notificationData.configs[0].webhook, provider: 'lark', is_active: !notificationData.configs[0].is_active },
                       })}
                       className={`relative w-12 h-6 rounded-full transition-colors ${
-                        config.is_active ? 'bg-blue-600' : 'bg-gray-300'
+                        notificationData.configs[0].is_active ? 'bg-blue-600' : 'bg-gray-300'
                       }`}
                     >
                       <span
                         className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                          config.is_active ? 'left-7' : 'left-1'
+                          notificationData.configs[0].is_active ? 'left-7' : 'left-1'
                         }`}
                       />
                     </button>
-                    <button
-                      onClick={() => openDrawer(config)}
-                      className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      配置
-                    </button>
-                    {deletingId === config.id ? (
-                      <div className="inline-flex items-center gap-2">
-                        <button
-                          onClick={() => handleNotificationDelete(config.id)}
-                          className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          disabled={notificationMutation.isPending}
-                        >
-                          {notificationMutation.isPending ? '删除中...' : '确认'}
-                        </button>
-                        <button
-                          onClick={() => setDeletingId(null)}
-                          className="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          取消
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setDeletingId(config.id)}
-                        className="px-3 py-1.5 text-sm text-gray-400 hover:text-red-600 transition-colors"
-                      >
-                        删除
-                      </button>
-                    )}
-                  </div>
+                  )}
+                  <button
+                    onClick={() => openDrawer(notificationData?.configs[0] || undefined)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    配置
+                  </button>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
