@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuth } from '@/stores/auth.store'
 
 // 可展开的子导航配置
 interface ChildItem {
@@ -86,7 +85,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const pathname = usePathname()
-  const { user, logout } = useAuth()
+
 
   // 切换展开/收起
   const toggleExpand = (path: string) => {
@@ -114,10 +113,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     return pathname === childPath
   }
 
-  const handleLogout = async () => {
-    await logout()
-    window.location.href = '/login'
-  }
 
   // 渲染单个导航项
   const renderNavItem = (item: NavItem) => {
@@ -233,7 +228,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         />
       )}
 
-      {/* 侧边栏 */}
+      {/* 侧边栏 - 移动端全屏覆盖，桌面端固定左侧 */}
       <aside
         className={`fixed top-0 left-0 h-full bg-gray-900 text-white z-50 transition-all duration-300 flex flex-col ${
           collapsed ? 'w-16' : 'w-64'
@@ -266,47 +261,14 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </ul>
         </nav>
 
-        {/* 用户信息区域 */}
-        <div className="border-t border-gray-700 p-4">
-          {!collapsed ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-medium">
-                  {user?.username?.charAt(0).toUpperCase() || 'U'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user?.username}</p>
-                  <p className="text-xs text-gray-400">{user?.role === 'admin' ? '管理员' : '用户'}</p>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                退出登录
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="w-full p-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors flex justify-center"
-              title="退出登录"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
-          )}
-        </div>
+        {/* 底部留空 - 后续可放置其他控件 */}
+        <div className="border-t border-gray-700 p-3" />
       </aside>
 
       {/* 移动端菜单按钮 */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-30 p-2 bg-gray-900 text-white rounded-lg lg:hidden"
+        className="fixed top-3 left-3 z-40 p-2 bg-gray-900 text-white rounded-lg lg:hidden shadow-lg"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
