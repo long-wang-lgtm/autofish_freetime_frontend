@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation'
 import { AIConfigCreate, AIConfigUpdate, getProviderDefaults, ProviderDefaults } from '@/lib/api/ai-config'
 
 type ConfigType = 'text' | 'image'
-type Provider = 'deepseek' | 'siliconflow' | 'volcano' | 'bailian'
+type Provider = 'deepseek' | 'siliconflow' | 'volcano' | 'bailian' | 'minimax'
 
 const PROVIDERS: { value: Provider; label: string }[] = [
   { value: 'deepseek', label: 'DeepSeek' },
   { value: 'siliconflow', label: '硅基流动' },
   { value: 'volcano', label: '火山方舟' },
   { value: 'bailian', label: '阿里百炼' },
+  { value: 'minimax', label: 'MiniMax' },
 ]
 
 const CONFIG_TYPES: { value: ConfigType; label: string }[] = [

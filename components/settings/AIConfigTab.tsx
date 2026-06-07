@@ -20,6 +20,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   siliconflow: '硅基流动',
   volcano: '火山方舟',
   bailian: '阿里百炼',
+  minimax: 'MiniMax',
 }
 
 const CONFIG_TYPE_LABELS: Record<string, string> = {
@@ -32,6 +33,7 @@ const PROVIDERS: { value: string; label: string }[] = [
   { value: 'siliconflow', label: '硅基流动' },
   { value: 'volcano', label: '火山方舟' },
   { value: 'bailian', label: '阿里百炼' },
+  { value: 'minimax', label: 'MiniMax' },
 ]
 
 const CONFIG_TYPES: { value: 'text' | 'image'; label: string }[] = [
