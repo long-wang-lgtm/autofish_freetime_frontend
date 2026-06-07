@@ -112,7 +112,7 @@ export default function AIConfigTab() {
   })
 
   // 过滤配置
-  const filteredConfigs = data?.configs.filter((config) => {
+  const filteredConfigs = data?.filter((config) => {
     if (activeSubTab === 'all') return true
     return config.config_type === activeSubTab
   }) || []
