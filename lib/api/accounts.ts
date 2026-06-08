@@ -30,27 +30,6 @@ export interface Account {
   // im_running: boolean
 }
 
-export interface AccountListResponse {
-  total: number
-  accounts: Account[]
-}
-
-export interface AccountCreate {
-  uid: string
-  name: string
-  cookie: string
-  auto_reply?: boolean
-  ai_auto_reply?: boolean
-  auto_delivery?: boolean
-  auto_free?: boolean
-  auto_positive_review?: boolean
-  reply_pause_seconds?: number
-  full_deliveryContent?: string
-  full_receiptAfter?: string
-  full_positiveReviewAfter?: string
-  full_default_reply_content?: string
-}
-
 export interface AccountUpdate {
   name?: string
   cookie?: string
@@ -67,11 +46,9 @@ export interface AccountUpdate {
   status?: number
 }
 
-export interface AccountStatusResponse {
+export interface AccountName {
   uid: string
-  im_connected: boolean
-  im_running: boolean
-  message: string
+  name: string
 }
 
 export interface OperationResponse {
@@ -107,11 +84,8 @@ export async function listAccounts(): Promise<Account[]> {
   return fetchApi<Account[]>("/api/accounts/all")
 }
 
-export async function createAccount(data: AccountCreate): Promise<Account> {
-  return fetchApi<Account>("/api/accounts", {
-    method: "POST",
-    body: JSON.stringify(data),
-  })
+export async function getAccountNames(): Promise<AccountName[]> {
+  return fetchApi<AccountName[]>(`/api/accounts/names`)
 }
 
 export async function updateAccount(

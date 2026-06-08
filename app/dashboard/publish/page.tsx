@@ -7,7 +7,7 @@ import { PublishWorkspace } from './components/PublishWorkspace'
 import { ResizableDivider } from './components/ResizableDivider'
 import { MobileTabView } from './components/MobileTabView'
 import { listOpportunities, type Opportunity } from '@/lib/api/opportunities'
-import { listAccounts } from '@/lib/api/accounts'
+import { getAccountNames } from '@/lib/api/accounts'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 const LEFT_PANEL_DEFAULT_WIDTH = 280
@@ -35,7 +35,7 @@ export default function PublishPage() {
 
   const { data: accountsData } = useQuery({
     queryKey: ['accounts'],
-    queryFn: listAccounts,
+    queryFn: getAccountNames,
   })
 
   const handleLeftWidthChange = useCallback((delta: number) => {
@@ -53,7 +53,7 @@ export default function PublishPage() {
           opportunities={opportunitiesData?.items || []}
           selectedOpportunity={selectedOpportunity}
           onSelectOpportunity={setSelectedOpportunity}
-          accounts={accountsData?.accounts || []}
+          accounts={accountsData || []}
         />
       </div>
     )
@@ -78,7 +78,7 @@ export default function PublishPage() {
       <div className="flex-1 h-full overflow-hidden">
         <PublishWorkspace
           opportunity={selectedOpportunity}
-          accounts={accountsData?.accounts || []}
+          accounts={accountsData || []}
           onRefreshOpportunities={() => queryClient.invalidateQueries({ queryKey: ['opportunities'] })}
         />
       </div>

@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { listItems, Item, ItemFilters, updateItem, refreshItems } from "@/lib/api/items"
-import { listAccounts, Account } from "@/lib/api/accounts"
+import { getAccountNames, AccountName } from "@/lib/api/accounts"
 import { ItemForm } from "@/components/items/ItemForm"
 import { ItemKeywordModal } from "@/components/items/ItemKeywordModal"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
@@ -103,7 +103,7 @@ export default function ItemsPage() {
   // 账号列表查询
   const { data: accountsData } = useQuery({
     queryKey: ["accounts"],
-    queryFn: listAccounts,
+    queryFn: getAccountNames,
   })
 
   // 搜索输入状态（用于debounce）
@@ -249,7 +249,7 @@ export default function ItemsPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
             >
               <option value="">全部账号</option>
-              {accountsData?.accounts.map((acc: Account) => (
+              {accountsData?.map((acc: AccountName) => (
                 <option key={acc.uid} value={acc.uid}>{acc.name}</option>
               ))}
             </select>
