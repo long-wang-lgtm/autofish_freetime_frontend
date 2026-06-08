@@ -18,7 +18,7 @@ const LIST_MAX_HEIGHT = 600
 
 interface PublishWorkspaceProps {
   opportunity: Opportunity | null
-  accounts: { uid: string; name: string; remark?: string }[]
+  accounts: { uid: string; name: string }[]
   onRefreshOpportunities: () => void
 }
 

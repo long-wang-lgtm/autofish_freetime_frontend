@@ -8,7 +8,6 @@ export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
 export interface Account {
   uid: string
   name: string
-  remark: string
   auto_reply: boolean
   ai_auto_reply: boolean
   auto_delivery: boolean
@@ -24,11 +23,11 @@ export interface Account {
   status: number
   itemtotalCounts: number
   onsaleitemCount: number
-  cookie_last_update_time: string | null
-  access_token_last_update_time: string | null
-  user_id: string
-  im_connected: boolean
-  im_running: boolean
+  // cookie_last_update_time: string | null
+  // access_token_last_update_time: string | null
+  // user_id: string
+  // im_connected: boolean
+  // im_running: boolean
 }
 
 export interface AccountListResponse {
@@ -40,7 +39,6 @@ export interface AccountCreate {
   uid: string
   name: string
   cookie: string
-  remark?: string
   auto_reply?: boolean
   ai_auto_reply?: boolean
   auto_delivery?: boolean
@@ -56,7 +54,6 @@ export interface AccountCreate {
 export interface AccountUpdate {
   name?: string
   cookie?: string
-  remark?: string
   auto_reply?: boolean
   ai_auto_reply?: boolean
   auto_delivery?: boolean
@@ -106,12 +103,8 @@ export async function fetchApi<T>(
   return response.json()
 }
 
-export async function listAccounts(): Promise<AccountListResponse> {
-  return fetchApi<AccountListResponse>("/api/accounts")
-}
-
-export async function getAccount(uid: string): Promise<Account> {
-  return fetchApi<Account>(`/api/accounts/${uid}`)
+export async function listAccounts(): Promise<Account[]> {
+  return fetchApi<Account[]>("/api/accounts/all")
 }
 
 export async function createAccount(data: AccountCreate): Promise<Account> {
@@ -125,7 +118,7 @@ export async function updateAccount(
   uid: string,
   data: AccountUpdate
 ): Promise<Account> {
-  return fetchApi<Account>(`/api/accounts/${uid}`, {
+  return fetchApi<Account>(`/api/accounts/update/${uid}`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
@@ -134,28 +127,6 @@ export async function updateAccount(
 export async function deleteAccount(uid: string): Promise<OperationResponse> {
   return fetchApi<OperationResponse>(`/api/accounts/${uid}`, {
     method: "DELETE",
-  })
-}
-
-export async function startAccountIm(uid: string): Promise<AccountStatusResponse> {
-  return fetchApi<AccountStatusResponse>(`/api/accounts/${uid}/start`, {
-    method: "POST",
-  })
-}
-
-export async function stopAccountIm(uid: string): Promise<AccountStatusResponse> {
-  return fetchApi<AccountStatusResponse>(`/api/accounts/${uid}/stop`, {
-    method: "POST",
-  })
-}
-
-export async function getAccountStatus(uid: string): Promise<AccountStatusResponse> {
-  return fetchApi<AccountStatusResponse>(`/api/accounts/${uid}/status`)
-}
-
-export async function refreshAccountToken(uid: string): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>(`/api/accounts/${uid}/refresh-token`, {
-    method: "POST",
   })
 }
 
@@ -170,11 +141,5 @@ export async function startQrLogin(uid?: string): Promise<{ session_id: string; 
 export async function cancelQrLogin(sessionId: string): Promise<OperationResponse> {
   return fetchApi<OperationResponse>(`/api/login/qr/${sessionId}`, {
     method: "DELETE",
-  })
-}
-
-export async function refreshCookie(uid: string): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>(`/api/login/cookie/refresh/${uid}`, {
-    method: "POST",
   })
 }

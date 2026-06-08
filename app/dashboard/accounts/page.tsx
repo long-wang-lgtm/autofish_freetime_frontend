@@ -1,11 +1,11 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { listAccounts, startAccountIm, stopAccountIm } from "@/lib/api/accounts"
+import { listAccounts} from "@/lib/api/accounts"
 import { AccountRow } from "@/components/accounts/AccountTable"
-import { AccountForm } from "@/components/accounts/AccountForm"
+import { AccountCard } from "@/components/accounts/AccountCard"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import QrLoginModal from "@/components/accounts/QrLoginModal"
 import LinkLoginModal from "@/components/accounts/LinkLoginModal"
@@ -15,27 +15,26 @@ import { useToast } from "@/components/ui/toaster"
 export default function AccountsPage() {
   const queryClient = useQueryClient()
   const { addToast } = useToast()
-  const [showAddForm, setShowAddForm] = useState(false)
   const [showQrModal, setShowQrModal] = useState(false)
   const [showLinkModal, setShowLinkModal] = useState(false)
   const [showLinkManage, setShowLinkManage] = useState(false)
   const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [reloginUid, setReloginUid] = useState<string | null>(null)
   const [bulkLoading, setBulkLoading] = useState<"start" | "stop" | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["accounts"],
     queryFn: listAccounts,
     refetchInterval: 30000,
   })
-
-  const handleFormSuccess = () => {
-    setShowAddForm(false)
-  }
-
-  const handleFormClose = () => {
-    setShowAddForm(false)
-  }
 
   return (
     <div className="space-y-4">
@@ -107,23 +106,6 @@ export default function AccountsPage() {
                     <div className="text-xs text-gray-400">分享给他人扫码</div>
                   </div>
                 </button>
-                <button
-                  onClick={() => {
-                    setShowAddForm(true)
-                    setAddMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-colors rounded-lg mx-1"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <div className="font-medium">手动输入</div>
-                    <div className="text-xs text-gray-400">填写账号详细信息</div>
-                  </div>
-                </button>
               </div>
             </>
           )}
@@ -154,7 +136,7 @@ export default function AccountsPage() {
         </div>
       )}
 
-      {!isLoading && !error && data?.accounts.length === 0 && (
+      {!isLoading && !error && data?.length === 0 && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
           <svg
             className="w-12 h-12 mx-auto text-gray-400 mb-4"
@@ -182,40 +164,45 @@ export default function AccountsPage() {
         </div>
       )}
 
-      {!isLoading && !error && data && data.accounts.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600">
-            <div className="col-span-1">账号信息</div>
-            <div className="col-span-1 text-center">状态</div>
-            {/* <div className="col-span-1 text-center">IM</div> */}
-            <div className="col-span-1 text-center">商品数量</div>
-            <div className="col-span-1 text-center">自动免拼</div>
-            <div className="col-span-1 text-center">自动发货</div>
-            <div className="col-span-1 text-center">自动回复</div>
-            <div className="col-span-1 text-center">AI回复</div>
-            <div className="col-span-1 text-center">自动评价</div>
-            <div className="col-span-1 text-center">自动通知</div>
-            <div className="col-span-1 text-center">AI提示词</div>
-            <div className="col-span-1 text-center">默认回复</div>
-            <div className="col-span-1 text-center">重新登录</div>
+      {!isLoading && !error && data && data.length > 0 && (
+        isMobile ? (
+          <div className="space-y-3">
+            {data.map((account) => (
+              <AccountCard
+                key={account.uid}
+                account={account}
+                onRelogin={(uid) => setReloginUid(uid)}
+              />
+            ))}
           </div>
+        ) : (
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600">
+              <div className="col-span-1">账号信息</div>
+              <div className="col-span-1 text-center">状态</div>
+              {/* <div className="col-span-1 text-center">IM</div> */}
+              <div className="col-span-1 text-center">商品数量</div>
+              <div className="col-span-1 text-center">自动免拼</div>
+              <div className="col-span-1 text-center">自动发货</div>
+              <div className="col-span-1 text-center">自动回复</div>
+              <div className="col-span-1 text-center">AI回复</div>
+              <div className="col-span-1 text-center">自动评价</div>
+              <div className="col-span-1 text-center">自动通知</div>
+              <div className="col-span-1 text-center">AI提示词</div>
+              <div className="col-span-1 text-center">默认回复</div>
+              <div className="col-span-1 text-center">重新登录</div>
+            </div>
 
-          {data.accounts.map((account, index) => (
-            <AccountRow
-              key={account.uid}
-              account={account}
-              index={index}
-              onRelogin={(uid) => setReloginUid(uid)}
-            />
-          ))}
-        </div>
-      )}
-
-      {showAddForm && (
-        <AccountForm
-          onClose={handleFormClose}
-          onSuccess={handleFormSuccess}
-        />
+            {data.map((account, index) => (
+              <AccountRow
+                key={account.uid}
+                account={account}
+                index={index}
+                onRelogin={(uid) => setReloginUid(uid)}
+              />
+            ))}
+          </div>
+        )
       )}
 
       <QrLoginModal

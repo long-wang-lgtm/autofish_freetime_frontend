@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Account, startAccountIm, stopAccountIm, updateAccount } from "@/lib/api/accounts"
+import { Account, updateAccount } from "@/lib/api/accounts"
 import { useQueryClient } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
@@ -172,36 +172,6 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
     }
   }
 
-  const handleStart = async () => {
-    setLoading("start")
-    try {
-      const result = await startAccountIm(account.uid)
-      if (result.im_running) {
-        addToast({ title: "启动成功", description: `账号 ${account.name} IM服务已启动` })
-      } else {
-        addToast({ title: "启动中", description: result.message })
-      }
-      queryClient.invalidateQueries({ queryKey: ["accounts"] })
-    } catch (e) {
-      addToast({ title: "启动失败", description: String(e), variant: "error" })
-    } finally {
-      setLoading(null)
-    }
-  }
-
-  const handleStop = async () => {
-    setLoading("stop")
-    try {
-      const result = await stopAccountIm(account.uid)
-      addToast({ title: "已停止", description: result.message })
-      queryClient.invalidateQueries({ queryKey: ["accounts"] })
-    } catch (e) {
-      addToast({ title: "停止失败", description: String(e), variant: "error" })
-    } finally {
-      setLoading(null)
-    }
-  }
-
   const handleSaveConfig = async (value: string) => {
     try {
       await updateAccount(account.uid, { [configField as string]: value })
@@ -264,27 +234,6 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
             {loading === "status" ? <LoadingSpinner size="sm" /> : statusLabels[account.status]}
           </button>
         </div>
-
-        {/* IM控制 */}
-        {/* <div className="col-span-1 flex items-center justify-center">
-          {!account.im_running ? (
-            <button
-              onClick={handleStart}
-              disabled={loading === "start"}
-              className="px-2 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors disabled:opacity-50"
-            >
-              {loading === "start" ? <LoadingSpinner size="sm" /> : "启动"}
-            </button>
-          ) : (
-            <button
-              onClick={handleStop}
-              disabled={loading === "stop"}
-              className="px-2 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50"
-            >
-              {loading === "stop" ? <LoadingSpinner size="sm" /> : "停止"}
-            </button>
-          )}
-        </div> */}
 
         {/* 商品数量 */}
         <div className="col-span-1 text-center">
