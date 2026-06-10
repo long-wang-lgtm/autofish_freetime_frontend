@@ -388,6 +388,7 @@ export default function ItemsPage() {
               <div className="col-span-1 text-center">评价后赠送</div>
               <div className="col-span-1 text-center">关键词回复</div>
               <div className="col-span-1 text-center">AI提示词</div>
+              {/* <div className="col-span-1 text-center">自动上架</div> */}
               <div className="col-span-1 text-center">指令码</div>
             </div>
 
@@ -516,7 +517,7 @@ function ConfigModal({
             </div>
             <div className="flex items-center gap-4 text-xs text-gray-500">
               <span>ID: {item.gid}</span>
-              <span>账号: {item.account_name || item.uid}</span>
+              <span>账号: {item.account.name}</span>
               <span>价格: ¥{item.price}</span>
             </div>
           </div>
@@ -693,7 +694,7 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
           <div className="flex items-center gap-1 mt-0.5 text-gray-400 truncate text-[11px]">
             <span title={item.gid} className="min-w-[85px]">{item.gid}</span>
             <span className="text-gray-300">|</span>
-            <span title={item.uid} className="truncate">{item.account_name || item.uid}</span>
+            <span title={item.account.uid} className="truncate">{item.account.name}</span>
           </div>
         </div>
 

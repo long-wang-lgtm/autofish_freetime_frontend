@@ -7,8 +7,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
 
 export interface Item {
   gid: string
-  uid: string
-  account_name: string
+  account: {
+    uid: string
+    name: string
+    isPro: boolean
+  }
   title: string
   description: string
   remark: string

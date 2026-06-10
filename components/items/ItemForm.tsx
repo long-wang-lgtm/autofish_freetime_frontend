@@ -126,7 +126,7 @@ export function ItemForm({ item, onClose, onSuccess }: ItemFormProps) {
               </div>
               <div>
                 <span className="text-gray-500">账号ID:</span>
-                <span className="ml-2">{item.uid}</span>
+                <span className="ml-2">{item.account.uid}</span>
               </div>
               <div>
                 <span className="text-gray-500">价格:</span>
