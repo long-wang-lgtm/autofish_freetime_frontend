@@ -229,7 +229,7 @@ export default function ItemsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col min-h-0 h-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">商品管理</h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -338,7 +338,7 @@ export default function ItemsPage() {
       </div>
 
       {/* 表格 */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <LoadingSpinner size="lg" />
@@ -359,7 +359,7 @@ export default function ItemsPage() {
         )}
 
         {!isLoading && !error && data && data.length > 0 && (
-          <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 380px)", minHeight: "200px" }}>
+          <div className="flex-1 overflow-auto" style={{ minHeight: "200px" }}>
             {/* 表头 - 固定 */}
             <div className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600" style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}>
               <div className="col-span-2">
