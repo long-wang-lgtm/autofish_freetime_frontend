@@ -30,6 +30,7 @@ export interface Item {
   createTime: string | null
   publishTime: string | null
   sendCode: string | null
+  auto_restock: boolean
 }
 
 export interface ItemListResponse {
@@ -102,7 +103,7 @@ async function fetchApi<T>(
   return response.json()
 }
 
-export async function listItems(filters?: ItemFilters): Promise<ItemListResponse> {
+export async function listItems(filters?: ItemFilters): Promise<Item[]> {
   const params = new URLSearchParams()
   if (filters?.uid) params.append("uid", filters.uid)
   if (filters?.status !== undefined) params.append("status", String(filters.status))
@@ -110,7 +111,7 @@ export async function listItems(filters?: ItemFilters): Promise<ItemListResponse
   if (filters?.gid) params.append("gid", filters.gid)
 
   const query = params.toString()
-  return fetchApi<ItemListResponse>(`/api/items${query ? `?${query}` : ""}`)
+  return fetchApi<Item[]>(`/api/items${query ? `?${query}` : ""}`)
 }
 
 export async function getItem(gid: string): Promise<Item> {

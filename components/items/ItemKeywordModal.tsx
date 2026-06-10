@@ -83,16 +83,16 @@ export function ItemKeywordModal({ item, onClose }: ItemKeywordModalProps) {
 
   // 商品选择器过滤
   const filteredPickerItems = useMemo(() => {
-    if (!allItemsData?.items) return []
-    if (!itemPickerSearch.trim()) return allItemsData.items
+    if (!allItemsData) return []
+    if (!itemPickerSearch.trim()) return allItemsData
     const search = itemPickerSearch.toLowerCase()
-    return allItemsData.items.filter(
+    return allItemsData.filter(
       (i) =>
         i.gid.toLowerCase().includes(search) ||
         (i.title && i.title.toLowerCase().includes(search)) ||
         (i.description && i.description.toLowerCase().includes(search))
     )
-  }, [allItemsData?.items, itemPickerSearch])
+  }, [allItemsData, itemPickerSearch])
 
   const {
     register,

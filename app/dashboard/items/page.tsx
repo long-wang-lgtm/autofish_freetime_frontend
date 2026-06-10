@@ -192,10 +192,10 @@ export default function ItemsPage() {
 
   // 排序后的数据
   const sortedItems = useMemo(() => {
-    if (!sortField || !sortDirection || !data?.items) {
-      return data?.items || []
+    if (!sortField || !sortDirection || !data) {
+      return data || []
     }
-    return [...data.items].sort((a, b) => {
+    return [...data].sort((a, b) => {
       let aVal: any = a[sortField]
       let bVal: any = b[sortField]
 
@@ -217,15 +217,15 @@ export default function ItemsPage() {
       if (aVal > bVal) return sortDirection === "asc" ? 1 : -1
       return 0
     })
-  }, [data?.items, sortField, sortDirection])
+  }, [data, sortField, sortDirection])
 
   const stats = {
-    total: data?.items.length || 0,
-    onSale: data?.items.filter(i => i.status === 0).length || 0,
-    offSale: data?.items.filter(i => i.status === 1).length || 0,
-    sold: data?.items.filter(i => i.status === -2).length || 0,
-    autoReply: data?.items.filter(i => i.auto_reply).length || 0,
-    autoDelivery: data?.items.filter(i => i.auto_delivery).length || 0,
+    total: data?.length || 0,
+    onSale: data?.filter(i => i.status === 0).length || 0,
+    offSale: data?.filter(i => i.status === 1).length || 0,
+    sold: data?.filter(i => i.status === -2).length || 0,
+    autoReply: data?.filter(i => i.auto_reply).length || 0,
+    autoDelivery: data?.filter(i => i.auto_delivery).length || 0,
   }
 
   return (
@@ -351,14 +351,14 @@ export default function ItemsPage() {
           </div>
         )}
 
-        {!isLoading && !error && data && data.items.length === 0 && (
+        {!isLoading && !error && data && data.length === 0 && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center m-4">
             <h3 className="text-lg font-medium text-gray-900 mb-1">暂无商品</h3>
             <p className="text-sm text-gray-500">没有找到符合条件的商品</p>
           </div>
         )}
 
-        {!isLoading && !error && data && data.items.length > 0 && (
+        {!isLoading && !error && data && data.length > 0 && (
           <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 380px)", minHeight: "200px" }}>
             {/* 表头 - 固定 */}
             <div className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
