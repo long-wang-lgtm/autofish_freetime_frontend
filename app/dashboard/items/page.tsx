@@ -307,36 +307,6 @@ export default function ItemsPage() {
         </div>
       </div>
 
-      {/* 统计信息 */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-        <div className="grid grid-cols-6 gap-3">
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-            <div className="text-xs text-gray-500">商品总数</div>
-          </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <div className="text-2xl font-bold text-green-600">{stats.onSale}</div>
-            <div className="text-xs text-gray-500">在售</div>
-          </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <div className="text-2xl font-bold text-gray-600">{stats.offSale}</div>
-            <div className="text-xs text-gray-500">已下架</div>
-          </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <div className="text-2xl font-bold text-orange-600">{stats.sold}</div>
-            <div className="text-xs text-gray-500">已售出</div>
-          </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <div className="text-2xl font-bold text-blue-600">{stats.autoReply}</div>
-            <div className="text-xs text-gray-500">自动回复</div>
-          </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <div className="text-2xl font-bold text-purple-600">{stats.autoDelivery}</div>
-            <div className="text-xs text-gray-500">自动发货</div>
-          </div>
-        </div>
-      </div>
-
       {/* 表格 */}
       <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         {isLoading && (
@@ -820,7 +790,7 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
             }`}
             title={
               item.account.isPro && !item.auto_restock
-                ? "Pro账号无法再次开启自动上架"
+                ? "Pro账号无法开启自动上架"
                 : item.auto_restock
                 ? "自动上架：开"
                 : "自动上架：关"
