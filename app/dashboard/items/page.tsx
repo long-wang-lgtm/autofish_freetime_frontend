@@ -9,7 +9,7 @@ import { ItemKeywordModal } from "@/components/items/ItemKeywordModal"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
 import { listKeywordRules } from "@/lib/api/keywords"
-import { MessageCircle, Bot, Truck, RefreshCw } from "lucide-react"
+import { MessageCircle, Bot, Truck, RefreshCw, Upload } from "lucide-react"
 import { useDebounce } from "@/hooks/useDebounce"
 
 function formatPublishTime(timestamp: string | null): string {
@@ -162,7 +162,7 @@ export default function ItemsPage() {
     },
   })
 
-  const handleToggle = (item: Item, field: "auto_reply" | "auto_delivery" | "auto_ai_reply") => {
+  const handleToggle = (item: Item, field: "auto_reply" | "auto_delivery" | "auto_ai_reply" | "auto_restock") => {
     updateMutation.mutate({
       gid: item.gid,
       data: { [field]: !item[field] },
@@ -361,7 +361,7 @@ export default function ItemsPage() {
         {!isLoading && !error && data && data.length > 0 && (
           <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 380px)", minHeight: "200px" }}>
             {/* 表头 - 固定 */}
-            <div className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
+            <div className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600" style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}>
               <div className="col-span-2">
                 <button className="flex items-center gap-1 hover:text-blue-600" onClick={() => handleSort("title")}>
                   商品信息
@@ -388,7 +388,7 @@ export default function ItemsPage() {
               <div className="col-span-1 text-center">评价后赠送</div>
               <div className="col-span-1 text-center">关键词回复</div>
               <div className="col-span-1 text-center">AI提示词</div>
-              {/* <div className="col-span-1 text-center">自动上架</div> */}
+              <div className="col-span-1 text-center">自动上架</div>
               <div className="col-span-1 text-center">指令码</div>
             </div>
 
@@ -434,7 +434,7 @@ type ConfigField = "deliveryContent" | "receiptAfter" | "positiveReviewAfter" | 
 interface ItemRowProps {
   item: Item
   isEven: boolean
-  onToggle: (item: Item, field: "auto_reply" | "auto_delivery" | "auto_ai_reply") => void
+  onToggle: (item: Item, field: "auto_reply" | "auto_delivery" | "auto_ai_reply" | "auto_restock") => void
   onEdit: () => void
   onKeywordClick: () => void
   keywordCount: number
@@ -680,7 +680,7 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
         className={`grid gap-2 px-4 py-2 items-center text-xs border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-colors ${
           isEven ? "bg-white" : "bg-gray-50/30"
         }`}
-        style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}
+        style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}
       >
         {/* 商品信息 */}
         <div className="col-span-2 min-w-0">
@@ -801,6 +801,33 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
             value={item.ai_reply_item_prompt}
             onClick={() => setConfigField("ai_reply_item_prompt")}
           />
+        </div>
+
+        {/* 自动上架 */}
+        <div className="col-span-1 flex items-center justify-center">
+          <button
+            onClick={() => {
+              if (item.account.isPro && !item.auto_restock) return
+              onToggle(item, "auto_restock")
+            }}
+            disabled={item.account.isPro && !item.auto_restock}
+            className={`p-1.5 rounded transition-colors ${
+              item.auto_restock
+                ? "text-teal-500 bg-teal-50"
+                : item.account.isPro
+                ? "text-gray-300 bg-gray-100 cursor-not-allowed"
+                : "text-gray-300 bg-gray-100"
+            }`}
+            title={
+              item.account.isPro && !item.auto_restock
+                ? "Pro账号无法再次开启自动上架"
+                : item.auto_restock
+                ? "自动上架：开"
+                : "自动上架：关"
+            }
+          >
+             <Upload className="w-4 h-4" />
+          </button>
         </div>
 
         {/* 指令码 */}
