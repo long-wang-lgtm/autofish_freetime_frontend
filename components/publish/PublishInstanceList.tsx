@@ -13,9 +13,9 @@ import {
   triggerPublish,
   getChannelCategories,
   imageDisplayUrl,
-  uploadImage,
   sortImages,
 } from '@/lib/api/publish-items'
+import { uploadFileToFlare } from '@/lib/api/upload'
 import { CreationProgressBar } from './CreationProgressBar'
 import { ImageLightbox } from './ImageLightbox'
 
@@ -81,23 +81,25 @@ export function PublishInstanceList({
     }
   }
 
-  // 图片上传处理（多图并发）
+  // 图片上传处理（多图并发，R2 直传）
   const handleImageUpload = useCallback(async (itemId: number, files: FileList | null) => {
     if (!files?.length) return
     const cached = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
     const item = cached?.items.find(i => i.id === itemId)
-    if ((item?.images || []).length + files.length > 8) {
+    if (!item) return
+    if ((item.images || []).length + files.length > 8) {
       window.alert('最多8张附加图片')
       return
     }
 
     setUploadingItemIds(prev => new Set(prev).add(itemId))
     const fileArray = Array.from(files)
-    // 并发上传所有图片，每张完成后独立更新缓存
+
+    // 并发上传所有图片到 R2，每张完成后独立更新缓存
     await Promise.all(
       fileArray.map(async (file) => {
         try {
-          const uploaded = await uploadImage(itemId, file)
+          const uploaded = await uploadFileToFlare(file, item.account_id)
           queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
             if (!old) return old
             return {
