@@ -27,6 +27,7 @@ export interface AccountByUserItem {
 export interface DashboardData {
   stats: DashboardStats
   registration_trend: TrendItem[]
+  account_registration_trend: TrendItem[]
   account_by_user: AccountByUserItem[]
 }
 

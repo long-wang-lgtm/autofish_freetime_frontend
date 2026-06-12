@@ -242,6 +242,48 @@ export default function AdminPage() {
     }
   }, [dashboard])
 
+  // --- 账号注册趋势图配置 ---
+  const accountTrendOption = useMemo<echarts.EChartsOption | null>(() => {
+    if (!dashboard?.account_registration_trend) return null
+    return {
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: unknown) => {
+          const p = (params as { data: number[]; axisValue: string }[])[0]
+          return `<div class="text-sm">${p.axisValue}<br/><strong>新增 ${p.data[0]} 个账号</strong></div>`
+        },
+      },
+      grid: { left: 40, right: 16, top: 16, bottom: 24 },
+      xAxis: {
+        type: 'category',
+        data: dashboard.account_registration_trend.map((t) => t.date.slice(5)),
+        axisLabel: { fontSize: 11, color: '#9ca3af' },
+        axisTick: { show: false },
+      },
+      yAxis: {
+        type: 'value',
+        minInterval: 1,
+        axisLabel: { fontSize: 11, color: '#9ca3af' },
+        splitLine: { lineStyle: { color: '#f3f4f6' } },
+      },
+      series: [
+        {
+          type: 'line',
+          data: dashboard.account_registration_trend.map((t) => t.count),
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 4,
+          lineStyle: { color: '#91CC75', width: 2 },
+          itemStyle: { color: '#91CC75' },
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(145,204,117,0.2)' },
+            { offset: 1, color: 'rgba(145,204,117,0.02)' },
+          ])},
+        },
+      ],
+    }
+  }, [dashboard])
+
   // --- 账号分布饼图配置 ---
   const pieOption = useMemo<echarts.EChartsOption | null>(() => {
     if (!dashboard) return null
@@ -293,6 +335,7 @@ export default function AdminPage() {
 
   // --- ECharts refs ---
   const trendRef = useChart<HTMLDivElement>(trendOption, [trendOption])
+  const accountTrendRef = useChart<HTMLDivElement>(accountTrendOption, [accountTrendOption])
   const pieRef = useChart<HTMLDivElement>(pieOption, [pieOption])
 
   // --- 账号颜色映射 ---
@@ -354,24 +397,30 @@ export default function AdminPage() {
         />
       </div>
 
-      {/* ===== 图表行 ===== */}
+      {/* ===== 趋势图行 ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* 注册趋势 */}
+        {/* 用户注册趋势 */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">注册趋势（近30天）</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">用户注册趋势（近30天）</h3>
           <div ref={trendRef} className="w-full" style={{ height: 300 }} />
         </div>
-        {/* 账号归属分布 */}
+        {/* 账号注册趋势 */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">账号归属分布</h3>
-          {dashboard?.account_by_user.length === 0 ? (
-            <div className="flex items-center justify-center text-gray-400 text-sm" style={{ height: 300 }}>
-              暂无数据
-            </div>
-          ) : (
-            <div ref={pieRef} className="w-full" style={{ height: 300 }} />
-          )}
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">账号注册趋势（近30天）</h3>
+          <div ref={accountTrendRef} className="w-full" style={{ height: 300 }} />
         </div>
+      </div>
+
+      {/* ===== 账号分布 ===== */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">账号归属分布</h3>
+        {dashboard?.account_by_user.length === 0 ? (
+          <div className="flex items-center justify-center text-gray-400 text-sm" style={{ height: 300 }}>
+            暂无数据
+          </div>
+        ) : (
+          <div ref={pieRef} className="w-full max-w-xl mx-auto" style={{ height: 320 }} />
+        )}
       </div>
 
       {/* ===== 一级 Tab 栏（外置于卡片） ===== */}
