@@ -116,6 +116,14 @@ export function PublishInstanceList({
         }
       })
     )
+
+    // 全部上传完成后，同步图片顺序到后端
+    const updated = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
+    const updatedItem = updated?.items.find(i => i.id === itemId)
+    if (updatedItem?.images?.length) {
+      sortImages(itemId, updatedItem.images)
+    }
+
     setUploadingItemIds(prev => {
       const next = new Set(prev)
       next.delete(itemId)
