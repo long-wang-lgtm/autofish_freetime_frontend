@@ -5,10 +5,9 @@ import { setTokens, clearTokens, getAccessToken, getRefreshToken } from '@/lib/u
 import { toast } from 'sonner'
 
 export interface User {
-  userId: string
   username: string
   email: string | null
-  role: 'admin' | 'user'
+  role: 'administrators' | 'user'
   last_login: string
 }
 
@@ -43,10 +42,9 @@ export const useAuth = create<AuthState>((set, get) => ({
       // 更新状态
       set({
         user: {
-          userId: user.user_id,
           username: user.username,
           email: user.email,
-          role: user.role as 'admin' | 'user',
+          role: user.role,
           last_login: user.last_login,
         },
         isAuthenticated: true,
@@ -133,10 +131,9 @@ export const useAuth = create<AuthState>((set, get) => ({
       const u = await authApi.getCurrentUser()
       set({
         user: {
-          userId: u.username, // 后端 /api/auth/me 无 user_id，用 username 代替
           username: u.username,
           email: null,
-          role: 'user',
+          role: u.role,
           last_login: u.last_login || '',
         },
         isAuthenticated: true,

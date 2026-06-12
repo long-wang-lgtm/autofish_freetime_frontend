@@ -26,10 +26,9 @@ export interface LoginResponse {
     token_type: string
     expires_in: number
     user: {
-      user_id: string
       username: string
       email: string | null
-      role: string
+      role: 'user' | 'administrators'
       last_login: string
     }
   }
@@ -52,6 +51,7 @@ export interface UserInfo {
   username: string
   last_login: string
   is_active: boolean
+  role: 'user' | 'administrators'
 }
 
 /** /api/auth/me 完整响应 */
