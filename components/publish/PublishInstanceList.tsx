@@ -87,8 +87,8 @@ export function PublishInstanceList({
     const cached = queryClient.getQueryData<{ items: PublishedItem[] }>(['published-items', opportunityId])
     const item = cached?.items.find(i => i.id === itemId)
     if (!item) return
-    if ((item.images || []).length + files.length > 8) {
-      window.alert('最多8张附加图片')
+    if ((item.images || []).length + files.length > 9) {
+      window.alert('最多9张附加图片')
       return
     }
 
