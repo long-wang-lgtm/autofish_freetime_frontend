@@ -5,9 +5,11 @@ import * as echarts from 'echarts'
 import { useAuth } from '@/stores/auth.store'
 import {
   adminApi,
+  subscribeImStatus,
   type DashboardData,
   type AdminUserInfo,
   type AdminAccountInfo,
+  type ImStatusSnapshot,
 } from '@/lib/api/administrators'
 
 // ===== 常量 =====
@@ -155,6 +157,16 @@ export default function AdminPage() {
   const [accountTotal, setAccountTotal] = useState(0)
   const [accountPage, setAccountPage] = useState(1)
   const [accountLoading, setAccountLoading] = useState(false)
+
+  // --- IM 状态监控 ---
+  const [imSnapshots, setImSnapshots] = useState<ImStatusSnapshot[]>([])
+
+  useEffect(() => {
+    const abort = subscribeImStatus(
+      (snapshot) => setImSnapshots((prev) => [...prev.slice(-99), snapshot]),
+    )
+    return abort
+  }, [])
 
   // --- 初始化 dashboard ---
   useEffect(() => {
@@ -375,10 +387,106 @@ export default function AdminPage() {
     }
   }, [dashboard])
 
+  // --- IM 状态趋势图配置 ---
+  const imStatusOption = useMemo<echarts.EChartsOption | null>(() => {
+    if (imSnapshots.length === 0) return null
+    const formatTime = (ts: number) => {
+      const d = new Date(ts * 1000)
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    }
+    return {
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: unknown) => {
+          const items = params as { seriesName: string; value: number; color: string; dataIndex: number }[]
+          if (!items.length) return ''
+          const ts = imSnapshots[items[0].dataIndex]?.timestamp
+          const timeStr = ts ? new Date(ts * 1000).toLocaleString('zh-CN', {
+            month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+          }) : ''
+          let html = `<div style="font-size:13px;line-height:1.6">`
+          html += `<div style="font-weight:600;color:#1f2937;margin-bottom:4px">${timeStr}</div>`
+          for (const item of items) {
+            html += `<div style="color:#6b7280"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${item.color};margin-right:6px"></span>${item.seriesName}: <b style="color:#1f2937">${item.value}</b></div>`
+          }
+          html += `</div>`
+          return html
+        },
+      },
+      grid: { left: 48, right: 24, top: 16, bottom: 32 },
+      xAxis: {
+        type: 'category',
+        data: imSnapshots.map((s) => formatTime(s.timestamp)),
+        axisLabel: { fontSize: 11, color: '#9ca3af', margin: 8 },
+        axisTick: { show: false },
+      },
+      yAxis: {
+        type: 'value',
+        minInterval: 1,
+        axisLabel: { fontSize: 11, color: '#9ca3af', margin: 8 },
+        splitLine: { lineStyle: { color: '#f3f4f6' } },
+      },
+      series: [
+        {
+          name: '总账号',
+          type: 'line',
+          data: imSnapshots.map((s) => s.total_accounts),
+          smooth: true,
+          symbol: 'none',
+          lineStyle: { color: '#9ca3af', type: 'dashed', width: 1.5 },
+          itemStyle: { color: '#9ca3af' },
+        },
+        {
+          name: '正常状态',
+          type: 'line',
+          data: imSnapshots.map((s) => s.active_accounts),
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 3,
+          lineStyle: { color: '#22c55e', width: 2 },
+          itemStyle: { color: '#22c55e' },
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(34,197,94,0.15)' },
+            { offset: 1, color: 'rgba(34,197,94,0.02)' },
+          ])},
+        },
+        {
+          name: '运行中',
+          type: 'line',
+          data: imSnapshots.map((s) => s.running_accounts),
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 3,
+          lineStyle: { color: '#5470C6', width: 2 },
+          itemStyle: { color: '#5470C6' },
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(84,112,198,0.15)' },
+            { offset: 1, color: 'rgba(84,112,198,0.02)' },
+          ])},
+        },
+        {
+          name: '任务正常',
+          type: 'line',
+          data: imSnapshots.map((s) => s.running_tasks),
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 3,
+          lineStyle: { color: '#f97316', width: 2 },
+          itemStyle: { color: '#f97316' },
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(249,115,22,0.15)' },
+            { offset: 1, color: 'rgba(249,115,22,0.02)' },
+          ])},
+        },
+      ],
+    }
+  }, [imSnapshots])
+
   // --- ECharts refs ---
   const trendRef = useChart<HTMLDivElement>(trendOption, [trendOption])
   const accountTrendRef = useChart<HTMLDivElement>(accountTrendOption, [accountTrendOption])
   const pieRef = useChart<HTMLDivElement>(pieOption, [pieOption])
+  const imStatusRef = useChart<HTMLDivElement>(imStatusOption, [imStatusOption])
 
   // --- 账号颜色映射 ---
   const userColorMap = useMemo(() => {
@@ -467,6 +575,14 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* ===== IM 服务运行状态趋势图 ===== */}
+      {imSnapshots.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">IM 服务运行状态</h3>
+          <div ref={imStatusRef} className="w-full" style={{ height: 280 }} />
+        </div>
+      )}
 
       {/* ===== 一级 Tab 栏（外置于卡片） ===== */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">

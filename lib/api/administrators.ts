@@ -91,6 +91,78 @@ async function authFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json()
 }
 
+// ===== IM 状态监控 SSE =====
+
+export interface ImStatusSnapshot {
+  timestamp: number        // Unix时间戳（秒）
+  total_accounts: number   // 总账号数
+  active_accounts: number  // 正常状态的账号数 (status == 1)
+  running_accounts: number // 正常运行的账号数 (im.is_connected)
+  running_tasks: number    // 任务正常数 (im task not done)
+}
+
+/**
+ * 订阅 IM 服务运行状态 SSE 推送
+ * @returns abort 函数，调用后取消连接
+ */
+export function subscribeImStatus(
+  onSnapshot: (snapshot: ImStatusSnapshot) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  const token = getAccessToken()
+  if (!token) {
+    onError?.(new Error('未找到访问令牌'))
+    return () => {}
+  }
+
+  const controller = new AbortController()
+
+  fetch(`${API_BASE_URL}/api/administrators/im-status-stream`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    signal: controller.signal,
+  })
+    .then(async (res) => {
+      if (!res.ok) {
+        // 404 等静默忽略，不报错
+        if (res.status !== 404) {
+          onError?.(new Error(`SSE 连接失败: ${res.status}`))
+        }
+        return
+      }
+      const reader = res.body?.getReader()
+      if (!reader) return
+      const decoder = new TextDecoder()
+      let buffer = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        // SSE 格式: "data: {...}\n\n"
+        const lines = buffer.split('\n\n')
+        buffer = lines.pop() || ''
+        for (const line of lines) {
+          const dataLine = line.trim()
+          if (!dataLine.startsWith('data: ')) continue
+          try {
+            const json = JSON.parse(dataLine.slice(6))
+            onSnapshot(json as ImStatusSnapshot)
+          } catch {
+            // 跳过解析失败的行
+          }
+        }
+      }
+    })
+    .catch((err) => {
+      if ((err as Error).name !== 'AbortError') {
+        onError?.(err as Error)
+      }
+    })
+
+  return () => controller.abort()
+}
+
 export const adminApi = {
   /** 获取仪表盘聚合数据 */
   getDashboard: () =>
