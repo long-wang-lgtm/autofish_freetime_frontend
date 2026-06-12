@@ -207,8 +207,25 @@ export default function AdminPage() {
       tooltip: {
         trigger: 'axis',
         formatter: (params: unknown) => {
-          const p = (params as { data: number[]; axisValue: string }[])[0]
-          return `<div class="text-sm">${p.axisValue}<br/><strong>新增 ${p.data} 人</strong></div>`
+          const items = params as { axisValue: string; data: { value: number; users: string[] } }[]
+          if (!items.length) return ''
+          const p = items[0]
+          const { users } = p.data
+          const [m, d] = p.axisValue.split('-')
+          const dateStr = `${parseInt(m)}月${parseInt(d)}日`
+          let html = `<div style="font-size:13px;line-height:1.6">`
+          html += `<div style="font-weight:600;color:#1f2937;margin-bottom:4px">${dateStr}</div>`
+          html += `<div style="color:#6b7280">新增 <b style="color:#1f2937">${p.data.value}</b> 位用户</div>`
+          if (users.length > 0) {
+            const shown = users.slice(0, 10)
+            const more = users.length > 10 ? ' 等' : ''
+            html += `<div style="border-top:1px solid #f3f4f6;margin-top:6px;padding-top:4px;font-size:12px">`
+            html += `<span style="color:#9ca3af">包括 </span>`
+            html += `<span style="color:#6b7280">${shown.join('、')}${more}</span>`
+            html += `</div>`
+          }
+          html += `</div>`
+          return html
         },
       },
       grid: { left: 40, right: 16, top: 16, bottom: 32 },
@@ -227,7 +244,7 @@ export default function AdminPage() {
       series: [
         {
           type: 'line',
-          data: dashboard.registration_trend.map((t) => t.count),
+          data: dashboard.registration_trend.map((t) => ({ value: t.count, users: t.users })),
           smooth: true,
           symbol: 'circle',
           symbolSize: 4,
@@ -249,8 +266,25 @@ export default function AdminPage() {
       tooltip: {
         trigger: 'axis',
         formatter: (params: unknown) => {
-          const p = (params as { data: number[]; axisValue: string }[])[0]
-          return `<div class="text-sm">${p.axisValue}<br/><strong>新增 ${p.data} 个账号</strong></div>`
+          const items = params as { axisValue: string; data: { value: number; users: string[] } }[]
+          if (!items.length) return ''
+          const p = items[0]
+          const { users } = p.data
+          const [m, d] = p.axisValue.split('-')
+          const dateStr = `${parseInt(m)}月${parseInt(d)}日`
+          let html = `<div style="font-size:13px;line-height:1.6">`
+          html += `<div style="font-weight:600;color:#1f2937;margin-bottom:4px">${dateStr}</div>`
+          html += `<div style="color:#6b7280">新增 <b style="color:#1f2937">${p.data.value}</b> 个账号</div>`
+          if (users.length > 0) {
+            const shown = users.slice(0, 10)
+            const more = users.length > 10 ? ' 等' : ''
+            html += `<div style="border-top:1px solid #f3f4f6;margin-top:6px;padding-top:4px;font-size:12px">`
+            html += `<span style="color:#9ca3af">归属 </span>`
+            html += `<span style="color:#6b7280">${shown.join('、')}${more}</span>`
+            html += `</div>`
+          }
+          html += `</div>`
+          return html
         },
       },
       grid: { left: 40, right: 16, top: 16, bottom: 32 },
@@ -269,7 +303,7 @@ export default function AdminPage() {
       series: [
         {
           type: 'line',
-          data: dashboard.account_registration_trend.map((t) => t.count),
+          data: dashboard.account_registration_trend.map((t) => ({ value: t.count, users: t.users })),
           smooth: true,
           symbol: 'circle',
           symbolSize: 4,

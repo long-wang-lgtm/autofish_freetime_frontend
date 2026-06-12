@@ -16,6 +16,7 @@ export interface DashboardStats {
 export interface TrendItem {
   date: string
   count: number
+  users: string[]
 }
 
 export interface AccountByUserItem {
