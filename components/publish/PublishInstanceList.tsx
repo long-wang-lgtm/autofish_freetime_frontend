@@ -36,7 +36,7 @@ function getStatusLabel(item: PublishedItem): { label: string; color: string } {
 interface PublishInstanceListProps {
   opportunityId: number
   accounts: { uid: string; name: string }[]
-  onEditItem: (item: PublishedItem) => void
+  onEditItem: (item: PublishedItem | null) => void
   selectedItemId?: number
 }
 
@@ -50,7 +50,6 @@ export function PublishInstanceList({
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [form, setForm] = useState<Partial<PublishedItem>>({})
-  const [editingField, setEditingField] = useState<{ itemId: number; field: 'description' | 'cover_plan_prompt' } | null>(null)
   const [channelCategories, setChannelCategories] = useState<Record<number, ChannelCategory[]>>({})
   const fetchedChannelRef = useRef<Set<number>>(new Set())
   const sortTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -289,7 +288,7 @@ export function PublishInstanceList({
         if (!old) return old
         return { ...old, items: old.items.filter((i: PublishedItem) => i.id !== itemId) }
       })
-      if (selectedItemId === itemId) onEditItem(null as any)
+      if (selectedItemId === itemId) onEditItem(null)
     },
   })
 
@@ -317,24 +316,9 @@ export function PublishInstanceList({
   const initForm = (item: PublishedItem) => {
     setForm({
       id: item.id,
-      description: item.description,
-      cover_plan_prompt: item.cover_plan_prompt,
       price: item.price,
       account_id: item.account_id,
       category: item.category,
-    })
-  }
-
-  const saveField = (itemId: number, field: 'description' | 'cover_plan_prompt') => {
-    const data: Partial<PublishedItem> = {}
-    if (field === 'description') data.description = form.description
-    if (field === 'cover_plan_prompt') data.cover_plan_prompt = form.cover_plan_prompt
-    if (Object.keys(data).length === 0) return
-    updatePublishedItem(itemId, data).then(updated => {
-      queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
-        if (!old) return old
-        return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
-      })
     })
   }
 
@@ -406,7 +390,7 @@ export function PublishInstanceList({
           items.map(item => {
             const statusInfo = getStatusLabel(item)
             const isSelected = selectedItemId === item.id
-            const isEditing = form.id === item.id || editingField?.itemId === item.id
+            const isEditing = form.id === item.id
 
             return (
               <div
@@ -519,88 +503,34 @@ export function PublishInstanceList({
                   ) : null}
                 </div>
 
-                {/* 改写内容 — 双击进入编辑 */}
-                <div
-                  className="flex-1 min-w-[160px] flex items-center"
-                  onDoubleClick={e => {
-                    e.stopPropagation()
-                    initForm(item)
-                    setEditingField({ itemId: item.id, field: 'description' })
-                  }}
-                  title={item.description || '双击编辑改写内容'}
-                >
-                  {editingField?.itemId === item.id && editingField?.field === 'description' ? (
-                    <textarea
-                      value={form.description ?? ''}
-                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                      onClick={e => e.stopPropagation()}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') { e.preventDefault(); saveField(item.id, 'description'); setEditingField(null) }
-                      }}
-                      onBlur={e => {
-                        e.stopPropagation()
-                        saveField(item.id, 'description')
-                        setEditingField(null)
-                      }}
-                      className="w-full p-1 border border-blue-400 rounded text-xs resize-none"
-                      rows={3}
-                      autoFocus
-                    />
-                  ) : (
-                    <div
-                      className="w-full text-gray-700 leading-tight"
-                      style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {item.description || <span className="text-gray-300">（空）</span>}
-                    </div>
-                  )}
+                {/* 改写内容 — 只读，点击行在抽屉编辑 */}
+                <div className="flex-1 min-w-[160px] flex items-center">
+                  <div
+                    className="w-full text-gray-700 leading-tight"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {item.description || <span className="text-gray-300">（空）</span>}
+                  </div>
                 </div>
 
-                {/* 封面规划 — 双击进入编辑 */}
-                <div
-                  className="flex-1 min-w-[200px] flex items-center"
-                  onDoubleClick={e => {
-                    e.stopPropagation()
-                    initForm(item)
-                    setEditingField({ itemId: item.id, field: 'cover_plan_prompt' })
-                  }}
-                  title={item.cover_plan_prompt || '双击编辑封面规划'}
-                >
-                  {editingField?.itemId === item.id && editingField?.field === 'cover_plan_prompt' ? (
-                    <textarea
-                      value={form.cover_plan_prompt ?? ''}
-                      onChange={e => setForm(f => ({ ...f, cover_plan_prompt: e.target.value }))}
-                      onClick={e => e.stopPropagation()}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') { e.preventDefault(); saveField(item.id, 'cover_plan_prompt'); setEditingField(null) }
-                      }}
-                      onBlur={e => {
-                        e.stopPropagation()
-                        saveField(item.id, 'cover_plan_prompt')
-                        setEditingField(null)
-                      }}
-                      className="w-full p-1 border border-blue-400 rounded text-xs resize-none"
-                      rows={3}
-                      autoFocus
-                    />
-                  ) : (
-                    <div
-                      className="w-full text-gray-400 leading-tight"
-                      style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {item.cover_plan_prompt || <span className="text-gray-300">（空）</span>}
-                    </div>
-                  )}
+                {/* 封面规划 — 只读，点击行在抽屉编辑 */}
+                <div className="flex-1 min-w-[200px] flex items-center">
+                  <div
+                    className="w-full text-gray-400 leading-tight"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {item.cover_plan_prompt || <span className="text-gray-300">（空）</span>}
+                  </div>
                 </div>
 
                 {/* 价格 — 点击编辑 */}

@@ -5,61 +5,51 @@ import { type Opportunity } from '@/lib/api/opportunities'
 import { type PublishedItem } from '@/lib/api/publish-items'
 import { PublishInstanceList } from './PublishInstanceList'
 import { EditorPanel } from './EditorPanel'
-import { ResizableDivider } from './ResizableDivider'
 import { NewPublishedItemModal } from './NewPublishedItemModal'
-import { OpportunityDetailCard } from './OpportunityDetailCard'
-
-const DETAIL_DEFAULT_HEIGHT = 140
-const DETAIL_MIN_HEIGHT = 120
-const DETAIL_MAX_HEIGHT = 500
-const LIST_DEFAULT_HEIGHT = 300
-const LIST_MIN_HEIGHT = 150
-const LIST_MAX_HEIGHT = 600
+import { OpportunityHeader } from './OpportunityHeader'
 
 interface PublishWorkspaceProps {
   opportunity: Opportunity | null
   accounts: { uid: string; name: string }[]
   onRefreshOpportunities: () => void
+
+  // Desktop mode: 状态由父组件（page.tsx）管理
+  selectedItem?: PublishedItem | null
+  selectedItemId?: number
+  onSelectItem?: (item: PublishedItem | null) => void
+  onItemChange?: (item: PublishedItem) => void
 }
 
-export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities }: PublishWorkspaceProps) {
+export function PublishWorkspace({
+  opportunity,
+  accounts,
+  onRefreshOpportunities,
+  selectedItem: externalSelectedItem,
+  selectedItemId: externalSelectedItemId,
+  onSelectItem: externalOnSelectItem,
+  onItemChange: externalOnItemChange,
+}: PublishWorkspaceProps) {
   const queryClient = useQueryClient()
-  const [selectedItem, setSelectedItem] = useState<PublishedItem | null>(null)
-  const [detailHeight, setDetailHeight] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('publish_detail_height')
-      return stored ? parseInt(stored) : DETAIL_DEFAULT_HEIGHT
-    }
-    return DETAIL_DEFAULT_HEIGHT
-  })
-  const [listHeight, setListHeight] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('publish_list_height')
-      return stored ? parseInt(stored) : LIST_DEFAULT_HEIGHT
-    }
-    return LIST_DEFAULT_HEIGHT
-  })
+
+  // Mobile mode 内部状态（props 未传入时使用）
+  const [internalSelectedItem, setInternalSelectedItem] = useState<PublishedItem | null>(null)
   const [editorSaveStatus, setEditorSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [showNewItemModal, setShowNewItemModal] = useState(false)
 
-  const handleDetailHeightChange = useCallback((delta: number) => {
-    setDetailHeight(prev => {
-      const next = Math.max(DETAIL_MIN_HEIGHT, Math.min(DETAIL_MAX_HEIGHT, prev + delta))
-      localStorage.setItem('publish_detail_height', String(next))
-      return next
-    })
-  }, [])
+  const isDesktop = externalOnSelectItem !== undefined
+  const selectedItem = isDesktop ? (externalSelectedItem ?? null) : internalSelectedItem
+  const selectedItemId = isDesktop ? externalSelectedItemId : internalSelectedItem?.id
 
-  const handleListHeightChange = useCallback((delta: number) => {
-    setListHeight(prev => {
-      const next = Math.max(LIST_MIN_HEIGHT, Math.min(LIST_MAX_HEIGHT, prev + delta))
-      localStorage.setItem('publish_list_height', String(next))
-      return next
-    })
-  }, [])
+  const handleSelectItem = isDesktop
+    ? externalOnSelectItem!
+    : setInternalSelectedItem
 
   const handleItemChange = useCallback((updated: PublishedItem) => {
-    setSelectedItem(updated)
+    if (isDesktop && externalOnItemChange) {
+      externalOnItemChange(updated)
+      return
+    }
+    // Mobile: 内部更新
+    setInternalSelectedItem(updated)
     queryClient.setQueryData(['published-items', opportunity?.id], (old: any) => {
       if (!old) return old
       return {
@@ -69,7 +59,9 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
         ),
       }
     })
-  }, [queryClient, opportunity?.id])
+  }, [isDesktop, externalOnItemChange, queryClient, opportunity?.id])
+
+  const [showNewItemModal, setShowNewItemModal] = useState(false)
 
   if (!opportunity) {
     return (
@@ -84,59 +76,47 @@ export function PublishWorkspace({ opportunity, accounts, onRefreshOpportunities
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* 上部：商机详情卡片（可调高度） */}
-      <div style={{ height: detailHeight, flexShrink: 0 }} className="overflow-hidden border-b">
-        <OpportunityDetailCard
-          opportunity={opportunity}
-          accounts={accounts}
-          onRefreshOpportunities={onRefreshOpportunities}
-        />
-      </div>
-
-      {/* 可拖拽分隔线 */}
-      <ResizableDivider
-        direction="vertical"
-        onResize={handleDetailHeightChange}
+      {/* 商机头部 — 折叠/展开 */}
+      <OpportunityHeader
+        opportunity={opportunity}
+        accounts={accounts}
+        onRefreshOpportunities={onRefreshOpportunities}
       />
 
       {/* 操作按钮栏 */}
-      <div className="flex items-center gap-2 px-4 py-1.5 border-b bg-gray-50">
-        <span className="text-xs text-gray-400">
-          商机操作
-        </span>
+      <div className="flex items-center gap-2 px-4 py-2 border-b bg-gray-50 flex-shrink-0">
         <button
           onClick={() => setShowNewItemModal(true)}
-          className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-white text-gray-600 whitespace-nowrap"
+          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
         >
-          + 新增素材
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m-7-7h14" />
+          </svg>
+          新增素材
         </button>
       </div>
 
-      {/* 中部：发布素材列表（可调高度） */}
-      <div style={{ height: listHeight, flexShrink: 0 }} className="overflow-hidden border-b">
+      {/* 发布素材列表 — 填满剩余高度 */}
+      <div className="flex-1 min-h-0 overflow-hidden">
         <PublishInstanceList
           opportunityId={opportunity.id}
           accounts={accounts}
-          onEditItem={setSelectedItem}
-          selectedItemId={selectedItem?.id}
+          onEditItem={handleSelectItem}
+          selectedItemId={selectedItemId}
         />
       </div>
 
-      {/* 可拖拽分隔线 */}
-      <ResizableDivider
-        direction="vertical"
-        onResize={handleListHeightChange}
-      />
-
-      {/* 下部：编辑区 — 直接填满剩余空间 */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <EditorPanel
-          item={selectedItem}
-          accounts={accounts}
-          onSaveStatusChange={setEditorSaveStatus}
-          onItemChange={handleItemChange}
-        />
-      </div>
+      {/* Mobile mode 内嵌编辑器（desktop 时由外部 EditorDrawer 承担） */}
+      {!isDesktop && (
+        <div className="flex-1 min-h-0 overflow-hidden border-t">
+          <EditorPanel
+            item={selectedItem}
+            accounts={accounts}
+            onSaveStatusChange={setEditorSaveStatus}
+            onItemChange={handleItemChange}
+          />
+        </div>
+      )}
 
       {/* 新增发布素材弹窗 */}
       {showNewItemModal && (
