@@ -208,20 +208,20 @@ export default function AdminPage() {
         trigger: 'axis',
         formatter: (params: unknown) => {
           const p = (params as { data: number[]; axisValue: string }[])[0]
-          return `<div class="text-sm">${p.axisValue}<br/><strong>新增 ${p.data[0]} 人</strong></div>`
+          return `<div class="text-sm">${p.axisValue}<br/><strong>新增 ${p.data} 人</strong></div>`
         },
       },
-      grid: { left: 40, right: 16, top: 16, bottom: 24 },
+      grid: { left: 40, right: 16, top: 16, bottom: 32 },
       xAxis: {
         type: 'category',
         data: dashboard.registration_trend.map((t) => t.date.slice(5)),
-        axisLabel: { fontSize: 11, color: '#9ca3af' },
+        axisLabel: { fontSize: 11, color: '#9ca3af', margin: 8 },
         axisTick: { show: false },
       },
       yAxis: {
         type: 'value',
         minInterval: 1,
-        axisLabel: { fontSize: 11, color: '#9ca3af' },
+        axisLabel: { fontSize: 11, color: '#9ca3af', margin: 8 },
         splitLine: { lineStyle: { color: '#f3f4f6' } },
       },
       series: [
@@ -250,20 +250,20 @@ export default function AdminPage() {
         trigger: 'axis',
         formatter: (params: unknown) => {
           const p = (params as { data: number[]; axisValue: string }[])[0]
-          return `<div class="text-sm">${p.axisValue}<br/><strong>新增 ${p.data[0]} 个账号</strong></div>`
+          return `<div class="text-sm">${p.axisValue}<br/><strong>新增 ${p.data} 个账号</strong></div>`
         },
       },
-      grid: { left: 40, right: 16, top: 16, bottom: 24 },
+      grid: { left: 40, right: 16, top: 16, bottom: 32 },
       xAxis: {
         type: 'category',
         data: dashboard.account_registration_trend.map((t) => t.date.slice(5)),
-        axisLabel: { fontSize: 11, color: '#9ca3af' },
+        axisLabel: { fontSize: 11, color: '#9ca3af', margin: 8 },
         axisTick: { show: false },
       },
       yAxis: {
         type: 'value',
         minInterval: 1,
-        axisLabel: { fontSize: 11, color: '#9ca3af' },
+        axisLabel: { fontSize: 11, color: '#9ca3af', margin: 8 },
         splitLine: { lineStyle: { color: '#f3f4f6' } },
       },
       series: [
@@ -311,18 +311,26 @@ export default function AdminPage() {
         trigger: 'item',
         formatter: '{b}: {c} 个账号 ({d}%)',
       },
+      legend: {
+        type: 'scroll',
+        orient: 'horizontal',
+        bottom: 0,
+        itemWidth: 8,
+        itemHeight: 8,
+        textStyle: { fontSize: 10, color: '#6b7280' },
+      },
       series: [
         {
           type: 'pie',
-          radius: ['45%', '72%'],
-          center: ['50%', '50%'],
+          radius: ['42%', '70%'],
+          center: ['50%', '45%'],
           avoidLabelOverlap: true,
           label: {
+            position: 'inside',
             fontSize: 11,
-            color: '#6b7280',
-            formatter: '{b}\n{d}%',
+            color: '#fff',
+            formatter: '{c}',
           },
-          labelLine: { lineStyle: { color: '#d1d5db' } },
           itemStyle: {
             borderColor: '#fff',
             borderWidth: 2,
@@ -397,30 +405,33 @@ export default function AdminPage() {
         />
       </div>
 
-      {/* ===== 趋势图行 ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* 用户注册趋势 */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">用户注册趋势（近30天）</h3>
-          <div ref={trendRef} className="w-full" style={{ height: 300 }} />
+      {/* ===== 图表行：左饼图 + 中右趋势图 ===== */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* 账号分布饼图 — 方形，窄列 */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5 lg:w-72 lg:shrink-0">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">账号归属分布</h3>
+          {dashboard?.account_by_user.length === 0 ? (
+            <div className="flex items-center justify-center text-gray-400 text-sm aspect-square">
+              暂无数据
+            </div>
+          ) : (
+            <div ref={pieRef} className="w-full aspect-square" />
+          )}
         </div>
-        {/* 账号注册趋势 */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">账号注册趋势（近30天）</h3>
-          <div ref={accountTrendRef} className="w-full" style={{ height: 300 }} />
-        </div>
-      </div>
 
-      {/* ===== 账号分布 ===== */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">账号归属分布</h3>
-        {dashboard?.account_by_user.length === 0 ? (
-          <div className="flex items-center justify-center text-gray-400 text-sm" style={{ height: 300 }}>
-            暂无数据
+        {/* 两个趋势图 — 占据剩余空间 */}
+        <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* 用户注册趋势 */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">用户注册趋势（近30天）</h3>
+            <div ref={trendRef} className="w-full" style={{ height: 260 }} />
           </div>
-        ) : (
-          <div ref={pieRef} className="w-full max-w-xl mx-auto" style={{ height: 320 }} />
-        )}
+          {/* 账号注册趋势 */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">账号注册趋势（近30天）</h3>
+            <div ref={accountTrendRef} className="w-full" style={{ height: 260 }} />
+          </div>
+        </div>
       </div>
 
       {/* ===== 一级 Tab 栏（外置于卡片） ===== */}
