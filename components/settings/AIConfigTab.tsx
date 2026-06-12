@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
+import { Sheet } from '@/components/ui/Sheet'
 import {
   listAIConfigs,
   deleteAIConfig,
@@ -327,30 +328,14 @@ export default function AIConfigTab() {
         )}
       </div>
 
-      {/* 侧边抽屉 - 宽度 500px */}
-      {drawerOpen && (
-        <>
-          {/* 遮罩 */}
-          <div
-            className="fixed inset-0 bg-black/30 z-40"
-            onClick={closeDrawer}
-          />
-          {/* 抽屉 */}
-          <div className="fixed right-0 top-0 h-full w-[500px] bg-white shadow-xl z-50 flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {editingConfig ? '编辑 AI 模型' : '添加 AI 模型'}
-              </h3>
-              <button
-                onClick={closeDrawer}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+      {/* 侧边抽屉 */}
+      <Sheet
+        open={drawerOpen}
+        onClose={closeDrawer}
+        title={editingConfig ? '编辑 AI 模型' : '添加 AI 模型'}
+        width="500px"
+      >
+        <form onSubmit={handleSubmit} className="h-full overflow-y-auto p-6 space-y-6">
               {/* 名称 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">名称</label>
@@ -478,10 +463,8 @@ export default function AIConfigTab() {
                   取消
                 </button>
               </div>
-            </form>
-          </div>
-        </>
-      )}
+        </form>
+      </Sheet>
     </>
   )
 }
