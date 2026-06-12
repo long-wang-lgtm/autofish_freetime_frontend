@@ -2,21 +2,62 @@ import { getAccessToken } from '@/lib/utils/auth'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
-export interface AdminStats {
+// ===== Dashboard =====
+
+export interface DashboardStats {
   total_users: number
-  active_users: number
   total_accounts: number
-  total_items: number
+  today_new_users: number
+  normal_accounts: number
+  disabled_accounts: number
+  error_accounts: number
 }
 
+export interface TrendItem {
+  date: string
+  count: number
+}
+
+export interface AccountByUserItem {
+  user_id: string
+  username: string
+  count: number
+}
+
+export interface DashboardData {
+  stats: DashboardStats
+  registration_trend: TrendItem[]
+  account_by_user: AccountByUserItem[]
+}
+
+// ===== 用户列表 =====
+
 export interface AdminUserInfo {
+  userId: string
   username: string
   email: string | null
-  role: 'user' | 'administrators'
+  role: string
   is_active: boolean
-  last_login: string
+  last_login: string | null
   created_at: string
+  account_count: number
 }
+
+// ===== 账号列表 =====
+
+export interface AdminAccountInfo {
+  uid: string
+  name: string
+  status: number
+  user_id: string
+  username: string
+  onsaleitemCount: number
+  auto_reply: boolean
+  ai_auto_reply: boolean
+  auto_delivery: boolean
+}
+
+// ===== 通用 =====
 
 export interface AdminListResponse<T> {
   success: boolean
@@ -49,10 +90,19 @@ async function authFetch<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const adminApi = {
-  /** 获取管理面板统计数据 */
-  getStats: () => authFetch<{ success: boolean; data: AdminStats }>('/api/administrators/stats'),
+  /** 获取仪表盘聚合数据 */
+  getDashboard: () =>
+    authFetch<{ success: boolean; data: DashboardData }>('/api/administrators/dashboard'),
 
   /** 获取用户列表 */
   getUsers: (page = 1, pageSize = 20) =>
-    authFetch<AdminListResponse<AdminUserInfo>>(`/api/administrators/users?page=${page}&page_size=${pageSize}`),
+    authFetch<AdminListResponse<AdminUserInfo>>(
+      `/api/administrators/users?page=${page}&page_size=${pageSize}`
+    ),
+
+  /** 获取账号列表 */
+  getAccounts: (page = 1, pageSize = 20) =>
+    authFetch<AdminListResponse<AdminAccountInfo>>(
+      `/api/administrators/accounts?page=${page}&page_size=${pageSize}`
+    ),
 }

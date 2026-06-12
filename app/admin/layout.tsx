@@ -77,7 +77,7 @@ export default function AdminLayout({
                 </svg>
               </div>
               <span className="text-base font-semibold text-gray-900">
-                管理员面板
+                闲逸通 - 管理员
               </span>
             </div>
 
