@@ -75,7 +75,7 @@ export default function Header({ children }: HeaderProps) {
         {/* 管理员入口 */}
         {user?.role === 'administrators' && (
           <button
-            onClick={() => router.push('/dashboard/administrators')}
+            onClick={() => router.push('/admin')}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mr-2"
             title="管理员"
           >
