@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useMemo } from 'react'
+import { useMemo } from 'react'
 import * as echarts from 'echarts'
 import { useImStatusSnapshots } from '@/hooks/useImStatusSnapshots'
+import { useChart } from './useChart'
 import type { ImStatusSnapshot } from '@/lib/api/administrators'
 
 // ===== 常量 =====
@@ -10,13 +11,20 @@ const SLOT_COUNT = 200          // X 轴最小时间槽数（数据少时不显�
 const SLOT_INTERVAL_SEC = 60    // 每槽 1 分钟
 
 // ===== 工具 =====
-function formatTime(ts: number): string {
+function formatTime(ts: number, showSeconds = false): string {
   const d = new Date(ts * 1000)
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  if (showSeconds) {
+    const ss = String(d.getSeconds()).padStart(2, '0')
+    return `${hh}:${mm}:${ss}`
+  }
+  return `${hh}:${mm}`
 }
 
 interface ChartFrame {
-  timeLabels: string[]
+  timeLabels: string[]       // HH:MM（X 轴）
+  slotTimestamps: number[]   // 每槽实际 Unix 时间戳（tooltip 秒级显示用）
   totalData: (number | null)[]
   activeData: (number | null)[]
   runningData: (number | null)[]
@@ -28,24 +36,20 @@ interface ChartFrame {
  *
  * 规则：
  * - 槽位数 = max(SLOT_COUNT, 数据实际跨度) — 200 只是最小宽度
- * - 数据从左对齐，右侧空槽填 null（线自然断开）
+ * - 快照通过就近匹配（Math.round）归入对应槽位，不要求时间戳精确对齐
+ * - 无快照的槽位填 null，线自然断开
  */
 function buildChartFrame(snapshots: ImStatusSnapshot[]): ChartFrame | null {
   if (snapshots.length === 0) return null
 
-  // 按时间戳建立索引
-  const snapMap = new Map<number, ImStatusSnapshot>()
-  for (const s of snapshots) {
-    snapMap.set(s.timestamp, s)
-  }
-
   const startTime = snapshots[0].timestamp
   const endTime = snapshots[snapshots.length - 1].timestamp
-  // 实际时间跨度（槽数），至少 200
   const actualSlots = Math.floor((endTime - startTime) / SLOT_INTERVAL_SEC) + 1
   const displaySlots = Math.max(SLOT_COUNT, actualSlots)
 
+  // 先用 null 填充所有槽位
   const timeLabels: string[] = []
+  const slotTimestamps: number[] = []
   const totalData: (number | null)[] = []
   const activeData: (number | null)[] = []
   const runningData: (number | null)[] = []
@@ -53,52 +57,39 @@ function buildChartFrame(snapshots: ImStatusSnapshot[]): ChartFrame | null {
 
   for (let i = 0; i < displaySlots; i++) {
     const ts = startTime + i * SLOT_INTERVAL_SEC
-    timeLabels.push(formatTime(ts))
-    const snap = snapMap.get(ts)
-    totalData.push(snap ? snap.total_accounts : null)
-    activeData.push(snap ? snap.active_accounts : null)
-    runningData.push(snap ? snap.running_accounts : null)
-    taskData.push(snap ? snap.running_tasks : null)
+    timeLabels.push(formatTime(ts, false))
+    slotTimestamps.push(ts)
+    totalData.push(null)
+    activeData.push(null)
+    runningData.push(null)
+    taskData.push(null)
   }
 
-  return { timeLabels, totalData, activeData, runningData, taskData }
-}
-
-// ===== ECharts 封装 =====
-function useChart<T extends HTMLElement>(
-  option: echarts.EChartsOption | null,
-  deps: unknown[],
-) {
-  const ref = useRef<T>(null)
-  const chartRef = useRef<echarts.ECharts | null>(null)
-
-  useEffect(() => {
-    if (!ref.current || !option) return
-    if (!chartRef.current) {
-      chartRef.current = echarts.init(ref.current)
+  // 每个快照通过就近匹配归入对应槽位
+  for (const s of snapshots) {
+    const offset = s.timestamp - startTime
+    const slotIndex = Math.round(offset / SLOT_INTERVAL_SEC)
+    if (slotIndex >= 0 && slotIndex < displaySlots) {
+      totalData[slotIndex] = s.total_accounts
+      activeData[slotIndex] = s.active_accounts
+      runningData[slotIndex] = s.running_accounts
+      taskData[slotIndex] = s.running_tasks
+      // 保留快照自身的时间戳，让 tooltip 显示精确秒
+      slotTimestamps[slotIndex] = s.timestamp
     }
-    chartRef.current.setOption(option, true)
-  }, deps)
+  }
 
-  useEffect(() => {
-    const chart = chartRef.current
-    return () => {
-      if (chart) chart.dispose()
-    }
-  }, [])
-
-  useEffect(() => {
-    const handleResize = () => chartRef.current?.resize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  return ref
+  return { timeLabels, slotTimestamps, totalData, activeData, runningData, taskData }
 }
 
 // ===== 组件 =====
-export default function ImStatusChart() {
+export default function ImStatusChart({
+  className,
+}: {
+  className?: string
+}) {
   const snapshots = useImStatusSnapshots()
+  const cardClass = `bg-white rounded-lg border border-gray-200 shadow-sm p-5 flex flex-col ${className || ''}`
 
   // --- 构建固定槽位数据 ---
   const frame = useMemo<ChartFrame | null>(() => buildChartFrame(snapshots), [snapshots])
@@ -113,7 +104,7 @@ export default function ImStatusChart() {
           const items = params as { seriesName: string; value: number; color: string; dataIndex: number }[]
           if (!items.length || items[0].value == null) return ''
           const idx = items[0].dataIndex
-          const label = frame.timeLabels[idx]
+          const label = formatTime(frame.slotTimestamps[idx], true)
           let html = `<div style="font-size:13px;line-height:1.6">`
           html += `<div style="font-weight:600;color:#1f2937;margin-bottom:4px">${label}</div>`
           for (const item of items) {
@@ -202,9 +193,9 @@ export default function ImStatusChart() {
   if (!frame) return null
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3">IM 服务运行状态</h3>
-      <div ref={chartRef} className="w-full" style={{ height: 280 }} />
+    <div className={cardClass}>
+      <h3 className="text-sm font-semibold text-gray-700 mb-3 shrink-0">IM 服务运行状态</h3>
+      <div ref={chartRef} className="w-full flex-1 min-h-[220px]" />
     </div>
   )
 }

@@ -8,6 +8,8 @@ import {
   Bot, Truck, Zap, Star, Sparkles, Bell, BellOff, Play, Square,
 } from "lucide-react"
 import ImStatusChart from "@/components/ui/echart/ImStatusChart"
+import AccountPieChart from "@/components/ui/echart/AccountPieChart"
+import type { AccountByUserItem } from "@/lib/api/administrators"
 
 const PAGE_SIZE = 20
 
@@ -119,6 +121,19 @@ export default function AdminAccountsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [togglingUid, setTogglingUid] = useState<string | null>(null)
+
+  // --- 饼图数据 ---
+  const [pieData, setPieData] = useState<AccountByUserItem[]>([])
+  const [pieLoading, setPieLoading] = useState(true)
+
+  useEffect(() => {
+    adminApi.getDashboard().then((res) => {
+      if (res.success) {
+        setPieData(res.data.account_by_user)
+      }
+    }).catch(console.error)
+    .finally(() => setPieLoading(false))
+  }, [])
 
   const fetchAccounts = useCallback(async (p: number) => {
     setLoading(true)
@@ -233,8 +248,13 @@ export default function AdminAccountsPage() {
         </div>
       )}
 
-      {/* IM 服务状态趋势图 */}
-      <ImStatusChart />
+      {/* 图表行：左饼图 + 右IM趋势 */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        <AccountPieChart data={pieData} loading={pieLoading} className="lg:w-64 lg:shrink-0" />
+        <div className="flex-1 min-w-0">
+          <ImStatusChart />
+        </div>
+      </div>
 
       {/* 账号表格 */}
       {!loading && !error && accounts && accounts.length > 0 && (

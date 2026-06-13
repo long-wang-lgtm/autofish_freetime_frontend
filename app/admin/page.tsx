@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import * as echarts from 'echarts'
 import { useAuth } from '@/stores/auth.store'
 import {
@@ -10,6 +10,8 @@ import {
   type AdminAccountInfo,
 } from '@/lib/api/administrators'
 import ImStatusChart from '@/components/ui/echart/ImStatusChart'
+import AccountPieChart from '@/components/ui/echart/AccountPieChart'
+import { useChart } from '@/components/ui/echart/useChart'
 
 // ===== 常量 =====
 const USER_PALETTE = [
@@ -35,38 +37,6 @@ function statusLabel(status: number): { text: string; cls: string } {
     case 3: return { text: '异常', cls: 'bg-red-100 text-red-600' }
     default: return { text: '未知', cls: 'bg-gray-100 text-gray-500' }
   }
-}
-
-// ===== ECharts 封装 =====
-function useChart<T extends HTMLElement>(
-  option: echarts.EChartsOption | null,
-  deps: unknown[],
-) {
-  const ref = useRef<T>(null)
-  const chartRef = useRef<echarts.ECharts | null>(null)
-
-  useEffect(() => {
-    if (!ref.current || !option) return
-    if (!chartRef.current) {
-      chartRef.current = echarts.init(ref.current)
-    }
-    chartRef.current.setOption(option, true)
-  }, deps)
-
-  useEffect(() => {
-    const chart = chartRef.current
-    return () => {
-      if (chart) chart.dispose()
-    }
-  }, [])
-
-  useEffect(() => {
-    const handleResize = () => chartRef.current?.resize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  return ref
 }
 
 // ===== 分页控件 =====
@@ -319,67 +289,9 @@ export default function AdminPage() {
     }
   }, [dashboard])
 
-  // --- 账号分布饼图配置 ---
-  const pieOption = useMemo<echarts.EChartsOption | null>(() => {
-    if (!dashboard) return null
-    const sorted = [...dashboard.account_by_user].sort((a, b) => b.count - a.count)
-    const top10 = sorted.slice(0, 10)
-    const otherCount = sorted.slice(10).reduce((s, i) => s + i.count, 0)
-
-    const data: { name: string; value: number; itemStyle: { color: string } }[] = top10.map(
-      (item, i) => ({
-        name: item.username,
-        value: item.count,
-        itemStyle: { color: USER_PALETTE[i] },
-      }),
-    )
-    if (otherCount > 0) {
-      data.push({
-        name: '其他用户',
-        value: otherCount,
-        itemStyle: { color: OTHER_COLOR },
-      })
-    }
-
-    return {
-      tooltip: {
-        trigger: 'item',
-        formatter: '{b}: {c} 个账号 ({d}%)',
-      },
-      legend: {
-        type: 'scroll',
-        orient: 'horizontal',
-        bottom: 0,
-        itemWidth: 8,
-        itemHeight: 8,
-        textStyle: { fontSize: 10, color: '#6b7280' },
-      },
-      series: [
-        {
-          type: 'pie',
-          radius: ['42%', '70%'],
-          center: ['50%', '45%'],
-          avoidLabelOverlap: true,
-          label: {
-            position: 'inside',
-            fontSize: 11,
-            color: '#fff',
-            formatter: '{c}',
-          },
-          itemStyle: {
-            borderColor: '#fff',
-            borderWidth: 2,
-          },
-          data,
-        },
-      ],
-    }
-  }, [dashboard])
-
   // --- ECharts refs ---
   const trendRef = useChart<HTMLDivElement>(trendOption, [trendOption])
   const accountTrendRef = useChart<HTMLDivElement>(accountTrendOption, [accountTrendOption])
-  const pieRef = useChart<HTMLDivElement>(pieOption, [pieOption])
 
   // --- 账号颜色映射 ---
   const userColorMap = useMemo(() => {
@@ -442,17 +354,8 @@ export default function AdminPage() {
 
       {/* ===== 图表行：左饼图 + 中右趋势图 ===== */}
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* 账号分布饼图 — 方形，窄列 */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5 lg:w-72 lg:shrink-0">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">账号归属分布</h3>
-          {dashboard?.account_by_user.length === 0 ? (
-            <div className="flex items-center justify-center text-gray-400 text-sm aspect-square">
-              暂无数据
-            </div>
-          ) : (
-            <div ref={pieRef} className="w-full aspect-square" />
-          )}
-        </div>
+        {/* 账号分布饼图 */}
+        <AccountPieChart data={dashboard?.account_by_user ?? []} className="lg:w-72 lg:shrink-0" />
 
         {/* 两个趋势图 — 占据剩余空间 */}
         <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-4">
