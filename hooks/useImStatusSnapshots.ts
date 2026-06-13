@@ -13,7 +13,8 @@ function start() {
   if (subscribeAttempted) return
   subscribeAttempted = true
   abortFn = subscribeImStatus((snapshot) => {
-    sharedSnapshots = [...sharedSnapshots.slice(-99), snapshot]
+    // 保留最近 4320 条（72小时 @ 1条/分钟）
+    sharedSnapshots = [...sharedSnapshots.slice(-4319), snapshot]
     listeners.forEach((notify) => notify())
   })
 }
