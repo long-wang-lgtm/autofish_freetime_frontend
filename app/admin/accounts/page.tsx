@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import {
   Bot, Truck, Zap, Star, Sparkles, Bell, BellOff, Play, Square,
 } from "lucide-react"
+import ImStatusChart from "@/components/ui/echart/ImStatusChart"
 
 const PAGE_SIZE = 20
 
@@ -168,7 +169,7 @@ export default function AdminAccountsPage() {
   return (
     <div className="space-y-4">
       {/* 标题区 */}
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">账号管理</h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -195,7 +196,7 @@ export default function AdminAccountsPage() {
           </svg>
           刷新
         </button>
-      </div>
+      </div> */}
 
       {/* 加载中 */}
       {loading && (
@@ -231,6 +232,9 @@ export default function AdminAccountsPage() {
           <p className="text-sm text-gray-500">系统中还没有添加任何账号</p>
         </div>
       )}
+
+      {/* IM 服务状态趋势图 */}
+      <ImStatusChart />
 
       {/* 账号表格 */}
       {!loading && !error && accounts && accounts.length > 0 && (
