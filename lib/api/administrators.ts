@@ -59,6 +59,35 @@ export interface AdminAccountInfo {
   auto_delivery: boolean
 }
 
+// ===== 管理员账号管理（完整字段 + IM 控制） =====
+
+export interface AdminAccountFull {
+  uid: string | null
+  name: string | null
+  status: number | null
+  itemtotalCounts: number | null
+  onsaleitemCount: number | null
+  reply_pause_seconds: number | null
+  auto_reply: boolean | null
+  ai_auto_reply: boolean | null
+  auto_delivery: boolean | null
+  auto_notify: boolean | null
+  auto_free: boolean | null
+  auto_positive_review: boolean | null
+  full_auto_shine: boolean | null
+  full_deliveryContent: string | null
+  full_receiptAfter: string | null
+  full_positiveReviewAfter: string | null
+  full_default_reply_content: string | null
+  full_ai_reply_system_prompt: string | null
+}
+
+export interface AdminAccountListData {
+  accounts: AdminAccountFull[]
+  total: number
+  statuslist: Record<string, boolean>
+}
+
 // ===== 通用 =====
 
 export interface AdminListResponse<T> {
@@ -117,7 +146,7 @@ export function subscribeImStatus(
 
   const controller = new AbortController()
 
-  fetch(`${API_BASE_URL}/api/administrators/im-status-stream`, {
+  fetch(`${API_BASE_URL}/api/administrators/dashboard/im-status-stream`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -174,9 +203,27 @@ export const adminApi = {
       `/api/administrators/users?page=${page}&page_size=${pageSize}`
     ),
 
-  /** 获取账号列表 */
+  /** 获取账号列表（仪表盘精简版） */
   getAccounts: (page = 1, pageSize = 20) =>
     authFetch<AdminListResponse<AdminAccountInfo>>(
+      `/api/administrators/dashboard/accounts?page=${page}&page_size=${pageSize}`
+    ),
+
+  /** 获取账号完整列表（含 IM 运行状态，用于管理员账号管理页） */
+  getAccountsFull: (page = 1, pageSize = 20) =>
+    authFetch<AdminAccountListData>(
       `/api/administrators/accounts?page=${page}&page_size=${pageSize}`
+    ),
+
+  /** 启动账号 IM 服务 */
+  startIm: (uid: string) =>
+    authFetch<{ success: boolean; message: string }>(
+      `/api/administrators/accounts/im/start?uid=${encodeURIComponent(uid)}`
+    ),
+
+  /** 停止账号 IM 服务 */
+  stopIm: (uid: string) =>
+    authFetch<{ success: boolean; message: string }>(
+      `/api/administrators/accounts/im/stop?uid=${encodeURIComponent(uid)}`
     ),
 }
