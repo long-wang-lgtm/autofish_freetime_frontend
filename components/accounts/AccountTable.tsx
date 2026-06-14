@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { Account, updateAccount } from "@/lib/api/accounts"
-import { useQueryClient } from "@tanstack/react-query"
+import { useState, useMemo } from "react"
+import { Account, updateAccount, listReviewTemplates, ReviewTemplate } from "@/lib/api/accounts"
+import { useQueryClient, useQuery } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
-import { Bot, Truck, QrCode, Zap, Star, Sparkles, Bell, BellOff, AlertCircle  } from "lucide-react"
+import { Bot, Truck, QrCode, Zap, Star, Sparkles, Bell, BellOff, AlertCircle } from "lucide-react"
+import ReviewTemplateSheet from "@/components/accounts/ReviewTemplateSheet"
 
 type ConfigField = "full_ai_reply_system_prompt" | "full_default_reply_content"
 
@@ -150,11 +151,47 @@ function ConfigCell({
   )
 }
 
+// 评价模板按钮 — 样式与 ConfigCell 一致
+function ReviewTemplateCell({ onClick }: { onClick: () => void }) {
+  const { data: templates } = useQuery({
+    queryKey: ["review-templates"],
+    queryFn: listReviewTemplates,
+    staleTime: 30_000,
+  })
+
+  const hasAny = templates && templates.length > 0
+  const hasConfigured = templates?.some((t) => t.content && t.content.trim().length > 0)
+
+  const tooltip = useMemo(() => {
+    if (!templates || templates.length === 0) return "暂无评价模板，点击配置"
+    const lines = templates.map((t) => {
+      const typeLabel = t.review_type === "seller" ? "卖家" : t.review_type === "buyer" ? "买家" : t.review_type
+      const status = t.is_active ? "启用" : "禁用"
+      const preview = t.content ? t.content.slice(0, 20) + (t.content.length > 20 ? "…" : "") : "空"
+      return `${typeLabel}[${status}]: ${preview}`
+    })
+    return "所有账号共享\n" + lines.join("\n")
+  }, [templates])
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full h-full min-h-[2.5rem] max-h-[2.5rem] text-sm px-1 flex items-center justify-center text-center hover:underline ${
+        hasConfigured ? "text-blue-600" : "text-gray-400"
+      }`}
+      title={tooltip}
+    >
+      {hasConfigured ? "已配置" : "点击配置"}
+    </button>
+  )
+}
+
 export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
   const queryClient = useQueryClient()
   const { addToast } = useToast()
   const [loading, setLoading] = useState<string | null>(null)
   const [configField, setConfigField] = useState<ConfigField | null>(null)
+  const [reviewTemplateOpen, setReviewTemplateOpen] = useState(false)
 
   const statusLabels: Record<number, string> = { 1: "正常", 2: "禁用", 3: "异常" }
   const statusColors: Record<number, string> = {
@@ -188,7 +225,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
   return (
     <>
       <div
-        className={`grid grid-cols-11 gap-2 px-4 py-3 items-center text-sm border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-colors ${
+        className={`grid grid-cols-12 gap-2 px-4 py-3 items-center text-sm border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-colors ${
           isEven ? "bg-white" : "bg-gray-50/30"
         }`}
       >
@@ -335,6 +372,11 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
           />
         </div>
 
+        {/* 评价模板 */}
+        <div className="col-span-1">
+          <ReviewTemplateCell onClick={() => setReviewTemplateOpen(true)} />
+        </div>
+
         {/* 重新登录 */}
         <div className="col-span-1 flex items-center justify-center">
           <button
@@ -363,6 +405,12 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
           onSave={handleSaveConfig}
         />
       )}
+
+      {/* 评价模板侧边栏 */}
+      <ReviewTemplateSheet
+        open={reviewTemplateOpen}
+        onClose={() => setReviewTemplateOpen(false)}
+      />
     </>
   )
 }

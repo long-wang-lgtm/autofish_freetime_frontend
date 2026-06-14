@@ -117,3 +117,41 @@ export async function cancelQrLogin(sessionId: string): Promise<OperationRespons
     method: "DELETE",
   })
 }
+
+// 评价模板
+export interface ReviewTemplate {
+  id?: number
+  content: string | null
+  is_active: boolean | null
+  review_type: string
+}
+
+export async function listReviewTemplates(): Promise<ReviewTemplate[]> {
+  return fetchApi<ReviewTemplate[]>("/api/accounts/reviewtemplate")
+}
+
+export async function createReviewTemplate(
+  data: ReviewTemplate
+): Promise<ReviewTemplate> {
+  return fetchApi<ReviewTemplate>("/api/accounts/reviewtemplate/create", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateReviewTemplate(
+  data: ReviewTemplate
+): Promise<ReviewTemplate> {
+  return fetchApi<ReviewTemplate>("/api/accounts/reviewtemplate/update", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteReviewTemplate(
+  id: number
+): Promise<OperationResponse> {
+  return fetchApi<OperationResponse>(`/api/accounts/reviewtemplate/${id}`, {
+    method: "DELETE",
+  })
+}
