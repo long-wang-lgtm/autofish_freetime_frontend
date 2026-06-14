@@ -188,7 +188,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
   return (
     <>
       <div
-        className={`grid grid-cols-12 gap-2 px-4 py-3 items-center text-sm border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-colors ${
+        className={`grid grid-cols-11 gap-2 px-4 py-3 items-center text-sm border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-colors ${
           isEven ? "bg-white" : "bg-gray-50/30"
         }`}
       >
@@ -233,15 +233,6 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
           >
             {loading === "status" ? <LoadingSpinner size="sm" /> : statusLabels[account.status]}
           </button>
-        </div>
-
-        {/* 商品数量 */}
-        <div className="col-span-1 text-center">
-          <span className="text-gray-700">
-            {account.onsaleitemCount || 0}
-            <span className="text-gray-400">/</span>
-            {account.itemtotalCounts || 0}
-          </span>
         </div>
 
         {/* 自动免拼开关 */}

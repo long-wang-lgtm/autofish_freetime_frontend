@@ -177,11 +177,10 @@ export default function AccountsPage() {
           </div>
         ) : (
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600">
+            <div className="grid grid-cols-11 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600">
               <div className="col-span-1">账号信息</div>
               <div className="col-span-1 text-center">状态</div>
               {/* <div className="col-span-1 text-center">IM</div> */}
-              <div className="col-span-1 text-center">商品数量</div>
               <div className="col-span-1 text-center">自动免拼</div>
               <div className="col-span-1 text-center">自动发货</div>
               <div className="col-span-1 text-center">自动回复</div>
