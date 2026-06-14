@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { OpportunityCard } from './OpportunityCard'
 import { NewOpportunityModal } from './NewOpportunityModal'
-import { elevateFromCollection, deleteOpportunity } from '@/lib/api/opportunities'
+import { deleteOpportunity } from '@/lib/api/opportunities'
 import { type Opportunity } from '@/lib/api/opportunities'
 
 interface OpportunityLibraryProps {
@@ -44,14 +44,6 @@ export function OpportunityLibrary({
     opp.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  // 升品：提示用户前往选品监控选择商品
-  const handleElevate = () => {
-    const msg = '升品功能需要从选品监控中选择商品。\n\n请前往「选品监控」页面，勾选要升品的商品后，再执行升品操作。'
-    if (window.confirm(msg)) {
-      window.open('/dashboard/selection', '_blank')
-    }
-  }
-
   return (
     <div className="h-full flex flex-col bg-gray-50 border-r">
       {/* 顶部工具栏 */}
@@ -72,12 +64,6 @@ export function OpportunityLibrary({
             className="flex-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             + 新建
-          </button>
-          <button
-            onClick={handleElevate}
-            className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50"
-          >
-            ↑ 升品
           </button>
         </div>
       </div>

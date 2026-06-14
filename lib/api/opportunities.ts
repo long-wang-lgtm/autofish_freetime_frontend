@@ -85,10 +85,3 @@ export async function deleteOpportunity(id: number) {
     method: 'DELETE',
   })
 }
-
-export async function elevateFromCollection(itemIds: string[]) {
-  return fetchApi<{ total: number; items: Opportunity[] }>('/api/publish/opportunities/elevate', {
-    method: 'POST',
-    body: JSON.stringify({ item_ids: itemIds }),
-  })
-}
