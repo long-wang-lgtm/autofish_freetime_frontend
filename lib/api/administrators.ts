@@ -20,9 +20,9 @@ export interface TrendItem {
 }
 
 export interface AccountByUserItem {
-  user_id: string
+  userId: string
   username: string
-  count: number
+  accountCount: number
 }
 
 export interface DashboardData {
@@ -42,7 +42,7 @@ export interface AdminUserInfo {
   is_active: boolean
   last_login: string | null
   created_at: string
-  account_count: number
+  accountCount: number
 }
 
 // ===== 账号列表 =====

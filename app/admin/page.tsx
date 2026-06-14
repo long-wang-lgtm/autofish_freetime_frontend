@@ -250,7 +250,7 @@ export default function AdminPage() {
             const shown = users.slice(0, 10)
             const more = users.length > 10 ? ' 等' : ''
             html += `<div style="border-top:1px solid #f3f4f6;margin-top:6px;padding-top:4px;font-size:12px">`
-            html += `<span style="color:#9ca3af">归属 </span>`
+            html += `<span style="color:#9ca3af">店铺: </br></span>`
             html += `<span style="color:#6b7280">${shown.join('、')}${more}</span>`
             html += `</div>`
           }
@@ -296,14 +296,14 @@ export default function AdminPage() {
   // --- 账号颜色映射 ---
   const userColorMap = useMemo(() => {
     if (!dashboard) return {} as Record<string, string>
-    const sorted = [...dashboard.account_by_user].sort((a, b) => b.count - a.count)
-    const top10Ids = new Set(sorted.slice(0, 10).map((u) => u.user_id))
+    const sorted = [...dashboard.account_by_user].sort((a, b) => b.accountCount - a.accountCount)
+    const top10Ids = new Set(sorted.slice(0, 10).map((u) => u.userId))
     const map: Record<string, string> = {}
     for (const item of sorted) {
-      if (top10Ids.has(item.user_id)) {
-        map[item.user_id] = hashColor(item.user_id)
+      if (top10Ids.has(item.userId)) {
+        map[item.userId] = hashColor(item.userId)
       } else {
-        map[item.user_id] = OTHER_COLOR
+        map[item.userId] = OTHER_COLOR
       }
     }
     return map
@@ -366,7 +366,7 @@ export default function AdminPage() {
           </div>
           {/* 账号注册趋势 */}
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">账号注册趋势（近30天）</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">店铺注册趋势（近30天）</h3>
             <div ref={accountTrendRef} className="w-full" style={{ height: 260 }} />
           </div>
         </div>
@@ -497,7 +497,7 @@ function UserTable({
                     {u.role === 'admin' || u.role === 'administrators' ? '管理员' : '用户'}
                   </span>
                 </Td>
-                <Td>{u.account_count}</Td>
+                <Td>{u.accountCount}</Td>
                 <Td className="text-gray-500">
                   {u.last_login
                     ? new Date(u.last_login).toLocaleDateString('zh-CN', {

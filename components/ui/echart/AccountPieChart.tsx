@@ -27,14 +27,14 @@ export default function AccountPieChart({
   const option = useMemo<echarts.EChartsOption | null>(() => {
     if (!data || data.length === 0) return null
 
-    const sorted = [...data].sort((a, b) => b.count - a.count)
+    const sorted = [...data].sort((a, b) => b.accountCount - a.accountCount)
     const top10 = sorted.slice(0, 10)
-    const otherCount = sorted.slice(10).reduce((s, i) => s + i.count, 0)
+    const otherCount = sorted.slice(10).reduce((s, i) => s + i.accountCount, 0)
 
     const pieData: { name: string; value: number; itemStyle: { color: string } }[] = top10.map(
       (item, i) => ({
         name: item.username,
-        value: item.count,
+        value: item.accountCount,
         itemStyle: { color: USER_PALETTE[i] },
       }),
     )
@@ -87,7 +87,7 @@ export default function AccountPieChart({
   if (loading) {
     return (
       <div className={cardClass}>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">账号归属分布</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">店铺归属分布</h3>
         <div className="flex items-center justify-center aspect-square">
           <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
         </div>
@@ -99,7 +99,7 @@ export default function AccountPieChart({
   if (!data || data.length === 0) {
     return (
       <div className={cardClass}>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">账号归属分布</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">店铺归属分布</h3>
         <div className="flex items-center justify-center text-gray-400 text-sm aspect-square">
           暂无数据
         </div>
@@ -110,7 +110,7 @@ export default function AccountPieChart({
   // --- 正常渲染 ---
   return (
     <div className={cardClass}>
-      <h3 className="text-sm font-semibold text-gray-700 mb-3">账号归属分布</h3>
+      <h3 className="text-sm font-semibold text-gray-700 mb-3">店铺归属分布</h3>
       <div ref={chartRef} className="w-full min-h-[200px]" style={{ aspectRatio: '1 / 1' }} />
     </div>
   )
