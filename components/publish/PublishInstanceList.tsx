@@ -637,7 +637,10 @@ export function PublishInstanceList({
                 </div>
 
                 {/* 创作进度 */}
-                <div className="w-[130px] flex-shrink-0 flex items-center">
+                <div
+                  className="w-[130px] flex-shrink-0 flex items-center"
+                  onClick={e => e.stopPropagation()}
+                >
                   <CreationProgressBar
                     item={item}
                     onStageClick={stage => handleStageClick(item, stage)}
