@@ -14,7 +14,10 @@ import { useToast } from "@/components/ui/toaster"
 interface RuleTableProps {
   rules: KeywordRule[]
   onEdit: (rule: KeywordRule) => void
+  className?: string
 }
+
+export function RuleTable({ rules, onEdit, className }: RuleTableProps) {
 
 const replyTypeLabels: Record<string, string> = {
   predefined: "预定义关键词",
@@ -27,7 +30,6 @@ const matchTypeLabels: Record<string, string> = {
   regex: "正则匹配",
 }
 
-export function RuleTable({ rules, onEdit }: RuleTableProps) {
   const queryClient = useQueryClient()
   const { addToast } = useToast()
   const [loading, setLoading] = useState<string | null>(null)
@@ -79,7 +81,7 @@ export function RuleTable({ rules, onEdit }: RuleTableProps) {
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <div className={["bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden", className].filter(Boolean).join(" ")}>
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>

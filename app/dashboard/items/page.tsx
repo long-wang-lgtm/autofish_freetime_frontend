@@ -8,9 +8,12 @@ import { ItemForm } from "@/components/items/ItemForm"
 import { ItemKeywordModal } from "@/components/items/ItemKeywordModal"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
-import { listKeywordRules } from "@/lib/api/keywords"
+import { listKeywordRules, KeywordRule } from "@/lib/api/keywords"
 import { MessageCircle, Bot, Truck, RefreshCw, Upload } from "lucide-react"
 import { useDebounce } from "@/hooks/useDebounce"
+import { TabBar } from "@/components/ui/Tab"
+import { RuleTable } from "@/components/rules/RuleTable"
+import { RuleForm } from "@/components/rules/RuleForm"
 
 function formatPublishTime(timestamp: string | null): string {
   if (!timestamp) return "-"
@@ -95,6 +98,11 @@ export default function ItemsPage() {
   const { addToast } = useToast()
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [keywordItem, setKeywordItem] = useState<Item | null>(null)
+  const [activeTab, setActiveTab] = useState("items")
+
+  // 关键词规则状态
+  const [editingRule, setEditingRule] = useState<KeywordRule | null>(null)
+  const [showCreateForm, setShowCreateForm] = useState(false)
 
   const [filters, setFilters] = useState<ItemFilters>({
     status: 0,
@@ -133,7 +141,7 @@ export default function ItemsPage() {
   })
 
   // 获取关键词规则列表，用于计算每个商品关联的规则数量
-  const { data: keywordsData } = useQuery({
+  const { data: keywordsData, isLoading: keywordsLoading, error: keywordsError } = useQuery({
     queryKey: ["keywords"],
     queryFn: listKeywordRules,
   })
@@ -149,6 +157,18 @@ export default function ItemsPage() {
       }
     }
     return counts
+  }, [keywordsData])
+
+  // 关键词规则统计
+  const rulesStats = useMemo(() => {
+    if (!keywordsData?.rules) return { total: 0, enabled: 0, disabled: 0, linkedItems: 0, linkedGroups: 0 }
+    return {
+      total: keywordsData.rules.length,
+      enabled: keywordsData.rules.filter((r) => r.enabled).length,
+      disabled: keywordsData.rules.filter((r) => !r.enabled).length,
+      linkedItems: keywordsData.rules.reduce((sum, r) => sum + r.linked_items, 0),
+      linkedGroups: keywordsData.rules.reduce((sum, r) => sum + r.linked_groups, 0),
+    }
   }, [keywordsData])
 
   const updateMutation = useMutation({
@@ -229,155 +249,254 @@ export default function ItemsPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-0 h-full space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">商品管理</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          管理您的闲鱼商品，配置自动回复和自动发货功能
-        </p>
-      </div>
+    <div className="flex flex-col min-h-0 h-full space-y-5">
 
-      {/* 搜索表单 */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-        <div className="flex items-end gap-3 flex-wrap">
-          {/* 账号下拉框 */}
-          <div className="flex-1 min-w-[150px]">
-            <label className="block text-xs text-gray-500 mb-1">账号</label>
-            <select
-              value={searchInput.uid}
-              onChange={(e) => setSearchInput((prev) => ({ ...prev, uid: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
-            >
-              <option value="">全部账号</option>
-              {accountsData?.map((acc: AccountName) => (
-                <option key={acc.uid} value={acc.uid}>{acc.name}</option>
-              ))}
-            </select>
-          </div>
-          {/* 商品ID */}
-          <div className="flex-1 min-w-[150px]">
-            <label className="block text-xs text-gray-500 mb-1">商品ID</label>
-            <input
-              type="text"
-              value={searchInput.gid}
-              onChange={(e) => setSearchInput((prev) => ({ ...prev, gid: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              placeholder="输入商品ID"
-            />
-          </div>
-          {/* 商品标题 */}
-          <div className="flex-1 min-w-[150px]">
-            <label className="block text-xs text-gray-500 mb-1">商品标题</label>
-            <input
-              type="text"
-              value={searchInput.title}
-              onChange={(e) => setSearchInput((prev) => ({ ...prev, title: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              placeholder="输入商品标题"
-            />
-          </div>
-          {/* 状态下拉框 */}
-          <div className="w-32">
-            <label className="block text-xs text-gray-500 mb-1">商品状态</label>
-            <select
-              value={filters.status ?? ""}
-              onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value ? Number(e.target.value) : undefined }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
-            >
-              <option value="">全部</option>
-              <option value="0">在售</option>
-              <option value="-2">已下架</option>
-              <option value="1">已售出</option>
-            </select>
-          </div>
-          {/* 刷新商品按钮 */}
-          <RefreshButton
-            uid={filters.uid}
-            onSuccess={() => queryClient.invalidateQueries({ queryKey: ["items"] })}
-            onError={(msg) => addToast({ title: "刷新失败", description: msg, variant: "error" })}
-          />
-          {/* 清空按钮 */}
-          <button
-            type="button"
-            onClick={handleClearFilters}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md"
-          >
-            清空筛选
-          </button>
-        </div>
-      </div>
+      {/* Tab 栏 */}
+      <TabBar
+        tabs={[
+          { key: "items", label: "商品管理" },
+          { key: "rules", label: "回复规则" },
+        ]}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        variant="overline"
+      />
 
-      {/* 表格 */}
-      <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <LoadingSpinner size="lg" />
-          </div>
-        )}
+      {/* Tab 描述 */}
+      <p className="text-sm text-gray-500 -mt-3">
+        {activeTab === "items"
+          ? "可配置功能：自动发货、发货配置、自动上架、自动回复规则绑定、AI回复、AI提示词"
+          : "可配置功能：自动回复关键词规则，匹配买家消息并自动发送预设回复"}
+      </p>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 m-4">
-            加载商品列表失败: {String(error)}
-          </div>
-        )}
-
-        {!isLoading && !error && data && data.length === 0 && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center m-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-1">暂无商品</h3>
-            <p className="text-sm text-gray-500">没有找到符合条件的商品</p>
-          </div>
-        )}
-
-        {!isLoading && !error && data && data.length > 0 && (
-          <div className="flex-1 overflow-auto" style={{ minHeight: "200px" }}>
-            {/* 表头 - 固定 */}
-            <div className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600" style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}>
-              <div className="col-span-2">
-                <button className="flex items-center gap-1 hover:text-blue-600" onClick={() => handleSort("title")}>
-                  商品信息
-                  <SortIcon field="title" sortField={sortField} sortDirection={sortDirection} />
-                </button>
+      {/* 商品管理 tab */}
+      {activeTab === "items" && (
+        <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          {/* 搜索表单 */}
+          <div className="p-4 border-b border-gray-100">
+            <div className="flex items-end gap-3 flex-wrap">
+              {/* 账号下拉框 */}
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-xs text-gray-500 mb-1">账号</label>
+                <select
+                  value={searchInput.uid}
+                  onChange={(e) => setSearchInput((prev) => ({ ...prev, uid: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+                >
+                  <option value="">全部账号</option>
+                  {accountsData?.map((acc: AccountName) => (
+                    <option key={acc.uid} value={acc.uid}>{acc.name}</option>
+                  ))}
+                </select>
               </div>
-              <div className="col-span-1 text-right">
-                <button className="flex items-center gap-1 ml-auto hover:text-blue-600" onClick={() => handleSort("price")}>
-                  价格
-                  <SortIcon field="price" sortField={sortField} sortDirection={sortDirection} />
-                </button>
+              {/* 商品ID */}
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-xs text-gray-500 mb-1">商品ID</label>
+                <input
+                  type="text"
+                  value={searchInput.gid}
+                  onChange={(e) => setSearchInput((prev) => ({ ...prev, gid: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  placeholder="输入商品ID"
+                />
               </div>
-              <div className="col-span-1 text-center">
-                <button className="flex items-center gap-1 mx-auto hover:text-blue-600" onClick={() => handleSort("publishTime")}>
-                  发布时间
-                  <SortIcon field="publishTime" sortField={sortField} sortDirection={sortDirection} />
-                </button>
+              {/* 商品标题 */}
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-xs text-gray-500 mb-1">商品标题</label>
+                <input
+                  type="text"
+                  value={searchInput.title}
+                  onChange={(e) => setSearchInput((prev) => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  placeholder="输入商品标题"
+                />
               </div>
-              <div className="col-span-1 text-center">数据</div>
-              <div className="col-span-1 text-center">AI回复</div>
-              <div className="col-span-1 text-center">自动发货</div>
-              <div className="col-span-1 text-center">付款后发货</div>
-              <div className="col-span-1 text-center">收货后赠送</div>
-              <div className="col-span-1 text-center">评价后赠送</div>
-              <div className="col-span-1 text-center">关键词回复</div>
-              <div className="col-span-1 text-center">AI提示词</div>
-              <div className="col-span-1 text-center">自动上架</div>
-              <div className="col-span-1 text-center">指令码</div>
-            </div>
-
-            {/* 内容区域 */}
-            {sortedItems.map((item, index) => (
-              <ItemRow
-                key={item.gid}
-                item={item}
-                isEven={index % 2 === 0}
-                onToggle={handleToggle}
-                onEdit={() => setEditingItem(item)}
-                onKeywordClick={() => setKeywordItem(item)}
-                keywordCount={itemKeywordCounts[item.gid] || 0}
-                onUpdateField={(gid, field, value) => updateMutation.mutate({ gid, data: { [field]: value } })}
+              {/* 状态下拉框 */}
+              <div className="w-32">
+                <label className="block text-xs text-gray-500 mb-1">商品状态</label>
+                <select
+                  value={filters.status ?? ""}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value ? Number(e.target.value) : undefined }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+                >
+                  <option value="">全部</option>
+                  <option value="0">在售</option>
+                  <option value="-2">已下架</option>
+                  <option value="1">已售出</option>
+                </select>
+              </div>
+              {/* 刷新商品按钮 */}
+              <RefreshButton
+                uid={filters.uid}
+                onSuccess={() => queryClient.invalidateQueries({ queryKey: ["items"] })}
+                onError={(msg) => addToast({ title: "刷新失败", description: msg, variant: "error" })}
               />
-            ))}
+              {/* 清空按钮 */}
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md"
+              >
+                清空筛选
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* 表格区域 */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="lg" />
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 m-4">
+              加载商品列表失败: {String(error)}
+            </div>
+          )}
+
+          {!isLoading && !error && data && data.length === 0 && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center m-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-1">暂无商品</h3>
+              <p className="text-sm text-gray-500">没有找到符合条件的商品</p>
+            </div>
+          )}
+
+          {!isLoading && !error && data && data.length > 0 && (
+            <div className="flex-1 overflow-auto" style={{ minHeight: "200px" }}>
+              {/* 表头 - 固定 */}
+              <div className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600" style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}>
+                <div className="col-span-2">
+                  <button className="flex items-center gap-1 hover:text-blue-600" onClick={() => handleSort("title")}>
+                    商品信息
+                    <SortIcon field="title" sortField={sortField} sortDirection={sortDirection} />
+                  </button>
+                </div>
+                <div className="col-span-1 text-right">
+                  <button className="flex items-center gap-1 ml-auto hover:text-blue-600" onClick={() => handleSort("price")}>
+                    价格
+                    <SortIcon field="price" sortField={sortField} sortDirection={sortDirection} />
+                  </button>
+                </div>
+                <div className="col-span-1 text-center">
+                  <button className="flex items-center gap-1 mx-auto hover:text-blue-600" onClick={() => handleSort("publishTime")}>
+                    发布时间
+                    <SortIcon field="publishTime" sortField={sortField} sortDirection={sortDirection} />
+                  </button>
+                </div>
+                <div className="col-span-1 text-center">数据</div>
+                <div className="col-span-1 text-center">AI回复</div>
+                <div className="col-span-1 text-center">自动发货</div>
+                <div className="col-span-1 text-center">付款后发货</div>
+                <div className="col-span-1 text-center">收货后赠送</div>
+                <div className="col-span-1 text-center">评价后赠送</div>
+                <div className="col-span-1 text-center">关键词回复</div>
+                <div className="col-span-1 text-center">AI提示词</div>
+                <div className="col-span-1 text-center">自动上架</div>
+                <div className="col-span-1 text-center">指令码</div>
+              </div>
+
+              {/* 内容区域 */}
+              {sortedItems.map((item, index) => (
+                <ItemRow
+                  key={item.gid}
+                  item={item}
+                  isEven={index % 2 === 0}
+                  onToggle={handleToggle}
+                  onEdit={() => setEditingItem(item)}
+                  onKeywordClick={() => setKeywordItem(item)}
+                  keywordCount={itemKeywordCounts[item.gid] || 0}
+                  onUpdateField={(gid, field, value) => updateMutation.mutate({ gid, data: { [field]: value } })}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 关键词规则 tab */}
+      {activeTab === "rules" && (
+        <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          {/* 统计信息 */}
+          <div className="grid grid-cols-5 gap-3 p-4 border-b border-gray-100">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="text-2xl font-bold text-gray-900">{rulesStats.total}</div>
+              <div className="text-xs text-gray-500">规则总数</div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="text-2xl font-bold text-green-600">{rulesStats.enabled}</div>
+              <div className="text-xs text-gray-500">已启用</div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="text-2xl font-bold text-gray-600">{rulesStats.disabled}</div>
+              <div className="text-xs text-gray-500">已禁用</div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="text-2xl font-bold text-blue-600">{rulesStats.linkedItems}</div>
+              <div className="text-xs text-gray-500">关联商品</div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="text-2xl font-bold text-purple-600">{rulesStats.linkedGroups}</div>
+              <div className="text-xs text-gray-500">关联商品组</div>
+            </div>
+          </div>
+
+          {/* 操作栏 */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <div className="text-sm text-gray-500">
+              {keywordsData?.rules.length === 0
+                ? "暂无规则"
+                : `共 ${keywordsData?.rules.length} 条规则，按优先级降序排列`}
+            </div>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              创建规则
+            </button>
+          </div>
+
+          {/* 规则列表 */}
+          {keywordsLoading && (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="lg" />
+            </div>
+          )}
+
+          {keywordsError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 m-4">
+              加载规则列表失败: {String(keywordsError)}
+            </div>
+          )}
+
+          {!keywordsLoading && !keywordsError && keywordsData && keywordsData.rules.length === 0 && (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+              <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">暂无规则</h3>
+              <p className="text-sm text-gray-500 mb-4">点击上方"创建规则"按钮添加您的第一条关键词回复规则</p>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors"
+              >
+                创建规则
+              </button>
+            </div>
+          )}
+
+          {!keywordsLoading && !keywordsError && keywordsData && keywordsData.rules.length > 0 && (
+            <RuleTable
+              className="border-0 rounded-none shadow-none"
+              rules={keywordsData.rules}
+              onEdit={setEditingRule}
+            />
+          )}
+        </div>
+      )}
 
       {/* 编辑商品表单 */}
       {editingItem && (
@@ -393,6 +512,23 @@ export default function ItemsPage() {
         <ItemKeywordModal
           item={keywordItem}
           onClose={() => setKeywordItem(null)}
+        />
+      )}
+
+      {/* 创建规则表单 */}
+      {showCreateForm && (
+        <RuleForm
+          onClose={() => setShowCreateForm(false)}
+          onSuccess={() => setShowCreateForm(false)}
+        />
+      )}
+
+      {/* 编辑规则表单 */}
+      {editingRule && (
+        <RuleForm
+          rule={editingRule}
+          onClose={() => setEditingRule(null)}
+          onSuccess={() => setEditingRule(null)}
         />
       )}
     </div>
