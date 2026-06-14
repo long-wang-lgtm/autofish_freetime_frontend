@@ -330,13 +330,13 @@ export default function AdminPage() {
           icon={<UserIcon />} bg="bg-blue-50" fg="text-blue-600"
         />
         <StatCard
-          label="总账号数" value={stats?.total_accounts}
-          icon={<AccountIcon />} bg="bg-indigo-50" fg="text-indigo-600"
-        />
-        <StatCard
           label="今日新增" value={stats?.today_new_users}
           icon={<NewIcon />} bg="bg-emerald-50" fg="text-emerald-600"
           highlight
+        />
+        <StatCard
+          label="总账号数" value={stats?.total_accounts}
+          icon={<AccountIcon />} bg="bg-indigo-50" fg="text-indigo-600"
         />
         <StatCard
           label="正常账号" value={stats?.normal_accounts}
