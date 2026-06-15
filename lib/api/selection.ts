@@ -15,10 +15,8 @@ export interface ProductItem {
   id: string
   title: string
   price: number
-  imageUrl: string
   wantCount: number
   lookCount: number
-  ratio: number // 想要数/浏览数
   collectCount: number
   shopName: string
   source: string
@@ -26,6 +24,136 @@ export interface ProductItem {
   publishedAt: string
   description: string
   date?: string // 商品所属日期，用于筛选
+  // ===== 衍生字段（前端计算，null = 数据不足无法计算）=====
+  /** 询单率 = wantCount / lookCount，0~1 之间 */
+  inquiryRate: number | null
+  /** 询藏比 = wantCount / collectCount */
+  wantCollectRatio: number | null
+  /** 日均询单 = wantCount / 上架天数 */
+  dailyWant: number | null
+  /** 预估销售额 = price * wantCount * 0.5 */
+  estimatedSales: number | null
+  /** 预估订单数 = wantCount * 0.5 */
+  estimatedOrders: number | null
+  /** 收藏率 = collectCount / lookCount，0~1 之间 */
+  collectRate: number | null
+  /** 上架天数 = (now - publishTime) / 86400 */
+  daysSincePublish: number | null
+  // ===== 后端直传字段 =====
+  /** 监控优先级 */
+  priority: number | null
+  /** 监控状态（0=暂停 1=启用） */
+  monitorStatus: number | null
+  /** 来源关键词列表 */
+  keywords: string[]
+}
+
+/** 可排序的列 key */
+export type ProductSortKey =
+  | 'title'
+  | 'price'
+  | 'wantCount'
+  | 'lookCount'
+  | 'collectCount'
+  | 'inquiryRate'
+  | 'wantCollectRatio'
+  | 'dailyWant'
+  | 'estimatedSales'
+  | 'estimatedOrders'
+  | 'collectRate'
+  | 'daysSincePublish'
+  | 'publishedAt'
+  | 'priority'
+  | 'status'
+
+/** 将 DTO 映射为 ProductItem，一并计算所有衍生字段 */
+export function dtoToProductItem(item: MonitoredItemDTO): ProductItem {
+  const price = item.price ?? 0
+  const wantCount = item.wantCount ?? 0
+  const lookCount = item.lookCount ?? 0
+  const collectCount = item.collectCount ?? 0
+
+  const nowMs = Date.now()
+  const daysSincePublish =
+    item.publishTime && item.publishTime > 0
+      ? Math.max(0, (nowMs - item.publishTime) / 86400000)
+      : null
+
+  const inquiryRate = lookCount > 0 ? wantCount / lookCount : null
+  const wantCollectRatio = collectCount > 0 ? wantCount / collectCount : null
+  const dailyWant = daysSincePublish !== null && daysSincePublish > 0 ? wantCount / daysSincePublish : null
+  const estimatedSales = price > 0 && wantCount > 0 ? price * wantCount * 0.5 : null
+  const estimatedOrders = wantCount > 0 ? wantCount * 0.5 : null
+  const collectRate = lookCount > 0 ? collectCount / lookCount : null
+
+  // 发布时间：publishTime 是商品在闲鱼上架的 Unix 时间戳（毫秒）
+  const publishedAt = item.publishTime
+    ? new Date(item.publishTime).toISOString()
+    : ''
+  const publishDate = item.publishTime
+    ? new Date(item.publishTime).toISOString().split('T')[0]
+    : undefined
+
+  return {
+    id: item.gid,
+    title: item.title || '',
+    price,
+    wantCount,
+    lookCount,
+    collectCount,
+    shopName: item.name ?? '',
+    source: item.keywords?.length ? `关键词[${item.keywords[0]}]` : '未知来源',
+    sourceType: 'keyword' as const,
+    publishedAt,
+    description: item.description ?? '',
+    date: publishDate,
+    inquiryRate,
+    wantCollectRatio,
+    dailyWant,
+    estimatedSales,
+    estimatedOrders,
+    collectRate,
+    daysSincePublish,
+    priority: item.priority ?? null,
+    monitorStatus: item.status ?? null,
+    keywords: item.keywords ?? [],
+  }
+}
+
+/** 获取排序用的数值，便于 ProductItem 按 SortKey 排序 */
+export function getProductSortValue(item: ProductItem, key: ProductSortKey): number | string {
+  switch (key) {
+    case 'title':
+      return item.title
+    case 'price':
+      return item.price
+    case 'wantCount':
+      return item.wantCount
+    case 'lookCount':
+      return item.lookCount
+    case 'collectCount':
+      return item.collectCount
+    case 'inquiryRate':
+      return item.inquiryRate ?? -1
+    case 'wantCollectRatio':
+      return item.wantCollectRatio ?? -1
+    case 'dailyWant':
+      return item.dailyWant ?? -1
+    case 'estimatedSales':
+      return item.estimatedSales ?? -1
+    case 'estimatedOrders':
+      return item.estimatedOrders ?? -1
+    case 'collectRate':
+      return item.collectRate ?? -1
+    case 'daysSincePublish':
+      return item.daysSincePublish ?? -1
+    case 'publishedAt':
+      return item.publishedAt ? new Date(item.publishedAt).getTime() : -1
+    case 'priority':
+      return item.priority ?? -1
+    case 'status':
+      return item.monitorStatus ?? -1
+  }
 }
 
 export interface DailyReport {
@@ -55,14 +183,14 @@ export interface MonitoredItemDTO {
   name?: string | null
   status?: number | null
   priority?: number | null
+  title?: string | null
+  description?: string | null
   price?: number | null
   wantCount?: number | null
   lookCount?: number | null
   collectCount?: number | null
-  description?: string | null
   sales?: number | null
   registerDays?: number | null
-  proLevel?: number | null
   publishTime?: number | null
   keywords?: string[] | null
   created_at?: string | null
@@ -170,6 +298,18 @@ export async function removeMonitorItem(gid: string): Promise<OperationResponse>
   })
 }
 
+/** 启用监控 — GET /api/topic/monitor/item/active?gid= */
+export async function activateMonitorItem(gid: string): Promise<OperationResponse> {
+  console.debug(`[SelectionAPI] activateMonitorItem gid=${gid}`)
+  return fetchAPI<OperationResponse>(`/monitor/item/active?gid=${encodeURIComponent(gid)}`)
+}
+
+/** 取消监控 — GET /api/topic/monitor/item/cancel?gid= */
+export async function cancelMonitorItem(gid: string): Promise<OperationResponse> {
+  console.debug(`[SelectionAPI] cancelMonitorItem gid=${gid}`)
+  return fetchAPI<OperationResponse>(`/monitor/item/cancel?gid=${encodeURIComponent(gid)}`)
+}
+
 /** 移除商家监控 — DELETE /api/topic/monitor/merchant/delete?uid= */
 export async function removeMonitorMerchant(uid: string): Promise<OperationResponse> {
   console.debug(`[SelectionAPI] removeMonitorMerchant uid=${uid}`)
@@ -246,22 +386,7 @@ export async function getCategoryProducts(categoryId: string): Promise<ProductIt
     : items
 
   console.debug(`[SelectionAPI] getCategoryProducts filtered ${filtered.length} items`)
-  return filtered.map(item => ({
-    id: item.gid,
-    title: item.name || item.keywords?.[0] || item.gid,
-    price: item.price ?? 0,
-    imageUrl: '/placeholder.png',
-    wantCount: item.wantCount ?? 0,
-    lookCount: item.lookCount ?? 0,
-    ratio: (item.wantCount ?? 0) / ((item.lookCount ?? 0) || 1),
-    collectCount: item.collectCount ?? 0,
-    shopName: item.name ?? '',
-    source: item.keywords?.length ? `关键词[${item.keywords[0]}]` : '未知来源',
-    sourceType: 'keyword' as const,
-    publishedAt: item.updated_at ?? item.created_at ?? '',
-    description: item.description ?? '',
-    date: item.created_at ? item.created_at.split('T')[0] : undefined,
-  }))
+  return filtered.map(dtoToProductItem)
 }
 
 export async function getCategoryReports(categoryId: string): Promise<DailyReport[]> {
