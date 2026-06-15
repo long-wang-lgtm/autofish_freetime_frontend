@@ -77,8 +77,7 @@ export function MerchantMonitorTab() {
                 <tr className="text-left text-gray-500 border-b border-gray-100">
                   <th className="pb-2 font-medium">商家UID</th>
                   <th className="pb-2 font-medium">名称</th>
-                  <th className="pb-2 font-medium text-right">在售商品</th>
-                  <th className="pb-2 font-medium text-right">总销量</th>
+                  <th className="pb-2 font-medium text-right">优先级</th>
                   <th className="pb-2 font-medium">最后采集</th>
                   <th className="pb-2 font-medium w-12"></th>
                 </tr>
@@ -88,9 +87,14 @@ export function MerchantMonitorTab() {
                   <tr key={m.uid} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-2.5 font-mono text-xs">{m.uid}</td>
                     <td className="py-2.5">{m.name || '-'}</td>
-                    <td className="py-2.5 text-right">{m.item_count}</td>
-                    <td className="py-2.5 text-right text-orange-600 font-medium">{m.sales}</td>
-                    <td className="py-2.5 text-gray-400">{m.last_fetch_time?.split('T')[0] || '-'}</td>
+                    <td className="py-2.5 text-right">
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${
+                        m.monitorStatus === 1 ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'
+                      }`}>
+                        {m.priority ?? '-'}
+                      </span>
+                    </td>
+                    <td className="py-2.5 text-gray-400">{m.last_fetch_at?.split('T')[0] || '-'}</td>
                     <td className="py-2.5 text-right">
                       <button
                         onClick={() => handleRemoveMerchant(m.uid)}

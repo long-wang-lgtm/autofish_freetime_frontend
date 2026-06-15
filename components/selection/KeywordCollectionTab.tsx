@@ -51,10 +51,10 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
     queryClient.invalidateQueries({ queryKey: ['selection-keywords'] })
   }
 
-  const handleRemoveKeyword = async (id: string) => {
+  const handleRemoveKeyword = async (id: number) => {
     await removeKeyword(id)
     queryClient.invalidateQueries({ queryKey: ['selection-keywords'] })
-    if (selectedKeywordId === id) onSelectKeyword(null)
+    if (selectedKeywordId === String(id)) onSelectKeyword(null)
   }
 
   const handleTrigger = async () => {
@@ -69,7 +69,7 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
 
   const filteredKeywords = useMemo(() => {
     if (!searchText) return keywords
-    return keywords.filter(k => k.keyword.toLowerCase().includes(searchText.toLowerCase()))
+    return keywords.filter(k => (k.keyword ?? '').toLowerCase().includes(searchText.toLowerCase()))
   }, [keywords, searchText])
 
   return (
@@ -102,9 +102,9 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
               filteredKeywords.map(kw => (
                 <button
                   key={kw.id}
-                  onClick={() => onSelectKeyword(kw.id)}
+                  onClick={() => onSelectKeyword(kw.id != null ? String(kw.id) : null)}
                   className={`w-full text-left p-2 rounded-lg text-xs transition-all ${
-                    selectedKeywordId === kw.id
+                    selectedKeywordId === String(kw.id)
                       ? 'bg-blue-50 border border-blue-100'
                       : 'hover:bg-gray-50'
                   }`}
@@ -112,12 +112,12 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
                   <div className="flex justify-between items-center">
                     <span className="truncate font-medium text-gray-900">{kw.keyword}</span>
                     <button
-                      onClick={e => { e.stopPropagation(); handleRemoveKeyword(kw.id) }}
+                      onClick={e => { e.stopPropagation(); if (kw.id != null) handleRemoveKeyword(kw.id) }}
                       className="text-gray-400 hover:text-red-500 ml-1"
                     >×</button>
                   </div>
                   <div className="text-gray-400 mt-0.5">
-                    采集 {kw.total_collected} / AI通过 {kw.ai_passed}
+                    采集 {kw.search_item_counts ?? 0} / AI通过 {kw.total_pass_item_counts ?? 0}
                   </div>
                 </button>
               ))

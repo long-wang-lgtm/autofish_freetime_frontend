@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { listMonitorItems, removeMonitorItem } from '@/lib/api/selection'
 import { ContentList } from './ContentList'
 import { ContentGrid } from './ContentGrid'
@@ -11,6 +11,7 @@ import { Search, Filter } from 'lucide-react'
 export function ProductMonitorTab() {
   const [view, setView] = useState<'grid' | 'list'>('list')
   const [searchText, setSearchText] = useState('')
+  const queryClient = useQueryClient()
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['monitor-items'],
@@ -19,23 +20,24 @@ export function ProductMonitorTab() {
 
   const handleRemove = async (gid: string) => {
     await removeMonitorItem(gid)
+    queryClient.invalidateQueries({ queryKey: ['monitor-items'] })
   }
 
   // 将 DTO 映射为 ProductItem 格式供列表使用
   const products = useMemo(() => items.map(item => ({
     id: item.gid,
-    title: item.keyword || item.gid,
-    price: item.price || 0,
+    title: item.name || item.keywords?.[0] || item.gid,
+    price: item.price ?? 0,
     imageUrl: '/placeholder.png',
-    wantCount: item.want_count,
-    lookCount: item.look_count,
-    ratio: item.want_count / (item.look_count || 1),
-    collectCount: item.collect_count,
-    shopName: '',
-    source: `关键词[${item.keyword}]`,
+    wantCount: item.wantCount ?? 0,
+    lookCount: item.lookCount ?? 0,
+    ratio: (item.wantCount ?? 0) / ((item.lookCount ?? 0) || 1),
+    collectCount: item.collectCount ?? 0,
+    shopName: item.name ?? '',
+    source: item.keywords?.length ? `关键词[${item.keywords[0]}]` : '未知来源',
     sourceType: 'keyword' as const,
-    publishedAt: item.last_fetch_time || '',
-    description: '',
+    publishedAt: item.updated_at ?? item.created_at ?? '',
+    description: item.description ?? '',
   })), [items])
 
   const filtered = useMemo(() => {
