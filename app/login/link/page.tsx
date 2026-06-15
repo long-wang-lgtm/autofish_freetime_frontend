@@ -38,13 +38,10 @@ export default function LinkLoginPage() {
         throw new Error(error.detail || `HTTP ${response.status}`)
       }
       const data = await response.json()
-      return {
-        session_id: data.session_id,
-        sse_url: `/api/login/qr/sse?session=${data.session_id}`,
-      }
+      return { session_id: data.session_id }
     },
     cancelLogin: async (sessionId) => {
-      await fetch(`${API_BASE}/api/login/qr/${sessionId}/cancel`, {
+      await fetch(`${API_BASE}/api/login/link/${sessionId}`, {
         method: "DELETE",
       })
     },

@@ -105,9 +105,9 @@ export async function deleteAccount(uid: string): Promise<OperationResponse> {
 }
 
 // 扫码登录 API
-export async function startQrLogin(uid?: string): Promise<{ session_id: string; sse_url: string }> {
+export async function startQrLogin(uid?: string): Promise<{ session_id: string }> {
   const params = uid ? `?uid=${encodeURIComponent(uid)}` : ""
-  return fetchApi<{ session_id: string; sse_url: string }>(`/api/login/qr/start${params}`, {
+  return fetchApi<{ session_id: string }>(`/api/login/qr/start${params}`, {
     method: "POST",
   })
 }

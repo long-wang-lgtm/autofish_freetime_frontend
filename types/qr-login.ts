@@ -15,8 +15,8 @@ export interface QrLoginState {
 }
 
 export interface UseQrLoginOptions {
-  /** 启动登录，返回 session_id 和 SSE URL */
-  startLogin: () => Promise<{ session_id: string; sse_url: string }>
+  /** 启动登录，返回 session_id，SSE URL 由 hook 内部构造 */
+  startLogin: () => Promise<{ session_id: string }>
   /** 取消登录 */
   cancelLogin: (sessionId: string) => Promise<void>
   /** 登录成功回调（hook 内部延迟后调用并自动清理） */
