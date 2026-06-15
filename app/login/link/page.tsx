@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback } from "react"
-import { useParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useQrLogin } from "@/hooks/useQrLogin"
 import { QrCodeDisplay } from "@/components/ui/qr-code-display"
 
@@ -10,8 +10,8 @@ export const runtime = "edge"
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
 
 export default function LinkLoginPage() {
-  const params = useParams()
-  const token = params.token as string
+  const searchParams = useSearchParams()
+  const token = searchParams.get("token")
 
   const handleSuccess = useCallback(() => {
     // 登录成功后页面关闭（由外部窗口控制或用户手动关闭）
@@ -28,7 +28,7 @@ export default function LinkLoginPage() {
   } = useQrLogin({
     startLogin: async () => {
       const response = await fetch(
-        `${API_BASE}/api/login/link/${token}/qr/start`,
+        `${API_BASE}/api/login/link/start?token=${token}`,
         { method: "POST" }
       )
       if (!response.ok) {
@@ -37,7 +37,11 @@ export default function LinkLoginPage() {
           .catch(() => ({ detail: "请求失败" }))
         throw new Error(error.detail || `HTTP ${response.status}`)
       }
-      return response.json()
+      const data = await response.json()
+      return {
+        session_id: data.session_id,
+        sse_url: `/api/login/qr/sse?session=${data.session_id}`,
+      }
     },
     cancelLogin: async (sessionId) => {
       await fetch(`${API_BASE}/api/login/qr/${sessionId}/cancel`, {
@@ -45,12 +49,23 @@ export default function LinkLoginPage() {
       })
     },
     onSuccess: handleSuccess,
-    autoStart: true,
+    autoStart: !!token,
   })
 
   const handleCancel = useCallback(async () => {
     await cleanup()
   }, [cleanup])
+
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
+          <h1 className="text-xl font-bold text-gray-900 mb-2">无效链接</h1>
+          <p className="text-sm text-gray-500">缺少 token 参数，请检查链接是否完整</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center p-4">

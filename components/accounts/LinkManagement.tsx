@@ -2,63 +2,19 @@
 
 import { useState, useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { getAuthHeader } from "@/lib/api/auth"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
+import {
+  listLinkTokens,
+  createLinkToken,
+  deleteLinkToken,
+  buildLinkUrl,
+  type LinkToken,
+} from "@/lib/api/link-login"
 
 interface LinkManagementProps {
   open: boolean
   onClose: () => void
-}
-
-interface LinkToken {
-  token: string
-  created_at: string
-}
-
-interface ListResponse {
-  tokens: LinkToken[]
-}
-
-interface CreateResponse {
-  link: string
-  token: string
-}
-
-async function fetchLinkList(): Promise<ListResponse> {
-  const headers = await getAuthHeader()
-  const response = await fetch(`${API_BASE}/api/login/link/list`, { headers })
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`)
-  }
-  return response.json()
-}
-
-async function createLink(): Promise<CreateResponse> {
-  const headers = await getAuthHeader()
-  const response = await fetch(`${API_BASE}/api/login/link/create`, {
-    method: "POST",
-    headers,
-  })
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "请求失败" }))
-    throw new Error(error.detail || `HTTP ${response.status}`)
-  }
-  return response.json()
-}
-
-async function deleteLink(token: string): Promise<void> {
-  const headers = await getAuthHeader()
-  const response = await fetch(`${API_BASE}/api/login/link/${token}`, {
-    method: "DELETE",
-    headers,
-  })
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "删除失败" }))
-    throw new Error(error.detail || `HTTP ${response.status}`)
-  }
 }
 
 function formatDate(isoString: string): string {
@@ -91,12 +47,12 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["link-tokens"],
-    queryFn: fetchLinkList,
+    queryFn: listLinkTokens,
     enabled: open,
   })
 
   const createMutation = useMutation({
-    mutationFn: createLink,
+    mutationFn: createLinkToken,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["link-tokens"] })
       addToast({ title: "链接已生成", description: "可复制链接分享给他人扫码登录" })
@@ -107,7 +63,7 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: deleteLink,
+    mutationFn: deleteLinkToken,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["link-tokens"] })
       addToast({ title: "已删除", description: "链接已失效" })
@@ -118,7 +74,7 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
   })
 
   const handleCopy = useCallback(async (token: string) => {
-    const fullUrl = window.location.origin + `/link-login/${token}`
+    const fullUrl = buildLinkUrl(token)
     await navigator.clipboard.writeText(fullUrl)
     setCopiedToken(token)
     setTimeout(() => setCopiedToken(null), 2000)
@@ -195,7 +151,7 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
                     <input
                       type="text"
                       readOnly
-                      value={window.location.origin + `/link-login/${creatingToken}`}
+                      value={buildLinkUrl(creatingToken)}
                       className="flex-1 px-3 py-2.5 bg-white/80 rounded-lg text-sm text-gray-800 border border-purple-100 focus:outline-none font-mono truncate"
                     />
                     <button
@@ -235,7 +191,7 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
             )}
 
             {/* 空状态 */}
-            {!isLoading && !error && (!data?.tokens || data.tokens.length === 0) && !creatingToken && (
+            {!isLoading && !error && (!data || data.length === 0) && !creatingToken && (
               <div className="flex flex-col items-center justify-center py-16 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/30">
                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-100 to-fuchsia-100 flex items-center justify-center mb-4">
                   <svg className="w-7 h-7 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,16 +206,16 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
             )}
 
             {/* 链接列表 */}
-            {!isLoading && !error && data?.tokens && data.tokens.length > 0 && (
+            {!isLoading && !error && data && data.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                   <span className="text-sm font-medium text-gray-600">
-                    共 {data.tokens.length} 个链接
+                    共 {data.length} 个链接
                   </span>
                 </div>
                 <div className="space-y-2">
-                  {data.tokens.map((item) => (
+                  {data.map((item) => (
                     <div
                       key={item.token}
                       className="group flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-white hover:border-purple-200 hover:shadow-md transition-all duration-200"
