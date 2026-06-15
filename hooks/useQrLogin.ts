@@ -20,6 +20,7 @@ export function useQrLogin({
   const [canRetry, setCanRetry] = useState(false)
   const inRetryRef = useRef(false)
   const genRef = useRef(0)
+  const autoStartedRef = useRef(false)
 
   const reset = useCallback(() => {
     genRef.current++
@@ -44,10 +45,7 @@ export function useQrLogin({
       const data = await startLogin()
       if (gen !== genRef.current) return // 已被 reset/cleanup 取消
       setSessionId(data.session_id)
-      const fullSseUrl = data.sse_url.startsWith("http")
-        ? data.sse_url
-        : `${API_BASE}${data.sse_url}`
-      setSseUrl(fullSseUrl)
+      setSseUrl(`${API_BASE}/api/login/qr/sse?session=${data.session_id}`)
     } catch {
       if (gen !== genRef.current) return
       setOverlayMsg("启动登录失败")
@@ -74,13 +72,13 @@ export function useQrLogin({
     reset()
   }, [sessionId, cancelLogin, reset])
 
-  // autoStart — 页面场景挂载即启动
+  // autoStart — 页面场景挂载即启动，防 StrictMode 双次触发
   useEffect(() => {
-    if (autoStart && !sessionId && scanStatus === "connecting") {
+    if (autoStart && !autoStartedRef.current) {
+      autoStartedRef.current = true
       start()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart])
+  }, [autoStart, start])
 
   // SSE connection
   useEffect(() => {
