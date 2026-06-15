@@ -12,6 +12,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
 export default function LinkLoginPage() {
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
+  const uid = searchParams.get("uid")
 
   const handleSuccess = useCallback(() => {
     // 登录成功后页面关闭（由外部窗口控制或用户手动关闭）
@@ -29,7 +30,7 @@ export default function LinkLoginPage() {
   } = useQrLogin({
     startLogin: async () => {
       const response = await fetch(
-        `${API_BASE}/api/login/link/start?token=${token}`,
+        `${API_BASE}/api/login/link/start?token=${token}${uid ? `&uid=${uid}` : ""}`,
         { method: "POST" }
       )
       if (!response.ok) {
