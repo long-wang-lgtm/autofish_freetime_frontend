@@ -51,7 +51,6 @@ export default function QrLoginModal({
   }, [open, start])
 
   const handleClose = useCallback(async () => {
-    startedRef.current = false
     await cleanup()
     onClose()
   }, [cleanup, onClose])

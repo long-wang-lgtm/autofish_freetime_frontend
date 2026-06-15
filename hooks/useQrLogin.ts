@@ -19,8 +19,10 @@ export function useQrLogin({
   const [hintMsg, setHintMsg] = useState<string | null>(null)
   const [canRetry, setCanRetry] = useState(false)
   const inRetryRef = useRef(false)
+  const genRef = useRef(0)
 
   const reset = useCallback(() => {
+    genRef.current++
     setSessionId(null)
     setSseUrl(null)
     setQrImage(null)
@@ -37,14 +39,17 @@ export function useQrLogin({
     setScanStatus("connecting")
     setCanRetry(false)
     inRetryRef.current = false
+    const gen = ++genRef.current
     try {
       const data = await startLogin()
+      if (gen !== genRef.current) return // 已被 reset/cleanup 取消
       setSessionId(data.session_id)
       const fullSseUrl = data.sse_url.startsWith("http")
         ? data.sse_url
         : `${API_BASE}${data.sse_url}`
       setSseUrl(fullSseUrl)
     } catch {
+      if (gen !== genRef.current) return
       setOverlayMsg("启动登录失败")
       setScanStatus("failed")
       setCanRetry(true)
