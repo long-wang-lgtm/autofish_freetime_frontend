@@ -28,5 +28,8 @@ export interface UseQrLoginOptions {
 export interface UseQrLoginReturn extends QrLoginState {
   start: () => Promise<void>
   retry: () => Promise<void>
+  /** 取消服务端会话，保留二维码并显示蒙版提示 */
+  cancel: () => Promise<void>
+  /** 完全清理：取消会话 + 重置所有状态 */
   cleanup: () => Promise<void>
 }

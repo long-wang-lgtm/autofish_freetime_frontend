@@ -72,6 +72,17 @@ export function useQrLogin({
     reset()
   }, [sessionId, cancelLogin, reset])
 
+  // cancel — 取消服务端会话但保留二维码，显示蒙版
+  const cancel = useCallback(async () => {
+    genRef.current++ // 使飞行中的 start() 失效
+    if (sessionId) {
+      try { await cancelLogin(sessionId) } catch { /* ignore */ }
+    }
+    setScanStatus("failed")
+    setOverlayMsg("已取消登录\n点击刷新")
+    setCanRetry(true)
+  }, [sessionId, cancelLogin])
+
   // autoStart — 页面场景挂载即启动，防 StrictMode 双次触发
   useEffect(() => {
     if (autoStart && !autoStartedRef.current) {
@@ -185,6 +196,7 @@ export function useQrLogin({
     canRetry,
     start,
     retry,
+    cancel,
     cleanup,
   }
 }

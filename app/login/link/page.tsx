@@ -24,6 +24,7 @@ export default function LinkLoginPage() {
     hintMsg,
     canRetry,
     retry,
+    cancel,
     cleanup,
   } = useQrLogin({
     startLogin: async () => {
@@ -50,8 +51,8 @@ export default function LinkLoginPage() {
   })
 
   const handleCancel = useCallback(async () => {
-    await cleanup()
-  }, [cleanup])
+    await cancel()
+  }, [cancel])
 
   if (!token) {
     return (
