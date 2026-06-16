@@ -1,9 +1,9 @@
 /**
  * 账号管理 API 客户端
  */
-import { getAuthHeader } from "./auth"
-
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
+import { fetchApi, API_BASE_URL, OperationResponse } from '@/lib/utils/api'
+export type { OperationResponse }
+export { fetchApi, API_BASE_URL }
 
 export interface Account {
   uid: string
@@ -49,35 +49,6 @@ export interface AccountUpdate {
 export interface AccountName {
   uid: string
   name: string
-}
-
-export interface OperationResponse {
-  success: boolean
-  message: string
-  data?: Record<string, unknown>
-}
-
-export async function fetchApi<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const headers = await getAuthHeader()
-
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-      ...options.headers,
-    },
-  })
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "请求失败" }))
-    throw new Error(error.detail || `HTTP ${response.status}`)
-  }
-
-  return response.json()
 }
 
 export async function listAccounts(): Promise<Account[]> {

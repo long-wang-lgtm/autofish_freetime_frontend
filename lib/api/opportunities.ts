@@ -1,7 +1,7 @@
 /**
  * 商机 API 客户端
  */
-import { fetchApi } from './accounts'
+import { fetchApi } from '@/lib/utils/api'
 
 export interface Opportunity {
   id: number

@@ -2,8 +2,7 @@
  * 链接登录 API 客户端
  */
 import { getAuthHeader } from "./auth"
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
+import { API_BASE_URL } from "@/lib/utils/api"
 
 export interface LinkToken {
   token: string
@@ -22,7 +21,7 @@ async function apiFetch<T>(
 ): Promise<T> {
   const headers = await getAuthHeader()
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",

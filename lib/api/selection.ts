@@ -236,12 +236,14 @@ export interface TopicStatsDTO {
 
 // ============ API 客户端 ============
 
-const API_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL!}/api/topic`
+import { API_BASE_URL } from '@/lib/utils/api'
 
-async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
+const SELECTION_API_BASE = `${API_BASE_URL}/api/topic`
+
+async function selectionFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const { getAccessToken } = await import('@/lib/utils/auth')
   const token = getAccessToken()
-  const url = `${API_BASE}${path}`
+  const url = `${SELECTION_API_BASE}${path}`
   console.debug(`[SelectionAPI] ${options?.method || 'GET'} ${url}`)
   const res = await fetch(url, {
     ...options,
@@ -266,19 +268,19 @@ async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
 /** 列出监控商品 — GET /api/topic/monitor/items */
 export async function listMonitorItems(): Promise<MonitoredItemDTO[]> {
   console.debug('[SelectionAPI] listMonitorItems')
-  return fetchAPI<MonitoredItemDTO[]>('/monitor/items')
+  return selectionFetch<MonitoredItemDTO[]>('/monitor/items')
 }
 
 /** 列出监控商家 — GET /api/topic/monitor/merchants */
 export async function listMonitorMerchants(): Promise<MonitoredMerchantDTO[]> {
   console.debug('[SelectionAPI] listMonitorMerchants')
-  return fetchAPI<MonitoredMerchantDTO[]>('/monitor/merchants')
+  return selectionFetch<MonitoredMerchantDTO[]>('/monitor/merchants')
 }
 
 /** 添加监控商家 — POST /api/topic/monitor/merchant/create (JSON body) */
 export async function addMonitorMerchant(uid: string, name: string = ''): Promise<OperationResponse> {
   console.debug(`[SelectionAPI] addMonitorMerchant uid=${uid}, name=${name}`)
-  return fetchAPI<OperationResponse>('/monitor/merchant/create', {
+  return selectionFetch<OperationResponse>('/monitor/merchant/create', {
     method: 'POST',
     body: JSON.stringify({ uid, name: name || uid }),
   })
@@ -287,13 +289,13 @@ export async function addMonitorMerchant(uid: string, name: string = ''): Promis
 /** 获取选品统计 — GET /api/topic/stats */
 export async function getTopicStats(): Promise<TopicStatsDTO> {
   console.debug('[SelectionAPI] getTopicStats')
-  return fetchAPI<TopicStatsDTO>('/stats')
+  return selectionFetch<TopicStatsDTO>('/stats')
 }
 
 /** 移除商品监控 — DELETE /api/topic/monitor/item/delete?gid= */
 export async function removeMonitorItem(gid: string): Promise<OperationResponse> {
   console.debug(`[SelectionAPI] removeMonitorItem gid=${gid}`)
-  return fetchAPI<OperationResponse>(`/monitor/item/delete?gid=${encodeURIComponent(gid)}`, {
+  return selectionFetch<OperationResponse>(`/monitor/item/delete?gid=${encodeURIComponent(gid)}`, {
     method: 'DELETE',
   })
 }
@@ -301,19 +303,19 @@ export async function removeMonitorItem(gid: string): Promise<OperationResponse>
 /** 启用监控 — GET /api/topic/monitor/item/active?gid= */
 export async function activateMonitorItem(gid: string): Promise<OperationResponse> {
   console.debug(`[SelectionAPI] activateMonitorItem gid=${gid}`)
-  return fetchAPI<OperationResponse>(`/monitor/item/active?gid=${encodeURIComponent(gid)}`)
+  return selectionFetch<OperationResponse>(`/monitor/item/active?gid=${encodeURIComponent(gid)}`)
 }
 
 /** 取消监控 — GET /api/topic/monitor/item/cancel?gid= */
 export async function cancelMonitorItem(gid: string): Promise<OperationResponse> {
   console.debug(`[SelectionAPI] cancelMonitorItem gid=${gid}`)
-  return fetchAPI<OperationResponse>(`/monitor/item/cancel?gid=${encodeURIComponent(gid)}`)
+  return selectionFetch<OperationResponse>(`/monitor/item/cancel?gid=${encodeURIComponent(gid)}`)
 }
 
 /** 移除商家监控 — DELETE /api/topic/monitor/merchant/delete?uid= */
 export async function removeMonitorMerchant(uid: string): Promise<OperationResponse> {
   console.debug(`[SelectionAPI] removeMonitorMerchant uid=${uid}`)
-  return fetchAPI<OperationResponse>(`/monitor/merchant/delete?uid=${encodeURIComponent(uid)}`, {
+  return selectionFetch<OperationResponse>(`/monitor/merchant/delete?uid=${encodeURIComponent(uid)}`, {
     method: 'DELETE',
   })
 }
@@ -323,13 +325,13 @@ export async function removeMonitorMerchant(uid: string): Promise<OperationRespo
 /** 列出关键词 — GET /api/topic/keywords */
 export async function listKeywords(): Promise<MonitoredKeywordDTO[]> {
   console.debug('[SelectionAPI] listKeywords')
-  return fetchAPI<MonitoredKeywordDTO[]>('/keywords')
+  return selectionFetch<MonitoredKeywordDTO[]>('/keywords')
 }
 
 /** 添加关键词 — POST /api/topic/keyword/create (JSON body) */
 export async function addKeyword(keyword: string): Promise<OperationResponse> {
   console.debug(`[SelectionAPI] addKeyword keyword=${keyword}`)
-  return fetchAPI<OperationResponse>('/keyword/create', {
+  return selectionFetch<OperationResponse>('/keyword/create', {
     method: 'POST',
     body: JSON.stringify({ keyword }),
   })
@@ -338,7 +340,7 @@ export async function addKeyword(keyword: string): Promise<OperationResponse> {
 /** 删除关键词 — DELETE /api/topic/keyword/delete?id= */
 export async function removeKeyword(keywordId: number): Promise<OperationResponse> {
   console.debug(`[SelectionAPI] removeKeyword keywordId=${keywordId}`)
-  return fetchAPI<OperationResponse>(`/keyword/delete?id=${keywordId}`, {
+  return selectionFetch<OperationResponse>(`/keyword/delete?id=${keywordId}`, {
     method: 'DELETE',
   })
 }
@@ -348,7 +350,7 @@ export async function removeKeyword(keywordId: number): Promise<OperationRespons
 /** 触发采集 — POST /api/topic/collection/run（后端待实现） */
 export async function triggerCollection(keywordIds: string[] = []): Promise<OperationResponse> {
   console.debug(`[SelectionAPI] triggerCollection keywordIds=${JSON.stringify(keywordIds)}`)
-  return fetchAPI<OperationResponse>('/collection/run', {
+  return selectionFetch<OperationResponse>('/collection/run', {
     method: 'POST',
     body: JSON.stringify({ keyword_ids: keywordIds }),
   })

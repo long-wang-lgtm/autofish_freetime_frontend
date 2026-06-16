@@ -1,7 +1,6 @@
 import { LoginData, RegisterData } from '@/lib/utils/validation'
 import { getAccessToken } from '@/lib/utils/auth'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+import { API_BASE_URL } from '@/lib/utils/api'
 
 /**
  * 获取认证头信息

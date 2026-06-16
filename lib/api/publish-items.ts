@@ -1,7 +1,7 @@
 /**
  * 发布素材 API 客户端
  */
-import { fetchApi } from './accounts'
+import { fetchApi } from '@/lib/utils/api'
 import { type MaterialImage, imageDisplayUrl } from './upload'
 
 // 重导出，保持向后兼容

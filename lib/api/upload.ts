@@ -6,7 +6,7 @@
  * - Cloudflare R2 预签名 URL 直传
  */
 import SparkMD5 from 'spark-md5'
-import { fetchApi, API_BASE } from './accounts'
+import { fetchApi, API_BASE_URL } from '@/lib/utils/api'
 import { getAuthHeader } from './auth'
 
 // ─── 类型定义 ───────────────────────────────────────────
@@ -31,7 +31,7 @@ export interface UploadURLResponse {
 /**
  * 图片展示 URL
  *
- * 优先级：url（闲鱼 CDN）→ flare（R2 直链）→ filepath（本地，需拼接 API_BASE）
+ * 优先级：url（闲鱼 CDN）→ flare（R2 直链）→ filepath（本地，需拼接 API_BASE_URL）
  */
 export function imageDisplayUrl(image: MaterialImage | undefined | null): string {
   if (!image) return ''
@@ -39,7 +39,7 @@ export function imageDisplayUrl(image: MaterialImage | undefined | null): string
   if (image.flare) return image.flare
   if (!image.filepath) return ''
   const filename = image.filepath.replace(/^data[\\/]/, 'api/').replace(/\\/g, '/')
-  return `${API_BASE}/${filename}`
+  return `${API_BASE_URL}/${filename}`
 }
 
 /** 从文件名提取扩展名（含点），如 ".png"；无扩展名时根据 MIME 推测 */
@@ -96,7 +96,7 @@ export function computeFileMD5(file: File): Promise<string> {
 /** 检查图片 hash 是否已在服务端存在（秒传） */
 export async function checkImageHash(md5: string): Promise<MaterialImage | null> {
   const authHeaders = await getAuthHeader()
-  const resp = await fetch(`${API_BASE}/api/image/hash?md5=${encodeURIComponent(md5)}`, {
+  const resp = await fetch(`${API_BASE_URL}/api/image/hash?md5=${encodeURIComponent(md5)}`, {
     headers: { ...authHeaders },
   })
   if (!resp.ok) return null
