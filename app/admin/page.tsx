@@ -7,8 +7,8 @@ import {
   adminApi,
   type DashboardData,
   type AdminUserInfo,
-  type AdminAccountInfo,
-} from '@/lib/api/administrators'
+  type AccountFull,
+} from '@/lib/api/admin'
 import ImStatusChart from '@/components/ui/echart/ImStatusChart'
 import AccountPieChart from '@/components/ui/echart/AccountPieChart'
 import { useChart } from '@/components/ui/echart/useChart'
@@ -30,7 +30,7 @@ function hashColor(userId: string): string {
   return USER_PALETTE[Math.abs(h) % USER_PALETTE.length]
 }
 
-function statusLabel(status: number): { text: string; cls: string } {
+function statusLabel(status: number | null): { text: string; cls: string } {
   switch (status) {
     case 1: return { text: '正常', cls: 'bg-green-100 text-green-700' }
     case 2: return { text: '禁用', cls: 'bg-gray-100 text-gray-500' }
@@ -122,7 +122,7 @@ export default function AdminPage() {
   const [userLoading, setUserLoading] = useState(false)
 
   // --- 账号列表 ---
-  const [accounts, setAccounts] = useState<AdminAccountInfo[]>([])
+  const [accounts, setAccounts] = useState<AccountFull[]>([])
   const [accountTotal, setAccountTotal] = useState(0)
   const [accountPage, setAccountPage] = useState(1)
   const [accountLoading, setAccountLoading] = useState(false)
@@ -141,11 +141,9 @@ export default function AdminPage() {
   const fetchUsers = useCallback(async (page: number) => {
     setUserLoading(true)
     try {
-      const res = await adminApi.getUsers(page, PAGE_SIZE)
-      if (res.success) {
-        setUsers(res.data.items)
-        setUserTotal(res.data.total)
-      }
+      const data = await adminApi.getUserList(page, PAGE_SIZE)
+      setUsers(data)
+      setUserTotal(data.length === PAGE_SIZE ? (page + 1) * PAGE_SIZE : (page - 1) * PAGE_SIZE + data.length)
     } catch (e) { console.error(e) }
     finally { setUserLoading(false) }
   }, [])
@@ -158,11 +156,9 @@ export default function AdminPage() {
   const fetchAccounts = useCallback(async (page: number) => {
     setAccountLoading(true)
     try {
-      const res = await adminApi.getAccounts(page, PAGE_SIZE)
-      if (res.success) {
-        setAccounts(res.data.items)
-        setAccountTotal(res.data.total)
-      }
+      const data = await adminApi.getAccountList(page, PAGE_SIZE)
+      setAccounts(data.accounts)
+      setAccountTotal(data.total)
     } catch (e) { console.error(e) }
     finally { setAccountLoading(false) }
   }, [])
@@ -296,14 +292,15 @@ export default function AdminPage() {
   // --- 账号颜色映射 ---
   const userColorMap = useMemo(() => {
     if (!dashboard) return {} as Record<string, string>
-    const sorted = [...dashboard.account_by_user].sort((a, b) => b.accountCount - a.accountCount)
+    const sorted = [...dashboard.account_by_user].sort((a, b) => (b.accountCount ?? 0) - (a.accountCount ?? 0))
     const top10Ids = new Set(sorted.slice(0, 10).map((u) => u.userId))
     const map: Record<string, string> = {}
     for (const item of sorted) {
-      if (top10Ids.has(item.userId)) {
-        map[item.userId] = hashColor(item.userId)
+      const id = item.userId || ''
+      if (top10Ids.has(id)) {
+        map[id] = hashColor(id)
       } else {
-        map[item.userId] = OTHER_COLOR
+        map[id] = OTHER_COLOR
       }
     }
     return map
@@ -506,7 +503,7 @@ function UserTable({
                     : '从未登录'}
                 </Td>
                 <Td className="text-gray-500">
-                  {new Date(u.created_at).toLocaleDateString('zh-CN')}
+                  {new Date(u.created_at!).toLocaleDateString('zh-CN')}
                 </Td>
               </tr>
             ))
@@ -524,7 +521,7 @@ function UserTable({
 function AccountTable({
   accounts, total, page, loading, onPageChange, userColorMap,
 }: {
-  accounts: AdminAccountInfo[]
+  accounts: AccountFull[]
   total: number
   page: number
   loading: boolean
@@ -557,14 +554,14 @@ function AccountTable({
                   <Td className="w-8 pr-0">
                     <span
                       className="inline-block w-3 h-3 rounded-full"
-                      style={{ backgroundColor: userColorMap[a.user_id] || OTHER_COLOR }}
+                      style={{ backgroundColor: userColorMap[a.user?.userId || ''] || OTHER_COLOR }}
                     />
                   </Td>
                   <Td>
                     <span className="font-medium text-gray-900">{a.name || '未命名'}</span>
                   </Td>
                   <Td className="text-gray-500 font-mono text-xs">{a.uid}</Td>
-                  <Td>{a.username}</Td>
+                  <Td>{a.user?.username || '—'}</Td>
                   <Td>
                     <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${st.cls}`}>
                       {st.text}

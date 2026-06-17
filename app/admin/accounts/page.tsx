@@ -1,15 +1,17 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { adminApi, type AdminAccountFull } from "@/lib/api/administrators"
+import { adminApi, type AccountFull, type ProxyLong } from "@/lib/api/admin"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { SlidePanel } from "@/components/ui/slide-panel"
 import { toast } from "sonner"
 import {
-  Bot, Truck, Zap, Star, Sparkles, Bell, BellOff, Play, Square,
+  Bot, Truck, Zap, Star, Sparkles, Bell, BellOff, Play, Square, Link2,
 } from "lucide-react"
+import { ProxyItem } from "@/components/ui/proxy-item"
 import ImStatusChart from "@/components/ui/echart/ImStatusChart"
 import AccountPieChart from "@/components/ui/echart/AccountPieChart"
-import type { AccountByUserItem } from "@/lib/api/administrators"
+import type { AccountByUserItem } from "@/lib/api/admin"
 
 const PAGE_SIZE = 20
 
@@ -113,14 +115,166 @@ function ConfigDot({ value, label }: { value: string | null; label: string }) {
   )
 }
 
+// 代理选择侧边栏 — 已绑定(仅展示) + 可绑定(用户其余代理)
+// 店铺不支持解绑，绑定新代理即替换旧代理
+function ProxySelectPanel({
+  open,
+  onClose,
+  uid,
+  userId,
+  accountName,
+  boundProxy,
+  onSuccess,
+}: {
+  open: boolean
+  onClose: () => void
+  uid: string
+  userId: string
+  accountName: string
+  /** 店铺当前绑定的代理（直接取自账号列表数据，无需额外请求） */
+  boundProxy: ProxyLong | null
+  onSuccess: () => void
+}) {
+  const [userProxies, setUserProxies] = useState<ProxyLong[]>([])
+  const [loading, setLoading] = useState(true)
+  const [bindingId, setBindingId] = useState<number | null>(null)
+  const [confirmingId, setConfirmingId] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (open && userId) {
+      setLoading(true)
+      adminApi.getUserProxies(userId)
+        .then((data) => setUserProxies(data || []))
+        .catch((err) => toast.error(`${err}`))
+        .finally(() => setLoading(false))
+    }
+  }, [open, userId])
+
+  // 可绑定列表 = 用户代理中排除已绑定的那个
+  const bindableProxies = userProxies.filter((p) => p.id !== boundProxy?.id)
+
+  const handleBindClick = (proxyId: number) => {
+    // 已有绑定代理时，先进入确认状态
+    if (boundProxy) {
+      setConfirmingId(proxyId)
+      return
+    }
+    doBind(proxyId)
+  }
+
+  const doBind = async (proxyId: number) => {
+    setBindingId(proxyId)
+    setConfirmingId(null)
+    try {
+      await adminApi.bindAccountProxy(uid, proxyId)
+      toast.success("代理绑定成功")
+      onSuccess()
+      onClose()
+    } catch (err) {
+      toast.error(`绑定失败: ${err}`)
+    } finally {
+      setBindingId(null)
+    }
+  }
+
+  return (
+    <SlidePanel open={open} onClose={onClose} title="选择代理" subtitle={accountName}>
+      {loading ? (
+        <div className="flex justify-center py-12"><LoadingSpinner /></div>
+      ) : (
+        <div className="space-y-6">
+          {/* 已绑定代理 — 仅展示，不支持解绑 */}
+          <section>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">已绑定代理</h4>
+            {boundProxy ? (
+              <ProxyItem proxy={boundProxy} variant="bound" />
+            ) : (
+              <div className="text-center text-gray-400 text-sm py-6 bg-gray-50 rounded-lg">
+                <Link2 className="w-4 h-4 mx-auto mb-1 opacity-50" />
+                暂未绑定代理
+              </div>
+            )}
+          </section>
+
+          {/* 可绑定代理 */}
+          <section>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">
+              可绑定代理
+              {userProxies.length > 0 && (
+                <span className="ml-1.5 text-xs text-gray-400 font-normal">({bindableProxies.length})</span>
+              )}
+            </h4>
+            {userProxies.length === 0 ? (
+              <div className="text-center text-gray-400 text-sm py-6 bg-gray-50 rounded-lg">
+                <Link2 className="w-4 h-4 mx-auto mb-1 opacity-50" />
+                该用户暂未分配任何代理
+              </div>
+            ) : bindableProxies.length === 0 ? (
+              <div className="text-center text-gray-400 text-sm py-6 bg-gray-50 rounded-lg">
+                暂无可绑定的代理
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {bindableProxies.map((p) => {
+                  const isConfirming = confirmingId === p.id
+                  return isConfirming ? (
+                    <div key={p.id} className="p-3 border border-amber-200 rounded-lg bg-amber-50/60">
+                      <div className="min-w-0">
+                        <div className="font-mono text-sm text-gray-900 truncate">{p.server}</div>
+                        <p className="text-xs text-amber-700 mt-1">
+                          ⚠ 绑定后将自动解绑原代理「{boundProxy?.server}」
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => doBind(p.id!)}
+                          disabled={bindingId === p.id}
+                          className="px-2.5 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+                        >
+                          {bindingId === p.id ? <LoadingSpinner size="sm" /> : "确认绑定"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmingId(null)}
+                          className="px-2.5 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <ProxyItem
+                      key={p.id}
+                      proxy={p}
+                      variant="bindable"
+                      actionLabel="绑定"
+                      actionLoading={bindingId === p.id}
+                      onAction={() => handleBindClick(p.id!)}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+    </SlidePanel>
+  )
+}
+
 export default function AdminAccountsPage() {
-  const [accounts, setAccounts] = useState<AdminAccountFull[]>([])
+  const [accounts, setAccounts] = useState<AccountFull[]>([])
   const [statuslist, setStatuslist] = useState<Record<string, boolean>>({})
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [togglingUid, setTogglingUid] = useState<string | null>(null)
+
+  const [showProxySelect, setShowProxySelect] = useState(false)
+  const [selectedUid, setSelectedUid] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [selectedAccountName, setSelectedAccountName] = useState<string>("")
+  const [selectedBoundProxy, setSelectedBoundProxy] = useState<ProxyLong | null>(null)
 
   // --- 饼图数据 ---
   const [pieData, setPieData] = useState<AccountByUserItem[]>([])
@@ -139,7 +293,7 @@ export default function AdminAccountsPage() {
     setLoading(true)
     setError(null)
     try {
-      const data = await adminApi.getAccountsFull(p, PAGE_SIZE)
+      const data = await adminApi.getAccountList(p, PAGE_SIZE)
       setAccounts(data.accounts)
       setStatuslist(data.statuslist)
       setTotal(data.total)
@@ -172,6 +326,15 @@ export default function AdminAccountsPage() {
     } finally {
       setTogglingUid(null)
     }
+  }
+
+  const handleBindProxy = (uid: string) => {
+    const account = accounts.find(a => a.uid === uid)
+    setSelectedUid(uid)
+    setSelectedUserId(account?.user?.userId || null)
+    setSelectedAccountName(account?.name || uid)
+    setSelectedBoundProxy(account?.proxy ?? null)
+    setShowProxySelect(true)
   }
 
   const statusLabels: Record<number, string> = { 1: "正常", 2: "禁用", 3: "异常" }
@@ -258,8 +421,8 @@ export default function AdminAccountsPage() {
 
       {/* 账号表格 */}
       {!loading && !error && accounts && accounts.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-auto max-h-[600px]">
+          <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600 sticky top-0 z-10">
             <div className="col-span-1">账号信息</div>
             <div className="col-span-1 text-center">状态</div>
             <div className="col-span-1 text-center">商品数量</div>
@@ -271,7 +434,7 @@ export default function AdminAccountsPage() {
             <div className="col-span-1 text-center">自动评价</div>
             <div className="col-span-1 text-center">自动通知</div>
             <div className="col-span-1 text-center">AI提示词</div>
-            <div className="col-span-1 text-center">默认回复</div>
+            <div className="col-span-1 text-center">代理</div>
           </div>
 
           {accounts.map((account, index) => {
@@ -413,12 +576,22 @@ export default function AdminAccountsPage() {
                   />
                 </div>
 
-                {/* 默认回复（只读） */}
-                <div className="col-span-1 text-center">
-                  <ConfigDot
-                    value={account.full_default_reply_content}
-                    label="默认回复"
-                  />
+                {/* 代理绑定 — 点击整格打开侧边栏 */}
+                <div className="col-span-1 min-w-0">
+                  <button
+                    onClick={() => handleBindProxy(uid)}
+                    className="w-full text-left min-w-0 group"
+                  >
+                    {account.proxy ? (
+                      <span className="font-mono text-xs text-gray-700 truncate group-hover:text-blue-600 transition-colors" title={account.proxy.server ?? undefined}>
+                        {account.proxy.server}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400 group-hover:text-blue-600 transition-colors">
+                        <Link2 className="w-3 h-3 inline mr-0.5" />点击绑定
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
             )
@@ -433,6 +606,19 @@ export default function AdminAccountsPage() {
             />
           </div>
         </div>
+      )}
+
+      {/* 代理选择侧边栏 */}
+      {selectedUid && selectedUserId && (
+        <ProxySelectPanel
+          open={showProxySelect}
+          onClose={() => { setShowProxySelect(false); setSelectedUid(null); setSelectedUserId(null) }}
+          uid={selectedUid}
+          userId={selectedUserId}
+          accountName={selectedAccountName}
+          boundProxy={selectedBoundProxy}
+          onSuccess={() => { fetchAccounts(page) }}
+        />
       )}
     </div>
   )

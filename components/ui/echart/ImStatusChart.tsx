@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import * as echarts from 'echarts'
 import { useImStatusSnapshots } from '@/hooks/useImStatusSnapshots'
 import { useChart } from './useChart'
-import type { ImStatusSnapshot } from '@/lib/api/administrators'
+import type { ImStatusSnapshot } from '@/lib/api/admin'
 
 // ===== 常量 =====
 const SLOT_COUNT = 200          // X 轴最小时间槽数（数据少时不显稀疏，数据多时自动扩展）

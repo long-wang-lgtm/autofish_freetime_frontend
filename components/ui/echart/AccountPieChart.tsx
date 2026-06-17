@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import * as echarts from 'echarts'
 import { useChart } from './useChart'
-import type { AccountByUserItem } from '@/lib/api/administrators'
+import type { AccountByUserItem } from '@/lib/api/admin'
 
 // ===== 常量 =====
 const USER_PALETTE = [
@@ -27,14 +27,14 @@ export default function AccountPieChart({
   const option = useMemo<echarts.EChartsOption | null>(() => {
     if (!data || data.length === 0) return null
 
-    const sorted = [...data].sort((a, b) => b.accountCount - a.accountCount)
+    const sorted = [...data].sort((a, b) => (b.accountCount ?? 0) - (a.accountCount ?? 0))
     const top10 = sorted.slice(0, 10)
-    const otherCount = sorted.slice(10).reduce((s, i) => s + i.accountCount, 0)
+    const otherCount = sorted.slice(10).reduce((s, i) => s + (i.accountCount ?? 0), 0)
 
     const pieData: { name: string; value: number; itemStyle: { color: string } }[] = top10.map(
       (item, i) => ({
-        name: item.username,
-        value: item.accountCount,
+        name: item.username || '',
+        value: item.accountCount ?? 0,
         itemStyle: { color: USER_PALETTE[i] },
       }),
     )

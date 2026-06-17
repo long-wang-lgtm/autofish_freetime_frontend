@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useSyncExternalStore } from 'react'
-import { subscribeImStatus, type ImStatusSnapshot } from '@/lib/api/administrators'
+import { subscribeImStatus, type ImStatusSnapshot } from '@/lib/api/admin'
 
 // ===== 模块级共享状态（单例 SSE 连接） =====
 let sharedSnapshots: ImStatusSnapshot[] = []
