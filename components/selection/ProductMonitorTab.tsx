@@ -11,7 +11,7 @@ import {
   getProductSortValue,
   type ProductSortKey,
 } from '@/lib/api/selection'
-import { ChevronUp, ChevronDown, Search, Trash2, ChevronRight, Check, Power } from 'lucide-react'
+import { ChevronUp, ChevronDown, Search, Trash2, ChevronRight, Check } from 'lucide-react'
 
 // ===== 格式化工具 =====
 
@@ -319,28 +319,37 @@ export function ProductMonitorTab() {
             {p.priority ?? '-'}
           </span>
         )
-      case 'monitorStatus':
-        return p.monitorStatus === 1 ? (
-          <button
-            onClick={(e) => { e.stopPropagation(); handleCancel(p.id) }}
-            className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-amber-600 transition-colors cursor-pointer"
-            title="点击取消监控"
-          >
-            <Power className="w-3 h-3" />
-            启用
-          </button>
-        ) : p.monitorStatus === 0 ? (
-          <button
-            onClick={(e) => { e.stopPropagation(); handleActivate(p.id) }}
-            className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-emerald-600 transition-colors cursor-pointer"
-            title="点击启用监控"
-          >
-            <Power className="w-3 h-3" />
-            暂停
-          </button>
-        ) : (
-          <span className="text-xs text-gray-400">-</span>
+      case 'monitorStatus': {
+        const STATUS_MAP: Record<number, { label: string; dot: string; bg: string; text: string; interactive: boolean }> = {
+          0: { label: '已暂停',   dot: 'bg-gray-400',   bg: 'bg-gray-100',   text: 'text-gray-500',   interactive: true },
+          1: { label: '监控中',   dot: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', interactive: true },
+          2: { label: '已分析',   dot: 'bg-blue-500',    bg: 'bg-blue-50',    text: 'text-blue-700',    interactive: false },
+          3: { label: '已发布',   dot: 'bg-violet-500',  bg: 'bg-violet-50',  text: 'text-violet-700',  interactive: false },
+        }
+        const s = STATUS_MAP[p.monitorStatus ?? -1]
+        if (!s) return <span className="text-xs text-gray-400">-</span>
+
+        const badge = (
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+            {s.label}
+          </span>
         )
+
+        if (!s.interactive) return badge
+
+        // 监控中 → 点击取消；已暂停 → 点击启用
+        const isActive = p.monitorStatus === 1
+        return (
+          <button
+            onClick={(e) => { e.stopPropagation(); isActive ? handleCancel(p.id) : handleActivate(p.id) }}
+            className="hover:opacity-80 transition-opacity cursor-pointer"
+            title={isActive ? '点击暂停监控' : '点击启用监控'}
+          >
+            {badge}
+          </button>
+        )
+      }
 
       default:
         return null

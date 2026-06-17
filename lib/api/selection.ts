@@ -42,7 +42,13 @@ export interface ProductItem {
   // ===== 后端直传字段 =====
   /** 监控优先级 */
   priority: number | null
-  /** 监控状态（0=暂停 1=启用） */
+  /**
+   * 监控状态（对齐后端 MonitorStatus 枚举）：
+   *   0 = PAUSED（已暂停）
+   *   1 = MONITORING（监控中）
+   *   2 = ANALYZED（已分析）
+   *   3 = PUBLISHED（已发布）
+   */
   monitorStatus: number | null
   /** 来源关键词列表 */
   keywords: string[]
