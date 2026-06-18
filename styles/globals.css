@@ -85,3 +85,12 @@
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
   background-color: #d1d5db;
 }
+
+/* 完全隐藏滚动条 — 用于 TabBar 等场景 */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
