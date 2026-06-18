@@ -60,58 +60,84 @@
 
 ### 3.2 RuleForm 弹窗 → 抽屉布局改造
 
-当前 RuleForm 是居中弹窗 + 左右分栏（max-w-4xl，左50%表单 + 右50%绑定）：
+当前 RuleForm 是居中弹窗 + 左右分栏（max-w-4xl，左50%表单 + 右50%绑定）。
+
+改为抽屉后，宽度增大到 **半屏~2/3屏**（`min(900px, 66vw)`），适应规则编辑的多配置项。布局从左右分栏改为 **垂直堆叠 + 折叠分区**：
 
 ```
-┌──────────────────────────────────────────────────────┐
-│ 创建规则                                         [✕] │  ← 标题栏
-├──────────────────────────┬───────────────────────────┤
-│ 关键词配置 (w-1/2)        │ 商品与商品组关联 (w-1/2)   │  ← 左右分栏
-│                          │                           │
-│ 回复类型: [▾]            │ 关联商品 (3个) [全选]      │
-│ 关键词:   [____]         │ [搜索...]                 │
-│ 匹配: [▾] 优先级: [__]   │ [商品1] [商品2] [商品3]   │
-│ 回复内容: [____]         │                           │
-│ [占位符][占位符]...      │ 关联商品组 (1个) [全选]   │
-│                          │ [搜索...]                 │
-│ ☑ 启用此规则             │ [商品组1]                 │
-├──────────────────────────┴───────────────────────────┤
-│                              [取消]  [创建]           │  ← 按钮栏
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐  ← 遮罩层（有修改时点击无效）
+│                                        ┌────┤
+│                                        │ ✕  │  ← 关闭按钮
+│ 创建规则                                └────┤
+├──────────────────────────────────────────────┤
+│ ▼ 关键词配置                                  │  ← 默认展开
+│   回复类型: [▾]                               │
+│   关键词: [________]  匹配: [▾]  优先级: [__] │
+│                                               │
+│   回复内容: [____________________________]   │
+│   [占位符] [占位符] [占位符] ...               │
+│   + 插入商品卡片 (折叠面板)                     │
+│   ☑ 启用此规则                                │
+├──────────────────────────────────────────────┤
+│ ▼ 商品与商品组关联 (已选 3 商品 / 1 商品组)     │  ← 折叠分区
+│   搜索商品: [________]              [全选]    │
+│   ☑ 商品A  ☐ 商品B  ☑ 商品C                  │
+│                                               │
+│   搜索商品组: [________]           [全选]     │
+│   ☐ 商品组1  ☑ 商品组2                       │
+├──────────────────────────────────────────────┤
+│                          [取消]  [保存/创建]   │  ← 必须点按钮才能退出
+└──────────────────────────────────────────────┘
+
+Key behaviors:
+- 遮罩层：isDirty ? 点击无效 : 点击关闭
+- 关闭按钮 (✕)：始终可关闭
+- 取消按钮：始终可关闭，放弃修改
+- 提交按钮：保存后关闭
 ```
 
-改为抽屉后，宽度受限（500-640px），左右分栏不可行。改为 **垂直堆叠 + 折叠分区**：
+## 四、Sheet/BottomSheet 增强：防误关闭
+
+### 问题
+
+当前 Sheet/BottomSheet 点击遮罩层即关闭。规则编辑抽屉配置项多、无自动保存，误触关闭会导致编辑内容丢失。
+
+### 方案
+
+给 Sheet 和 BottomSheet 增加 `closeOnBackdrop` 属性：
 
 ```
-┌─────────────────────────────────┐
-│ 创建规则                     [✕] │  ← Sheet 标题栏
-├─────────────────────────────────┤
-│ ▼ 关键词配置                     │  ← 默认展开
-│   回复类型: [▾]                  │
-│   关键词: [________]  匹配: [▾] │
-│   优先级: [___]                  │
-│   回复内容: [________________]  │
-│   [占位符] [占位符] ...          │
-│   + 插入商品卡片 (折叠面板)       │
-│   ☑ 启用此规则                   │
-├─────────────────────────────────┤
-│ ▼ 商品与商品组关联 (已选 3 商品)  │  ← 折叠分区
-│   搜索商品: [________]           │
-│   ☑ 商品A  ☐ 商品B  ☑ 商品C     │
-│   搜索商品组: [________]         │
-│   ☐ 商品组1  ☑ 商品组2          │
-├─────────────────────────────────┤
-│                  [取消]  [创建]   │  ← 底部按钮
-└─────────────────────────────────┘
+SheetProps / BottomSheetProps 新增:
+  closeOnBackdrop?: boolean   // 默认 true（向后兼容）
 ```
 
-## 四、通用组件设计
+行为：
+- `true`（默认）：点击遮罩关闭，和现在一样
+- `false`：点击遮罩无反应，只能通过按钮退出
 
-### 4.1 `KeywordRuleForm` — 规则表单核心
+BottomSheet 额外：`closeOnBackdrop={false}` 时同时禁用下拉关闭手势。
+
+### 消费者使用方式
+
+```
+// 跟踪表单是否有修改
+const [isDirty, setIsDirty] = useState(false)
+
+<Sheet
+  closeOnBackdrop={!isDirty}   // 无修改时可点遮罩退出，有修改时必须点按钮
+  ...
+>
+```
+
+---
+
+## 五、通用组件设计
+
+### 5.1 `KeywordRuleForm` — 规则表单核心
 
 **位置**：`components/items/parts/KeywordRuleForm.tsx`
 
-**职责**：关键词规则的创建/编辑表单字段，不包含商品绑定 UI。
+**职责**：关键词规则的创建/编辑表单字段，不包含商品绑定 UI。内置表单脏状态跟踪，通过回调通知父级以控制抽屉关闭行为。
 
 **Props**：
 
@@ -123,8 +149,14 @@ interface KeywordRuleFormProps {
   onSubmit: (data: FormData) => Promise<void>
   onCancel: () => void
   onDelete?: () => Promise<void>       // 可选：删除规则
+  onDirtyChange?: (dirty: boolean) => void  // 表单脏状态变化回调
 }
 ```
+
+**内部脏状态跟踪**：
+- watch 所有表单字段，与 initialValues（rule 传入值或空默认值）做深度对比
+- 任一字段变化 → `onDirtyChange(true)`
+- 提交成功 / 取消 / 重置 → `onDirtyChange(false)`
 
 **内部包含**：
 - reply_type / keyword / match_type / priority 字段
@@ -155,44 +187,51 @@ interface RuleBindingPanelProps {
 }
 ```
 
-### 4.3 改造后的消费者
+### 5.3 改造后的消费者
 
 **KeywordDrawer（商品入口）**：
 
 ```
-<Sheet>
-  {view === "list" && <RuleListView />}    ← 规则列表（已有逻辑）
-  {view === "form" && <KeywordRuleForm      ← 通用表单
+const [isDirty, setIsDirty] = useState(false)
+
+<Sheet closeOnBackdrop={!isDirty}>
+  {view === "list" && <RuleListView />}       ← 规则列表（列表视图无脏状态）
+  {view === "form" && <KeywordRuleForm         ← 通用表单
     rule={editingRule}
     linkedItem={item}
     bindingWarning="此规则已关联 N 个商品，修改将影响所有关联商品"
     onSubmit={handleSave}
     onCancel={backToList}
     onDelete={handleDelete}
+    onDirtyChange={setIsDirty}
   />}
 </Sheet>
 ```
 
-注：商品入口不展示 RuleBindingPanel，创建时自动 linkItemToRule(currentItem)。
-
-**RuleForm → RuleDrawer（规则入口）**：
+**RuleDrawer（规则入口，原 RuleForm 弹窗改抽屉）**：
 
 ```
-<Sheet width="640px">                     ← 弹窗改为抽屉
-  <KeywordRuleForm                        ← 通用表单
-    rule={rule}
-    onSubmit={handleSave}
-    onCancel={onClose}
-  />
-  <RuleBindingPanel                       ← 绑定面板（折叠分区）
-    items={...}
-    groups={...}
-    ...
-  />
+const [isDirty, setIsDirty] = useState(false)
+
+<Sheet width="min(900px, 66vw)" closeOnBackdrop={!isDirty}>
+  <div className="flex flex-col h-full">       ← 垂直堆叠
+    <KeywordRuleForm                            ← 通用表单
+      rule={rule}
+      onSubmit={handleSave}
+      onCancel={onClose}
+      onDirtyChange={setIsDirty}
+    />
+    <RuleBindingPanel                           ← 折叠分区
+      items={...}
+      groups={...}
+      ...
+    />
+    {/* 按钮在 KeywordRuleForm 内部 */}
+  </div>
 </Sheet>
 ```
 
-## 五、组件层级（改造后）
+## 六、组件层级（改造后）
 
 ```
 page.tsx (~50行)
@@ -225,29 +264,30 @@ components/items/
     └── MobileProductCard.tsx
 ```
 
-## 六、执行顺序
+## 七、执行顺序
 
-### 第一阶段：Tab 提取（纯搬运，不改逻辑）
+### 第一阶段：Tab 提取 + Sheet 增强（纯搬运，不改业务逻辑）
 
 | 步骤 | 操作 | 风险 |
 |------|------|------|
-| 1 | 新建 `ItemsTab.tsx` — 从 page.tsx 搬移 items tab JSX | 低 |
-| 2 | 新建 `RulesTab.tsx` — 从 page.tsx 搬移 rules tab JSX，STAT_CARDS 数组化 | 低 |
-| 3 | 重写 `page.tsx` — 简化为薄壳 | 低 |
-| 4 | 删除 `app/dashboard/rules/` 目录 | 低 |
-| 5 | `tsc --noEmit` 验证 | — |
+| 1 | Sheet/BottomSheet 增加 `closeOnBackdrop` prop（默认 `true`） | 低 |
+| 2 | 新建 `ItemsTab.tsx` — 从 page.tsx 搬移 items tab JSX | 低 |
+| 3 | 新建 `RulesTab.tsx` — 从 page.tsx 搬移 rules tab JSX，STAT_CARDS 数组化 | 低 |
+| 4 | 重写 `page.tsx` — 简化为薄壳 | 低 |
+| 5 | 删除 `app/dashboard/rules/` 目录 | 低 |
+| 6 | `tsc --noEmit` 验证 | — |
 
 ### 第二阶段：规则表单统一（改造逻辑 + 布局）
 
 | 步骤 | 操作 | 风险 |
 |------|------|------|
-| 6 | 新建 `KeywordRuleForm.tsx` — 提取通用表单字段 + 逻辑 | 中 |
-| 7 | 新建 `RuleBindingPanel.tsx` — 提取商品/组绑定面板 | 低 |
-| 8 | 改造 `KeywordDrawer.tsx` — 使用 KeywordRuleForm，增加编辑警告 | 中 |
-| 9 | 新建 `RuleDrawer.tsx` — 原 RuleForm 改为抽屉 + KeywordRuleForm + RuleBindingPanel | 中 |
-| 10 | 更新 `page.tsx` — `<RuleForm>` → `<RuleDrawer>` | 低 |
-| 11 | 删除 `components/rules/RuleForm.tsx`（保留 RuleTable.tsx） | 低 |
-| 12 | `tsc --noEmit` + 功能验证 | — |
+| 7 | 新建 `KeywordRuleForm.tsx` — 提取通用表单字段 + 脏状态跟踪 | 中 |
+| 8 | 新建 `RuleBindingPanel.tsx` — 提取商品/组绑定面板 | 低 |
+| 9 | 改造 `KeywordDrawer.tsx` — 使用 KeywordRuleForm + closeOnBackdrop + 编辑警告 | 中 |
+| 10 | 新建 `RuleDrawer.tsx` — 宽抽屉 `min(900px, 66vw)` + KeywordRuleForm + RuleBindingPanel | 中 |
+| 11 | 更新 `page.tsx` — `<RuleForm>` → `<RuleDrawer>` | 低 |
+| 12 | 删除 `components/rules/RuleForm.tsx`（保留 RuleTable.tsx） | 低 |
+| 13 | `tsc --noEmit` + 功能验证 | — |
 
 ### 为什么不一步到位
 
@@ -255,14 +295,16 @@ components/items/
 - 第二阶段涉及 RuleForm 弹窗→抽屉的布局改造和 KeywordRuleForm 提取，需要更多设计验证
 - 两个阶段互不阻塞：第一阶段完成后 page.tsx 已干净，第二阶段随时可以开始
 
-## 七、约束
+## 八、约束
 
 - 不修改任何业务逻辑（第一阶段）
 - 不修改 `useItemsPage` / `useKeywords` 接口
 - 不改变现有视觉效果（第一阶段）
-- RuleForm → RuleDrawer 布局改动需保持功能完整
+- Sheet/BottomSheet 增加 `closeOnBackdrop` 默认 `true`，向后兼容
+- RuleDrawer 宽度 `min(900px, 66vw)`，KeywordDrawer 保持 560px
+- 有编辑时必须通过按钮退出，不可点遮罩关闭
 
-## 八、效果对比
+## 九、效果对比
 
 | 指标 | 改前 | 第一阶段后 | 第二阶段后 |
 |------|------|-----------|-----------|
@@ -271,5 +313,7 @@ components/items/
 | RulesTab.tsx | 不存在 | ~100 | ~100 |
 | KeywordRuleForm.tsx | 不存在 | 不存在 | ~200 |
 | RuleBindingPanel.tsx | 不存在 | 不存在 | ~100 |
+| Sheet 防误关闭 | ❌ | ✅ closeOnBackdrop | ✅ |
 | 死代码 | rules/page.tsx | 0 | RuleForm.tsx 删除 |
-| 规则容器统一 | 弹窗+抽屉混用 | 弹窗+抽屉混用 | 全部抽屉 |
+| 规则容器 | 弹窗+抽屉混用 | 弹窗+抽屉混用 | 全部抽屉 |
+| 抽屉宽度（规则编辑）| N/A | N/A | min(900px, 66vw) |
