@@ -50,7 +50,20 @@
 
 ### 1.3 导航
 
-左侧导航栏需增加"选品监控"菜单项，指向 `/dashboard/selection`。具体增加位置和方式由实现阶段确认（可能需修改导航配置文件）。
+左侧导航栏（`components/layout/Sidebar.tsx`）新增独立一级项：
+
+```typescript
+// 在 navItems 数组中，"商品发布"之后、"设置"之前插入
+{
+  label: '选品监控',
+  path: '/dashboard/selection',
+  icon: (/* 图标待定，实现阶段选择 */),
+},
+```
+
+Sidebar 已内置 `NavItem` + `isItemActive` 逻辑，新增项无需改动组件代码，只加配置即可。
+
+当前 `navItems` 顺序（4 → 5 项）：账号管理 → 商品管理 → 商品发布 → **选品监控（新增）** → 设置
 
 ### 1.4 冲突记录
 
