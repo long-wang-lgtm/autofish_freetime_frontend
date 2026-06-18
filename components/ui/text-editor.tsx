@@ -25,6 +25,13 @@ const DEVICE_PADDING: Record<Device, string> = {
   "mobile-portrait": "px-2.5 py-2",
 }
 
+/** 防止用户拖拽 textarea 过高导致外层容器出现滚动条 */
+const DEVICE_MAX_H: Record<Device, string> = {
+  pc: "max-h-[60vh]",
+  "mobile-landscape": "max-h-[40vh]",
+  "mobile-portrait": "max-h-[35vh]",
+}
+
 function resolveRows(
   rows: TextEditorProps["rows"],
   device: Device
@@ -62,11 +69,12 @@ export function TextEditor({
 
   const resolvedRows = resolveRows(rows, device)
   const padding = DEVICE_PADDING[device]
+  const maxH = DEVICE_MAX_H[device]
 
   return (
     <textarea
       rows={resolvedRows}
-      className={`w-full text-sm border border-gray-300 rounded-lg focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 ${padding} ${className ?? ""}`}
+      className={`w-full text-sm border border-gray-300 rounded-lg focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 ${padding} ${maxH} ${className ?? ""}`}
       {...rest}
     />
   )
