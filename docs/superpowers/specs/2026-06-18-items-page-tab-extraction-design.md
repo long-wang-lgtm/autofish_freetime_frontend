@@ -91,6 +91,7 @@
 
 Key behaviors:
 - 遮罩层：isDirty ? 点击无效 : 点击关闭
+- BottomSheet 拖拽手柄：isDirty ? 不可见 + 手势禁用 : 可见
 - 关闭按钮 (✕)：始终可关闭
 - 取消按钮：始终可关闭，放弃修改
 - 提交按钮：保存后关闭
@@ -106,28 +107,55 @@ Key behaviors:
 
 给 Sheet 和 BottomSheet 增加 `closeOnBackdrop` 属性：
 
-```
-SheetProps / BottomSheetProps 新增:
+```typescript
+interface SheetProps {
+  // ...existing props
+  /** 点击遮罩是否关闭抽屉。默认 true。false 时只能通过 onClose 回调（即按钮）退出 */
   closeOnBackdrop?: boolean   // 默认 true（向后兼容）
+}
+
+interface BottomSheetProps {
+  // ...existing props
+  /** 点击遮罩是否关闭抽屉。默认 true。false 时拖拽手柄不渲染、下拉手势禁用 */
+  closeOnBackdrop?: boolean   // 默认 true（向后兼容）
+}
 ```
 
-行为：
-- `true`（默认）：点击遮罩关闭，和现在一样
-- `false`：点击遮罩无反应，只能通过按钮退出
+### 行为明细
 
-BottomSheet 额外：`closeOnBackdrop={false}` 时同时禁用下拉关闭手势。
+**Sheet（桌面端）**：
+| `closeOnBackdrop` | 遮罩点击 | 关闭按钮 (✕) |
+|-------------------|---------|-------------|
+| `true`（默认）     | 关闭抽屉 | 关闭抽屉 |
+| `false`           | 无反应   | 关闭抽屉 |
 
-### 消费者使用方式
+**BottomSheet（移动端）**：
+| `closeOnBackdrop` | 遮罩点击 | 拖拽手柄 | 下拉手势 | 关闭按钮 (✕) |
+|-------------------|---------|---------|---------|-------------|
+| `true`（默认）     | 关闭     | **可见** | 启用    | 关闭         |
+| `false`           | 无反应   | **不可见** | 禁用  | 关闭         |
 
-```
-// 跟踪表单是否有修改
+关键：`closeOnBackdrop={false}` 时拖拽手柄 **完全不渲染**，不可见。避免用户看到手柄尝试下拉却发现无效的困惑。
+
+### 动态控制
+
+`closeOnBackdrop` 由父级根据表单脏状态动态传入，实现"无修改可点遮罩退出，有修改必须点按钮"：
+
+```typescript
+// 消费者侧
 const [isDirty, setIsDirty] = useState(false)
 
-<Sheet
-  closeOnBackdrop={!isDirty}   // 无修改时可点遮罩退出，有修改时必须点按钮
-  ...
->
+<Sheet closeOnBackdrop={!isDirty} ...>
+  <KeywordRuleForm onDirtyChange={setIsDirty} ... />
+</Sheet>
 ```
+
+### 扩展性
+
+- 默认值 `true` 保证所有现有消费者行为不变
+- 新抽屉按需传入 `closeOnBackdrop={!isDirty}` 即可获得防误关闭能力
+- 无需修改 Sheet/BottomSheet 内部逻辑即可适配未来更多抽屉场景
+- 若未来需要"完全禁止遮罩关闭"（如强制填写表单），只需传 `closeOnBackdrop={false}` 常量即可
 
 ---
 
