@@ -153,20 +153,27 @@ components/selection/
 - 选中行高亮显示（背景色区分）
 - 再次点击同一行或点击面板关闭按钮 → 取消选中、收起面板
 
-### 3.3 新增列：近期趋势
+### 3.3 新增列
 
-在现有 15 列之后追加第 16 列，列名"近期趋势"，内容为 `MiniTrendChart` 组件。
+在现有 15 列之后追加 2 列：
 
-**MiniTrendChart 规格：**
+#### 列 16：趋势指标（可排序）
+
+- 内容：箭头 + 涨跌幅百分比，如 `↑ 23.5%` / `↓ 12.0%` / `→ 0%`
+- 数值 = `(latestInquiry - earliestInquiry) / earliestInquiry × 100%`
+- 颜色：正值 → green-600，负值 → red-600，零/接近零 → gray-400
+- 排序：按 `trendValue` 数值排序（`ProductSortKey` 新增 `trendValue`）
+- 宽度：约 90px
+
+#### 列 17：近期趋势（不可排序）
+
+- 内容：`MiniTrendChart` 组件
 - 纯折线 sparkline，无坐标轴、无刻度标签、无网格线
 - 数据源：`recentInquiries: number[]`（最近 10 次采集的询单数）
-- 颜色：
-  - 整体上升 → `#16a34a`（green-600）
-  - 整体下降 → `#dc2626`（red-600）
-  - 平稳 → `#9ca3af`（gray-400）
-- 趋势方向由后端字段 `trend: 'up' | 'down' | 'flat'` 决定
+- 颜色：由 `trend` 字段决定 — up → green-600，down → red-600，flat → gray-400
 - 尺寸：宽约 100px，高约 28px，适配表格行高
 - hover 时显示最后一次采集的询单数 tooltip
+- 不可排序（视觉辅助列）
 
 ### 3.4 历史详情抽屉
 
@@ -245,7 +252,7 @@ components/selection/
 
 | # | 冲突 | 处理方式 |
 |---|------|---------|
-| 1 | 新增"近期趋势"列会使表格总列数变为 16，可能影响横向滚动和列宽分配 | 不删改现有列，新列给固定宽度 100px，表格自然增加横向滚动 |
+| 1 | 新增 2 列使表格总列数变为 17，可能影响横向滚动和列宽分配 | 不删改现有列，新列各给固定宽度（趋势指标 90px + 近期趋势 100px），表格自然增加横向滚动 |
 | 2 | 行点击选中与监控状态 badge 点击事件可能冒泡冲突 | badge 的 onClick 使用 `e.stopPropagation()` 阻止冒泡；操作按钮同样处理 |
 
 ---
@@ -271,7 +278,8 @@ components/selection/
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `recentInquiries` | `number[]` | 最近 10 次采集的询单数，按时间升序，供迷你图渲染 |
-| `trend` | `'up' \| 'down' \| 'flat'` | 近 10 次采集的询单整体趋势方向 |
+| `trend` | `'up' \| 'down' \| 'flat'` | 近 10 次采集的询单整体趋势方向，决定迷你图颜色 |
+| `trendValue` | `number` | 趋势涨跌幅百分比（如 23.5 表示 +23.5%），供趋势指标列展示和排序 |
 | `lastCollectedAt` | `string \| null` | 最近一次采集时间（ISO 8601），供迷你图 tooltip |
 
 ### 5.2 历史详情接口（新端点）
@@ -310,7 +318,7 @@ app/dashboard/selection/page.tsx         # 🆕 独立选品监控页
   ├── SelectionTabBar (shared/)
   ├── KeywordCollectionTab (keyword/)     # Tab: 关键词采集
   ├── ProductMonitorTab (product/)        # Tab: 商品监控
-  │   ├── MiniTrendChart (product/)       # 🆕 第 16 列
+  │   ├── MiniTrendChart (product/)       # 🆕 第 17 列（迷你趋势图）
   │   └── ProductHistoryDrawer (product/) # 🆕 历史详情抽屉（内嵌 Sheet）
   │       └── TrendChart (product/)       # 🆕 折线图
   ├── MerchantMonitorTab (merchant/)      # Tab: 商户监控
