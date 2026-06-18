@@ -172,6 +172,17 @@ const [isDirty, setIsDirty] = useState(false)
 
 **职责**：关键词规则的创建/编辑表单字段，不包含商品绑定 UI。内置表单脏状态跟踪，通过回调通知父级以控制抽屉关闭行为。
 
+**按钮放置策略**：`KeywordRuleForm` 内部渲染操作按钮（取消 + 提交）。通过 `children` 插槽，消费者可在表单字段与按钮之间插入额外内容。
+
+```
+<KeywordRuleForm onSubmit={...} onCancel={...}>
+  {/* 可选：插入在表单字段与操作按钮之间的内容 */}
+  <RuleBindingPanel ... />   {/* 仅 RuleDrawer 传入 */}
+</KeywordRuleForm>
+```
+
+渲染顺序：`[表单字段] → [children 插槽] → [关联商品提示/警告] → [取消] [提交]`
+
 **Props**：
 
 ```
@@ -181,8 +192,9 @@ interface KeywordRuleFormProps {
   bindingWarning?: string               // 编辑已绑定规则时的警告文案
   onSubmit: (data: FormData) => Promise<void>
   onCancel: () => void
-  onDelete?: () => Promise<void>       // 可选：删除规则
+  onDelete?: () => Promise<void>       // 可选：删除规则。未传则不渲染删除按钮
   onDirtyChange?: (dirty: boolean) => void  // 表单脏状态变化回调
+  children?: ReactNode                 // 插槽：表单字段下方、按钮上方
 }
 ```
 
@@ -190,6 +202,7 @@ interface KeywordRuleFormProps {
 - watch 所有表单字段，与 initialValues（rule 传入值或空默认值）做深度对比
 - 任一字段变化 → `onDirtyChange(true)`
 - 提交成功 / 取消 / 重置 → `onDirtyChange(false)`
+- `onCancel` 调用前必须先 `onDirtyChange(false)`，避免关闭时 stale closure
 
 **内部包含**：
 - reply_type / keyword / match_type / priority 字段
@@ -197,7 +210,8 @@ interface KeywordRuleFormProps {
 - enabled 开关
 - 关联商品提示条（当 linkedItem 传入时）
 - 编辑警告条（当 bindingWarning 传入时）
-- 提交/取消按钮
+- `{children}` 插槽渲染点
+- 操作按钮（取消 + 提交，条件性删除按钮）
 
 ### 5.2 `RuleBindingPanel` — 商品/商品组绑定面板
 
@@ -227,12 +241,18 @@ interface RuleBindingPanelProps {
   selectedGroupIds: string[]
   onToggleItem: (id: string) => void
   onToggleGroup: (id: string) => void
-  onSelectAllItems: () => void
+  onSelectAllItems: () => void          // 全选/取消全选当前搜索结果
   onSelectAllGroups: () => void
   onItemSearchChange: (q: string) => void
   onGroupSearchChange: (q: string) => void
 }
 ```
+
+**加载/空状态处理**：RuleBindingPanel 本身不处理加载态。父级（RuleDrawer）应在数据就绪后才渲染 RuleBindingPanel，数据未就绪时渲染 LoadingSpinner。
+
+**搜索为空时的处理**：
+- 搜索无匹配：显示 `"未找到匹配的商品"` / `"未找到匹配的商品组"`
+- 列表为空（无数据）：显示 `"暂无可关联的商品"` / `"暂无可关联的商品组"`
 
 ### 5.3 改造后的消费者
 
@@ -257,34 +277,51 @@ const [isDirty, setIsDirty] = useState(false)
 
 **RuleDrawer（规则入口，原 RuleForm 弹窗改抽屉）**：
 
+RuleDrawer **不提供删除功能**（删除由 RuleTable 的行内按钮处理，与当前行为一致）。
+
 ```
 const [isDirty, setIsDirty] = useState(false)
 
 <Sheet width="min(900px, 66vw)" closeOnBackdrop={!isDirty}>
-  <div className="flex flex-col h-full">       ← 垂直堆叠
-    <KeywordRuleForm                            ← 通用表单
-      rule={rule}
-      onSubmit={handleSave}
-      onCancel={onClose}
-      onDirtyChange={setIsDirty}
-    />
-    <RuleBindingPanel                           ← 折叠分区
+  <KeywordRuleForm
+    rule={rule}
+    onSubmit={handleSave}
+    onCancel={onClose}
+    onDirtyChange={setIsDirty}
+  >
+    {/* children 插槽：渲染在表单字段与按钮之间 */}
+    <RuleBindingPanel
       items={...}
       groups={...}
+      selectedItemIds={...}
+      selectedGroupIds={...}
       ...
     />
-    {/* 按钮在 KeywordRuleForm 内部 */}
-  </div>
+  </KeywordRuleForm>
 </Sheet>
 ```
 
-## 六、组件层级（改造后）
+## 六、数据流
+
+**数据所有者**：`page.tsx` 通过 `useItemsPage()` 一次性获取所有数据（items、keywords、accounts），通过 props 向下传递给 ItemsTab 和 RulesTab。
+
+```
+useItemsPage()                        ← 唯一数据源（page.tsx）
+├── ItemsTab props                    ← 商品数据 + 筛选 + 操作回调
+└── RulesTab props                    ← 关键词数据 + 统计 + 操作回调
+```
+
+各 tab **不自建数据 hook**，确保两个 tab 共享同一份 React Query 缓存，切换 tab 不会重复请求。
+
+**RuleDrawer / KeywordDrawer 的数据**：抽屉内部自管数据获取（如 `getRulesForItem`、`listItems`、`listItemGroups`），不通过 page.tsx 传递。原因：这些数据仅在抽屉打开时需要，且 queryKey 不同（如 `["keywords", "item", itemId]`）。
+
+## 七、组件层级（改造后）
 
 ```
 page.tsx (~50行)
 ├── <TabBar />
-├── {items && <ItemsTab />}              components/items/ItemsTab.tsx
-├── {rules && <RulesTab />}              components/items/RulesTab.tsx
+├── {activeTab==="items" && <ItemsTab />}   components/items/ItemsTab.tsx
+├── {activeTab==="rules" && <RulesTab />}   components/items/RulesTab.tsx
 ├── <ItemEditDrawer />                   components/items/drawers/
 ├── <KeywordDrawer />                    ← 内部使用 KeywordRuleForm
 ├── <ConfigDrawer />
@@ -311,7 +348,7 @@ components/items/
     └── MobileProductCard.tsx
 ```
 
-## 七、执行顺序
+## 八、执行顺序
 
 ### 第一阶段：Tab 提取 + Sheet 增强（纯搬运，不改业务逻辑）
 
@@ -342,7 +379,7 @@ components/items/
 - 第二阶段涉及 RuleForm 弹窗→抽屉的布局改造和 KeywordRuleForm 提取，需要更多设计验证
 - 两个阶段互不阻塞：第一阶段完成后 page.tsx 已干净，第二阶段随时可以开始
 
-## 八、约束
+## 九、约束
 
 - 不修改任何业务逻辑（第一阶段）
 - 不修改 `useItemsPage` / `useKeywords` 接口
@@ -351,7 +388,7 @@ components/items/
 - RuleDrawer 宽度 `min(900px, 66vw)`，KeywordDrawer 保持 560px
 - 有编辑时必须通过按钮退出，不可点遮罩关闭
 
-## 九、效果对比
+## 十、效果对比
 
 | 指标 | 改前 | 第一阶段后 | 第二阶段后 |
 |------|------|-----------|-----------|
@@ -360,7 +397,7 @@ components/items/
 | RulesTab.tsx | 不存在 | ~100 | ~100 |
 | KeywordRuleForm.tsx | 不存在 | 不存在 | ~200 |
 | RuleBindingPanel.tsx | 不存在 | 不存在 | ~100 |
-| Sheet 防误关闭 | ❌ | ✅ closeOnBackdrop | ✅ |
+| Sheet closeOnBackdrop prop | ❌ | ✅ (prop 就绪，未被使用) | ✅ (消费者激活) |
 | 死代码 | rules/page.tsx | 0 | RuleForm.tsx 删除 |
 | 规则容器 | 弹窗+抽屉混用 | 弹窗+抽屉混用 | 全部抽屉 |
 | 抽屉宽度（规则编辑）| N/A | N/A | min(900px, 66vw) |
