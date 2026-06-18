@@ -12,16 +12,9 @@ import { listOpportunities, type Opportunity } from '@/lib/api/opportunities'
 import { type PublishedItem } from '@/lib/api/publish-items'
 import { getAccountNames } from '@/lib/api/accounts'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
-import { TabBar as SelectionTabBar, TabName } from '@/components/selection/TabBar'
-import { KeywordCollectionTab } from '@/components/selection/KeywordCollectionTab'
-import { ProductMonitorTab } from '@/components/selection/ProductMonitorTab'
-import { MerchantMonitorTab } from '@/components/selection/MerchantMonitorTab'
 
-type PublishTab = 'publish' | 'selection'
-
-const PUBLISH_TABS: { key: PublishTab; label: string }[] = [
+const PUBLISH_TABS: { key: string; label: string }[] = [
   { key: 'publish', label: '商品发布' },
-  { key: 'selection', label: '选品监控' },
 ]
 
 const LEFT_PANEL_DEFAULT_WIDTH = 280
@@ -32,10 +25,7 @@ export default function PublishPage() {
   const queryClient = useQueryClient()
   const isMobile = useMediaQuery('(max-width: 768px)')
 
-  const [activePublishTab, setActivePublishTab] = useState<PublishTab>('publish')
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null)
-  const [selectionTab, setSelectionTab] = useState<TabName>('keyword')
-  const [selectedKeywordId, setSelectedKeywordId] = useState<string | null>(null)
 
   const [leftWidth, setLeftWidth] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -102,55 +92,38 @@ export default function PublishPage() {
       {/* 一级 Tab 栏 */}
       <TabBar
         tabs={PUBLISH_TABS}
-        activeTab={activePublishTab}
-        onTabChange={(key) => setActivePublishTab(key as PublishTab)}
+        activeTab="publish"
+        onTabChange={() => {}}
         variant="overline"
       />
 
-      {/* Tab 内容 */}
-      {activePublishTab === 'publish' && (
-        <div className="flex flex-1 min-h-0 overflow-hidden">
-          <div style={{ width: leftWidth, flexShrink: 0 }} className="overflow-hidden">
-            <OpportunityLibrary
-              opportunities={opportunitiesData?.items || []}
-              isLoading={opportunitiesLoading}
-              selectedOpportunity={selectedOpportunity}
-              onSelectOpportunity={setSelectedOpportunity}
-            />
-          </div>
-
-          <ResizableDivider
-            direction="horizontal"
-            onResize={handleLeftWidthChange}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <div style={{ width: leftWidth, flexShrink: 0 }} className="overflow-hidden">
+          <OpportunityLibrary
+            opportunities={opportunitiesData?.items || []}
+            isLoading={opportunitiesLoading}
+            selectedOpportunity={selectedOpportunity}
+            onSelectOpportunity={setSelectedOpportunity}
           />
-
-          <div className="flex-1 overflow-hidden">
-            <PublishWorkspace
-              opportunity={selectedOpportunity}
-              accounts={accountsData || []}
-              onRefreshOpportunities={() => queryClient.invalidateQueries({ queryKey: ['opportunities'] })}
-              selectedItem={selectedItem}
-              selectedItemId={selectedItem?.id}
-              onSelectItem={setSelectedItem}
-              onItemChange={handleItemChange}
-            />
-          </div>
         </div>
-      )}
 
-      {activePublishTab === 'selection' && (
-        <div className="space-y-3">
-         <SelectionTabBar activeTab={selectionTab} onTabChange={setSelectionTab} />
-          {selectionTab === 'keyword' && (
-            <KeywordCollectionTab
-              selectedKeywordId={selectedKeywordId}
-              onSelectKeyword={setSelectedKeywordId}
-            />
-          )}
-          {selectionTab === 'product' && <ProductMonitorTab />}
-          {selectionTab === 'merchant' && <MerchantMonitorTab />}
+        <ResizableDivider
+          direction="horizontal"
+          onResize={handleLeftWidthChange}
+        />
+
+        <div className="flex-1 overflow-hidden">
+          <PublishWorkspace
+            opportunity={selectedOpportunity}
+            accounts={accountsData || []}
+            onRefreshOpportunities={() => queryClient.invalidateQueries({ queryKey: ['opportunities'] })}
+            selectedItem={selectedItem}
+            selectedItemId={selectedItem?.id}
+            onSelectItem={setSelectedItem}
+            onItemChange={handleItemChange}
+          />
         </div>
-      )}
+      </div>
 
       {/* 编辑抽屉 — fixed overlay，从右侧滑入 */}
       <EditorDrawer
