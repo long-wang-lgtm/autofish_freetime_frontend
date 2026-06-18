@@ -6,7 +6,7 @@ import {
   type KeywordRule,
   createKeywordRule,
   updateKeywordRule,
-  deleteKeywordRule,
+  unlinkItemFromRule,
   linkItemToRule,
   PREDEFINED_KEYWORDS,
   getRulesForItem,
@@ -87,19 +87,19 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
     }
   }
 
-  // 删除规则
-  const handleDeleteRule = async (rule: KeywordRule) => {
-    if (!confirm(`确定要删除规则"${rule.keyword}"吗？`)) return
+  // 解除绑定（替代原来的删除规则）
+  const handleUnlinkRule = async (rule: KeywordRule) => {
+    if (!confirm(`确定要解除规则"${rule.keyword}"与此商品的绑定吗？`)) return
     setLoading(true)
     try {
-      await deleteKeywordRule(rule.rule_id)
-      addToast({ title: "已删除", description: "规则已删除" })
+      await unlinkItemFromRule(rule.rule_id, item.gid)
+      addToast({ title: "已解除绑定", description: "规则与此商品的关联已取消" })
       queryClient.invalidateQueries({ queryKey: ["keywords", "item", item.gid] })
       queryClient.invalidateQueries({ queryKey: ["keywords"] })
       setShowCreateForm(false)
       setEditingRule(null)
     } catch (e) {
-      addToast({ title: "删除失败", description: String(e), variant: "error" })
+      addToast({ title: "解除绑定失败", description: String(e), variant: "error" })
     } finally {
       setLoading(false)
     }
@@ -169,11 +169,11 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
                     编辑
                   </button>
                   <button
-                    onClick={() => handleDeleteRule(rule)}
+                    onClick={() => handleUnlinkRule(rule)}
                     disabled={loading}
-                    className="px-3 py-1 text-xs text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    className="px-3 py-1 text-xs text-orange-600 hover:bg-orange-50 rounded-md transition-colors"
                   >
-                    删除
+                    解除绑定
                   </button>
                 </div>
               </div>
@@ -191,6 +191,28 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
 
   const title = "关键词回复"
   const subtitle = `为商品「${item.title || item.gid.slice(0, 10)}...」配置关键词自动回复`
+
+  // ==== 编辑表单视图 ====
+  const editView = (
+    <KeywordRuleForm
+      rule={editingRule ?? undefined}
+      linkedItem={item}
+      bindingWarning={bindingWarning}
+      onSubmit={handleSave}
+      onCancel={() => {
+        setShowCreateForm(false)
+        setEditingRule(null)
+        setIsDirty(false)
+      }}
+      onDestructiveAction={
+        editingRule
+          ? { label: "解除绑定", onAction: () => handleUnlinkRule(editingRule) }
+          : undefined
+      }
+      onDirtyChange={setIsDirty}
+      showItemCardPanel
+    />
+  )
 
   if (isMobile) {
     return (
@@ -216,8 +238,10 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
                 setEditingRule(null)
                 setIsDirty(false)
               }}
-              onDelete={
-                editingRule ? () => handleDeleteRule(editingRule) : undefined
+              onDestructiveAction={
+                editingRule
+                  ? { label: "解除绑定", onAction: () => handleUnlinkRule(editingRule) }
+                  : undefined
               }
               onDirtyChange={setIsDirty}
             />
@@ -228,27 +252,15 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title={title} width="560px" closeOnBackdrop={!isDirty}>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={title}
+      width="min(66vw, 900px)"
+      closeOnBackdrop={!isDirty}
+    >
       <div className="flex-1 min-h-0 overflow-y-auto p-4">
-        {!showCreateForm ? (
-          ruleListView
-        ) : (
-          <KeywordRuleForm
-            rule={editingRule ?? undefined}
-            linkedItem={item}
-            bindingWarning={bindingWarning}
-            onSubmit={handleSave}
-            onCancel={() => {
-              setShowCreateForm(false)
-              setEditingRule(null)
-              setIsDirty(false)
-            }}
-            onDelete={
-              editingRule ? () => handleDeleteRule(editingRule) : undefined
-            }
-            onDirtyChange={setIsDirty}
-          />
-        )}
+        {!showCreateForm ? ruleListView : editView}
       </div>
     </Sheet>
   )

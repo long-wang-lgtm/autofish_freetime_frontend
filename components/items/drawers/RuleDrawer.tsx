@@ -1,8 +1,17 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { type KeywordRule, createKeywordRule, updateKeywordRule, linkItemToRule, unlinkItemFromRule, linkGroupToRule, unlinkGroupFromRule, listRuleItems } from "@/lib/api/keywords"
+import {
+  type KeywordRule,
+  createKeywordRule,
+  updateKeywordRule,
+  linkItemToRule,
+  unlinkItemFromRule,
+  linkGroupToRule,
+  unlinkGroupFromRule,
+  listRuleItems,
+} from "@/lib/api/keywords"
 import { listItemGroups } from "@/lib/api/items"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
@@ -27,10 +36,6 @@ export default function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawe
   // 关联选择状态
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([])
-
-  // 搜索词追踪，用于 selectAll 逻辑
-  const [itemSearch, setItemSearch] = useState("")
-  const [groupSearch, setGroupSearch] = useState("")
 
   // 初始化关联数据
   useEffect(() => {
@@ -58,26 +63,6 @@ export default function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawe
 
   const groups = groupsData?.groups ?? []
   const dataReady = !itemsLoading && !groupsLoading
-
-  // 过滤后的列表（用于 selectAll 计算）
-  const filteredItems = useMemo(() => {
-    if (!itemSearch.trim()) return items
-    const q = itemSearch.toLowerCase()
-    return items.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) ||
-        item.gid.toLowerCase().includes(q)
-    )
-  }, [items, itemSearch])
-
-  const filteredGroups = useMemo(() => {
-    if (!groupSearch.trim()) return groups
-    const q = groupSearch.toLowerCase()
-    return groups.filter((group) =>
-      group.groupName.toLowerCase().includes(q)
-    )
-  }, [groups, groupSearch])
-
   const isEdit = !!rule
 
   // 切换单个关联
@@ -95,23 +80,6 @@ export default function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawe
         ? prev.filter((id) => id !== groupId)
         : [...prev, groupId]
     )
-  }
-
-  // 全选 / 取消全选
-  const selectAllItems = () => {
-    if (selectedItemIds.length === filteredItems.length && filteredItems.length > 0) {
-      setSelectedItemIds([])
-    } else {
-      setSelectedItemIds(filteredItems.map((i) => i.gid))
-    }
-  }
-
-  const selectAllGroups = () => {
-    if (selectedGroupIds.length === filteredGroups.length && filteredGroups.length > 0) {
-      setSelectedGroupIds([])
-    } else {
-      setSelectedGroupIds(filteredGroups.map((g) => g.groupId))
-    }
   }
 
   // 保存（含关联同步）
@@ -187,32 +155,56 @@ export default function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawe
 
   const title = isEdit ? "编辑规则" : "创建规则"
 
-  const innerContent = (
+  // 右列面板（ItemCardPanel 由 showItemCardPanel 自动渲染）
+  const sidePanelContent = dataReady ? (
+    <RuleBindingPanel
+      items={items}
+      groups={groups}
+      selectedItemIds={selectedItemIds}
+      selectedGroupIds={selectedGroupIds}
+      onToggleItem={toggleItem}
+      onToggleGroup={toggleGroup}
+    />
+  ) : (
+    <div className="flex items-center justify-center py-8">
+      <LoadingSpinner />
+    </div>
+  )
+
+  // 桌面端：两列布局，右列三面板
+  const desktopContent = (
     <KeywordRuleForm
       rule={rule}
       onSubmit={handleSave}
       onCancel={handleCancel}
       onDirtyChange={setIsDirty}
-    >
-      {dataReady ? (
-        <RuleBindingPanel
-          items={items}
-          groups={groups}
-          selectedItemIds={selectedItemIds}
-          selectedGroupIds={selectedGroupIds}
-          onToggleItem={toggleItem}
-          onToggleGroup={toggleGroup}
-          onSelectAllItems={selectAllItems}
-          onSelectAllGroups={selectAllGroups}
-          onItemSearchChange={setItemSearch}
-          onGroupSearchChange={setGroupSearch}
-        />
-      ) : (
-        <div className="flex items-center justify-center py-8">
-          <LoadingSpinner />
+      showItemCardPanel
+      sidePanel={sidePanelContent}
+    />
+  )
+
+  // 移动端：单列布局，面板在表单下方以 accordion 展示
+  const mobileContent = (
+    <>
+      <KeywordRuleForm
+        rule={rule}
+        onSubmit={handleSave}
+        onCancel={handleCancel}
+        onDirtyChange={setIsDirty}
+      />
+      {dataReady && (
+        <div className="mt-3">
+          <RuleBindingPanel
+            items={items}
+            groups={groups}
+            selectedItemIds={selectedItemIds}
+            selectedGroupIds={selectedGroupIds}
+            onToggleItem={toggleItem}
+            onToggleGroup={toggleGroup}
+          />
         </div>
       )}
-    </KeywordRuleForm>
+    </>
   )
 
   if (isMobile) {
@@ -223,7 +215,7 @@ export default function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawe
         title={title}
         closeOnBackdrop={!isDirty}
       >
-        <div className="flex-1 min-h-0 overflow-y-auto p-4">{innerContent}</div>
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">{mobileContent}</div>
       </BottomSheet>
     )
   }
@@ -233,10 +225,10 @@ export default function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawe
       open={open}
       onClose={onClose}
       title={title}
-      width="min(900px, 66vw)"
+      width="min(66vw, 900px)"
       closeOnBackdrop={!isDirty}
     >
-      <div className="flex-1 min-h-0 overflow-y-auto p-4">{innerContent}</div>
+      <div className="flex-1 min-h-0 overflow-y-auto p-4">{desktopContent}</div>
     </Sheet>
   )
 }
