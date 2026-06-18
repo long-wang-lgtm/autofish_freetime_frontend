@@ -94,3 +94,9 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* TabBar 移动端右侧渐变遮罩 — 提示内容可滑动 */
+.tab-mask {
+  mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
+}
