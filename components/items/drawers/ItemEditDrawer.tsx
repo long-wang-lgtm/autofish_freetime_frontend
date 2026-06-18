@@ -9,6 +9,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
 import { useQueryClient } from "@tanstack/react-query"
 import { Sheet, BottomSheet } from "@/components/ui/Sheet"
+import { TextEditor } from "@/components/ui/text-editor"
 import { useIsMobile } from "@/hooks/useIsMobile"
 
 const itemSchema = z.object({
@@ -141,10 +142,9 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">商品描述</label>
-        <textarea
+        <TextEditor
           {...register("description")}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
           placeholder="商品描述"
         />
       </div>
@@ -192,10 +192,9 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
       {/* 默认回复内容 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">默认回复内容</label>
-        <textarea
+        <TextEditor
           {...register("default_reply_content")}
           rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
           placeholder="未匹配关键词时的默认回复"
         />
       </div>
@@ -221,10 +220,9 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
           <div className="mt-3 space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">商品提示词</label>
-              <textarea
+              <TextEditor
                 {...register("ai_reply_item_prompt")}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="AI回复的商品相关提示词"
               />
             </div>
@@ -264,28 +262,25 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 发货内容（按{"{分段符}"}拆分，每条一条）
               </label>
-              <textarea
+              <TextEditor
                 {...register("deliveryContent")}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="例如: 亲，宝贝已发出哦~{分段符}请注意查收~"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">收货后赠送内容</label>
-              <textarea
+              <TextEditor
                 {...register("receiptAfter")}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="买家确认收货后自动发送"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">好评后赠送内容</label>
-              <textarea
+              <TextEditor
                 {...register("positiveReviewAfter")}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="买家好评后自动发送"
               />
             </div>
