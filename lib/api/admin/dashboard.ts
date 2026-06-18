@@ -68,10 +68,7 @@ export async function getDashboard(): Promise<{
   return fetchApi(PREFIX)
 }
 
-/**
- * 订阅 IM 服务运行状态 SSE 推送
- * @returns abort 函数，调用后取消连接
- */
+
 export function subscribeImStatus(
   onSnapshot: (snapshot: ImStatusSnapshot) => void,
   onError?: (err: Error) => void,
