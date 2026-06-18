@@ -34,7 +34,7 @@ function SelectionContent() {
           tabs={SELECTION_TABS}
           activeTab={selectionTab}
           onTabChange={(key) => setSelectionTab(key as TabName)}
-          variant="inset"
+          variant="overline"
         />
         <button
           onClick={() => setSettingsOpen(true)}
