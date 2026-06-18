@@ -1,222 +1,275 @@
-# 商品管理页 Tab 内容提取设计文档
+# 商品管理页 Tab 提取 & 规则表单统一设计文档
 
 **日期**: 2026-06-18  
 **状态**: 待审批  
 
 ---
 
-## 背景
+## 一、背景
 
 `app/dashboard/items/page.tsx` 当前 344 行，虽然业务逻辑已通过 `useItemsPage` hook 抽离，但两个 tab 的全部 JSX（商品管理 tab ~170 行 + 回复规则 tab ~70 行）仍挤在同一个文件中。
 
-同时存在两个遗留问题：
+同时存在三个问题：
 
-1. **死代码路由** — `app/dashboard/rules/page.tsx`（85 行）是独立的规则管理页面，但实际从未使用，其功能已通过 items page 的 rules tab 提供
-2. **重复布局** — items tab 和 rules tab 各自内联了容器、加载态、错误态、空态等相似 JSX，但写法略有差异
+1. **死代码路由** — `app/dashboard/rules/page.tsx`（85 行）是独立的规则管理页面，实际从未使用
+2. **规则表单分裂** — `KeywordDrawer`（商品入口）和 `RuleForm`（规则入口）各自实现了几乎相同的表单字段，但容器不同（抽屉 vs 弹窗）、绑定逻辑不同
+3. **容器不统一** — `KeywordDrawer` 用响应式抽屉，`RuleForm` 用居中弹窗，体验不一致
 
-## 目标
+## 二、目标
 
 - `page.tsx` 缩减到 ~50 行，只做 tab 切换 + 抽屉调度
 - tab 内容分别移到 `components/items/ItemsTab.tsx` 和 `components/items/RulesTab.tsx`
 - 删除无用路由 `app/dashboard/rules/`
-- 统一两个 tab 中相似的 UI 模式（统计卡片、加载/错误/空态写法）
+- 统一两个 tab 中相似的 UI 模式
+- **规则创建/编辑统一使用抽屉**，提取通用表单组件 `KeywordRuleForm`
 
-## 设计方案
+## 三、当前架构分析
 
-### 组件层级
+### 3.1 关键词规则编辑：两条路径对比
 
 ```
-page.tsx (~50行)                          # 薄壳：TabBar + 描述 + tab 切换 + 抽屉
-├── <TabBar />                            # 已有 — 一级 tab 导航
-├── {items && <ItemsTab />}               # 新建 — 商品管理 tab
-├── {rules && <RulesTab />}               # 新建 — 回复规则 tab
-├── <ItemEditDrawer />                    # 已有 — 编辑商品抽屉
-├── <KeywordDrawer />                     # 已有 — 关键词回复抽屉
-├── <ConfigDrawer />                      # 已有 — 配置编辑抽屉
-└── <RuleForm /> ×2                       # 已有 — 创建/编辑规则弹窗
+商品列表入口 (KeywordDrawer)              规则页面入口 (RuleForm)
+═══════════════════════════              ═══════════════════════
+触发: 点击 ItemRow 的"关键词回复"图标    触发: 点击"创建规则"/RuleTable 编辑
+容器: 响应式抽屉 (Sheet/BottomSheet)      容器: 固定居中弹窗 (max-w-4xl)
+范围: 仅当前商品                          范围: 全店商品 + 商品组
 ```
 
-### page.tsx 精简后的形态
+```
+┌──────────────────────────┬──────────────────┬──────────────────┐
+│ 功能                       │ KeywordDrawer     │ RuleForm          │
+├──────────────────────────┼──────────────────┼──────────────────┤
+│ 表单 schema (zod)          │ ✅ 完全一致        │ ✅ 完全一致        │
+│ reply_type / keyword       │ ✅                │ ✅                │
+│ match_type / priority      │ ✅                │ ✅                │
+│ reply_content / enabled    │ ✅                │ ✅                │
+│ 占位符工具栏               │ PlaceholderPicker │ 内联按钮组          │
+│ 商品卡片选择器              │ 内联折叠面板        │ 弹窗叠加            │
+│ getDisplayKeyword          │ 内联函数           │ lib/api 导出       │
+│ 创建规则                    │ ✅ + auto-link    │ ✅                │
+│ 更新规则                    │ ✅                │ ✅                │
+│ 删除规则                    │ ✅                │ ❌（RuleTable 做）  │
+│ 商品/商品组多选绑定          │ ❌                 │ ✅ 右侧面板         │
+│ 规则列表视图                │ ✅ 卡片列表        │ ❌（父级 RuleTable） │
+│ 编辑影响其他商品的警告       │ ❌ 缺失            │ N/A               │
+│ 容器类型                    │ 抽屉               │ 居中弹窗            │
+└──────────────────────────┴──────────────────┴──────────────────┘
+```
 
-```tsx
-"use client"
-import { Suspense } from "react"
-import { useTabRouting } from "@/hooks/useTabRouting"
-import { TabBar } from "@/components/ui/Tab"
-import { ItemsTab } from "@/components/items/ItemsTab"
-import { RulesTab } from "@/components/items/RulesTab"
-import { RuleForm } from "@/components/rules/RuleForm"
-import { ConfigDrawer, ItemEditDrawer, KeywordDrawer } from "@/components/items/drawers"
-import { useItemsPage } from "@/hooks/useItemsPage"
+**结论**：表单字段 JSX、schema、占位符插入、商品卡片插入逻辑高度重复，应提取为 `KeywordRuleForm` 通用组件。绑定面板作为可选的附属组件。
 
-function ItemsPageContent() {
-  const { ... } = useItemsPage()
-  const [activeTab, setActiveTab] = useTabRouting(['items', 'rules'] as const, 'items')
+### 3.2 RuleForm 弹窗 → 抽屉布局改造
 
-  return (
-    <div className="flex flex-col min-h-0 h-full space-y-5">
-      <TabBar ... />
-      <p className="text-sm text-gray-500 -mt-3">...</p>
+当前 RuleForm 是居中弹窗 + 左右分栏（max-w-4xl，左50%表单 + 右50%绑定）：
 
-      {activeTab === "items" && <ItemsTab {...itemsProps} />}
-      {activeTab === "rules" && <RulesTab {...rulesProps} />}
+```
+┌──────────────────────────────────────────────────────┐
+│ 创建规则                                         [✕] │  ← 标题栏
+├──────────────────────────┬───────────────────────────┤
+│ 关键词配置 (w-1/2)        │ 商品与商品组关联 (w-1/2)   │  ← 左右分栏
+│                          │                           │
+│ 回复类型: [▾]            │ 关联商品 (3个) [全选]      │
+│ 关键词:   [____]         │ [搜索...]                 │
+│ 匹配: [▾] 优先级: [__]   │ [商品1] [商品2] [商品3]   │
+│ 回复内容: [____]         │                           │
+│ [占位符][占位符]...      │ 关联商品组 (1个) [全选]   │
+│                          │ [搜索...]                 │
+│ ☑ 启用此规则             │ [商品组1]                 │
+├──────────────────────────┴───────────────────────────┤
+│                              [取消]  [创建]           │  ← 按钮栏
+└──────────────────────────────────────────────────────┘
+```
 
-      {/* 抽屉 + 弹窗 */}
-      {editingItem && <ItemEditDrawer ... />}
-      {keywordItem && <KeywordDrawer ... />}
-      {mobileConfig && <ConfigDrawer ... />}
-      {showCreateForm && <RuleForm ... />}
-      {editingRule && <RuleForm rule={editingRule} ... />}
-    </div>
-  )
+改为抽屉后，宽度受限（500-640px），左右分栏不可行。改为 **垂直堆叠 + 折叠分区**：
+
+```
+┌─────────────────────────────────┐
+│ 创建规则                     [✕] │  ← Sheet 标题栏
+├─────────────────────────────────┤
+│ ▼ 关键词配置                     │  ← 默认展开
+│   回复类型: [▾]                  │
+│   关键词: [________]  匹配: [▾] │
+│   优先级: [___]                  │
+│   回复内容: [________________]  │
+│   [占位符] [占位符] ...          │
+│   + 插入商品卡片 (折叠面板)       │
+│   ☑ 启用此规则                   │
+├─────────────────────────────────┤
+│ ▼ 商品与商品组关联 (已选 3 商品)  │  ← 折叠分区
+│   搜索商品: [________]           │
+│   ☑ 商品A  ☐ 商品B  ☑ 商品C     │
+│   搜索商品组: [________]         │
+│   ☐ 商品组1  ☑ 商品组2          │
+├─────────────────────────────────┤
+│                  [取消]  [创建]   │  ← 底部按钮
+└─────────────────────────────────┘
+```
+
+## 四、通用组件设计
+
+### 4.1 `KeywordRuleForm` — 规则表单核心
+
+**位置**：`components/items/parts/KeywordRuleForm.tsx`
+
+**职责**：关键词规则的创建/编辑表单字段，不包含商品绑定 UI。
+
+**Props**：
+
+```
+interface KeywordRuleFormProps {
+  rule?: KeywordRule                    // 编辑模式传已有规则
+  linkedItem?: Item                     // 商品入口：显示关联商品提示
+  bindingWarning?: string               // 编辑已绑定规则时的警告文案
+  onSubmit: (data: FormData) => Promise<void>
+  onCancel: () => void
+  onDelete?: () => Promise<void>       // 可选：删除规则
 }
+```
 
-export default function ItemsPage() {
-  return <Suspense fallback={...}><ItemsPageContent /></Suspense>
+**内部包含**：
+- reply_type / keyword / match_type / priority 字段
+- reply_content 文本区 + PlaceholderPicker + 内联商品卡片选择器
+- enabled 开关
+- 关联商品提示条（当 linkedItem 传入时）
+- 编辑警告条（当 bindingWarning 传入时）
+- 提交/取消按钮
+
+### 4.2 `RuleBindingPanel` — 商品/商品组绑定面板
+
+**位置**：`components/items/parts/RuleBindingPanel.tsx`
+
+**职责**：选择关联的商品和商品组（从全店范围）。
+
+**Props**：
+
+```
+interface RuleBindingPanelProps {
+  items: RuleItem[]                     // 全店商品列表
+  groups: ItemGroup[]                   // 商品组列表
+  selectedItemIds: string[]
+  selectedGroupIds: string[]
+  onToggleItem: (id: string) => void
+  onToggleGroup: (id: string) => void
+  onSelectAllItems: () => void
+  onSelectAllGroups: () => void
 }
 ```
 
-## 逐组件详设
+### 4.3 改造后的消费者
 
-### ItemsTab (`components/items/ItemsTab.tsx`)
+**KeywordDrawer（商品入口）**：
 
-**职责**：商品管理 tab 的全部 UI，包含桌面端筛选栏、移动端筛选栏、加载/错误/空状态、桌面表格、移动端卡片列表。
+```
+<Sheet>
+  {view === "list" && <RuleListView />}    ← 规则列表（已有逻辑）
+  {view === "form" && <KeywordRuleForm      ← 通用表单
+    rule={editingRule}
+    linkedItem={item}
+    bindingWarning="此规则已关联 N 个商品，修改将影响所有关联商品"
+    onSubmit={handleSave}
+    onCancel={backToList}
+    onDelete={handleDelete}
+  />}
+</Sheet>
+```
 
-**Props**（从 useItemsPage 解构传入）：
+注：商品入口不展示 RuleBindingPanel，创建时自动 linkItemToRule(currentItem)。
 
-| 分类 | 字段 | 类型 |
+**RuleForm → RuleDrawer（规则入口）**：
+
+```
+<Sheet width="640px">                     ← 弹窗改为抽屉
+  <KeywordRuleForm                        ← 通用表单
+    rule={rule}
+    onSubmit={handleSave}
+    onCancel={onClose}
+  />
+  <RuleBindingPanel                       ← 绑定面板（折叠分区）
+    items={...}
+    groups={...}
+    ...
+  />
+</Sheet>
+```
+
+## 五、组件层级（改造后）
+
+```
+page.tsx (~50行)
+├── <TabBar />
+├── {items && <ItemsTab />}              components/items/ItemsTab.tsx
+├── {rules && <RulesTab />}              components/items/RulesTab.tsx
+├── <ItemEditDrawer />                   components/items/drawers/
+├── <KeywordDrawer />                    ← 内部使用 KeywordRuleForm
+├── <ConfigDrawer />
+└── <RuleDrawer />                       ← 原 RuleForm，改为抽屉 + KeywordRuleForm
+
+components/items/
+├── config.ts
+├── FilterBar.tsx
+├── ItemsTab.tsx                         (新建)
+├── RulesTab.tsx                         (新建)
+├── drawers/
+│   ├── ConfigDrawer.tsx
+│   ├── ItemEditDrawer.tsx
+│   ├── KeywordDrawer.tsx                ← 改造
+│   └── RuleDrawer.tsx                   ← 新建（替代 RuleForm）
+├── parts/
+│   ├── IconToggle.tsx
+│   ├── KeywordRuleForm.tsx              (新建 — 通用规则表单)
+│   ├── PlaceholderPicker.tsx
+│   ├── RuleBindingPanel.tsx             (新建 — 商品/组绑定面板)
+│   └── SendCodeEditor.tsx
+└── views/
+    ├── ItemRow.tsx
+    └── MobileProductCard.tsx
+```
+
+## 六、执行顺序
+
+### 第一阶段：Tab 提取（纯搬运，不改逻辑）
+
+| 步骤 | 操作 | 风险 |
 |------|------|------|
-| 筛选 | `accountsData`, `filters`, `searchInput`, `stats`, `sortField`, `sortDirection` | — |
-| 筛选回调 | `onSearchChange`, `onStatusChange`, `onRefresh`, `onClearFilters`, `onSortChange` | — |
-| 数据 | `data`, `sortedItems`, `itemKeywordCounts` | — |
-| 状态 | `isLoading`, `error`, `isRefreshing`, `isMobile` | — |
-| 操作 | `handleToggle`, `updateMutation`, `setEditingItem`, `setKeywordItem`, `setMobileConfig` | — |
+| 1 | 新建 `ItemsTab.tsx` — 从 page.tsx 搬移 items tab JSX | 低 |
+| 2 | 新建 `RulesTab.tsx` — 从 page.tsx 搬移 rules tab JSX，STAT_CARDS 数组化 | 低 |
+| 3 | 重写 `page.tsx` — 简化为薄壳 | 低 |
+| 4 | 删除 `app/dashboard/rules/` 目录 | 低 |
+| 5 | `tsc --noEmit` 验证 | — |
 
-**内部结构**：
+### 第二阶段：规则表单统一（改造逻辑 + 布局）
 
-```
-<div className="flex-1 min-h-0 flex flex-col space-y-4">
-  {/* 移动端筛选栏 */}
-  {isMobile && <FilterBar ... />}
-
-  <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-    {/* 桌面端筛选栏 */}
-    <div className="hidden md:block"><FilterBar ... /></div>
-
-    {/* 加载态 */}
-    {isLoading && <LoadingSpinner />}
-
-    {/* 错误态 */}
-    {error && <ErrorBanner message={error} />}
-
-    {/* 空态 */}
-    {empty && <EmptyPlaceholder ... />}
-
-    {/* 桌面表格 */}
-    <div className="flex-1 overflow-auto hidden md:block">
-      <TableHeader ... />
-      {sortedItems.map(item => <ItemRow ... />)}
-    </div>
-
-    {/* 移动端卡片 */}
-    <div className="flex-1 overflow-auto md:hidden">
-      {sortedItems.map(item => <MobileProductCard ... />)}
-    </div>
-  </div>
-</div>
-```
-
-**不变**：ItemRow、MobileProductCard、FilterBar、表头结构均保持不变，仅从 page.tsx 搬移。
-
-### RulesTab (`components/items/RulesTab.tsx`)
-
-**职责**：回复规则 tab 的全部 UI，包含统计卡片、操作栏、加载/错误/空状态、规则表格。
-
-**Props**（从 useItemsPage 解构传入）：
-
-| 分类 | 字段 | 类型 |
+| 步骤 | 操作 | 风险 |
 |------|------|------|
-| 数据 | `keywordRules`, `rulesStats` | `KeywordRule[]`, `KeywordStats` |
-| 状态 | `keywordsLoading`, `keywordsError` | — |
-| 操作 | `setShowCreateForm`, `setEditingRule` | — |
+| 6 | 新建 `KeywordRuleForm.tsx` — 提取通用表单字段 + 逻辑 | 中 |
+| 7 | 新建 `RuleBindingPanel.tsx` — 提取商品/组绑定面板 | 低 |
+| 8 | 改造 `KeywordDrawer.tsx` — 使用 KeywordRuleForm，增加编辑警告 | 中 |
+| 9 | 新建 `RuleDrawer.tsx` — 原 RuleForm 改为抽屉 + KeywordRuleForm + RuleBindingPanel | 中 |
+| 10 | 更新 `page.tsx` — `<RuleForm>` → `<RuleDrawer>` | 低 |
+| 11 | 删除 `components/rules/RuleForm.tsx`（保留 RuleTable.tsx） | 低 |
+| 12 | `tsc --noEmit` + 功能验证 | — |
 
-**设计要点**：
-- 采用 `rules/page.tsx` 中已有的 `STAT_CARDS` 数组映射模式，替代当前 `items/page.tsx` rules tab 中内联的 5 个重复卡片 div
-- 统一空状态：和当前 items page rules tab 一致，空态内包含"创建规则"按钮
+### 为什么不一步到位
 
-**内部结构**：
+- 第一阶段纯搬运，不动逻辑，零风险，可独立验证
+- 第二阶段涉及 RuleForm 弹窗→抽屉的布局改造和 KeywordRuleForm 提取，需要更多设计验证
+- 两个阶段互不阻塞：第一阶段完成后 page.tsx 已干净，第二阶段随时可以开始
 
-```
-<div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-  {/* 统计卡片 */}
-  <div className="grid grid-cols-5 gap-3 p-4 border-b border-gray-100">
-    {STAT_CARDS.map(...)}
-  </div>
+## 七、约束
 
-  {/* 操作栏 */}
-  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-    <CountText />
-    <CreateButton />
-  </div>
+- 不修改任何业务逻辑（第一阶段）
+- 不修改 `useItemsPage` / `useKeywords` 接口
+- 不改变现有视觉效果（第一阶段）
+- RuleForm → RuleDrawer 布局改动需保持功能完整
 
-  {/* 加载态 */}
-  {keywordsLoading && <LoadingSpinner />}
+## 八、效果对比
 
-  {/* 错误态 */}
-  {keywordsError && <ErrorBanner message={keywordsError} />}
-
-  {/* 空态 */}
-  {empty && <EmptyPlaceholder withCreateButton />}
-
-  {/* 规则表格 */}
-  {hasData && <RuleTable rules={keywordRules} onEdit={setEditingRule} />}
-</div>
-```
-
-### 删除项
-
-| 路径 | 原因 |
-|------|------|
-| `app/dashboard/rules/page.tsx` | 死代码，功能已在 items page rules tab 提供 |
-| `app/dashboard/rules/` 目录 | 删除整个路由目录 |
-
-### 不动项
-
-以下文件和模块本次不修改：
-
-- `hooks/useItemsPage.ts` — 已在上一轮重构中抽离，接口保持不变
-- `hooks/useKeywords.ts` — 共享数据层，不变
-- `hooks/useTabRouting.ts` — 工具 hook，不变
-- `components/items/FilterBar.tsx` — 不变
-- `components/items/drawers/*` — 三个抽屉组件不变
-- `components/items/parts/*` — 不变
-- `components/items/views/*` — ItemRow/MobileProductCard 不变
-- `components/rules/RuleTable.tsx` — 不变
-- `components/rules/RuleForm.tsx` — 不变
-- `components/items/config.ts` — 不变
-
-## 效果对比
-
-| 指标 | 改前 | 改后 |
-|------|------|------|
-| page.tsx 行数 | 344 | ~50 |
-| ItemsTab.tsx | 不存在 | ~180 (从 page.tsx 搬出) |
-| RulesTab.tsx | 不存在 | ~100 (含 STAT_CARDS 优化) |
-| 死代码 | rules/page.tsx (85行) | 0 |
-| 总文件数 | 1 页面文件 | 1 页面 + 2 组件 |
-
-## 执行顺序
-
-1. 新建 `components/items/ItemsTab.tsx` — 搬移 items tab JSX
-2. 新建 `components/items/RulesTab.tsx` — 搬移 rules tab JSX，采用 STAT_CARDS 模式
-3. 重写 `app/dashboard/items/page.tsx` — 简化为薄壳
-4. 删除 `app/dashboard/rules/page.tsx` + 目录
-5. `npx tsc --noEmit` 验证零错误
-6. 检查 `grep -r "rules/page"` 确保无残留引用
-
-## 约束
-
-- 不修改任何业务逻辑，纯 JSX 搬运
-- 不修改 useItemsPage 的接口
-- 不新增任何 UI 组件到 `components/ui/`
-- 不改变现有视觉效果
+| 指标 | 改前 | 第一阶段后 | 第二阶段后 |
+|------|------|-----------|-----------|
+| page.tsx 行数 | 344 | ~50 | ~50 |
+| ItemsTab.tsx | 不存在 | ~180 | ~180 |
+| RulesTab.tsx | 不存在 | ~100 | ~100 |
+| KeywordRuleForm.tsx | 不存在 | 不存在 | ~200 |
+| RuleBindingPanel.tsx | 不存在 | 不存在 | ~100 |
+| 死代码 | rules/page.tsx | 0 | RuleForm.tsx 删除 |
+| 规则容器统一 | 弹窗+抽屉混用 | 弹窗+抽屉混用 | 全部抽屉 |
