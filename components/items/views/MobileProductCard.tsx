@@ -1,34 +1,11 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import { Item } from "@/lib/api/items"
 import { Bot, Truck, Upload, ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
-
-type ConfigField = "deliveryContent" | "receiptAfter" | "positiveReviewAfter" | "ai_reply_item_prompt"
-
-function formatPublishTime(timestamp: string | null): string {
-  if (!timestamp) return "-"
-  const date = new Date(Number(timestamp) * 1000)
-  return date.toLocaleString("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
-
-function statusLabel(status: number): { text: string; color: string } {
-  switch (status) {
-    case 0:
-      return { text: "在售", color: "bg-green-100 text-green-700" }
-    case -2:
-      return { text: "已下架", color: "bg-gray-100 text-gray-500" }
-    case 1:
-      return { text: "已售出", color: "bg-red-100 text-red-600" }
-    default:
-      return { text: "未知", color: "bg-gray-100 text-gray-500" }
-  }
-}
+import { ConfigField, formatPublishTime, statusLabel } from "../config"
+import { IconToggle } from "../parts/IconToggle"
+import { SendCodeEditor } from "../parts/SendCodeEditor"
 
 interface ConfigEntry {
   key: string
@@ -161,12 +138,13 @@ export function MobileProductCard({
               </span>
             </button>
           ) : cfg.key === "sendCode" ? (
-            <SendCodeRow
+            <SendCodeEditor
               key={cfg.key}
               gid={item.gid}
               sendCode={item.sendCode}
+              variant="row"
               hasValue={cfg.hasValue}
-              onChange={onSendCodeChange}
+              onUpdateField={(gid, _field, value) => onSendCodeChange(gid, value)}
             />
           ) : (
             <ConfigRow
@@ -217,12 +195,13 @@ export function MobileProductCard({
                     </span>
                   </button>
                 ) : cfg.key === "sendCode" ? (
-                  <SendCodeRow
+                  <SendCodeEditor
                     key={cfg.key}
                     gid={item.gid}
                     sendCode={item.sendCode}
+                    variant="row"
                     hasValue={cfg.hasValue}
-                    onChange={onSendCodeChange}
+                    onUpdateField={(gid, _field, value) => onSendCodeChange(gid, value)}
                   />
                 ) : (
                   <ConfigRow
@@ -240,40 +219,6 @@ export function MobileProductCard({
         </>
       )}
     </div>
-  )
-}
-
-/** 纯图标切换按钮 */
-function IconToggle({
-  active,
-  activeClass,
-  disabled,
-  title,
-  onClick,
-  children,
-}: {
-  active: boolean
-  activeClass: string
-  disabled?: boolean
-  title: string
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
-        disabled
-          ? "text-gray-300 bg-gray-50 cursor-not-allowed"
-          : active
-          ? activeClass
-          : "text-gray-400 bg-gray-50"
-      }`}
-    >
-      {children}
-    </button>
   )
 }
 
@@ -306,78 +251,6 @@ function ConfigRow({
           }`}
         >
           {hasValue ? value : "未配置"}
-        </span>
-        <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
-      </span>
-    </button>
-  )
-}
-
-/** 指令码行 — 点击原地编辑 */
-function SendCodeRow({
-  gid,
-  sendCode,
-  hasValue,
-  onChange,
-}: {
-  gid: string
-  sendCode: string | null
-  hasValue: boolean
-  onChange: (gid: string, value: string) => void
-}) {
-  const [editing, setEditing] = useState(false)
-  const [editValue, setEditValue] = useState("")
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (editing && inputRef.current) {
-      inputRef.current.focus()
-    }
-  }, [editing])
-
-  const handleSave = () => {
-    const trimmed = editValue.trim()
-    if (trimmed !== (sendCode || "")) {
-      onChange(gid, trimmed)
-    }
-    setEditing(false)
-  }
-
-  if (editing) {
-    return (
-      <div className="flex items-center justify-between px-4 py-2">
-        <span className="text-sm text-gray-600">⌨️ 指令码</span>
-        <input
-          ref={inputRef}
-          type="text"
-          inputMode="numeric"
-          maxLength={6}
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value.replace(/\D/g, ""))}
-          onBlur={handleSave}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleSave()
-            if (e.key === "Escape") setEditing(false)
-          }}
-          className="w-16 text-center text-xs px-1.5 py-1 border border-blue-400 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-        />
-      </div>
-    )
-  }
-
-  return (
-    <button
-      onClick={() => {
-        setEditValue(sendCode || "")
-        setEditing(true)
-      }}
-      title="指令码 — 仅买家时生效"
-      className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
-    >
-      <span className={hasValue ? "text-gray-600" : "text-gray-400"}>⌨️ 指令码</span>
-      <span className="flex items-center gap-1">
-        <span className={`text-xs max-w-[100px] truncate ${hasValue ? "text-gray-700 font-mono" : "text-gray-400"}`}>
-          {hasValue ? (sendCode || "").trim() : "未配置"}
         </span>
         <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
       </span>

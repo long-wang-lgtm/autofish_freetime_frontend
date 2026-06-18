@@ -8,6 +8,7 @@ export interface Item {
   account: {
     uid: string
     name: string
+    status: number
     isPro: boolean
   }
   title: string
@@ -32,11 +33,6 @@ export interface Item {
   publishTime: string | null
   sendCode: string | null
   auto_restock: boolean
-}
-
-export interface ItemListResponse {
-  total: number
-  items: Item[]
 }
 
 export interface ItemGroup {

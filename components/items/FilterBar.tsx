@@ -4,33 +4,146 @@ import { useState } from "react"
 import { SlidersHorizontal, X, RefreshCw } from "lucide-react"
 import { AccountName } from "@/lib/api/accounts"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { useIsMobile } from "@/hooks/useIsMobile"
 
-interface MobileFilterBarProps {
+interface FilterBarProps {
   accounts: AccountName[]
   searchInput: { uid: string; title: string; gid: string }
   statusFilter: number | undefined
-  onSearchChange: (updater: (prev: { uid: string; title: string; gid: string }) => {
-    uid: string
-    title: string
-    gid: string
-  }) => void
+  onSearchChange: (updater: (
+    prev: { uid: string; title: string; gid: string }
+  ) => { uid: string; title: string; gid: string }) => void
   onStatusChange: (status: number | undefined) => void
   onRefresh: () => void
   onClear: () => void
   isRefreshing: boolean
   selectedUid?: string
-  stats: {
-    total: number
-    onSale: number
-    offSale: number
-    sold: number
-  }
+  stats: { total: number; onSale: number; offSale: number; sold: number }
   sortField: string | null
   sortDirection: "asc" | "desc" | null
   onSortChange: (field: "title" | "price" | "publishTime" | "status") => void
 }
 
-export function MobileFilterBar({
+export function FilterBar(props: FilterBarProps) {
+  const isMobile = useIsMobile()
+
+  if (isMobile) {
+    return <FilterBarMobile {...props} />
+  }
+  return <FilterBarDesktop {...props} />
+}
+
+// ========== 桌面端 ==========
+
+function FilterBarDesktop({
+  accounts,
+  searchInput,
+  statusFilter,
+  onSearchChange,
+  onStatusChange,
+  onRefresh,
+  onClear,
+  isRefreshing,
+  selectedUid,
+}: FilterBarProps) {
+  return (
+    <div className="p-4 border-b border-gray-100">
+      <div className="flex items-end gap-3 flex-wrap">
+        {/* 账号下拉框 */}
+        <div className="flex-1 min-w-[150px]">
+          <label className="block text-xs text-gray-500 mb-1">账号</label>
+          <select
+            value={searchInput.uid}
+            onChange={(e) =>
+              onSearchChange((prev) => ({ ...prev, uid: e.target.value }))
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+          >
+            <option value="">全部账号</option>
+            {accounts.map((acc) => (
+              <option key={acc.uid} value={acc.uid}>
+                {acc.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* 商品ID */}
+        <div className="flex-1 min-w-[150px]">
+          <label className="block text-xs text-gray-500 mb-1">商品ID</label>
+          <input
+            type="text"
+            value={searchInput.gid}
+            onChange={(e) =>
+              onSearchChange((prev) => ({ ...prev, gid: e.target.value }))
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            placeholder="输入商品ID"
+          />
+        </div>
+        {/* 商品标题 */}
+        <div className="flex-1 min-w-[150px]">
+          <label className="block text-xs text-gray-500 mb-1">商品标题</label>
+          <input
+            type="text"
+            value={searchInput.title}
+            onChange={(e) =>
+              onSearchChange((prev) => ({ ...prev, title: e.target.value }))
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            placeholder="输入商品标题"
+          />
+        </div>
+        {/* 状态下拉框 */}
+        <div className="w-32">
+          <label className="block text-xs text-gray-500 mb-1">商品状态</label>
+          <select
+            value={statusFilter ?? ""}
+            onChange={(e) =>
+              onStatusChange(e.target.value ? Number(e.target.value) : undefined)
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+          >
+            <option value="">全部</option>
+            <option value="0">在售</option>
+            <option value="-2">已下架</option>
+            <option value="1">已售出</option>
+          </select>
+        </div>
+        {/* 刷新按钮 */}
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={!selectedUid || isRefreshing}
+          title={!selectedUid ? "请先选择账号" : "从闲鱼刷新商品列表"}
+          className={`px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2 transition-colors ${
+            !selectedUid || isRefreshing
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+          }`}
+        >
+          {isRefreshing ? (
+            <LoadingSpinner size="sm" />
+          ) : (
+            <RefreshCw className="w-4 h-4" />
+          )}
+          {isRefreshing ? "刷新中..." : "刷新商品"}
+        </button>
+        {/* 清空按钮 */}
+        <button
+          type="button"
+          onClick={onClear}
+          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md"
+        >
+          清空筛选
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ========== 移动端（来源：MobileFilterBar.tsx，逻辑完全保留） ==========
+
+function FilterBarMobile({
   accounts,
   searchInput,
   statusFilter,
@@ -44,19 +157,16 @@ export function MobileFilterBar({
   sortField,
   sortDirection,
   onSortChange,
-}: MobileFilterBarProps) {
+}: FilterBarProps) {
   const [expanded, setExpanded] = useState(false)
 
-  // 仅统计折叠区内激活的筛选（标题 + GID）
   const hiddenFilterCount =
-    (searchInput.title ? 1 : 0) +
-    (searchInput.gid ? 1 : 0)
+    (searchInput.title ? 1 : 0) + (searchInput.gid ? 1 : 0)
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* === 顶部栏：账号 + 状态 + 更多筛选 + 刷新 === */}
+      {/* 顶部栏：账号 + 状态 + 更多筛选 + 刷新 */}
       <div className="flex items-center gap-2 px-3 py-2.5">
-        {/* 账号下拉（始终可见） */}
         <select
           value={searchInput.uid}
           onChange={(e) =>
@@ -72,13 +182,10 @@ export function MobileFilterBar({
           ))}
         </select>
 
-        {/* 状态下拉（始终可见） */}
         <select
           value={statusFilter ?? ""}
           onChange={(e) =>
-            onStatusChange(
-              e.target.value ? Number(e.target.value) : undefined
-            )
+            onStatusChange(e.target.value ? Number(e.target.value) : undefined)
           }
           className="w-20 px-2 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 flex-shrink-0"
         >
@@ -88,7 +195,6 @@ export function MobileFilterBar({
           <option value="1">已售出</option>
         </select>
 
-        {/* 展开筛选按钮（标题 + GID） */}
         <button
           onClick={() => setExpanded(!expanded)}
           className={`relative flex-shrink-0 p-2 rounded-lg border transition-colors ${
@@ -105,7 +211,6 @@ export function MobileFilterBar({
           )}
         </button>
 
-        {/* 刷新按钮 */}
         <button
           onClick={onRefresh}
           disabled={!selectedUid || isRefreshing}
@@ -124,7 +229,7 @@ export function MobileFilterBar({
         </button>
       </div>
 
-      {/* 统计条 */}
+      {/* 统计条 + 排序 */}
       <div className="flex items-center gap-3 px-3 pb-2 text-xs text-gray-500">
         <span>
           共 <span className="font-semibold text-gray-900">{stats.total}</span> 件
@@ -142,7 +247,6 @@ export function MobileFilterBar({
           已售出 <span className="font-medium text-red-500">{stats.sold}</span>
         </span>
 
-        {/* 排序 — 放在统计条右侧 */}
         <div className="ml-auto flex items-center gap-1">
           <SortChip
             label="标题"
@@ -168,11 +272,10 @@ export function MobileFilterBar({
         </div>
       </div>
 
-      {/* === 展开的筛选面板：标题 + GID 同行 === */}
+      {/* 展开的筛选面板 */}
       {expanded && (
         <div className="px-3 pb-3 pt-1 border-t border-gray-100 space-y-2.5">
           <div className="grid grid-cols-2 gap-2.5">
-            {/* 商品标题搜索 */}
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">商品标题</label>
               <div className="relative">
@@ -187,7 +290,9 @@ export function MobileFilterBar({
                 />
                 {searchInput.title && (
                   <button
-                    onClick={() => onSearchChange((prev) => ({ ...prev, title: "" }))}
+                    onClick={() =>
+                      onSearchChange((prev) => ({ ...prev, title: "" }))
+                    }
                     className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600"
                   >
                     <X className="w-3 h-3" />
@@ -195,8 +300,6 @@ export function MobileFilterBar({
                 )}
               </div>
             </div>
-
-            {/* 商品ID搜索 */}
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">商品ID</label>
               <input
@@ -210,8 +313,6 @@ export function MobileFilterBar({
               />
             </div>
           </div>
-
-          {/* 清空按钮 */}
           {hiddenFilterCount > 0 && (
             <button
               onClick={() => {
@@ -229,7 +330,7 @@ export function MobileFilterBar({
   )
 }
 
-/** 排序标签 */
+/** 排序标签（MobileFilterBar 内部组件，保留在 FilterBar 内） */
 function SortChip({
   label,
   field,
