@@ -5,6 +5,7 @@ import { NotificationConfig } from '@/lib/api/notification'
 import NotificationTab from '@/components/settings/NotificationTab'
 import AIConfigTab from '@/components/settings/AIConfigTab'
 import { useTabRouting } from '@/hooks/useTabRouting'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 type MainTabType = 'ai-config' | 'notification'
 
@@ -22,6 +23,7 @@ function SettingsPageContent() {
   const [editingConfig, setEditingConfig] = useState<NotificationConfig | null>(null)
   const [webhookInput, setWebhookInput] = useState('')
   const [isActiveInput, setIsActiveInput] = useState(true)
+  const isMobile = useIsMobile()
 
   const openDrawer = (config?: NotificationConfig) => {
     if (config) {
@@ -64,11 +66,12 @@ function SettingsPageContent() {
       </div>
 
       {/* AI 配置 Tab 内容 */}
-      {activeMainTab === 'ai-config' && <AIConfigTab />}
+      {activeMainTab === 'ai-config' && <AIConfigTab isMobile={isMobile} />}
 
       {/* 通知渠道 Tab 内容 */}
       {activeMainTab === 'notification' && (
         <NotificationTab
+          isMobile={isMobile}
           editingConfig={editingConfig}
           setEditingConfig={setEditingConfig}
           webhookInput={webhookInput}

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Sheet } from '@/components/ui/Sheet'
+import { Sheet, BottomSheet } from '@/components/ui/Sheet'
 import {
   listAIConfigs,
   deleteAIConfig,
@@ -43,10 +43,10 @@ const CONFIG_TYPES: { value: 'text' | 'image'; label: string }[] = [
 ]
 
 interface AIConfigTabProps {
-  // 可以接收外部控制的抽屉状态（可选）
+  isMobile: boolean
 }
 
-export default function AIConfigTab() {
+export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
 
@@ -198,29 +198,36 @@ export default function AIConfigTab() {
     <>
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {/* 工具栏 */}
-        <div className="flex items-center gap-3 px-6 pt-4 pb-3 border-b border-gray-100">
+        <div className={`flex items-center border-b border-gray-100 ${
+          isMobile ? 'gap-1.5 px-2 pt-3 pb-2' : 'gap-3 px-6 pt-4 pb-3'
+        }`}>
           {(['all', 'text', 'image'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveSubTab(tab)}
-              className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-all ${
+              className={`font-medium rounded-lg transition-all ${
+                isMobile ? 'px-2.5 py-1.5 text-[11px]' : 'px-5 py-2.5 text-sm'
+              } ${
                 activeSubTab === tab
                   ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
               }`}
             >
-              {tab === 'all' ? '全部' : tab === 'text' ? '文字模型' : '生图模型'}
+              {tab === 'all' ? '全部' : tab === 'text' ? '文字' : '生图'}
             </button>
           ))}
+          <span className="flex-1" />
           <button
             onClick={() => openDrawer()}
             title="每个ai模型调用方法不一致，添加模型后若不可用，请联系作者！后续添加模型连接测试功能"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className={`bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center flex-shrink-0 ${
+              isMobile ? 'px-2.5 py-1.5 text-[11px] gap-1' : 'px-4 py-2 gap-2'
+            }`}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            添加模型
+            {isMobile ? '添加' : '添加模型'}
           </button>
         </div>
 
@@ -240,6 +247,85 @@ export default function AIConfigTab() {
             >
               添加模型
             </button>
+          </div>
+        ) : isMobile ? (
+          // 移动端卡片列表
+          <div className="flex-1 overflow-y-auto px-1 py-2 space-y-2">
+            {filteredConfigs.map((config) => (
+              <div key={config.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                {/* 标题行 */}
+                <div className="flex items-start justify-between px-3 pt-3 pb-1 gap-2">
+                  <span className="text-sm font-semibold text-gray-900 leading-tight truncate flex-1 min-w-0">
+                    {config.name}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${
+                    config.config_type === 'text' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                  }`}>
+                    {CONFIG_TYPE_LABELS[config.config_type]}
+                  </span>
+                </div>
+                {/* 信息行 */}
+                <div className="px-3 pb-1 flex items-center gap-1.5 text-[10px] text-gray-500">
+                  <span>{PROVIDER_LABELS[config.provider] || config.provider}</span>
+                  <span className="text-gray-300">·</span>
+                  <span className="font-mono">{config.model}</span>
+                </div>
+                {/* 默认状态 */}
+                <div className="px-3 pb-2 text-[10px]">
+                  {config.is_active ? (
+                    <span className="text-green-600">✓ 默认模型</span>
+                  ) : (
+                    <button
+                      onClick={() => handleSetDefault(config.id)}
+                      className="text-gray-400 hover:text-blue-600"
+                    >
+                      设为默认
+                    </button>
+                  )}
+                </div>
+                {/* 底部操作 */}
+                <div className="flex items-center justify-end gap-1 px-3 py-2 border-t border-gray-100">
+                  <button
+                    onClick={() => handleCopy(config)}
+                    className="px-2 py-1 text-[10px] text-gray-500 hover:text-blue-600"
+                  >
+                    复制
+                  </button>
+                  {deleteConfirm === config.id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDelete(config.id)}
+                        disabled={deleteMutation.isPending}
+                        className="px-2 py-1 text-[10px] text-red-600"
+                      >
+                        {deleteMutation.isPending ? '...' : '确认'}
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(null)}
+                        className="px-2 py-1 text-[10px] text-gray-400"
+                      >
+                        取消
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => openDrawer(config)}
+                        className="px-3 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 rounded"
+                      >
+                        编辑
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(config.id)}
+                        className="px-3 py-1 text-[10px] text-red-600 hover:bg-red-50 rounded"
+                      >
+                        删除
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <table className="w-full">
@@ -328,143 +414,142 @@ export default function AIConfigTab() {
         )}
       </div>
 
-      {/* 侧边抽屉 */}
-      <Sheet
-        open={drawerOpen}
-        onClose={closeDrawer}
-        title={editingConfig ? '编辑 AI 模型' : '添加 AI 模型'}
-        width="500px"
-      >
-        <form onSubmit={handleSubmit} className="h-full overflow-y-auto p-6 space-y-6">
-              {/* 名称 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">名称</label>
-                <input
-                  type="text"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  required
-                  placeholder="例如：我的DeepSeek文字模型"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
+      {/* 抽屉 — 桌面侧边 / 移动端底部 */}
+      {isMobile ? (
+        <BottomSheet
+          open={drawerOpen}
+          onClose={closeDrawer}
+          title={editingConfig ? '编辑 AI 模型' : '添加 AI 模型'}
+          footer={
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSubmit}
+                disabled={saveMutation.isPending}
+                className="flex-1 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
+              >
+                {saveMutation.isPending ? '保存中...' : '保存'}
+              </button>
+              <button
+                type="button"
+                onClick={closeDrawer}
+                className="flex-1 px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              >
+                取消
+              </button>
+            </div>
+          }
+        >
+          <div className="p-5 space-y-4">
+            {/* 名称 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">名称</label>
+              <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} required placeholder="例如：我的DeepSeek文字模型" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+            </div>
+            {/* 服务商 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">服务商</label>
+              <select value={formProvider} onChange={(e) => { setFormProvider(e.target.value); if (providerDefaults[e.target.value]) setFormBaseUrl(providerDefaults[e.target.value]) }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                {PROVIDERS.map((p) => (<option key={p.value} value={p.value}>{p.label}</option>))}
+              </select>
+            </div>
+            {/* 用途 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">用途</label>
+              <div className="flex gap-4">
+                {CONFIG_TYPES.map((type) => (
+                  <label key={type.value} className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="formConfigType" value={type.value} checked={formConfigType === type.value} onChange={(e) => setFormConfigType(e.target.value as 'text' | 'image')} className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm text-gray-700">{type.label}</span>
+                  </label>
+                ))}
               </div>
-
-              {/* 服务商 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">服务商</label>
-                <select
-                  value={formProvider}
-                  onChange={(e) => {
-                    setFormProvider(e.target.value)
-                    if (providerDefaults[e.target.value]) {
-                      setFormBaseUrl(providerDefaults[e.target.value])
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                >
-                  {PROVIDERS.map((p) => (
-                    <option key={p.value} value={p.value}>{p.label}</option>
-                  ))}
-                </select>
+            </div>
+            {/* Base URL */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Base URL</label>
+              <input type="text" value={formBaseUrl} onChange={(e) => setFormBaseUrl(e.target.value)} required placeholder="https://api.example.com" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+              {providerDefaults[formProvider] && (<p className="mt-1 text-xs text-gray-400">默认值：{providerDefaults[formProvider]}</p>)}
+            </div>
+            {/* API Key */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+              <input type="password" value={formApiKey} onChange={(e) => setFormApiKey(e.target.value)} required placeholder="sk-..." className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+            </div>
+            {/* 模型名称 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">模型名称</label>
+              <input type="text" value={formModel} onChange={(e) => setFormModel(e.target.value)} required placeholder="例如：deepseek-chat、flux-quick" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+            </div>
+            {/* 设为默认 */}
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="formIsDefaultMobile" checked={formIsDefault} onChange={(e) => setFormIsDefault(e.target.checked)} className="w-4 h-4 text-blue-600 rounded" />
+              <label htmlFor="formIsDefaultMobile" className="text-sm text-gray-700">设为该用途的默认模型</label>
+            </div>
+          </div>
+        </BottomSheet>
+      ) : (
+        <Sheet
+          open={drawerOpen}
+          onClose={closeDrawer}
+          title={editingConfig ? '编辑 AI 模型' : '添加 AI 模型'}
+          width="500px"
+        >
+          <form onSubmit={handleSubmit} className="h-full overflow-y-auto p-6 space-y-6">
+            {/* 名称 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">名称</label>
+              <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} required placeholder="例如：我的DeepSeek文字模型" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+            </div>
+            {/* 服务商 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">服务商</label>
+              <select value={formProvider} onChange={(e) => { setFormProvider(e.target.value); if (providerDefaults[e.target.value]) setFormBaseUrl(providerDefaults[e.target.value]) }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                {PROVIDERS.map((p) => (<option key={p.value} value={p.value}>{p.label}</option>))}
+              </select>
+            </div>
+            {/* 用途 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">用途</label>
+              <div className="flex gap-4">
+                {CONFIG_TYPES.map((type) => (
+                  <label key={type.value} className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="formConfigType" value={type.value} checked={formConfigType === type.value} onChange={(e) => setFormConfigType(e.target.value as 'text' | 'image')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                    <span className="text-sm text-gray-700">{type.label}</span>
+                  </label>
+                ))}
               </div>
-
-              {/* 用途 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">用途</label>
-                <div className="flex gap-4">
-                  {CONFIG_TYPES.map((type) => (
-                    <label key={type.value} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="formConfigType"
-                        value={type.value}
-                        checked={formConfigType === type.value}
-                        onChange={(e) => setFormConfigType(e.target.value as 'text' | 'image')}
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700">{type.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Base URL */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Base URL</label>
-                <input
-                  type="text"
-                  value={formBaseUrl}
-                  onChange={(e) => setFormBaseUrl(e.target.value)}
-                  required
-                  placeholder="https://api.example.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-                {providerDefaults[formProvider] && (
-                  <p className="mt-1 text-xs text-gray-400">
-                    默认值：{providerDefaults[formProvider]}
-                  </p>
-                )}
-              </div>
-
-              {/* API Key */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
-                <input
-                  type="password"
-                  value={formApiKey}
-                  onChange={(e) => setFormApiKey(e.target.value)}
-                  required
-                  placeholder="sk-..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-              </div>
-
-              {/* 模型名称 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">模型名称</label>
-                <input
-                  type="text"
-                  value={formModel}
-                  onChange={(e) => setFormModel(e.target.value)}
-                  required
-                  placeholder="例如：deepseek-chat、flux-quick"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-              </div>
-
-              {/* 设为默认 */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="formIsDefault"
-                  checked={formIsDefault}
-                  onChange={(e) => setFormIsDefault(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
-                />
-                <label htmlFor="formIsDefault" className="text-sm text-gray-700 cursor-pointer">
-                  设为该用途的默认模型
-                </label>
-              </div>
-
-              {/* 底部按钮 */}
-              <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
-                <button
-                  type="submit"
-                  disabled={saveMutation.isPending}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {saveMutation.isPending ? '保存中...' : '保存'}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeDrawer}
-                  className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  取消
-                </button>
-              </div>
-        </form>
-      </Sheet>
+            </div>
+            {/* Base URL */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Base URL</label>
+              <input type="text" value={formBaseUrl} onChange={(e) => setFormBaseUrl(e.target.value)} required placeholder="https://api.example.com" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+              {providerDefaults[formProvider] && (<p className="mt-1 text-xs text-gray-400">默认值：{providerDefaults[formProvider]}</p>)}
+            </div>
+            {/* API Key */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+              <input type="password" value={formApiKey} onChange={(e) => setFormApiKey(e.target.value)} required placeholder="sk-..." className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+            </div>
+            {/* 模型名称 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">模型名称</label>
+              <input type="text" value={formModel} onChange={(e) => setFormModel(e.target.value)} required placeholder="例如：deepseek-chat、flux-quick" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+            </div>
+            {/* 设为默认 */}
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="formIsDefault" checked={formIsDefault} onChange={(e) => setFormIsDefault(e.target.checked)} className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded" />
+              <label htmlFor="formIsDefault" className="text-sm text-gray-700 cursor-pointer">设为该用途的默认模型</label>
+            </div>
+            {/* 底部按钮 */}
+            <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+              <button type="submit" disabled={saveMutation.isPending} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                {saveMutation.isPending ? '保存中...' : '保存'}
+              </button>
+              <button type="button" onClick={closeDrawer} className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">取消</button>
+            </div>
+          </form>
+        </Sheet>
+      )}
     </>
   )
 }
