@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { KeywordRule, PREDEFINED_KEYWORDS } from "@/lib/api/keywords"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { TextEditor } from "@/components/ui/text-editor"
 import { PlaceholderPicker } from "./PlaceholderPicker"
 import { ItemCardPanel } from "./ItemCardPanel"
 
@@ -245,12 +246,11 @@ export function KeywordRuleForm({
 
             {/* Textarea */}
             <div className="mt-2">
-              <textarea
+              <TextEditor
                 {...register("reply_content")}
                 rows={5}
                 onDrop={handleReplyContentDrop}
                 onDragOver={(e) => e.preventDefault()}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none text-sm"
                 placeholder="当消息匹配时，自动发送此回复内容"
               />
               {errors.reply_content && (

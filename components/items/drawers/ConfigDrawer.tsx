@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Item } from "@/lib/api/items"
 import { Sheet, BottomSheet } from "@/components/ui/Sheet"
+import { TextEditor } from "@/components/ui/text-editor"
 import { useIsMobile } from "@/hooks/useIsMobile"
 import { ConfigField, FIELD_LABELS } from "../config"
 import { PlaceholderPicker } from "../parts/PlaceholderPicker"
@@ -55,13 +56,12 @@ export function ConfigDrawer({ open, item, field, onClose, onSave }: ConfigDrawe
       <PlaceholderPicker onInsert={insertPlaceholder} draggable={!isMobile} />
 
       {/* 文本输入 */}
-      <textarea
+      <TextEditor
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         onDrop={isMobile ? undefined : handleDrop}
         onDragOver={isMobile ? undefined : (e) => e.preventDefault()}
-        rows={isMobile ? 5 : 6}
-        className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg resize-none focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+        rows={{ pc: 6, landscape: 5, portrait: 5 }}
         placeholder="输入内容..."
       />
     </div>
