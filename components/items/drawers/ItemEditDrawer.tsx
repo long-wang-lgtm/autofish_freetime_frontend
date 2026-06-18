@@ -8,8 +8,7 @@ import { Item, ItemUpdate, updateItem } from "@/lib/api/items"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
 import { useQueryClient } from "@tanstack/react-query"
-import { Sheet } from "@/components/ui/Sheet"
-import { BottomSheet } from "@/components/ui/BottomSheet"
+import { Sheet, BottomSheet } from "@/components/ui/Sheet"
 import { useIsMobile } from "@/hooks/useIsMobile"
 
 const itemSchema = z.object({

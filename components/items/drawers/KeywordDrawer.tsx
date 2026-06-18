@@ -19,8 +19,7 @@ import {
 import { listItems, Item } from "@/lib/api/items"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
-import { Sheet } from "@/components/ui/Sheet"
-import { BottomSheet } from "@/components/ui/BottomSheet"
+import { Sheet, BottomSheet } from "@/components/ui/Sheet"
 import { useIsMobile } from "@/hooks/useIsMobile"
 import { PlaceholderPicker } from "../parts/PlaceholderPicker"
 
