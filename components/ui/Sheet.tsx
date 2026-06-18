@@ -17,9 +17,11 @@ interface SheetProps {
   title?: string
   width?: string
   children: ReactNode
+  /** 点击遮罩是否关闭，默认 true */
+  closeOnBackdrop?: boolean
 }
 
-export function Sheet({ open, onClose, title, width = "500px", children }: SheetProps) {
+export function Sheet({ open, onClose, title, width = "500px", closeOnBackdrop = true, children }: SheetProps) {
   return (
     <>
       {/* 遮罩层 */}
@@ -27,7 +29,7 @@ export function Sheet({ open, onClose, title, width = "500px", children }: Sheet
         className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${
           open ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
-        onClick={onClose}
+        onClick={closeOnBackdrop ? onClose : undefined}
       />
 
       {/* 侧栏面板 — 右侧滑入 */}
@@ -72,6 +74,8 @@ interface BottomSheetProps {
   footer?: ReactNode
   /** 高度占屏幕比例，默认 0.9 (90%) */
   heightRatio?: number
+  /** 点击遮罩是否关闭，默认 true */
+  closeOnBackdrop?: boolean
 }
 
 export function BottomSheet({
@@ -82,6 +86,7 @@ export function BottomSheet({
   children,
   footer,
   heightRatio = 0.9,
+  closeOnBackdrop = true,
 }: BottomSheetProps) {
   const startY = useRef(0)
   const currentY = useRef(0)
@@ -113,6 +118,10 @@ export function BottomSheet({
     }
   }
 
+  const maybeTouchHandlers = closeOnBackdrop
+    ? { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd }
+    : {}
+
   return (
     <>
       {/* 遮罩层 */}
@@ -120,7 +129,7 @@ export function BottomSheet({
         className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-300 ${
           open ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
-        onClick={onClose}
+        onClick={closeOnBackdrop ? onClose : undefined}
       />
 
       {/* 底部面板 */}
@@ -129,14 +138,14 @@ export function BottomSheet({
           open ? "translate-y-0" : "translate-y-full"
         }`}
         style={{ maxHeight: `${heightRatio * 100}vh` }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        {...maybeTouchHandlers}
       >
         {/* 拖拽手柄 */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 bg-gray-300 rounded-full" />
-        </div>
+        {closeOnBackdrop && (
+          <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+            <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          </div>
+        )}
 
         {/* 标题栏 */}
         {(title || subtitle) && (
