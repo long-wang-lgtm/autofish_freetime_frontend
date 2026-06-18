@@ -180,6 +180,17 @@ components/selection/
 - hover 时显示最后一次采集的询单数 tooltip
 - 不可排序（视觉辅助列），需在表格 header renderer 的 `unsortable` 判断中追加 `col.key === 'trendChart'`
 
+#### 列 18：稳定性（可排序）
+
+- 内容：询单数变异系数（CV = σ/μ），如 `CV 0.23`
+- 数值越低越稳定
+- 颜色分级：
+  - CV ≤ 0.3 → green-600（稳定）
+  - 0.3 < CV ≤ 0.6 → yellow-600（一般）
+  - CV > 0.6 → red-600（波动）
+- 排序：按 `stabilityValue` 数值升序（`ProductSortKey` 新增 `stabilityValue`）
+- 宽度：约 90px
+
 ### 3.4 历史详情抽屉
 
 **触发：** 点击商品行
@@ -258,7 +269,7 @@ components/selection/
 
 | # | 冲突 | 处理方式 |
 |---|------|---------|
-| 1 | 新增 2 列使表格总列数变为 17，可能影响横向滚动和列宽分配 | 不删改现有列，新列各给固定宽度（趋势指标 90px + 近期趋势 100px），表格自然增加横向滚动 |
+| 1 | 新增 3 列使表格总列数变为 18，可能影响横向滚动和列宽分配 | 不删改现有列，新列各给固定宽度（趋势指标 90px + 近期趋势 100px + 稳定性 90px），表格自然增加横向滚动 |
 | 2 | 行点击选中与监控状态 badge 点击事件可能冒泡冲突 | badge 的 onClick 使用 `e.stopPropagation()` 阻止冒泡；操作按钮同样处理 |
 | 3 | 删除按钮（行尾 Trash2）当前未使用 `e.stopPropagation()`，加行级 onClick 后删除操作会误触发行选中 | 给删除按钮的 onClick 加 `e.stopPropagation()` |
 
@@ -289,6 +300,7 @@ components/selection/
 | `recentInquiries` | `number[]` | 最近 10 次采集的询单数，按时间升序，供迷你图渲染 |
 | `trend` | `'up' \| 'down' \| 'flat'` | 近 10 次采集的询单整体趋势方向，决定迷你图颜色 |
 | `trendValue` | `number` | 趋势涨跌幅百分比（如 23.5 表示 +23.5%），供趋势指标列展示和排序 |
+| `stabilityValue` | `number` | 询单数变异系数 CV（σ/μ），供稳定性列展示和排序，值越小越稳定 |
 | `lastCollectedAt` | `string \| null` | 最近一次采集时间（ISO 8601），供迷你图 tooltip |
 
 ### 5.2 历史详情接口（新端点）
@@ -327,7 +339,7 @@ app/dashboard/selection/page.tsx         # 🆕 独立选品监控页
   ├── SelectionTabBar (shared/)
   ├── KeywordCollectionTab (keyword/)     # Tab: 关键词采集
   ├── ProductMonitorTab (product/)        # Tab: 商品监控
-  │   ├── MiniTrendChart (product/)       # 🆕 第 17 列（迷你趋势图）
+  │   ├── MiniTrendChart (product/)       # 🆕 第 17 列（迷你趋势图，不可排序）
   │   └── ProductHistoryDrawer (product/) # 🆕 历史详情抽屉（内嵌 Sheet）
   │       └── TrendChart (product/)       # 🆕 折线图
   ├── MerchantMonitorTab (merchant/)      # Tab: 商户监控
