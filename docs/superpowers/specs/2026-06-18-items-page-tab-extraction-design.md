@@ -80,11 +80,16 @@
 │   ☑ 启用此规则                                │
 ├──────────────────────────────────────────────┤
 │ ▼ 商品与商品组关联 (已选 3 商品 / 1 商品组)     │  ← 折叠分区
-│   搜索商品: [________]              [全选]    │
-│   ☑ 商品A  ☐ 商品B  ☑ 商品C                  │
 │                                               │
-│   搜索商品组: [________]           [全选]     │
-│   ☐ 商品组1  ☑ 商品组2                       │
+│ ┌─ 关联商品 (3个) ─────────┐ ┌─ 关联商品组 (1个) ───┐ │
+│ │ [搜索商品...]    [全选]  │ │ [搜索商品组...] [全选]│ │
+│ │                          │ │                      │ │
+│ │ ☑ iPhone 15 Pro          │ │ ☐ 数码产品           │ │
+│ │ ☐ iPad Air               │ │ ☑ 手机配件           │ │
+│ │ ☑ MacBook Pro            │ │                      │ │
+│ │ ☑ AirPods                │ │                      │ │
+│ │ ☐ Apple Watch            │ │                      │ │
+│ └──────────────────────────┘ └──────────────────────┘ │
 ├──────────────────────────────────────────────┤
 │                          [取消]  [保存/创建]   │  ← 必须点按钮才能退出
 └──────────────────────────────────────────────┘
@@ -194,15 +199,27 @@ interface KeywordRuleFormProps {
 - 编辑警告条（当 bindingWarning 传入时）
 - 提交/取消按钮
 
-### 4.2 `RuleBindingPanel` — 商品/商品组绑定面板
+### 5.2 `RuleBindingPanel` — 商品/商品组绑定面板
 
 **位置**：`components/items/parts/RuleBindingPanel.tsx`
 
-**职责**：选择关联的商品和商品组（从全店范围）。
+**职责**：选择关联的商品和商品组（从全店范围）。采用左右两列并排布局，充分利用宽抽屉（`min(900px, 66vw)`）的横向空间。
+
+**布局**：
+
+```
+┌─ 关联商品 (N个) ─────────┐ ┌─ 关联商品组 (M个) ───┐
+│ [搜索商品...]    [全选]  │ │ [搜索商品组...] [全选]│
+│                          │ │                      │
+│ ☑ 商品A                  │ │ ☐ 商品组1            │
+│ ☐ 商品B                  │ │ ☑ 商品组2            │
+│ ☑ 商品C                  │ │                      │
+└──────────────────────────┘ └──────────────────────┘
+```
 
 **Props**：
 
-```
+```typescript
 interface RuleBindingPanelProps {
   items: RuleItem[]                     // 全店商品列表
   groups: ItemGroup[]                   // 商品组列表
@@ -212,6 +229,8 @@ interface RuleBindingPanelProps {
   onToggleGroup: (id: string) => void
   onSelectAllItems: () => void
   onSelectAllGroups: () => void
+  onItemSearchChange: (q: string) => void
+  onGroupSearchChange: (q: string) => void
 }
 ```
 
