@@ -1,6 +1,7 @@
 "use client"
 
-import { type ReactNode, useEffect, useRef } from "react"
+import { type ReactNode, useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 
 // ============================================================
 // Sheet — 桌面端侧边抽屉（右侧滑入）
@@ -22,7 +23,12 @@ interface SheetProps {
 }
 
 export function Sheet({ open, onClose, title, width = "500px", closeOnBackdrop = true, children }: SheetProps) {
-  return (
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  if (!mounted) return null
+
+  return createPortal(
     <>
       {/* 遮罩层 */}
       <div
@@ -34,10 +40,10 @@ export function Sheet({ open, onClose, title, width = "500px", closeOnBackdrop =
 
       {/* 侧栏面板 — 右侧滑入 */}
       <div
-        className={`fixed right-0 top-0 h-full bg-white shadow-xl z-50 flex flex-col transition-transform duration-300 ${
+        className={`fixed right-0 top-0 bg-white shadow-xl z-50 flex flex-col transition-transform duration-300 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
-        style={{ width }}
+        style={{ width, height: "100vh" }}
       >
         {/* 标题栏 */}
         {title && (
@@ -54,12 +60,13 @@ export function Sheet({ open, onClose, title, width = "500px", closeOnBackdrop =
           </div>
         )}
 
-        {/* 内容区 — 可滚动 */}
-        <div className="flex-1 overflow-hidden">
+        {/* 内容区 — flex 容器，子元素可独立滚动 */}
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {children}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
 
@@ -88,8 +95,11 @@ export function BottomSheet({
   heightRatio = 0.9,
   closeOnBackdrop = true,
 }: BottomSheetProps) {
+  const [mounted, setMounted] = useState(false)
   const startY = useRef(0)
   const currentY = useRef(0)
+
+  useEffect(() => { setMounted(true) }, [])
 
   // 阻止背景滚动
   useEffect(() => {
@@ -122,7 +132,9 @@ export function BottomSheet({
     ? { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd }
     : {}
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <>
       {/* 遮罩层 */}
       <div
@@ -137,7 +149,7 @@ export function BottomSheet({
         className={`fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-xl flex flex-col transition-transform duration-300 ${
           open ? "translate-y-0" : "translate-y-full"
         }`}
-        style={{ maxHeight: `${heightRatio * 100}vh` }}
+        style={{ height: `${heightRatio * 100}vh` }}
         {...maybeTouchHandlers}
       >
         {/* 拖拽手柄 */}
@@ -182,6 +194,7 @@ export function BottomSheet({
           <div className="border-t border-gray-100 px-5 py-3 flex-shrink-0">{footer}</div>
         )}
       </div>
-    </>
+    </>,
+    document.body
   )
 }

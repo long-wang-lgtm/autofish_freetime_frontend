@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import type { KeywordRule } from "@/lib/api/keywords"
-import { RuleTable } from "@/components/rules/RuleTable"
+import { RuleTable } from "@/components/items/rules/RuleTable"
+import RuleDrawer from "@/components/items/drawers/RuleDrawer"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 interface RulesTabProps {
@@ -9,8 +11,6 @@ interface RulesTabProps {
   rulesStats: { total: number; enabled: number; disabled: number; linkedItems: number; linkedGroups: number }
   keywordsLoading: boolean
   keywordsError: unknown
-  onCreateRule: () => void
-  onEditRule: (rule: KeywordRule) => void
 }
 
 const STAT_CARDS = [
@@ -26,9 +26,11 @@ export function RulesTab({
   rulesStats,
   keywordsLoading,
   keywordsError,
-  onCreateRule,
-  onEditRule,
 }: RulesTabProps) {
+  // — 抽屉状态（内部管理）——
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [editingRule, setEditingRule] = useState<KeywordRule | null>(null)
+
   return (
     <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
       {/* 统计信息 */}
@@ -49,7 +51,7 @@ export function RulesTab({
             : `共 ${rulesStats.total} 条规则，按优先级降序排列`}
         </div>
         <button
-          onClick={onCreateRule}
+          onClick={() => setShowCreateForm(true)}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors flex items-center gap-2"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +78,7 @@ export function RulesTab({
           <h3 className="text-lg font-medium text-gray-900 mb-1">暂无规则</h3>
           <p className="text-sm text-gray-500 mb-4">点击上方"创建规则"按钮添加您的第一条关键词回复规则</p>
           <button
-            onClick={onCreateRule}
+            onClick={() => setShowCreateForm(true)}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors"
           >
             创建规则
@@ -87,7 +89,27 @@ export function RulesTab({
         <RuleTable
           className="border-0 rounded-none shadow-none"
           rules={keywordRules}
-          onEdit={onEditRule}
+          onEdit={setEditingRule}
+        />
+      )}
+
+      {/* ==== 抽屉（内部调度）==== */}
+
+      {/* 创建规则 */}
+      {showCreateForm && (
+        <RuleDrawer
+          open={showCreateForm}
+          onClose={() => setShowCreateForm(false)}
+          onSuccess={() => setShowCreateForm(false)}
+        />
+      )}
+      {/* 编辑规则 */}
+      {editingRule && (
+        <RuleDrawer
+          rule={editingRule}
+          open={!!editingRule}
+          onClose={() => setEditingRule(null)}
+          onSuccess={() => setEditingRule(null)}
         />
       )}
     </div>

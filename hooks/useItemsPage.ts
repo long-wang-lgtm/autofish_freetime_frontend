@@ -8,8 +8,6 @@ import { useToast } from "@/components/ui/toaster"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useIsMobile } from "@/hooks/useIsMobile"
 import { useKeywords } from "@/hooks/useKeywords"
-import type { ConfigField } from "@/components/items/config"
-import type { KeywordRule } from "@/lib/api/keywords"
 
 export function useItemsPage() {
   const queryClient = useQueryClient()
@@ -17,11 +15,6 @@ export function useItemsPage() {
   const isMobile = useIsMobile()
 
   // ——— 状态 ———
-  const [editingItem, setEditingItem] = useState<Item | null>(null)
-  const [keywordItem, setKeywordItem] = useState<Item | null>(null)
-  const [mobileConfig, setMobileConfig] = useState<{ item: Item; field: ConfigField } | null>(null)
-  const [editingRule, setEditingRule] = useState<KeywordRule | null>(null)
-  const [showCreateForm, setShowCreateForm] = useState(false)
   const [filters, setFilters] = useState<ItemFilters>({ status: 0 })
   const [searchInput, setSearchInput] = useState({ uid: "", title: "", gid: "" })
   const [sortField, setSortField] = useState<"title" | "price" | "publishTime" | "status" | null>(null)
@@ -117,11 +110,6 @@ export function useItemsPage() {
 
   return {
     // 状态
-    editingItem, setEditingItem,
-    keywordItem, setKeywordItem,
-    mobileConfig, setMobileConfig,
-    editingRule, setEditingRule,
-    showCreateForm, setShowCreateForm,
     filters, setFilters,
     searchInput, setSearchInput,
     sortField, sortDirection,

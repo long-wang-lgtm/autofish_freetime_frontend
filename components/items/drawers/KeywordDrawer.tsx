@@ -114,7 +114,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
 
   // ==== 规则列表视图 ====
   const ruleListView = (
-    <div className="p-4">
+    <>
       <div className="flex items-center justify-between mb-4">
         <div className="text-sm text-gray-600">
           已关联 {linkedRulesData?.total || 0} 个规则
@@ -186,7 +186,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
           <p className="text-xs mt-1">点击上方按钮创建新规则</p>
         </div>
       )}
-    </div>
+    </>
   )
 
   const title = "关键词回复"
@@ -202,7 +202,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
         heightRatio={0.95}
         closeOnBackdrop={!isDirty}
       >
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">
           {!showCreateForm ? (
             ruleListView
           ) : (
@@ -229,7 +229,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
 
   return (
     <Sheet open={open} onClose={onClose} title={title} width="560px" closeOnBackdrop={!isDirty}>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4">
         {!showCreateForm ? (
           ruleListView
         ) : (

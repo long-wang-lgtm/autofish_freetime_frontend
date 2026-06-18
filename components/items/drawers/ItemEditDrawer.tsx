@@ -333,8 +333,10 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
 
   return (
     <Sheet open={open} onClose={onClose} title="编辑商品" width="640px">
-      {formContent}
-      <div className="border-t px-4 py-3">{footer}</div>
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {formContent}
+      </div>
+      <div className="border-t px-4 py-3 flex-shrink-0">{footer}</div>
     </Sheet>
   )
 }

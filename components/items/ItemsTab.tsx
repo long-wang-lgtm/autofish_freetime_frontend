@@ -1,11 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import type { Item } from "@/lib/api/items"
 import type { AccountName } from "@/lib/api/accounts"
 import type { ConfigField } from "@/components/items/config"
 import { FilterBar } from "@/components/items/FilterBar"
 import { ItemRow } from "@/components/items/views/ItemRow"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
+import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
+import { KeywordDrawer } from "@/components/items/drawers/KeywordDrawer"
+import { ConfigDrawer } from "@/components/items/drawers/ConfigDrawer"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 interface ItemsTabProps {
@@ -29,10 +33,6 @@ interface ItemsTabProps {
   error: unknown
   onToggle: (item: Item, field: string) => void
   updateMutation: { mutate: (args: { gid: string; data: Record<string, unknown> }) => void }
-  onEdit: (item: Item) => void
-  onKeywordClick: (item: Item) => void
-  onConfigClick: (config: { item: Item; field: ConfigField }) => void
-  onSendCodeChange: (gid: string, value: string) => void
 }
 
 export function ItemsTab({
@@ -56,11 +56,12 @@ export function ItemsTab({
   error,
   onToggle,
   updateMutation,
-  onEdit,
-  onKeywordClick,
-  onConfigClick,
-  onSendCodeChange,
 }: ItemsTabProps) {
+  // — 抽屉状态（内部管理）——
+  const [editingItem, setEditingItem] = useState<Item | null>(null)
+  const [keywordItem, setKeywordItem] = useState<Item | null>(null)
+  const [mobileConfig, setMobileConfig] = useState<{ item: Item; field: ConfigField } | null>(null)
+
   return (
     <div className="flex-1 min-h-0 flex flex-col space-y-4">
       {/* 移动端筛选栏 */}
@@ -175,8 +176,8 @@ export function ItemsTab({
                   item={item}
                   isEven={index % 2 === 0}
                   onToggle={onToggle}
-                  onEdit={() => onEdit(item)}
-                  onKeywordClick={() => onKeywordClick(item)}
+                  onEdit={() => setEditingItem(item)}
+                  onKeywordClick={() => setKeywordItem(item)}
                   keywordCount={itemKeywordCounts[item.gid] || 0}
                   onUpdateField={(gid, field, value) =>
                     updateMutation.mutate({ gid, data: { [field]: value } })
@@ -193,16 +194,51 @@ export function ItemsTab({
                   item={item}
                   keywordCount={itemKeywordCounts[item.gid] || 0}
                   onToggle={onToggle}
-                  onEdit={() => onEdit(item)}
-                  onKeywordClick={() => onKeywordClick(item)}
-                  onConfigClick={(field) => onConfigClick({ item, field })}
-                  onSendCodeChange={onSendCodeChange}
+                  onEdit={() => setEditingItem(item)}
+                  onKeywordClick={() => setKeywordItem(item)}
+                  onConfigClick={(field) => setMobileConfig({ item, field })}
+                  onSendCodeChange={(gid, value) => updateMutation.mutate({ gid, data: { sendCode: value } })}
                 />
               ))}
             </div>
           </>
         )}
       </div>
+
+      {/* ==== 抽屉（内部调度）==== */}
+
+      {/* 编辑商品 */}
+      {editingItem && (
+        <ItemEditDrawer
+          item={editingItem}
+          open={!!editingItem}
+          onClose={() => setEditingItem(null)}
+          onSuccess={() => setEditingItem(null)}
+        />
+      )}
+
+      {/* 关键词回复 */}
+      {keywordItem && (
+        <KeywordDrawer
+          item={keywordItem}
+          open={!!keywordItem}
+          onClose={() => setKeywordItem(null)}
+        />
+      )}
+
+      {/* 配置编辑 */}
+      {mobileConfig && (
+        <ConfigDrawer
+          open={!!mobileConfig}
+          item={mobileConfig.item}
+          field={mobileConfig.field}
+          onClose={() => setMobileConfig(null)}
+          onSave={(gid, field, value) => {
+            updateMutation.mutate({ gid, data: { [field]: value } })
+            setMobileConfig(null)
+          }}
+        />
+      )}
     </div>
   )
 }

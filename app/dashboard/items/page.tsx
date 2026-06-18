@@ -3,21 +3,12 @@
 import { Suspense } from "react"
 import { useTabRouting } from "@/hooks/useTabRouting"
 import { TabBar } from "@/components/ui/Tab"
-import RuleDrawer from "@/components/items/drawers/RuleDrawer"
-import { ConfigDrawer } from "@/components/items/drawers/ConfigDrawer"
-import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
-import { KeywordDrawer } from "@/components/items/drawers/KeywordDrawer"
 import { ItemsTab } from "@/components/items/ItemsTab"
 import { RulesTab } from "@/components/items/RulesTab"
 import { useItemsPage } from "@/hooks/useItemsPage"
 
 function ItemsPageContent() {
   const {
-    editingItem, setEditingItem,
-    keywordItem, setKeywordItem,
-    mobileConfig, setMobileConfig,
-    editingRule, setEditingRule,
-    showCreateForm, setShowCreateForm,
     filters, setFilters,
     searchInput, setSearchInput,
     sortField, sortDirection,
@@ -60,7 +51,6 @@ function ItemsPageContent() {
           : "可配置功能：自动回复关键词规则，匹配买家消息并自动发送预设回复"}
       </p>
 
-      {/* 商品管理 tab */}
       {activeTab === "items" && (
         <ItemsTab
           isMobile={isMobile}
@@ -83,65 +73,16 @@ function ItemsPageContent() {
           error={error}
           onToggle={(item, field) => handleToggle(item, field as "auto_reply" | "auto_delivery" | "auto_ai_reply" | "auto_restock")}
           updateMutation={updateMutation}
-          onEdit={setEditingItem}
-          onKeywordClick={setKeywordItem}
-          onConfigClick={setMobileConfig}
-          onSendCodeChange={(gid, value) => updateMutation.mutate({ gid, data: { sendCode: value } })}
         />
       )}
 
-      {/* 关键词规则 tab */}
       {activeTab === "rules" && (
         <RulesTab
           keywordRules={keywordRules}
           rulesStats={rulesStats}
           keywordsLoading={keywordsLoading}
           keywordsError={keywordsError}
-          onCreateRule={() => setShowCreateForm(true)}
-          onEditRule={setEditingRule}
         />
-      )}
-
-      {/* 编辑商品 — 响应式抽屉 */}
-      {editingItem && (
-        <ItemEditDrawer
-          item={editingItem}
-          open={!!editingItem}
-          onClose={() => setEditingItem(null)}
-          onSuccess={() => setEditingItem(null)}
-        />
-      )}
-
-      {/* 关键词回复 — 响应式抽屉 */}
-      {keywordItem && (
-        <KeywordDrawer
-          item={keywordItem}
-          open={!!keywordItem}
-          onClose={() => setKeywordItem(null)}
-        />
-      )}
-
-      {/* 配置编辑 — 响应式抽屉 */}
-      {mobileConfig && (
-        <ConfigDrawer
-          open={!!mobileConfig}
-          item={mobileConfig.item}
-          field={mobileConfig.field}
-          onClose={() => setMobileConfig(null)}
-          onSave={(gid, field, value) => {
-            updateMutation.mutate({ gid, data: { [field]: value } })
-            setMobileConfig(null)
-          }}
-        />
-      )}
-
-      {/* 创建规则 — 响应式抽屉 */}
-      {showCreateForm && (
-        <RuleDrawer open={showCreateForm} onClose={() => setShowCreateForm(false)} onSuccess={() => setShowCreateForm(false)} />
-      )}
-      {/* 编辑规则 — 响应式抽屉 */}
-      {editingRule && (
-        <RuleDrawer rule={editingRule} open={!!editingRule} onClose={() => setEditingRule(null)} onSuccess={() => setEditingRule(null)} />
       )}
     </div>
   )

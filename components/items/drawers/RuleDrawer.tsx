@@ -223,7 +223,7 @@ export default function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawe
         title={title}
         closeOnBackdrop={!isDirty}
       >
-        {innerContent}
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">{innerContent}</div>
       </BottomSheet>
     )
   }
@@ -236,7 +236,7 @@ export default function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawe
       width="min(900px, 66vw)"
       closeOnBackdrop={!isDirty}
     >
-      {innerContent}
+      <div className="flex-1 min-h-0 overflow-y-auto p-4">{innerContent}</div>
     </Sheet>
   )
 }
