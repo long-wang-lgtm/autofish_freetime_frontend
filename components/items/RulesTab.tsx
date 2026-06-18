@@ -3,7 +3,7 @@
 import { useState } from "react"
 import type { KeywordRule } from "@/lib/api/keywords"
 import { RuleTable } from "@/components/items/rules/RuleTable"
-import RuleDrawer from "@/components/items/drawers/RuleDrawer"
+import RuleDrawer from "@/components/items/drawers/RuleItemsAllDrawer"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 interface RulesTabProps {

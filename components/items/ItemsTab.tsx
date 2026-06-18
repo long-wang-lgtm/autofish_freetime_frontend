@@ -8,7 +8,7 @@ import { FilterBar } from "@/components/items/FilterBar"
 import { ItemRow } from "@/components/items/views/ItemRow"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
 import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
-import { KeywordDrawer } from "@/components/items/drawers/KeywordDrawer"
+import { KeywordDrawer } from "@/components/items/drawers/RulesItemsingleDrawer"
 import { ConfigDrawer } from "@/components/items/drawers/ConfigDrawer"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
