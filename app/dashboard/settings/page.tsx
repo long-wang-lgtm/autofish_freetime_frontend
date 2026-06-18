@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { NotificationConfig } from '@/lib/api/notification'
 import NotificationTab from '@/components/settings/NotificationTab'
 import AIConfigTab from '@/components/settings/AIConfigTab'
+import { useTabRouting } from '@/hooks/useTabRouting'
 
 type MainTabType = 'ai-config' | 'notification'
 
@@ -12,8 +13,11 @@ const MAIN_TABS: { key: MainTabType; label: string; icon: string }[] = [
   { key: 'notification', label: '通知渠道', icon: '🔔' },
 ]
 
-export default function SettingsPage() {
-  const [activeMainTab, setActiveMainTab] = useState<MainTabType>('ai-config')
+function SettingsPageContent() {
+  const [activeMainTab, setActiveMainTab] = useTabRouting<MainTabType>(
+    ['ai-config', 'notification'] as const,
+    'ai-config'
+  )
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingConfig, setEditingConfig] = useState<NotificationConfig | null>(null)
   const [webhookInput, setWebhookInput] = useState('')
@@ -77,5 +81,13 @@ export default function SettingsPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-64 text-gray-400">加载中...</div>}>
+      <SettingsPageContent />
+    </Suspense>
   )
 }

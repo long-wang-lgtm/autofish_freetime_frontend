@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react"
+import { useState, useCallback, useMemo, useEffect, useRef, Suspense } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { listItems, Item, ItemFilters, updateItem, refreshItems } from "@/lib/api/items"
 import { getAccountNames, AccountName } from "@/lib/api/accounts"
@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/toaster"
 import { listKeywordRules, KeywordRule } from "@/lib/api/keywords"
 import { MessageCircle, Bot, Truck, RefreshCw, Upload } from "lucide-react"
 import { useDebounce } from "@/hooks/useDebounce"
+import { useTabRouting } from "@/hooks/useTabRouting"
 import { TabBar } from "@/components/ui/Tab"
 import { RuleTable } from "@/components/rules/RuleTable"
 import { RuleForm } from "@/components/rules/RuleForm"
@@ -93,12 +94,12 @@ function RefreshButton({
   )
 }
 
-export default function ItemsPage() {
+function ItemsPageContent() {
   const queryClient = useQueryClient()
   const { addToast } = useToast()
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [keywordItem, setKeywordItem] = useState<Item | null>(null)
-  const [activeTab, setActiveTab] = useState("items")
+  const [activeTab, setActiveTab] = useTabRouting(['items', 'rules'] as const, 'items')
 
   // 关键词规则状态
   const [editingRule, setEditingRule] = useState<KeywordRule | null>(null)
@@ -258,7 +259,7 @@ export default function ItemsPage() {
           { key: "rules", label: "回复规则" },
         ]}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(key) => setActiveTab(key as "items" | "rules")}
         variant="overline"
       />
 
@@ -958,5 +959,13 @@ function ItemRow({ item, isEven, onToggle, onEdit, onKeywordClick, keywordCount,
         />
       )}
     </>
+  )
+}
+
+export default function ItemsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-64 text-gray-400">加载中...</div>}>
+      <ItemsPageContent />
+    </Suspense>
   )
 }
