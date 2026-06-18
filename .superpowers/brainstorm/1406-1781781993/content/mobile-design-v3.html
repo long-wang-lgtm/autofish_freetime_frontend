@@ -1,0 +1,156 @@
+<h2>方案C v3 — 调整优先级位置</h2>
+<p class="subtitle">状态+关键词（左上）| 优先级（右上）| toggle 移除，状态标签本身可点击切换</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">规则卡片 v3 (375px)</div>
+    <div class="mockup-body" style="font-size:12px;width:340px;">
+
+      <!-- 统计 pill 行 -->
+      <div style="display:flex;gap:6px;padding:6px 4px;overflow-x:auto;">
+        <div style="display:flex;align-items:center;gap:4px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:16px;padding:4px 10px;flex-shrink:0;"><span style="font-weight:600;font-size:12px;">12</span><span style="font-size:10px;color:#6b7280;">总数</span></div>
+        <div style="display:flex;align-items:center;gap:4px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:16px;padding:4px 10px;flex-shrink:0;"><span style="font-weight:600;font-size:12px;color:#16a34a;">8</span><span style="font-size:10px;color:#6b7280;">启用</span></div>
+        <div style="display:flex;align-items:center;gap:4px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:16px;padding:4px 10px;flex-shrink:0;"><span style="font-weight:600;font-size:12px;color:#4b5563;">4</span><span style="font-size:10px;color:#6b7280;">禁用</span></div>
+        <div style="display:flex;align-items:center;gap:4px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:16px;padding:4px 10px;flex-shrink:0;"><span style="font-weight:600;font-size:12px;color:#2563eb;">15</span><span style="font-size:10px;color:#6b7280;">商品</span></div>
+        <div style="display:flex;align-items:center;gap:4px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:16px;padding:4px 10px;flex-shrink:0;"><span style="font-weight:600;font-size:12px;color:#9333ea;">3</span><span style="font-size:10px;color:#6b7280;">组</span></div>
+      </div>
+
+      <!-- 操作栏 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 4px;">
+        <span style="font-size:11px;color:#6b7280;">共 12 条规则，按优先级降序</span>
+        <button style="padding:6px 14px;background:#2563eb;color:#fff;border-radius:6px;font-size:11px;border:none;">+ 创建</button>
+      </div>
+
+      <!-- 卡片 1 — 启用 -->
+      <div style="margin:0 4px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 12px 4px;gap:8px;">
+          <div style="display:flex;align-items:flex-start;gap:6px;flex:1;min-width:0;">
+            <span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500;flex-shrink:0;cursor:pointer;" title="点击切换状态">启用</span>
+            <span style="font-size:14px;font-weight:600;color:#111827;line-height:1.3;word-break:break-all;">你好</span>
+          </div>
+          <span style="font-size:14px;font-weight:700;color:#374151;flex-shrink:0;margin-top:1px;">#10</span>
+        </div>
+        <div style="padding:0 12px 4px 12px;display:flex;gap:4px;align-items:center;font-size:10px;color:#9ca3af;">
+          <span style="background:#f3f4f6;color:#6b7280;padding:1px 5px;border-radius:3px;font-size:9px;">模糊匹配</span>
+          <span style="color:#d1d5db;">·</span>
+          <span>预定义关键词</span>
+        </div>
+        <div style="padding:0 12px 6px 12px;font-size:11px;color:#6b7280;line-height:1.3;">
+          亲，在的哦~有什么可以帮助您的？
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 12px 8px;border-top:1px solid #f3f4f6;">
+          <span style="font-size:10px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:4px;">📦 2商品</span>
+          <span style="font-size:10px;background:#faf5ff;color:#9333ea;padding:2px 8px;border-radius:4px;">📁 1组</span>
+          <span style="flex:1;"></span>
+          <button style="font-size:10px;padding:4px 10px;background:#f3f4f6;border-radius:4px;border:none;">编辑</button>
+          <button style="font-size:10px;padding:4px 10px;color:#dc2626;background:#fef2f2;border-radius:4px;border:none;">删除</button>
+        </div>
+      </div>
+
+      <!-- 卡片 2 — 禁用 -->
+      <div style="margin:0 4px 8px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 12px 4px;gap:8px;">
+          <div style="display:flex;align-items:flex-start;gap:6px;flex:1;min-width:0;">
+            <span style="background:#f3f4f6;color:#6b7280;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500;flex-shrink:0;cursor:pointer;" title="点击切换状态">禁用</span>
+            <span style="font-size:14px;font-weight:600;color:#9ca3af;line-height:1.3;word-break:break-all;">/price.*(元|块)/</span>
+          </div>
+          <span style="font-size:14px;font-weight:700;color:#9ca3af;flex-shrink:0;margin-top:1px;">#5</span>
+        </div>
+        <div style="padding:0 12px 4px 12px;display:flex;gap:4px;align-items:center;font-size:10px;color:#9ca3af;">
+          <span style="background:#f3f4f6;color:#9ca3af;padding:1px 5px;border-radius:3px;font-size:9px;">正则匹配</span>
+          <span style="color:#d1d5db;">·</span>
+          <span>自定义关键词</span>
+        </div>
+        <div style="padding:0 12px 6px 12px;font-size:11px;color:#9ca3af;line-height:1.3;">
+          请查看商品详情页了解价格信息...
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 12px 8px;border-top:1px solid #f3f4f6;">
+          <span style="font-size:10px;color:#9ca3af;">无关联</span>
+          <span style="flex:1;"></span>
+          <button style="font-size:10px;padding:4px 10px;background:#f3f4f6;border-radius:4px;border:none;">编辑</button>
+          <button style="font-size:10px;padding:4px 10px;color:#dc2626;background:#fef2f2;border-radius:4px;border:none;">删除</button>
+        </div>
+      </div>
+
+      <!-- 卡片 3 — 启用，有很多关联 -->
+      <div style="margin:0 4px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 12px 4px;gap:8px;">
+          <div style="display:flex;align-items:flex-start;gap:6px;flex:1;min-width:0;">
+            <span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500;flex-shrink:0;cursor:pointer;">启用</span>
+            <span style="font-size:14px;font-weight:600;color:#111827;line-height:1.3;word-break:break-all;">优惠券</span>
+          </div>
+          <span style="font-size:14px;font-weight:700;color:#374151;flex-shrink:0;margin-top:1px;">#8</span>
+        </div>
+        <div style="padding:0 12px 4px 12px;display:flex;gap:4px;align-items:center;font-size:10px;color:#9ca3af;">
+          <span style="background:#f3f4f6;color:#6b7280;padding:1px 5px;border-radius:3px;font-size:9px;">精确匹配</span>
+          <span style="color:#d1d5db;">·</span>
+          <span>预定义关键词</span>
+        </div>
+        <div style="padding:0 12px 6px 12px;font-size:11px;color:#6b7280;line-height:1.3;">
+          当前暂无优惠活动，请关注店铺首页获取最新优惠信息
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 12px 8px;border-top:1px solid #f3f4f6;">
+          <span style="font-size:10px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:4px;">📦 5商品</span>
+          <span style="font-size:10px;background:#faf5ff;color:#9333ea;padding:2px 8px;border-radius:4px;">📁 2组</span>
+          <span style="flex:1;"></span>
+          <button style="font-size:10px;padding:4px 10px;background:#f3f4f6;border-radius:4px;border:none;">编辑</button>
+          <button style="font-size:10px;padding:4px 10px;color:#dc2626;background:#fef2f2;border-radius:4px;border:none;">删除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">信息层级说明</div>
+    <div class="mockup-body" style="font-size:12px;padding:16px;line-height:1.8;">
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:600;color:#111827;margin-bottom:4px;">标题行（第一行）</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:4px;font-size:10px;">状态</span>
+          <span style="font-weight:600;">关键词</span>
+          <span style="flex:1;"></span>
+          <span style="font-weight:700;">#优先级</span>
+        </div>
+        <div style="font-size:10px;color:#6b7280;">
+          · 状态 badge 可点击切换启用/禁用<br/>
+          · 关键词 14px semibold，主视觉焦点<br/>
+          · 优先级 #N 格式放在最右，不抢关键词风头
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:600;color:#111827;margin-bottom:4px;">信息行（第二行）</div>
+        <div style="display:flex;gap:4px;align-items:center;font-size:10px;color:#9ca3af;margin-bottom:8px;">
+          <span style="background:#f3f4f6;padding:1px 5px;border-radius:3px;">匹配方式</span>
+          <span>·</span>
+          <span>回复类型</span>
+        </div>
+        <div style="font-size:10px;color:#6b7280;">
+          · 辅助信息，10px 灰色，不抢眼
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:600;color:#111827;margin-bottom:4px;">回复预览（第三行）</div>
+        <div style="font-size:11px;color:#374151;margin-bottom:4px;">回复内容摘要...</div>
+        <div style="font-size:10px;color:#6b7280;">
+          · 单行或两行截断，完整内容进抽屉编辑
+        </div>
+      </div>
+
+      <div>
+        <div style="font-weight:600;color:#111827;margin-bottom:4px;">底部操作栏</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
+          <span style="font-size:10px;background:#eff6ff;padding:2px 6px;border-radius:4px;">关联标签</span>
+          <span style="flex:1;"></span>
+          <button style="font-size:10px;padding:3px 8px;border-radius:4px;">编辑</button>
+          <button style="font-size:10px;padding:3px 8px;color:#dc2626;">删除</button>
+        </div>
+        <div style="font-size:10px;color:#6b7280;">
+          · 关联商品/组只显示数量标签<br/>
+          · 关联详情进抽屉查看（方案B）
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

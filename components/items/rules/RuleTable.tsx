@@ -3,78 +3,42 @@
 import { useState } from "react"
 import {
   KeywordRule,
-  updateKeywordRule,
-  deleteKeywordRule,
   getDisplayKeyword,
 } from "@/lib/api/keywords"
-import { useQueryClient } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { useToast } from "@/components/ui/toaster"
 
 interface RuleTableProps {
   rules: KeywordRule[]
   onEdit: (rule: KeywordRule) => void
+  onToggleEnabled: (rule: KeywordRule) => void
+  onDelete: (rule: KeywordRule) => void
+  toggling: string | null
+  deleting: string | null
   className?: string
 }
 
-export function RuleTable({ rules, onEdit, className }: RuleTableProps) {
+export function RuleTable({
+  rules,
+  onEdit,
+  onToggleEnabled,
+  onDelete,
+  toggling,
+  deleting,
+  className,
+}: RuleTableProps) {
 
-const replyTypeLabels: Record<string, string> = {
-  predefined: "预定义关键词",
-  custom: "自定义关键词",
-}
+  const replyTypeLabels: Record<string, string> = {
+    predefined: "预定义关键词",
+    custom: "自定义关键词",
+  }
 
-const matchTypeLabels: Record<string, string> = {
-  exact: "精确匹配",
-  fuzzy: "模糊匹配",
-  regex: "正则匹配",
-}
+  const matchTypeLabels: Record<string, string> = {
+    exact: "精确匹配",
+    fuzzy: "模糊匹配",
+    regex: "正则匹配",
+  }
 
-  const queryClient = useQueryClient()
-  const { addToast } = useToast()
-  const [loading, setLoading] = useState<string | null>(null)
   const [expandedRule, setExpandedRule] = useState<string | null>(null)
-
-  const handleToggleEnabled = async (rule: KeywordRule) => {
-    setLoading(`toggle-${rule.rule_id}`)
-    try {
-      await updateKeywordRule(rule.rule_id, { enabled: !rule.enabled })
-      addToast({
-        title: "更新成功",
-        description: `规则已${!rule.enabled ? "启用" : "禁用"}`,
-      })
-      queryClient.invalidateQueries({ queryKey: ["keywords"] })
-    } catch (e) {
-      addToast({
-        title: "更新失败",
-        description: String(e),
-        variant: "error",
-      })
-    } finally {
-      setLoading(null)
-    }
-  }
-
-  const handleDelete = async (rule: KeywordRule) => {
-    if (!confirm(`确定要删除此规则吗？`)) return
-    setLoading(`delete-${rule.rule_id}`)
-    try {
-      await deleteKeywordRule(rule.rule_id)
-      addToast({
-        title: "已删除",
-        description: "规则已删除",
-      })
-      queryClient.invalidateQueries({ queryKey: ["keywords"] })
-    } catch (e) {
-      addToast({
-        title: "删除失败",
-        description: String(e),
-        variant: "error",
-      })
-    } finally {
-      setLoading(null)
-    }
-  }
 
   const toggleExpand = (ruleId: string) => {
     setExpandedRule(expandedRule === ruleId ? null : ruleId)
@@ -183,15 +147,15 @@ const matchTypeLabels: Record<string, string> = {
                     </button>
 
                     <button
-                      onClick={() => handleToggleEnabled(rule)}
-                      disabled={loading === `toggle-${rule.rule_id}`}
+                      onClick={() => onToggleEnabled(rule)}
+                      disabled={toggling === rule.rule_id}
                       className={`px-3 py-1 text-sm rounded-md transition-colors ${
                         rule.enabled
                           ? "bg-orange-100 hover:bg-orange-200 text-orange-700"
                           : "bg-green-100 hover:bg-green-200 text-green-700"
                       } disabled:opacity-50`}
                     >
-                      {loading === `toggle-${rule.rule_id}` ? (
+                      {toggling === rule.rule_id ? (
                         <LoadingSpinner size="sm" />
                       ) : rule.enabled ? (
                         "禁用"
@@ -201,11 +165,11 @@ const matchTypeLabels: Record<string, string> = {
                     </button>
 
                     <button
-                      onClick={() => handleDelete(rule)}
-                      disabled={loading === `delete-${rule.rule_id}`}
+                      onClick={() => onDelete(rule)}
+                      disabled={deleting === rule.rule_id}
                       className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
                     >
-                      {loading === `delete-${rule.rule_id}` ? (
+                      {deleting === rule.rule_id ? (
                         <LoadingSpinner size="sm" />
                       ) : (
                         "删除"

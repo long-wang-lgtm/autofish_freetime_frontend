@@ -1,54 +1,132 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import type { KeywordRule } from "@/lib/api/keywords"
+import { updateKeywordRule, deleteKeywordRule } from "@/lib/api/keywords"
 import { RuleTable } from "@/components/items/rules/RuleTable"
+import { MobileRuleCard } from "@/components/items/views/MobileRuleCard"
 import RuleDrawer from "@/components/items/drawers/RuleItemsAllDrawer"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { useQueryClient } from "@tanstack/react-query"
+import { useToast } from "@/components/ui/toaster"
 
 interface RulesTabProps {
+  isMobile: boolean
   keywordRules: KeywordRule[]
   rulesStats: { total: number; enabled: number; disabled: number; linkedItems: number; linkedGroups: number }
   keywordsLoading: boolean
   keywordsError: unknown
 }
 
-const STAT_CARDS = [
-  { key: "total",        label: "规则总数",   color: "text-gray-900" },
-  { key: "enabled",      label: "已启用",     color: "text-green-600" },
-  { key: "disabled",     label: "已禁用",     color: "text-gray-600" },
-  { key: "linkedItems",  label: "关联商品",   color: "text-blue-600" },
-  { key: "linkedGroups", label: "关联商品组", color: "text-purple-600" },
+const DESKTOP_STAT_CARDS = [
+  { key: "total",        label: "规则总数",   color: "text-gray-900", bg: "bg-gray-50" },
+  { key: "enabled",      label: "已启用",     color: "text-green-600", bg: "bg-green-50" },
+  { key: "disabled",     label: "已禁用",     color: "text-gray-600", bg: "bg-gray-50" },
+  { key: "linkedItems",  label: "关联商品",   color: "text-blue-600", bg: "bg-blue-50" },
+  { key: "linkedGroups", label: "关联商品组", color: "text-purple-600", bg: "bg-purple-50" },
+] as const
+
+const MOBILE_STAT_PILLS = [
+  { key: "total",        label: "总数", color: "text-gray-900" },
+  { key: "enabled",      label: "启用", color: "text-green-600" },
+  { key: "disabled",     label: "禁用", color: "text-gray-600" },
+  { key: "linkedItems",  label: "商品", color: "text-blue-600" },
+  { key: "linkedGroups", label: "组",   color: "text-purple-600" },
 ] as const
 
 export function RulesTab({
+  isMobile,
   keywordRules,
   rulesStats,
   keywordsLoading,
   keywordsError,
 }: RulesTabProps) {
-  // — 抽屉状态（内部管理）——
+  const queryClient = useQueryClient()
+  const { addToast } = useToast()
+
+  // — 抽屉状态 —
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingRule, setEditingRule] = useState<KeywordRule | null>(null)
+
+  // — toggle/delete loading 状态 —
+  const [toggling, setToggling] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  const handleToggleEnabled = useCallback(async (rule: KeywordRule) => {
+    setToggling(rule.rule_id)
+    try {
+      await updateKeywordRule(rule.rule_id, { enabled: !rule.enabled })
+      addToast({
+        title: "更新成功",
+        description: `规则已${!rule.enabled ? "启用" : "禁用"}`,
+      })
+      queryClient.invalidateQueries({ queryKey: ["keywords"] })
+    } catch (e) {
+      addToast({
+        title: "更新失败",
+        description: String(e),
+        variant: "error",
+      })
+    } finally {
+      setToggling(null)
+    }
+  }, [queryClient, addToast])
+
+  const handleDelete = useCallback(async (rule: KeywordRule) => {
+    if (!confirm(`确定要删除此规则吗？`)) return
+    setDeleting(rule.rule_id)
+    try {
+      await deleteKeywordRule(rule.rule_id)
+      addToast({
+        title: "已删除",
+        description: "规则已删除",
+      })
+      queryClient.invalidateQueries({ queryKey: ["keywords"] })
+    } catch (e) {
+      addToast({
+        title: "删除失败",
+        description: String(e),
+        variant: "error",
+      })
+    } finally {
+      setDeleting(null)
+    }
+  }, [queryClient, addToast])
 
   return (
     <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
       {/* 统计信息 */}
-      <div className="grid grid-cols-5 gap-3 p-4 border-b border-gray-100">
-        {STAT_CARDS.map(({ key, label, color }) => (
-          <div key={key} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <div className={`text-2xl font-bold ${color}`}>{rulesStats[key]}</div>
-            <div className="text-xs text-gray-500">{label}</div>
-          </div>
-        ))}
-      </div>
+      {isMobile ? (
+        <div className="flex gap-2 px-2 py-2 overflow-x-auto border-b border-gray-100">
+          {MOBILE_STAT_PILLS.map(({ key, label, color }) => (
+            <div
+              key={key}
+              className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 flex-shrink-0"
+            >
+              <span className={`text-sm font-bold ${color}`}>{rulesStats[key]}</span>
+              <span className="text-[10px] text-gray-500">{label}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-5 gap-3 p-4 border-b border-gray-100">
+          {DESKTOP_STAT_CARDS.map(({ key, label, color, bg }) => (
+            <div key={key} className={`${bg} border border-gray-200 rounded-lg p-3`}>
+              <div className={`text-2xl font-bold ${color}`}>{rulesStats[key]}</div>
+              <div className="text-xs text-gray-500">{label}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 操作栏 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="text-sm text-gray-500">
           {rulesStats.total === 0
             ? "暂无规则"
-            : `共 ${rulesStats.total} 条规则，按优先级降序排列`}
+            : isMobile
+              ? `共 ${rulesStats.total} 条规则`
+              : `共 ${rulesStats.total} 条规则，按优先级降序排列`}
         </div>
         <button
           onClick={() => setShowCreateForm(true)}
@@ -86,14 +164,36 @@ export function RulesTab({
         </div>
       )}
       {!keywordsLoading && !keywordsError && rulesStats.total > 0 && (
-        <RuleTable
-          className="border-0 rounded-none shadow-none"
-          rules={keywordRules}
-          onEdit={setEditingRule}
-        />
+        <>
+          {/* 桌面端表格 */}
+          {!isMobile && (
+            <RuleTable
+              className="border-0 rounded-none shadow-none"
+              rules={keywordRules}
+              onEdit={setEditingRule}
+              onToggleEnabled={handleToggleEnabled}
+              onDelete={handleDelete}
+              toggling={toggling}
+              deleting={deleting}
+            />
+          )}
+          {/* 移动端卡片列表 */}
+          {isMobile && (
+            <div className="flex-1 overflow-y-auto px-1 py-2 space-y-2">
+              {keywordRules.map((rule) => (
+                <MobileRuleCard
+                  key={rule.rule_id}
+                  rule={rule}
+                  onToggleEnabled={handleToggleEnabled}
+                  onEdit={setEditingRule}
+                  onDelete={handleDelete}
+                  toggling={toggling === rule.rule_id}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
-
-      {/* ==== 抽屉（内部调度）==== */}
 
       {/* 创建规则 */}
       {showCreateForm && (

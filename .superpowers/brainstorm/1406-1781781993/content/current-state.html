@@ -1,0 +1,114 @@
+<h2>RulesTab 当前状态 & 移动端问题</h2>
+<p class="subtitle">左侧是当前桌面端效果，右侧是移动端（375px）实际表现 — 5列统计卡片挤压、8列表格完全不可用</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">桌面端 (≥768px) — 当前效果</div>
+    <div class="mockup-body" style="font-size:13px;">
+      <!-- 统计卡片 -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:12px;border-bottom:1px solid #e5e7eb;">
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:700;">12</div>
+          <div style="font-size:10px;color:#6b7280;">规则总数</div>
+        </div>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:700;color:#16a34a;">8</div>
+          <div style="font-size:10px;color:#6b7280;">已启用</div>
+        </div>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:700;color:#4b5563;">4</div>
+          <div style="font-size:10px;color:#6b7280;">已禁用</div>
+        </div>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:700;color:#2563eb;">15</div>
+          <div style="font-size:10px;color:#6b7280;">关联商品</div>
+        </div>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:700;color:#9333ea;">3</div>
+          <div style="font-size:10px;color:#6b7280;">关联商品组</div>
+        </div>
+      </div>
+      <!-- 操作栏 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #e5e7eb;">
+        <span style="font-size:12px;color:#6b7280;">共 12 条规则，按优先级降序排列</span>
+        <button style="padding:6px 12px;background:#2563eb;color:#fff;border-radius:6px;font-size:12px;border:none;">+ 创建规则</button>
+      </div>
+      <!-- 表格 -->
+      <table style="width:100%;font-size:11px;border-collapse:collapse;">
+        <thead><tr style="background:#f9fafb;text-align:left;">
+          <th style="padding:6px 8px;">状态</th><th style="padding:6px 8px;">类型</th><th style="padding:6px 8px;">关键词</th><th style="padding:6px 8px;">回复</th><th style="padding:6px 8px;">匹配</th><th style="padding:6px 8px;">优先级</th><th style="padding:6px 8px;">关联</th><th style="padding:6px 8px;">操作</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:6px 8px;"><span style="background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:4px;font-size:10px;">启用</span></td><td style="padding:6px 8px;">预定义</td><td style="padding:6px 8px;">你好</td><td style="padding:6px 8px;">亲，在的哦~</td><td style="padding:6px 8px;">模糊</td><td style="padding:6px 8px;">10</td><td style="padding:6px 8px;">商品:2 ▾</td><td style="padding:6px 8px;">编辑 禁用 删除</td></tr>
+          <tr style="background:#f9fafb;"><td style="padding:6px 8px;"><span style="background:#f3f4f6;color:#6b7280;padding:2px 6px;border-radius:4px;font-size:10px;">禁用</span></td><td style="padding:6px 8px;">自定义</td><td style="padding:6px 8px;">/price.*/</td><td style="padding:6px 8px;">请查看商品详情页</td><td style="padding:6px 8px;">正则</td><td style="padding:6px 8px;">5</td><td style="padding:6px 8px;">无关联</td><td style="padding:6px 8px;">编辑 启用 删除</td></tr>
+          <tr><td style="padding:6px 8px;"><span style="background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:4px;font-size:10px;">启用</span></td><td style="padding:6px 8px;">预定义</td><td style="padding:6px 8px;">优惠券</td><td style="padding:6px 8px;">当前暂无优惠活动</td><td style="padding:6px 8px;">精确</td><td style="padding:6px 8px;">8</td><td style="padding:6px 8px;">商品组:1 ▾</td><td style="padding:6px 8px;">编辑 禁用 删除</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">移动端 (375px) — 当前实际效果</div>
+    <div class="mockup-body" style="font-size:11px;width:340px;">
+      <!-- 统计卡片 - 5列挤压 -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:6px;border-bottom:1px solid #e5e7eb;">
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:4px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;">12</div>
+          <div style="font-size:7px;color:#6b7280;">总数</div>
+        </div>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:4px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#16a34a;">8</div>
+          <div style="font-size:7px;color:#6b7280;">启用</div>
+        </div>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:4px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#4b5563;">4</div>
+          <div style="font-size:7px;color:#6b7280;">禁用</div>
+        </div>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:4px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#2563eb;">15</div>
+          <div style="font-size:7px;color:#6b7280;">商品</div>
+        </div>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:4px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#9333ea;">3</div>
+          <div style="font-size:7px;color:#6b7280;">组</div>
+        </div>
+      </div>
+      <!-- 操作栏 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid #e5e7eb;">
+        <span style="font-size:9px;color:#6b7280;">共 12 条规则</span>
+        <button style="padding:4px 8px;background:#2563eb;color:#fff;border-radius:4px;font-size:10px;border:none;">+ 创建</button>
+      </div>
+      <!-- 表格问题标注 -->
+      <div style="padding:16px 8px;text-align:center;">
+        <div style="background:#fef2f2;border:2px dashed #fca5a5;border-radius:12px;padding:20px;">
+          <div style="font-size:32px;margin-bottom:8px;">⚠️</div>
+          <div style="font-weight:600;color:#dc2626;margin-bottom:6px;">8 列表格无法展示</div>
+          <div style="font-size:11px;color:#991b1b;line-height:1.5;">
+            表头拥挤不可读<br/>
+            操作列（编辑/禁用/删除）挤作一团<br/>
+            关联展开详情无空间<br/>
+            横向滚动体验差
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>核心问题总结</h3>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+    <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:12px;">
+      <div style="font-weight:600;color:#c2410c;margin-bottom:4px;">🔢 统计卡片</div>
+      <div style="font-size:12px;color:#9a3412;">5列 grid 在 375px 下每个卡片仅 ~65px，文字截断严重</div>
+    </div>
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px;">
+      <div style="font-weight:600;color:#dc2626;margin-bottom:4px;">📊 规则列表</div>
+      <div style="font-size:12px;color:#991b1b;">8 列 HTML table 在移动端基本不可用，需要卡片化</div>
+    </div>
+    <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:12px;">
+      <div style="font-weight:600;color:#1d4ed8;margin-bottom:4px;">📱 无 isMobile 支持</div>
+      <div style="font-size:12px;color:#1e40af;">page.tsx 未向 RulesTab 传递 isMobile，缺少移动端分支</div>
+    </div>
+  </div>
+</div>

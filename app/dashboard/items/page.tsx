@@ -78,6 +78,7 @@ function ItemsPageContent() {
 
       {activeTab === "rules" && (
         <RulesTab
+          isMobile={isMobile}
           keywordRules={keywordRules}
           rulesStats={rulesStats}
           keywordsLoading={keywordsLoading}
