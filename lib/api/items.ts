@@ -79,7 +79,7 @@ export async function listItems(filters?: ItemFilters): Promise<Item[]> {
   if (filters?.gid) params.append("gid", filters.gid)
 
   const query = params.toString()
-  return fetchApi<Item[]>(`/api/items${query ? `?${query}` : ""}`)
+  return fetchApi<Item[]>(`/api/items/list${query ? `?${query}` : ""}`)
 }
 
 export async function getItem(gid: string): Promise<Item> {
