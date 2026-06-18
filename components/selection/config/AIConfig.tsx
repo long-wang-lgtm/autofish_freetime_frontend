@@ -7,7 +7,7 @@ export function AIConfig() {
   const [autoEnabled, setAutoEnabled] = useState(true)
 
   return (
-    <div className="bg-white rounded-xl p-5">
+    <div>
       <h3 className="font-semibold text-gray-900 mb-4">AI 分析配置</h3>
       <div className="space-y-4">
         {/* 自动分析开关 */}

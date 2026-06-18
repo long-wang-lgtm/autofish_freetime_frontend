@@ -52,6 +52,17 @@ export interface ProductItem {
   monitorStatus: number | null
   /** 来源关键词列表 */
   keywords: string[]
+  // ===== 历史表现字段（后端直传）=====
+  /** 最近 10 次采集的询单数，按时间升序 */
+  recentInquiries: number[]
+  /** 近 10 次采集的询单整体趋势方向 */
+  trend: 'up' | 'down' | 'flat'
+  /** 趋势涨跌幅百分比（如 23.5 表示 +23.5%） */
+  trendValue: number
+  /** 询单数变异系数 CV（σ/μ），值越小越稳定 */
+  stabilityValue: number
+  /** 最近一次采集时间（ISO 8601），供迷你图 tooltip */
+  lastCollectedAt: string | null
 }
 
 /** 可排序的列 key */
@@ -71,6 +82,8 @@ export type ProductSortKey =
   | 'publishedAt'
   | 'priority'
   | 'status'
+  | 'trendValue'
+  | 'stabilityValue'
 
 /** 将 DTO 映射为 ProductItem，一并计算所有衍生字段 */
 export function dtoToProductItem(item: MonitoredItemDTO): ProductItem {
@@ -123,6 +136,11 @@ export function dtoToProductItem(item: MonitoredItemDTO): ProductItem {
     priority: item.priority ?? null,
     monitorStatus: item.status ?? null,
     keywords: item.keywords ?? [],
+    recentInquiries: item.recentInquiries ?? [],
+    trend: item.trend ?? 'flat',
+    trendValue: item.trendValue ?? 0,
+    stabilityValue: item.stabilityValue ?? 0,
+    lastCollectedAt: item.lastCollectedAt ?? null,
   }
 }
 
@@ -159,6 +177,10 @@ export function getProductSortValue(item: ProductItem, key: ProductSortKey): num
       return item.priority ?? -1
     case 'status':
       return item.monitorStatus ?? -1
+    case 'trendValue':
+      return item.trendValue
+    case 'stabilityValue':
+      return item.stabilityValue
   }
 }
 
@@ -201,6 +223,16 @@ export interface MonitoredItemDTO {
   keywords?: string[] | null
   created_at?: string | null
   updated_at?: string | null
+  /** 最近 10 次采集的询单数，按时间升序 */
+  recentInquiries?: number[] | null
+  /** 近 10 次采集的询单整体趋势方向 */
+  trend?: 'up' | 'down' | 'flat' | null
+  /** 趋势涨跌幅百分比（如 23.5 表示 +23.5%） */
+  trendValue?: number | null
+  /** 询单数变异系数 CV（σ/μ），值越小越稳定 */
+  stabilityValue?: number | null
+  /** 最近一次采集时间（ISO 8601） */
+  lastCollectedAt?: string | null
 }
 
 /** 监控商家 — 对应 MonitoredMerchantSchema */
@@ -413,4 +445,39 @@ export async function getDailyProductCounts(categoryId: string): Promise<Record<
   }
   console.debug(`[SelectionAPI] getDailyProductCounts counts=${JSON.stringify(counts)}`)
   return counts
+}
+
+// ============ 商品历史表现 ============
+
+/** 历史采集数据点 */
+export interface HistoryPoint {
+  /** 采集时间（ISO 8601） */
+  collectedAt: string
+  /** 本次采集时的询单数 */
+  inquiryCount: number
+  /** 本次采集时的浏览数 */
+  viewCount: number
+  /** 本次采集时的想要数 */
+  wantCount: number
+  /** 本次采集时的收藏数 */
+  favoriteCount: number
+  /** 本次采集时的价格（如有变动） */
+  price: number | null
+}
+
+/** 商品历史表现响应 */
+export interface ProductHistoryResponse {
+  gid: string
+  items: HistoryPoint[]
+}
+
+/** 获取商品历史采集数据 — GET /api/topic/monitor/item/{gid}/history */
+export async function getProductHistory(
+  gid: string,
+  days: 7 | 30 | 90 = 7
+): Promise<ProductHistoryResponse> {
+  console.debug(`[SelectionAPI] getProductHistory gid=${gid} days=${days}`)
+  return selectionFetch<ProductHistoryResponse>(
+    `/monitor/item/${encodeURIComponent(gid)}/history?days=${days}`
+  )
 }

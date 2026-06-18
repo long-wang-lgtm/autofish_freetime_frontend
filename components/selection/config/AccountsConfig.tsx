@@ -24,7 +24,7 @@ export function AccountsConfig() {
   }
 
   return (
-    <div className="bg-white rounded-xl p-5">
+    <div>
       <h3 className="font-semibold text-gray-900 mb-4">对标账号/店铺</h3>
 
       {/* 搜索区 */}

@@ -12,6 +12,8 @@ import {
   type ProductSortKey,
 } from '@/lib/api/selection'
 import { ChevronUp, ChevronDown, Search, Trash2, ChevronRight, Check } from 'lucide-react'
+import { MiniTrendChart } from '@/components/selection/product/MiniTrendChart'
+import { ProductHistoryDrawer } from '@/components/selection/product/ProductHistoryDrawer'
 
 // ===== 格式化工具 =====
 
@@ -65,7 +67,7 @@ function fmtDate(isoString: string | null): string {
 
 // ===== 列分组定义 =====
 
-type ColumnGroup = 'identity' | 'core' | 'conversion' | 'time' | 'value' | 'meta'
+type ColumnGroup = 'identity' | 'core' | 'conversion' | 'time' | 'value' | 'meta' | 'trend'
 
 const GROUP_STYLE: Record<ColumnGroup, { bar: string }> = {
   identity:   { bar: '' },
@@ -74,10 +76,11 @@ const GROUP_STYLE: Record<ColumnGroup, { bar: string }> = {
   time:       { bar: 'bg-gradient-to-r from-gray-300 to-gray-400' },
   value:      { bar: 'bg-gradient-to-r from-emerald-300 to-emerald-400' },
   meta:       { bar: 'bg-gradient-to-r from-violet-300 to-violet-400' },
+  trend:      { bar: 'bg-gradient-to-r from-rose-300 to-rose-400' },
 }
 
 interface ColumnDef {
-  key: ProductSortKey | 'keywords' | 'monitorStatus'
+  key: ProductSortKey | 'keywords' | 'monitorStatus' | 'trendChart'
   label: string
   width: string
   group: ColumnGroup
@@ -109,6 +112,10 @@ const COLUMNS: ColumnDef[] = [
   { key: 'keywords',          label: '关键词',         width: 'w-[110px] shrink-0', group: 'meta',       groupStart: true },
   { key: 'priority',          label: '优先级',         width: 'w-[56px] shrink-0',  group: 'meta',       groupStart: false },
   { key: 'monitorStatus',     label: '监控状态',       width: 'w-[72px] shrink-0',  group: 'meta',       groupStart: false },
+  // ── 📈 趋势表现（rose）──
+  { key: 'trendValue' as ProductSortKey,    label: '趋势指标',   width: 'w-[90px] shrink-0',  group: 'trend', groupStart: true },
+  { key: 'trendChart' as any,               label: '近期趋势',   width: 'w-[100px] shrink-0', group: 'trend', groupStart: false },
+  { key: 'stabilityValue' as ProductSortKey, label: '稳定性',    width: 'w-[90px] shrink-0',  group: 'trend', groupStart: false },
 ]
 
 // ===== 组件 =====
@@ -119,6 +126,7 @@ export function ProductMonitorTab() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [copiedGid, setCopiedGid] = useState<string | null>(null)
   const [aiReportOpen, setAiReportOpen] = useState(false)
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
   const { data: items = [], isLoading } = useQuery({
@@ -351,6 +359,41 @@ export function ProductMonitorTab() {
         )
       }
 
+      // ── 趋势指标 ──
+      case 'trendValue': {
+        const v = p.trendValue
+        const isUp = p.trend === 'up'
+        const isDown = p.trend === 'down'
+        return (
+          <span className={`text-xs font-semibold tabular-nums ${
+            isUp ? 'text-green-600' : isDown ? 'text-red-600' : 'text-gray-400'
+          }`}>
+            {isUp ? '↑' : isDown ? '↓' : '→'} {Math.abs(v).toFixed(1)}%
+          </span>
+        )
+      }
+
+      // ── 迷你趋势图 ──
+      case 'trendChart':
+        return (
+          <MiniTrendChart
+            data={p.recentInquiries}
+            trend={p.trend}
+            lastCollectedAt={p.lastCollectedAt}
+          />
+        )
+
+      // ── 稳定性 ──
+      case 'stabilityValue': {
+        const cv = p.stabilityValue
+        const colorClass = cv <= 0.3 ? 'text-green-600' : cv <= 0.6 ? 'text-yellow-600' : 'text-red-600'
+        return (
+          <span className={`text-xs font-semibold tabular-nums ${colorClass}`}>
+            CV {cv.toFixed(2)}
+          </span>
+        )
+      }
+
       default:
         return null
     }
@@ -407,14 +450,14 @@ export function ProductMonitorTab() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div className="min-w-[1340px]">
+              <div className="min-w-[1620px]">
                 {/* ── 表头 ── */}
                 <div className="flex px-5 pt-2.5 pb-2 text-[11px] font-medium text-gray-500 bg-gradient-to-b from-gray-50 to-gray-50/50 select-none">
                   {COLUMNS.map(col => {
                     const isActive = sortKey === col.key
                     const isGroupStart = col.groupStart && col.group !== 'identity'
                     const isIdentity = col.group === 'identity'
-                    const unsortable = col.key === 'keywords' || col.key === 'monitorStatus'
+                    const unsortable = col.key === 'keywords' || col.key === 'monitorStatus' || col.key === 'trendChart'
                     return !unsortable ? (
                       <button
                         key={col.key}
@@ -466,7 +509,12 @@ export function ProductMonitorTab() {
                   {filtered.map(p => (
                     <div
                       key={p.id}
-                      className="group flex px-5 py-[12px] items-center hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent transition-all duration-200"
+                      onClick={() => setSelectedProductId(prev => prev === p.id ? null : p.id)}
+                      className={`group flex px-5 py-[12px] items-center transition-all duration-200 cursor-pointer ${
+                        selectedProductId === p.id
+                          ? 'bg-blue-50/60 hover:bg-blue-50/70'
+                          : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent'
+                      }`}
                     >
                       {COLUMNS.map(col => {
                         const isGroupStart = col.groupStart && col.group !== 'identity'
@@ -488,7 +536,7 @@ export function ProductMonitorTab() {
                       {/* 行操作 */}
                       <div className="w-[40px] shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                         <button
-                          onClick={() => handleRemove(p.id)}
+                          onClick={(e) => { e.stopPropagation(); handleRemove(p.id) }}
                           className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                           title="删除"
                         >
@@ -521,6 +569,13 @@ export function ProductMonitorTab() {
           </div>
         )}
       </div>
+
+      {/* 历史详情抽屉 */}
+      <ProductHistoryDrawer
+        gid={selectedProductId}
+        product={selectedProductId ? filtered.find(p => p.id === selectedProductId) ?? null : null}
+        onClose={() => setSelectedProductId(null)}
+      />
     </div>
   )
 }
