@@ -45,7 +45,7 @@ function ItemsPageContent() {
       />
 
       {/* Tab 描述 */}
-      <p className="text-sm text-gray-500 -mt-3">
+      <p className="text-sm text-gray-500 -mt-3 hidden md:block">
         {activeTab === "items"
           ? "可配置功能：自动发货、发货配置、自动上架、自动回复规则绑定、AI回复、AI提示词"
           : "可配置功能：自动回复关键词规则，匹配买家消息并自动发送预设回复"}
