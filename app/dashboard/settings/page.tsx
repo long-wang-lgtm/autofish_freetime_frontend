@@ -4,14 +4,15 @@ import { useState, Suspense } from 'react'
 import { NotificationConfig } from '@/lib/api/notification'
 import NotificationTab from '@/components/settings/NotificationTab'
 import AIConfigTab from '@/components/settings/AIConfigTab'
+import { TabBar } from '@/components/ui/Tab'
 import { useTabRouting } from '@/hooks/useTabRouting'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
 type MainTabType = 'ai-config' | 'notification'
 
-const MAIN_TABS: { key: MainTabType; label: string; icon: string }[] = [
-  { key: 'ai-config', label: 'AI 配置', icon: '🤖' },
-  { key: 'notification', label: '通知渠道', icon: '🔔' },
+const MAIN_TABS = [
+  { key: 'ai-config' as const, label: 'AI 配置', icon: '🤖' },
+  { key: 'notification' as const, label: '通知渠道', icon: '🔔' },
 ]
 
 function SettingsPageContent() {
@@ -47,23 +48,12 @@ function SettingsPageContent() {
 
   return (
     <div className="space-y-5">
-      {/* 一级 Tab 栏 - 左上角 */}
-      <div className="flex items-center gap-0 border-b border-gray-200">
-        {MAIN_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveMainTab(tab.key)}
-            className={`px-5 py-3 text-base font-semibold transition-all border-b-2 -mb-[2px] ${
-              activeMainTab === tab.key
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <span className="mr-1.5">{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <TabBar
+        tabs={MAIN_TABS}
+        activeTab={activeMainTab}
+        onTabChange={(key) => setActiveMainTab(key as MainTabType)}
+        variant="overline"
+      />
 
       {/* AI 配置 Tab 内容 */}
       {activeMainTab === 'ai-config' && <AIConfigTab isMobile={isMobile} />}
