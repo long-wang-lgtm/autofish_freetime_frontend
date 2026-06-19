@@ -145,6 +145,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
         <TextEditor
           {...register("description")}
           rows={3}
+          maxHeight="30vh"
           placeholder="商品描述"
         />
       </div>
@@ -195,6 +196,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
         <TextEditor
           {...register("default_reply_content")}
           rows={2}
+          maxHeight="30vh"
           placeholder="未匹配关键词时的默认回复"
         />
       </div>
@@ -223,6 +225,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
               <TextEditor
                 {...register("ai_reply_item_prompt")}
                 rows={2}
+                maxHeight="30vh"
                 placeholder="AI回复的商品相关提示词"
               />
             </div>
@@ -265,6 +268,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
               <TextEditor
                 {...register("deliveryContent")}
                 rows={2}
+                maxHeight="30vh"
                 placeholder="例如: 亲，宝贝已发出哦~{分段符}请注意查收~"
               />
             </div>
@@ -273,6 +277,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
               <TextEditor
                 {...register("receiptAfter")}
                 rows={2}
+                maxHeight="30vh"
                 placeholder="买家确认收货后自动发送"
               />
             </div>
@@ -281,6 +286,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
               <TextEditor
                 {...register("positiveReviewAfter")}
                 rows={2}
+                maxHeight="30vh"
                 placeholder="买家好评后自动发送"
               />
             </div>
