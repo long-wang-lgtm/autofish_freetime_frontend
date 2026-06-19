@@ -166,7 +166,7 @@ function FilterBarMobile({
   return (
     <div className="border-b border-gray-100">
       {/* 顶部栏：账号 + 状态 + 更多筛选 + 刷新 */}
-      <div className="flex items-center gap-2 px-3 py-2.5">
+      <div className="flex items-center gap-2 px-3 py-2">
         <select
           value={searchInput.uid}
           onChange={(e) =>
@@ -187,7 +187,7 @@ function FilterBarMobile({
           onChange={(e) =>
             onStatusChange(e.target.value ? Number(e.target.value) : undefined)
           }
-          className="w-20 px-2 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 flex-shrink-0"
+          className="w-20 px-2.5 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 flex-shrink-0"
         >
           <option value="">全部</option>
           <option value="0">在售</option>
@@ -277,7 +277,7 @@ function FilterBarMobile({
         <div className="px-3 pb-3 pt-1 border-t border-gray-100 space-y-2.5">
           <div className="grid grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-[11px] text-gray-500 mb-1">商品标题</label>
+              <label className="block text-xs text-gray-500 mb-1">商品标题</label>
               <div className="relative">
                 <input
                   type="text"
@@ -301,7 +301,7 @@ function FilterBarMobile({
               </div>
             </div>
             <div>
-              <label className="block text-[11px] text-gray-500 mb-1">商品ID</label>
+              <label className="block text-xs text-gray-500 mb-1">商品ID</label>
               <input
                 type="text"
                 value={searchInput.gid}
