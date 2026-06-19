@@ -249,6 +249,7 @@ export function KeywordRuleForm({
               <TextEditor
                 {...register("reply_content")}
                 rows={5}
+                maxHeight="35vh"
                 onDrop={handleReplyContentDrop}
                 onDragOver={(e) => e.preventDefault()}
                 placeholder="当消息匹配时，自动发送此回复内容"
