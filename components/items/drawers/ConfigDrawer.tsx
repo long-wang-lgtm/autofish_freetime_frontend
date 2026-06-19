@@ -62,6 +62,7 @@ export function ConfigDrawer({ open, item, field, onClose, onSave }: ConfigDrawe
         onDrop={isMobile ? undefined : handleDrop}
         onDragOver={isMobile ? undefined : (e) => e.preventDefault()}
         rows={{ pc: 6, landscape: 5, portrait: 5 }}
+        maxHeight="40vh"
         placeholder="输入内容..."
       />
     </div>
