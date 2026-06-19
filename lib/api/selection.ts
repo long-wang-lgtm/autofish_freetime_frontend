@@ -134,7 +134,7 @@ export function dtoToProductItem(item: MonitoredItemDTO): ProductItem {
     collectRate,
     daysSincePublish,
     priority: item.priority ?? null,
-    monitorStatus: item.status ?? null,
+    monitorStatus: item.monitorStatus ?? null,
     keywords: item.keywords ?? [],
     recentInquiries: item.recentInquiries ?? [],
     trend: item.trend ?? 'flat',
@@ -209,7 +209,7 @@ export interface MonitoredItemDTO {
   gid: string
   uid?: string | null
   name?: string | null
-  status?: number | null
+  monitorStatus?: number | null
   priority?: number | null
   title?: string | null
   description?: string | null
