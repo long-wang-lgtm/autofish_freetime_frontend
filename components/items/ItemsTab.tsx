@@ -63,9 +63,8 @@ export function ItemsTab({
   const [mobileConfig, setMobileConfig] = useState<{ item: Item; field: ConfigField } | null>(null)
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col space-y-4">
-      {/* 移动端筛选栏 */}
-      {isMobile && (
+    <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        {/* 筛选栏 — 桌面端与移动端统一位置 */}
         <FilterBar
           accounts={accountsData || []}
           searchInput={searchInput}
@@ -81,27 +80,6 @@ export function ItemsTab({
           sortDirection={sortDirection}
           onSortChange={onSortChange}
         />
-      )}
-
-      <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        {/* 桌面端搜索表单 */}
-        <div className="hidden md:block">
-          <FilterBar
-            accounts={accountsData || []}
-            searchInput={searchInput}
-            statusFilter={filters.status}
-            onSearchChange={onSearchChange}
-            onStatusChange={onStatusChange}
-            onRefresh={onRefresh}
-            onClear={onClearFilters}
-            isRefreshing={isRefreshing}
-            selectedUid={filters.uid}
-            stats={stats}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSortChange={onSortChange}
-          />
-        </div>
 
         {/* 加载/错误/空状态 */}
         {isLoading && (
@@ -203,7 +181,6 @@ export function ItemsTab({
             </div>
           </>
         )}
-      </div>
 
       {/* ==== 抽屉（内部调度）==== */}
 

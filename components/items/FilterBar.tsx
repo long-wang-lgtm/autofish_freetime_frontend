@@ -164,7 +164,7 @@ function FilterBarMobile({
     (searchInput.title ? 1 : 0) + (searchInput.gid ? 1 : 0)
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="border-b border-gray-100">
       {/* 顶部栏：账号 + 状态 + 更多筛选 + 刷新 */}
       <div className="flex items-center gap-2 px-3 py-2.5">
         <select
