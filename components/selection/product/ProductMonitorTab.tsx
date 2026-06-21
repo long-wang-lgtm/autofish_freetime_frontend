@@ -63,6 +63,10 @@ function cvColor(cv: number | null): string {
   return 'text-red-600'
 }
 
+function getBarPct(val: number, max: number): string {
+  return max > 0 && val > 0 ? `${Math.max(3, Math.round((val / max) * 100))}%` : '0%'
+}
+
 // ===== 列分组定义 =====
 
 type ColumnGroup = 'identity' | 'core' | 'conversion' | 'daily' | 'growth' | 'stability' | 'trend' | 'meta'
@@ -133,6 +137,7 @@ export function ProductMonitorTab() {
     queryFn: listMonitorItems,
   })
   const items = data?.items ?? []
+  const lastFetchLogs = data?.lastFetchLogs ?? []
 
   const handleRemove = useCallback(async (gid: string) => {
     await removeMonitorItem(gid)
@@ -168,14 +173,12 @@ export function ProductMonitorTab() {
     }
   }, [sortKey])
 
-  const products = useMemo(() => {
-    if (Array.isArray(items)) {
-      return items.map(item => dtoToProductItem(item))
-    }
-    const { items: itemList, lastFetchLogs } = items as { items: any[]; lastFetchLogs: any[] }
-    const logMap = new Map(lastFetchLogs?.map((l: any) => [l.gid, l]) ?? [])
-    return itemList.map((item: any) => dtoToProductItem(item, logMap.get(item.gid)))
-  }, [items])
+  const logMap = useMemo(() => new Map(lastFetchLogs.map(l => [l.gid, l])), [lastFetchLogs])
+
+  const products = useMemo(() =>
+    items.map(item => dtoToProductItem(item, logMap.get(item.gid))),
+    [items, logMap]
+  )
 
   const filtered = useMemo(() => {
     let result = products
@@ -205,9 +208,6 @@ export function ProductMonitorTab() {
   const dataBarMax = useMemo(() => ({
     price: Math.max(...filtered.map(p => p.price), 1),
   }), [filtered])
-
-  const getBarPct = (val: number, max: number) =>
-    max > 0 && val > 0 ? `${Math.max(3, Math.round((val / max) * 100))}%` : '0%'
 
   // ===== 单元格渲染 =====
 
