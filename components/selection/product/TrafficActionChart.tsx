@@ -24,17 +24,16 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
     chartRef.current.setOption({
       tooltip: {
         trigger: 'axis',
-        valueFormatter: (value: number | string, seriesName?: string) => {
+        valueFormatter: (value: unknown) => {
           const v = Number(value)
           if (Number.isNaN(v)) return String(value)
-          if (seriesName === '收藏数') return v.toLocaleString('zh-CN')
           if (typeof v === 'number' && !Number.isInteger(v)) return v.toFixed(1)
           return v.toLocaleString('zh-CN')
         },
       },
       legend: { show: false },
       grid: { left: 48, right: 56, top: 20, bottom: 28 },
-      xAxis: { type: 'category', data: times, axisLabel: { fontSize: 9, color: '#9ca3af', rotate: 45 }, axisTick: { show: false } },
+      xAxis: { type: 'category', data: times, axisLabel: { fontSize: 10, color: '#9ca3af', rotate: 45 }, axisTick: { show: false } },
       yAxis: [
         {
           type: 'value',
@@ -89,7 +88,7 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
   useEffect(() => { return () => { chartRef.current?.dispose(); chartRef.current = null } }, [])
 
   if (!ht.ts || ht.ts.length === 0) {
-    return <div className="flex items-center justify-center h-40 text-sm text-gray-600">暂无数据</div>
+    return <div className="flex items-center justify-center h-48 text-sm text-gray-600">暂无数据</div>
   }
 
   return (
@@ -97,7 +96,7 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
       {/* HTML Legend */}
       <div className="mb-1 ml-1">
         <span className="text-[10px] text-gray-600">流量转化匹配图</span>
-        <span className="flex gap-3 text-[9px] text-gray-600 flex-wrap mt-0.5">
+        <span className="flex gap-3 text-[10px] text-gray-600 flex-wrap mt-0.5">
           <span className="inline-flex items-center gap-1">
             <span className="w-2 h-0.5 bg-emerald-400 inline-block rounded" />浏览流量
           </span>
@@ -109,7 +108,7 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
           </span>
         </span>
       </div>
-      <div ref={containerRef} className="w-full h-40" />
+      <div ref={containerRef} className="w-full h-48" />
     </div>
   )
 }
