@@ -11,6 +11,8 @@
 | 3 | 灰色偏浅（gray-600 大面积使用），长时间阅读疲劳 | 数据值 gray-800→gray-900，标签 gray-600→gray-700，图表轴色 #9ca3af→#6b7280 |
 | 4 | 基础数据区默认折叠，运营每次都要点开 | useState(false) → useState(true) |
 | 5 | 采集质量信息埋在折叠区底部，不方便快速参考 | 从 GrowthPricePanel 移至 Header 区域 |
+| 6 | 趋势列因采集频率限制几乎永远显示"数据积累中"，无信息量 | 移除趋势列 |
+| 7 | 缺少浏览/想要的日均绝对值，只有比率维度 | 新增浏览日均 + 想要日均两行 |
 
 ---
 
@@ -152,15 +154,63 @@ GID: 955244769833 · 状态: 监控中 · 优先级: 3 · 采集: 不足(3次)
 
 ---
 
-## 5. "数据积累中"说明（仅文档，无代码改动）
+## 5. 核心指标矩阵扩展
 
-矩阵表格"趋势"列显示"数据积累中"的条件（`WindowCompareCards.tsx:92`）：
+### 5.1 移除趋势列
 
-```typescript
-const allSampleEnough = (d1.fetch_count ?? 0) >= 12 && (d3.fetch_count ?? 0) >= 12 && (d7.fetch_count ?? 0) >= 12
+趋势列依赖 `allSampleEnough`（三窗口 fetch_count 均 ≥ 12）。实际运营中绝大多数商品采集频率达不到此阈值，趋势列几乎永远显示"数据积累中"，没有信息量。直接移除。
+
+### 5.2 新增浏览日均 + 想要日均行
+
+矩阵从 3 行扩到 5 行：
+
+```
+              D1 (n=7)    D3 (n=18)   vs D1      D7 (n=21)   vs D3     D1→D7 总Δ
+询单率          12.4%       10.2%     -2.2 pp ↘    9.8%      -0.4 pp ↘   -2.6 pp ↘
+收藏率          11.4%       11.4%      0.0 pp →   10.9%      -0.5 pp ↘   -0.5 pp ↘
+询藏比           1.08        0.90     -0.17 ↘      0.91      +0.01 ↗     -0.17 ↘
+浏览日均        141         152       +11 ↗        138        -14 ↘        -3 ↘
+想要日均         14          13        -1 ↘         11         -2 ↘        -3 ↘
 ```
 
-D1/D3/D7 任意窗口采集次数 < 12 时，三窗口单调性判断（`judgeThreeWindowTrend`）不可靠，不展示"持续上行/持续下行/见顶回落/触底反弹"等趋势标签，改显示灰色"数据积累中"。
+- 日均 = window total / 窗口天数（D1÷1, D3÷3, D7÷7），取整数
+- Delta 为原始差值（整数），不用 pp 单位
+- 数据来源：`WindowMetricsDTO.total_dlook` / `total_dwant`，已存在于 DTO
+
+**计算：**
+
+```typescript
+const d1DailyLook = d1.total_dlook != null ? Math.round(d1.total_dlook / 1) : null
+const d3DailyLook = d3.total_dlook != null ? Math.round(d3.total_dlook / 3) : null
+const d7DailyLook = d7.total_dlook != null ? Math.round(d7.total_dlook / 7) : null
+// 想要同理
+```
+
+**新增格式化函数：**
+
+```typescript
+function fmtDeltaInt(d: number | null): string {
+  if (d == null) return '-'
+  const sign = d > 0 ? '+' : ''
+  return `${sign}${Math.round(d)}`
+}
+```
+
+### 5.3 表格列调整
+
+| 列 | 变化 |
+|----|------|
+| 趋势 | **移除** |
+| 标签列（第一列）| 不变 |
+| D1/D3/vs D1/D7/vs D3/D1→D7总Δ | 不变（7 列总计） |
+
+### 5.4 移除的代码
+
+- `judgeThreeWindowTrend` 三个调用（inquiryTrend/favoriteTrend/ifTrend）
+- `allSampleEnough` 变量
+- `trendColor` 函数
+- `Info` lucide icon 导入（仅用于询藏比 trend tooltip）
+- 表头 `<th>趋势</th>` 和三行 `<td>趋势</td>` 列
 
 ---
 
@@ -169,7 +219,7 @@ D1/D3/D7 任意窗口采集次数 < 12 时，三窗口单调性判断（`judgeTh
 | 文件 | 改动要点 | 行数 |
 |------|---------|------|
 | `ProductDiagnosticDrawer.tsx` | text-[11px]→text-xs, text-gray-600→text-gray-700（标签/badge/Hero Metric）, Header 追加采集质量 | +5 / -3 |
-| `WindowCompareCards.tsx` | text-[11px]→text-xs, text-gray-800→text-gray-900（数值）, text-gray-600→text-gray-700（标签/表头）, text-gray-500→text-gray-600（delta头）, text-gray-400→text-gray-500（null）, text-gray-300→text-gray-400（分隔符） | +10 / -10 |
+| `WindowCompareCards.tsx` | text-[11px]→text-xs, 颜色统一, 移除趋势列+judgeThreeWindowTrend/allSampleEnough/trendColor/Info, 新增浏览日均+想要日均两行+fmtDeltaInt | +45 / -45 |
 | `CumulativeGrowthChart.tsx` | text-[10px]→text-xs, ECharts fontSize 10→12, axisLabel color #9ca3af→#6b7280, nameTextStyle color #9ca3af→#6b7280, grid bottom 28→32 | +8 / -8 |
 | `IntentConversionChart.tsx` | text-[10px]→text-xs, ECharts fontSize 10→12, axisLabel color #9ca3af→#6b7280, markLine label fontSize 10→12, grid bottom 28→32 | +10 / -10 |
 | `TrafficActionChart.tsx` | text-[10px]→text-xs, ECharts fontSize 10→12, axisLabel color #9ca3af→#6b7280, grid bottom 28→32 | +8 / -8 |
