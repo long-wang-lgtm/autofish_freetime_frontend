@@ -147,10 +147,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
 
               <CumulativeGrowthChart hourlyTrend={ht} />
 
-              <div>
-                <div className="text-[10px] text-gray-600 mb-1 ml-1">买卖意愿图</div>
-                <IntentConversionChart hourlyTrend={ht} />
-              </div>
+              <IntentConversionChart hourlyTrend={ht} />
 
               <div>
                 <div className="text-[10px] text-gray-600 mb-1 ml-1">流量转化匹配图</div>
