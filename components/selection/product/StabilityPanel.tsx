@@ -15,7 +15,7 @@ function cvLabel(cv: number | null): string {
 }
 
 function cvColor(cv: number | null): string {
-  if (cv === null) return 'text-gray-600'
+  if (cv === null) return 'text-gray-700'
   if (cv < 0.5) return 'text-green-600'
   if (cv < 1.2) return 'text-amber-600'
   return 'text-red-600'
@@ -36,14 +36,14 @@ export function StabilityPanel({ hourlyTrend }: StabilityPanelProps) {
 
   return (
     <div className="space-y-2">
-      <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider px-1">
+      <div className="text-xs font-semibold text-gray-700 uppercase tracking-wider px-1">
         📐 稳定性诊断
       </div>
-      <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 text-[11px]">
+      <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 text-xs">
         {items.map(({ label, stats }) => (
           <div key={label} className="flex items-center gap-2">
-            <span className="text-gray-600 w-16 shrink-0">{label}</span>
-            <span className="font-semibold text-gray-800 tabular-nums">
+            <span className="text-gray-700 w-16 shrink-0">{label}</span>
+            <span className="font-semibold text-gray-900 tabular-nums">
               {stats.mean?.toFixed(2) ?? '-'} ± {stats.stddev?.toFixed(2) ?? '-'} /h
             </span>
             <span className={`tabular-nums ${cvColor(stats.cv)}`}>
@@ -51,7 +51,7 @@ export function StabilityPanel({ hourlyTrend }: StabilityPanelProps) {
             </span>
           </div>
         ))}
-        <div className="text-[11px] text-gray-500 pt-1">
+        <div className="text-xs text-gray-600 pt-1">
           基于窗口内 {totalN} 个数据点 · 未排除昼夜周期效应
         </div>
       </div>

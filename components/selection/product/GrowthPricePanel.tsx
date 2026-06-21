@@ -19,14 +19,14 @@ function fmtCount(v: number): string {
 function Row({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
   return (
     <div className="flex justify-between">
-      <span className="text-gray-600">{label}</span>
-      <span className={`font-medium tabular-nums ${valueClass ?? 'text-gray-800'}`}>{value}</span>
+      <span className="text-gray-700">{label}</span>
+      <span className={`font-medium tabular-nums ${valueClass ?? 'text-gray-900'}`}>{value}</span>
     </div>
   )
 }
 
 export function GrowthPricePanel({ product }: GrowthPricePanelProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
 
   if (!product) return null
 
@@ -37,7 +37,7 @@ export function GrowthPricePanel({ product }: GrowthPricePanelProps) {
     <div className="border-t border-gray-100 pt-3">
       <button
         onClick={() => setOpen(prev => !prev)}
-        className="w-full flex items-center justify-between text-xs font-medium text-gray-600 hover:text-gray-800 transition-colors"
+        className="w-full flex items-center justify-between text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors"
       >
         <span>💡 基础数据</span>
         {open
@@ -52,7 +52,7 @@ export function GrowthPricePanel({ product }: GrowthPricePanelProps) {
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             {/* 左列：💰 商业表现 */}
             <div className="space-y-1.5">
-              <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
+              <div className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                 💰 商业表现
               </div>
               <Row label="上架日期" value={
@@ -75,7 +75,7 @@ export function GrowthPricePanel({ product }: GrowthPricePanelProps) {
 
             {/* 右列：📈 流量周期 */}
             <div className="space-y-1.5">
-              <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
+              <div className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                 📈 流量周期
               </div>
               <Row label="窗口日均询单" value={
@@ -87,29 +87,6 @@ export function GrowthPricePanel({ product }: GrowthPricePanelProps) {
               <Row label="7天询单增量" value={d7?.total_dwant != null ? fmtCount(d7.total_dwant) : '-'} />
               <Row label="7天浏览增量" value={d7?.total_dlook != null ? fmtCount(d7.total_dlook) : '-'} />
               <Row label="7天收藏增量" value={d7?.total_dcollect != null ? fmtCount(d7.total_dcollect) : '-'} />
-            </div>
-          </div>
-
-          {/* 📊 采集质量（跨两列） */}
-          <div className="border-t border-gray-100 pt-2">
-            <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
-              📊 采集质量
-            </div>
-            <div className="flex gap-6 text-[11px]">
-              <span className="text-gray-600">
-                质量标签{' '}
-                <span className="font-medium text-gray-800">
-                  {d7?.quality_label === 'reliable' ? '可靠' :
-                   d7?.quality_label === 'limited' ? '有限' :
-                   d7?.quality_label === 'insufficient' ? '不足' : '-'}
-                </span>
-              </span>
-              <span className="text-gray-600">
-                采集次数{' '}
-                <span className="font-medium text-gray-800">
-                  {d7?.fetch_count?.toString() ?? '-'}
-                </span>
-              </span>
             </div>
           </div>
         </div>

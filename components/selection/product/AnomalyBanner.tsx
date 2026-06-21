@@ -11,7 +11,7 @@ const SEVERITY_STYLE: Record<string, { bg: string; border: string; text: string 
   orange: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-800' },
   yellow: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-800' },
   green:  { bg: 'bg-green-50',  border: 'border-green-200',  text: 'text-green-800' },
-  gray:   { bg: 'bg-gray-50',   border: 'border-gray-200',   text: 'text-gray-600' },
+  gray:   { bg: 'bg-gray-50',   border: 'border-gray-200',   text: 'text-gray-700' },
 }
 
 export function AnomalyBanner({ alerts }: AnomalyBannerProps) {
@@ -19,7 +19,7 @@ export function AnomalyBanner({ alerts }: AnomalyBannerProps) {
 
   return (
     <div className="space-y-1.5">
-      <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider px-1">
+      <div className="text-xs font-semibold text-gray-700 uppercase tracking-wider px-1">
         异常预警
       </div>
       {alerts.map((a, i) => {
