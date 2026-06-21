@@ -24,7 +24,7 @@ function fmtPercent(rate: number | null): string {
 
 function fmtRatio(ratio: number | null): string {
   if (ratio === null) return '-'
-  return ratio.toFixed(1)
+  return ratio.toFixed(2)
 }
 
 function fmtDaily(daily: number | null): string {
@@ -44,7 +44,7 @@ function fmtGrowth(growth: number | null): string {
 
 function fmtAcceleration(acc: number | null): string {
   if (acc === null) return '-'
-  const pct = (acc * 100).toFixed(0)
+  const pct = (acc * 100).toFixed(1)
   if (acc > 0.3) return `加速 +${pct}%`
   if (acc < -0.3) return `降温 ${pct}%`
   return '平稳'
