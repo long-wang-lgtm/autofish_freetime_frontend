@@ -75,7 +75,7 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
             silent: true,
             symbol: 'none',
             lineStyle: { color: '#2563eb', type: 'dashed', width: 1 },
-            data: [{ yAxis: 10, label: { formatter: '10%', fontSize: 12, color: '#2563eb' } }],
+            data: [{ yAxis: 10, label: { show: false } }],
           },
         },
         {
@@ -104,8 +104,8 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
             symbol: 'none',
             lineStyle: { color: '#0d9488', type: 'dashed', width: 1 },
             data: [
-              { yAxis: 0.8, label: { formatter: '0.8', fontSize: 12, color: '#0d9488' } },
-              { yAxis: 1.2, label: { formatter: '1.2', fontSize: 12, color: '#0d9488' } },
+              { yAxis: 0.8, label: { show: false } },
+              { yAxis: 1.2, label: { show: false } },
             ],
           },
         },
