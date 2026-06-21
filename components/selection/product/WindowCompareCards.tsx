@@ -100,13 +100,13 @@ export function WindowCompareCards({
   return (
     <div className="space-y-3">
       {/* Title */}
-      <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider px-1">
+      <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider px-1">
         📊 核心指标
       </div>
 
       {/* Matrix Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-[10px]">
+        <table className="w-full text-[11px]">
           <thead>
             <tr className="text-gray-600 border-b border-gray-100">
               <th className="text-left py-1.5 px-1 font-medium"></th>
@@ -228,7 +228,7 @@ export function WindowCompareCards({
       </div>
 
       {/* Scale reference + Growth signals - single row below table */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-600 px-1">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-600 px-1">
         <span>
           规模参考: 7天日均浏览 <span className="font-semibold text-gray-800">{d7DailyLook?.toFixed(1) ?? '-'}/天</span>
           {' · '}

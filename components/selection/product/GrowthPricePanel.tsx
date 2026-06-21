@@ -52,7 +52,7 @@ export function GrowthPricePanel({ product }: GrowthPricePanelProps) {
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             {/* 左列：💰 商业表现 */}
             <div className="space-y-1.5">
-              <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
+              <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
                 💰 商业表现
               </div>
               <Row label="上架日期" value={
@@ -75,7 +75,7 @@ export function GrowthPricePanel({ product }: GrowthPricePanelProps) {
 
             {/* 右列：📈 流量周期 */}
             <div className="space-y-1.5">
-              <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
+              <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
                 📈 流量周期
               </div>
               <Row label="窗口日均询单" value={
@@ -92,7 +92,7 @@ export function GrowthPricePanel({ product }: GrowthPricePanelProps) {
 
           {/* 📊 采集质量（跨两列） */}
           <div className="border-t border-gray-100 pt-2">
-            <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
+            <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
               📊 采集质量
             </div>
             <div className="flex gap-6 text-[11px]">

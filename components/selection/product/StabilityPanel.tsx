@@ -36,7 +36,7 @@ export function StabilityPanel({ hourlyTrend }: StabilityPanelProps) {
 
   return (
     <div className="space-y-2">
-      <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider px-1">
+      <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider px-1">
         📐 稳定性诊断
       </div>
       <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 text-[11px]">
@@ -51,7 +51,7 @@ export function StabilityPanel({ hourlyTrend }: StabilityPanelProps) {
             </span>
           </div>
         ))}
-        <div className="text-[10px] text-gray-500 pt-1">
+        <div className="text-[11px] text-gray-500 pt-1">
           基于窗口内 {totalN} 个数据点 · 未排除昼夜周期效应
         </div>
       </div>
