@@ -190,24 +190,3 @@ export function detectAnomalies(
 
   return alerts
 }
-
-// ===== 趋势判断 =====
-
-/**
- * 三值趋势标签（启发式，非统计显著）。
- * 基于 D1/D3/D7 三窗口单调性，返回趋势类型和说明。
- */
-export function judgeThreeWindowTrend(
-  d1: number | null,
-  d3: number | null,
-  d7: number | null
-): { label: string; direction: 'up' | 'down' | 'v' | 'peak' | 'mixed' } {
-  if (d1 == null || d3 == null || d7 == null) {
-    return { label: '数据不足', direction: 'mixed' }
-  }
-  if (d1 > d3 && d3 > d7) return { label: '持续下行', direction: 'down' }
-  if (d1 < d3 && d3 < d7) return { label: '持续上行', direction: 'up' }
-  if (d3 < d1 && d3 < d7) return { label: '触底反弹', direction: 'v' }
-  if (d3 > d1 && d3 > d7) return { label: '见顶回落', direction: 'peak' }
-  return { label: '无明显趋势', direction: 'mixed' }
-}
