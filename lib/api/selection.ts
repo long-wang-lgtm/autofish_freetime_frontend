@@ -204,6 +204,55 @@ export interface OperationResponse {
   data?: Record<string, unknown>
 }
 
+/** 窗口性能指标 — 对应后端 windows_metrics 单窗口数据 */
+export interface WindowMetricsDTO {
+  inquiry_rate: number | null
+  favorite_rate: number | null
+  if_ratio: number | null
+  browse_growth: number | null
+  total_dwant: number
+  total_dlook: number
+  total_dcollect: number
+  price_trend: string | null
+  price_lowest_ratio: number | null
+  want_stability: number | null
+  look_stability: number | null
+  collect_stability: number | null
+  fetch_count: number
+  quality_label: string
+}
+
+/** 趋势方向 — 对应后端 trend_direction */
+export interface TrendDirectionDTO {
+  want_slope: string | null
+  look_slope: string | null
+  collect_slope: string | null
+}
+
+/** 小时趋势 — 对应后端 hourly_trend（列式结构，ECharts dataset 可直接消费） */
+export interface HourlyTrendDTO {
+  ts: string[]
+  hourly_want_rate: number[]
+  hourly_look_rate: number[]
+  hourly_collect_rate: number[]
+  price: (number | null)[]
+  cumulative_want: number[]
+  cumulative_look: number[]
+  cumulative_collect: number[]
+}
+
+/** 最新采集日志 — 对应后端 lastFetchLogs[] 单项 */
+export interface MonitoredItemFetchLogDTO {
+  gid: string
+  price: number
+  wantCount: number
+  lookCount: number
+  collectCount: number
+  sales: number
+  itemStatus: number
+  created_at: string
+}
+
 /** 监控商品 — 对应 MonitoredItemSchema */
 export interface MonitoredItemDTO {
   gid: string
@@ -233,6 +282,17 @@ export interface MonitoredItemDTO {
   stabilityValue?: number | null
   /** 最近一次采集时间（ISO 8601） */
   lastCollectedAt?: string | null
+  /** ===== 新增：Performance 引擎字段 ===== */
+  /** 三窗口性能指标 */
+  windows_metrics?: {
+    d1: WindowMetricsDTO
+    d3: WindowMetricsDTO
+    d7: WindowMetricsDTO
+  } | null
+  /** 趋势方向 */
+  trend_direction?: TrendDirectionDTO | null
+  /** 小时级趋势时序数据 */
+  hourly_trend?: HourlyTrendDTO | null
 }
 
 /** 监控商家 — 对应 MonitoredMerchantSchema */
@@ -303,10 +363,16 @@ async function selectionFetch<T>(path: string, options?: RequestInit): Promise<T
 
 // ============ API 函数 ============
 
+/** 监控商品列表响应 — 对应后端 GET /api/topic/monitor/items 实际返回 */
+interface MonitorItemListResponse {
+  items: MonitoredItemDTO[]
+  lastFetchLogs: MonitoredItemFetchLogDTO[]
+}
+
 /** 列出监控商品 — GET /api/topic/monitor/items */
-export async function listMonitorItems(): Promise<MonitoredItemDTO[]> {
+export async function listMonitorItems(): Promise<MonitorItemListResponse> {
   console.debug('[SelectionAPI] listMonitorItems')
-  return selectionFetch<MonitoredItemDTO[]>('/monitor/items')
+  return selectionFetch<MonitorItemListResponse>('/monitor/items')
 }
 
 /** 列出监控商家 — GET /api/topic/monitor/merchants */
@@ -420,7 +486,7 @@ export async function listCategories(type?: CategoryType): Promise<Category[]> {
 /** 根据关键词 ID 获取采集商品列表 */
 export async function getCategoryProducts(categoryId: string): Promise<ProductItem[]> {
   console.debug(`[SelectionAPI] getCategoryProducts categoryId=${categoryId}`)
-  const items = await listMonitorItems()
+  const { items } = await listMonitorItems()
   const filtered = categoryId
     ? items.filter(item => item.keywords?.includes(categoryId))
     : items
@@ -437,7 +503,7 @@ export async function getCategoryReports(categoryId: string): Promise<DailyRepor
 /** 按日期统计商品数量 */
 export async function getDailyProductCounts(categoryId: string): Promise<Record<string, number>> {
   console.debug(`[SelectionAPI] getDailyProductCounts categoryId=${categoryId}`)
-  const items = await listMonitorItems()
+  const { items } = await listMonitorItems()
   const counts: Record<string, number> = {}
   for (const item of items) {
     const date = item.created_at ? item.created_at.split('T')[0] : 'unknown'

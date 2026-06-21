@@ -129,10 +129,11 @@ export function ProductMonitorTab() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
-  const { data: items = [], isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['monitor-items'],
     queryFn: listMonitorItems,
   })
+  const items = data?.items ?? []
 
   const handleRemove = useCallback(async (gid: string) => {
     await removeMonitorItem(gid)
