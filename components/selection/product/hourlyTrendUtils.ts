@@ -93,37 +93,22 @@ export function detectAnomalies(
 
   const { d1, d7 } = wm
 
-  // 1. 流量剧烈波动 (look_stability d7 ≥ 1.2)
-  if (d7.look_stability != null && d7.look_stability >= 1.2) {
+  // 1. 合并流量 + 需求波动（当 want 或 look CV 达标时触发）
+  const wantCv = d7.want_stability
+  const lookCv = d7.look_stability
+  const worstCv = Math.max(wantCv ?? 0, lookCv ?? 0)
+  const worstDimension = (wantCv ?? 0) >= (lookCv ?? 0) ? '想要需求' : '浏览流量'
+  if (worstCv >= 1.2) {
     alerts.push({
-      type: 'look_volatile',
+      type: 'data_volatile',
       severity: 'red',
-      message: `🚨 流量剧烈波动 (CV=${d7.look_stability.toFixed(2)})，可能存在断崖或突增`,
+      message: `🚨 数据波动剧烈 (${worstDimension} CV=${worstCv.toFixed(2)})，可能存在断崖或突增`,
     })
-  }
-  // 2. 流量明显波动 (0.8 ≤ look_stability < 1.2)
-  else if (d7.look_stability != null && d7.look_stability >= 0.8) {
+  } else if (worstCv >= 0.8) {
     alerts.push({
-      type: 'look_unstable',
+      type: 'data_unstable',
       severity: 'orange',
-      message: `⚠️ 流量波动较大 (CV=${d7.look_stability.toFixed(2)})`,
-    })
-  }
-
-  // 3. 需求剧烈波动 (want_stability d7 ≥ 1.2)
-  if (d7.want_stability != null && d7.want_stability >= 1.2) {
-    alerts.push({
-      type: 'want_volatile',
-      severity: 'red',
-      message: `🚨 需求剧烈波动 (CV=${d7.want_stability.toFixed(2)})`,
-    })
-  }
-  // 4. 需求明显波动 (0.8 ≤ want_stability < 1.2)
-  else if (d7.want_stability != null && d7.want_stability >= 0.8) {
-    alerts.push({
-      type: 'want_unstable',
-      severity: 'orange',
-      message: `⚠️ 需求波动较大 (CV=${d7.want_stability.toFixed(2)})`,
+      message: `⚠️ 数据波动较大 (${worstDimension} CV=${worstCv.toFixed(2)})`,
     })
   }
 
@@ -154,17 +139,32 @@ export function detectAnomalies(
   if (d1.total_dwant === 0 && d7.quality_label !== 'insufficient') {
     alerts.push({
       type: 'zero_inquiry',
-      severity: 'gray',
+      severity: 'orange',
       message: '❕ 近24小时零询单，商品可能已无活跃度',
     })
   }
 
-  // 8. 极端询藏比 (d7 if_ratio > 5)
+  // 8. 询单率骤降但流量未减（最危险信号——商品竞争力恶化）
+  if (
+    d1.inquiry_rate != null &&
+    d7.inquiry_rate != null &&
+    d7.inquiry_rate > 0 &&
+    d1.inquiry_rate < d7.inquiry_rate * 0.7 &&
+    (d7.browse_growth == null || d7.browse_growth >= 0)
+  ) {
+    alerts.push({
+      type: 'inquiry_collapse',
+      severity: 'red',
+      message: `🔴 询单率骤降但流量未减，商品竞争力在恶化 (D7=${(d7.inquiry_rate * 100).toFixed(1)}% → D1=${(d1.inquiry_rate * 100).toFixed(1)}%)`,
+    })
+  }
+
+  // 9. 极端询藏比 (d7 if_ratio > 5)
   if (d7.if_ratio != null && d7.if_ratio > 5) {
     alerts.push({
       type: 'extreme_if_ratio',
       severity: 'gray',
-      message: `❕ 询藏比极高 (${d7.if_ratio.toFixed(1)})，用户大量咨询但极少收藏`,
+      message: `❕ 询藏比极高 (${d7.if_ratio.toFixed(2)})，用户大量咨询但极少收藏`,
     })
   }
 
@@ -185,15 +185,6 @@ export function detectAnomalies(
       type: 'price_rise',
       severity: 'green',
       message: `💹 近期提价 ${pct}%，如需求未降则卖家有定价权`,
-    })
-  }
-
-  // 11. 数据不足 (quality_label === 'insufficient')
-  if (d7.quality_label === 'insufficient') {
-    alerts.push({
-      type: 'insufficient_data',
-      severity: 'gray',
-      message: `❓ 采集次数不足 (${d7.fetch_count}次)，当前指标仅供参考`,
     })
   }
 

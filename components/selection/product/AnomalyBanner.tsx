@@ -19,7 +19,7 @@ export function AnomalyBanner({ alerts }: AnomalyBannerProps) {
 
   return (
     <div className="space-y-1.5">
-      <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1">
+      <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider px-1">
         异常预警
       </div>
       {alerts.map((a, i) => {

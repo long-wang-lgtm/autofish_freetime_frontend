@@ -74,6 +74,11 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
               {product.publishedAt && `（${product.publishedAt.split('T')[0]}）`}
             </div>
           )}
+          {wm?.d7?.quality_label === 'insufficient' && (
+            <span className="text-[10px] text-gray-600 bg-gray-100 rounded px-2 py-0.5">
+              数据有限（{wm.d7.fetch_count}次采集）
+            </span>
+          )}
           {product.monitorStatus != null && product.monitorStatus !== 1 && (
             <span className="inline-block text-[10px] font-medium text-red-600 bg-red-50 rounded px-2 py-0.5">
               {product.monitorStatus === 0 ? '已暂停' : product.monitorStatus === 2 ? '已分析' : '已发布'}
