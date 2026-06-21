@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="bg-dev" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ea580c"/>
+      <stop offset="100%" style="stop-color:#c2410c"/>
+    </linearGradient>
+  </defs>
+  <!-- 背景圆角矩形 -->
+  <rect x="10" y="10" width="80" height="80" rx="20" fill="url(#bg-dev)"/>
+  <!-- 鱼形简笔画 -->
+  <path d="M50 30 C65 30 75 50 75 50 C75 50 65 70 50 70 C35 70 25 50 25 50 C25 50 35 30 50 30Z" fill="none" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <!-- 鱼眼 -->
+  <circle cx="58" cy="45" r="4" fill="white"/>
+  <!-- 鱼尾 -->
+  <path d="M30 50 L18 40 L18 60Z" fill="white"/>
+  <!-- DEV 标记 -->
+  <rect x="55" y="60" width="30" height="16" rx="4" fill="#fbbf24"/>
+  <text x="70" y="72" font-family="sans-serif" font-size="10" font-weight="bold" fill="#1c1917" text-anchor="middle">DEV</text>
+</svg>

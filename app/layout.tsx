@@ -7,9 +7,14 @@ import { Toaster } from '@/components/ui/toaster'
 
 const inter = Inter({ subsets: ['latin'] })
 
+const isDev = process.env.NODE_ENV === 'development'
+
 export const metadata: Metadata = {
   title: '闲逸通智能回复自动发货系统',
   description: '闲逸通智能回复自动发货系统，多账号自动化管理',
+  icons: {
+    icon: isDev ? '/favicon-dev.svg' : '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
