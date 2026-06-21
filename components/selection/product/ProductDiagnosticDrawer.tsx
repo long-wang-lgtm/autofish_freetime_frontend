@@ -68,6 +68,12 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
               ))}
             </div>
           )}
+          {product.daysSincePublish != null && (
+            <div className="text-[10px] text-gray-600">
+              上架 {product.daysSincePublish} 天
+              {product.publishedAt && `（${product.publishedAt.split('T')[0]}）`}
+            </div>
+          )}
           {product.monitorStatus != null && product.monitorStatus !== 1 && (
             <span className="inline-block text-[10px] font-medium text-red-600 bg-red-50 rounded px-2 py-0.5">
               {product.monitorStatus === 0 ? '已暂停' : product.monitorStatus === 2 ? '已分析' : '已发布'}
@@ -75,6 +81,37 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           )}
         </div>
       )}
+
+      {/* Hero Metric — 表格触发的关键信号 */}
+      {product && (
+        <div className="flex items-center gap-4 px-2 py-2 bg-amber-50/50 rounded-lg border border-amber-100">
+          <span className="text-[10px] text-gray-600">触发信号</span>
+          {acceleration != null && acceleration > 0.3 ? (
+            <>
+              <span className="text-sm font-bold text-red-500">🔥 升温 +{(acceleration * 100).toFixed(0)}%</span>
+              <span className="text-[10px] text-gray-600">
+                D1 询单率 {(wm?.d1?.inquiry_rate != null ? (wm!.d1!.inquiry_rate * 100).toFixed(1) : '-')}%
+                vs D7 {(wm?.d7?.inquiry_rate != null ? (wm!.d7!.inquiry_rate * 100).toFixed(1) : '-')}%
+              </span>
+            </>
+          ) : acceleration != null && acceleration < -0.3 ? (
+            <>
+              <span className="text-sm font-bold text-blue-500">❄️ 降温 {(acceleration * -100).toFixed(0)}%</span>
+              <span className="text-[10px] text-gray-600">
+                D1 询单率 {(wm?.d1?.inquiry_rate != null ? (wm!.d1!.inquiry_rate * 100).toFixed(1) : '-')}%
+                vs D7 {(wm?.d7?.inquiry_rate != null ? (wm!.d7!.inquiry_rate * 100).toFixed(1) : '-')}%
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-sm font-medium text-gray-600">无明显异常信号</span>
+              <span className="text-[10px] text-gray-500">各指标在正常范围内</span>
+            </>
+          )}
+        </div>
+      )}
+
+      <hr className="border-gray-100 my-3" />
 
       {/* Part 0: 异常预警 */}
       <AnomalyBanner alerts={alerts} />
