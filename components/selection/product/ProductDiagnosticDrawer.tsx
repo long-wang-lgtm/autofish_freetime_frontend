@@ -145,15 +145,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
                 趋势诊断
               </div>
 
-              <div>
-                <div className="text-[10px] text-gray-600 mb-1 ml-1">累计增长图 · 窗口期内增量</div>
-                <CumulativeGrowthChart
-                  hourlyTrend={ht}
-                  d7TotalWant={wm.d7.total_dwant}
-                  d7TotalLook={wm.d7.total_dlook}
-                  d7TotalCollect={wm.d7.total_dcollect}
-                />
-              </div>
+              <CumulativeGrowthChart hourlyTrend={ht} />
 
               <div>
                 <div className="text-[10px] text-gray-600 mb-1 ml-1">买卖意愿图</div>
