@@ -18,21 +18,66 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
 
     const times = ht.ts.map(t => {
       const d = new Date(t)
-      return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:00`
+      return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
     })
 
     chartRef.current.setOption({
-      tooltip: { trigger: 'axis' },
-      legend: { data: ['浏览流量', '想要需求'], bottom: 0, textStyle: { fontSize: 10, color: '#6b7280' } },
-      grid: { left: 48, right: 56, top: 20, bottom: 32 },
+      tooltip: {
+        trigger: 'axis',
+        valueFormatter: (value: number | string, seriesName?: string) => {
+          const v = Number(value)
+          if (Number.isNaN(v)) return String(value)
+          if (seriesName === '收藏数') return v.toLocaleString('zh-CN')
+          if (typeof v === 'number' && !Number.isInteger(v)) return v.toFixed(1)
+          return v.toLocaleString('zh-CN')
+        },
+      },
+      legend: { show: false },
+      grid: { left: 48, right: 56, top: 20, bottom: 28 },
       xAxis: { type: 'category', data: times, axisLabel: { fontSize: 9, color: '#9ca3af', rotate: 45 }, axisTick: { show: false } },
       yAxis: [
-        { type: 'value', name: '浏览/小时', axisLabel: { fontSize: 10, color: '#9ca3af' }, splitLine: { lineStyle: { color: '#f3f4f6' } } },
-        { type: 'value', name: '想要/小时', axisLabel: { fontSize: 10, color: '#9ca3af' }, splitLine: { show: false } },
+        {
+          type: 'value',
+          name: '浏览/小时',
+          axisLabel: { fontSize: 10, color: '#9ca3af' },
+          splitLine: { lineStyle: { color: '#f3f4f6' } },
+        },
+        {
+          type: 'value',
+          name: '想要·收藏/小时',
+          axisLabel: { fontSize: 10, color: '#9ca3af' },
+          splitLine: { show: false },
+        },
       ],
       series: [
-        { name: '浏览流量', type: 'line', yAxisIndex: 0, data: ht.hourly_look_rate, smooth: true, symbol: 'none', lineStyle: { color: '#9ca3af', width: 0 }, areaStyle: { color: 'rgba(156, 163, 175, 0.15)' } },
-        { name: '想要需求', type: 'line', yAxisIndex: 1, data: ht.hourly_want_rate, smooth: true, symbol: 'none', lineStyle: { color: '#2563eb', width: 2 } },
+        {
+          name: '浏览流量',
+          type: 'line',
+          yAxisIndex: 0,
+          data: ht.hourly_look_rate,
+          smooth: true,
+          symbol: 'none',
+          lineStyle: { color: '#6ee7b7', width: 1 },
+          areaStyle: { color: 'rgba(5, 150, 105, 0.10)' },
+        },
+        {
+          name: '想要需求',
+          type: 'line',
+          yAxisIndex: 1,
+          data: ht.hourly_want_rate,
+          smooth: true,
+          symbol: 'none',
+          lineStyle: { color: '#2563eb', width: 2 },
+        },
+        {
+          name: '收藏数',
+          type: 'line',
+          yAxisIndex: 1,
+          data: ht.hourly_collect_rate,
+          smooth: true,
+          symbol: 'none',
+          lineStyle: { color: '#d97706', width: 1.5, type: 'dashed' },
+        },
       ],
     })
 
@@ -44,7 +89,27 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
   useEffect(() => { return () => { chartRef.current?.dispose(); chartRef.current = null } }, [])
 
   if (!ht.ts || ht.ts.length === 0) {
-    return <div className="flex items-center justify-center h-48 text-sm text-gray-400">暂无数据</div>
+    return <div className="flex items-center justify-center h-40 text-sm text-gray-600">暂无数据</div>
   }
-  return <div ref={containerRef} className="w-full h-56" />
+
+  return (
+    <div>
+      {/* HTML Legend */}
+      <div className="mb-1 ml-1">
+        <span className="text-[10px] text-gray-600">流量转化匹配图</span>
+        <span className="flex gap-3 text-[9px] text-gray-600 flex-wrap mt-0.5">
+          <span className="inline-flex items-center gap-1">
+            <span className="w-2 h-0.5 bg-emerald-400 inline-block rounded" />浏览流量
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="w-2 h-0.5 bg-blue-600 inline-block rounded" />想要需求
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="w-2 h-0.5 bg-amber-600 inline-block rounded" />收藏数
+          </span>
+        </span>
+      </div>
+      <div ref={containerRef} className="w-full h-40" />
+    </div>
+  )
 }

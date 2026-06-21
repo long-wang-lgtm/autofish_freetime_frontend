@@ -149,10 +149,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
 
               <IntentConversionChart hourlyTrend={ht} />
 
-              <div>
-                <div className="text-[10px] text-gray-600 mb-1 ml-1">流量转化匹配图</div>
-                <TrafficActionChart hourlyTrend={ht} />
-              </div>
+              <TrafficActionChart hourlyTrend={ht} />
             </div>
           ) : (
             <div className="flex items-center justify-center py-12 text-sm text-gray-400">
