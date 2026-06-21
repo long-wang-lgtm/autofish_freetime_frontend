@@ -58,29 +58,34 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
               : '-'}
             {' · '}
             优先级: {product.priority ?? '-'}
+            {' · '}
+            采集:{' '}
+            {wm?.d7 != null ? (
+              <>
+                {wm.d7.quality_label === 'reliable' ? '可靠' :
+                 wm.d7.quality_label === 'limited' ? '有限' :
+                 wm.d7.quality_label === 'insufficient' ? '不足' : '-'}
+                ({wm.d7.fetch_count ?? '-'}次)
+              </>
+            ) : '-'}
           </div>
           {product.keywords.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {product.keywords.map(kw => (
-                <span key={kw} className="text-[11px] text-gray-600 bg-gray-100 rounded-full px-2 py-0.5">
+                <span key={kw} className="text-xs text-gray-700 bg-gray-100 rounded-full px-2 py-0.5">
                   {kw}
                 </span>
               ))}
             </div>
           )}
           {product.daysSincePublish != null && (
-            <div className="text-[11px] text-gray-600">
+            <div className="text-xs text-gray-700">
               上架 {Math.round(product.daysSincePublish)} 天
               {product.publishedAt && `（${new Date(product.publishedAt).toLocaleString('zh-CN')}）`}
             </div>
           )}
-          {wm?.d7?.quality_label === 'insufficient' && (
-            <span className="text-[11px] text-gray-600 bg-gray-100 rounded px-2 py-0.5">
-              数据有限（{wm.d7.fetch_count}次采集）
-            </span>
-          )}
           {product.monitorStatus != null && product.monitorStatus !== 1 && (
-            <span className="inline-block text-[11px] font-medium text-red-600 bg-red-50 rounded px-2 py-0.5">
+            <span className="inline-block text-xs font-medium text-red-600 bg-red-50 rounded px-2 py-0.5">
               {product.monitorStatus === 0 ? '已暂停' : product.monitorStatus === 2 ? '已分析' : '已发布'}
             </span>
           )}
@@ -90,11 +95,11 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
       {/* Hero Metric — 表格触发的关键信号 */}
       {product && (
         <div className="flex items-center gap-4 px-2 py-2 bg-amber-50/50 rounded-lg border border-amber-100">
-          <span className="text-[11px] text-gray-600">触发信号</span>
+          <span className="text-xs text-gray-700">触发信号</span>
           {acceleration != null && acceleration > 0.3 ? (
             <>
               <span className="text-sm font-bold text-red-500">🔥 升温 +{(acceleration * 100).toFixed(0)}%</span>
-              <span className="text-[11px] text-gray-600">
+              <span className="text-xs text-gray-700">
                 D1 询单率 {(wm?.d1?.inquiry_rate != null ? (wm!.d1!.inquiry_rate * 100).toFixed(1) : '-')}%
                 vs D7 {(wm?.d7?.inquiry_rate != null ? (wm!.d7!.inquiry_rate * 100).toFixed(1) : '-')}%
               </span>
@@ -102,15 +107,15 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           ) : acceleration != null && acceleration < -0.3 ? (
             <>
               <span className="text-sm font-bold text-blue-500">❄️ 降温 {(acceleration * -100).toFixed(0)}%</span>
-              <span className="text-[11px] text-gray-600">
+              <span className="text-xs text-gray-700">
                 D1 询单率 {(wm?.d1?.inquiry_rate != null ? (wm!.d1!.inquiry_rate * 100).toFixed(1) : '-')}%
                 vs D7 {(wm?.d7?.inquiry_rate != null ? (wm!.d7!.inquiry_rate * 100).toFixed(1) : '-')}%
               </span>
             </>
           ) : (
             <>
-              <span className="text-sm font-medium text-gray-600">无明显异常信号</span>
-              <span className="text-[11px] text-gray-600">各指标在正常范围内</span>
+              <span className="text-sm font-medium text-gray-700">无明显异常信号</span>
+              <span className="text-xs text-gray-700">各指标在正常范围内</span>
             </>
           )}
         </div>
@@ -125,7 +130,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
 
       {!hasData ? (
         /* windows_metrics 为 null：占位提示 */
-        <div className="flex items-center justify-center py-16 text-sm text-gray-600 text-center">
+        <div className="flex items-center justify-center py-16 text-sm text-gray-700 text-center">
           该商品指标尚未生成<br />请等待更多采集数据
         </div>
       ) : (
@@ -135,8 +140,6 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
             <div className={isMobile ? 'space-y-3' : 'grid grid-cols-2 gap-3'}>
               <WindowCompareCards
                 windowsMetrics={wm}
-                d7DailyLook={product!.d7DailyLook}
-                d7DailyWant={product!.d7DailyWant}
                 d7BrowseGrowth={product!.d7BrowseGrowth}
                 acceleration={acceleration}
                 windowShare={windowShare}
