@@ -62,25 +62,25 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           {product.keywords.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {product.keywords.map(kw => (
-                <span key={kw} className="text-[10px] text-gray-600 bg-gray-100 rounded-full px-2 py-0.5">
+                <span key={kw} className="text-[11px] text-gray-600 bg-gray-100 rounded-full px-2 py-0.5">
                   {kw}
                 </span>
               ))}
             </div>
           )}
           {product.daysSincePublish != null && (
-            <div className="text-[10px] text-gray-600">
-              上架 {product.daysSincePublish} 天
-              {product.publishedAt && `（${product.publishedAt.split('T')[0]}）`}
+            <div className="text-[11px] text-gray-600">
+              上架 {Math.round(product.daysSincePublish)} 天
+              {product.publishedAt && `（${new Date(product.publishedAt).toLocaleString('zh-CN')}）`}
             </div>
           )}
           {wm?.d7?.quality_label === 'insufficient' && (
-            <span className="text-[10px] text-gray-600 bg-gray-100 rounded px-2 py-0.5">
+            <span className="text-[11px] text-gray-600 bg-gray-100 rounded px-2 py-0.5">
               数据有限（{wm.d7.fetch_count}次采集）
             </span>
           )}
           {product.monitorStatus != null && product.monitorStatus !== 1 && (
-            <span className="inline-block text-[10px] font-medium text-red-600 bg-red-50 rounded px-2 py-0.5">
+            <span className="inline-block text-[11px] font-medium text-red-600 bg-red-50 rounded px-2 py-0.5">
               {product.monitorStatus === 0 ? '已暂停' : product.monitorStatus === 2 ? '已分析' : '已发布'}
             </span>
           )}
@@ -90,11 +90,11 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
       {/* Hero Metric — 表格触发的关键信号 */}
       {product && (
         <div className="flex items-center gap-4 px-2 py-2 bg-amber-50/50 rounded-lg border border-amber-100">
-          <span className="text-[10px] text-gray-600">触发信号</span>
+          <span className="text-[11px] text-gray-600">触发信号</span>
           {acceleration != null && acceleration > 0.3 ? (
             <>
               <span className="text-sm font-bold text-red-500">🔥 升温 +{(acceleration * 100).toFixed(0)}%</span>
-              <span className="text-[10px] text-gray-600">
+              <span className="text-[11px] text-gray-600">
                 D1 询单率 {(wm?.d1?.inquiry_rate != null ? (wm!.d1!.inquiry_rate * 100).toFixed(1) : '-')}%
                 vs D7 {(wm?.d7?.inquiry_rate != null ? (wm!.d7!.inquiry_rate * 100).toFixed(1) : '-')}%
               </span>
@@ -102,7 +102,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           ) : acceleration != null && acceleration < -0.3 ? (
             <>
               <span className="text-sm font-bold text-blue-500">❄️ 降温 {(acceleration * -100).toFixed(0)}%</span>
-              <span className="text-[10px] text-gray-600">
+              <span className="text-[11px] text-gray-600">
                 D1 询单率 {(wm?.d1?.inquiry_rate != null ? (wm!.d1!.inquiry_rate * 100).toFixed(1) : '-')}%
                 vs D7 {(wm?.d7?.inquiry_rate != null ? (wm!.d7!.inquiry_rate * 100).toFixed(1) : '-')}%
               </span>
@@ -110,7 +110,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           ) : (
             <>
               <span className="text-sm font-medium text-gray-600">无明显异常信号</span>
-              <span className="text-[10px] text-gray-600">各指标在正常范围内</span>
+              <span className="text-[11px] text-gray-600">各指标在正常范围内</span>
             </>
           )}
         </div>
@@ -130,25 +130,18 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
         </div>
       ) : (
         <>
-          {/* Part 1: 核心指标 */}
-          <WindowCompareCards
-            windowsMetrics={wm}
-            d7DailyLook={product!.d7DailyLook}
-            d7DailyWant={product!.d7DailyWant}
-            d7BrowseGrowth={product!.d7BrowseGrowth}
-            acceleration={acceleration}
-            windowShare={windowShare}
-            priceTrend={product!.priceTrend}
-          />
-
-          <hr className="border-gray-100 my-3" />
-
-          {/* Part 2: 趋势诊断三图 */}
+          {/* Part 1+2: 核心指标 + 趋势图 */}
           {hasEnoughTrendPoints && ht ? (
-            <div className="space-y-3">
-              <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider px-1">
-                趋势诊断
-              </div>
+            <div className={isMobile ? 'space-y-3' : 'grid grid-cols-2 gap-3'}>
+              <WindowCompareCards
+                windowsMetrics={wm}
+                d7DailyLook={product!.d7DailyLook}
+                d7DailyWant={product!.d7DailyWant}
+                d7BrowseGrowth={product!.d7BrowseGrowth}
+                acceleration={acceleration}
+                windowShare={windowShare}
+                priceTrend={product!.priceTrend}
+              />
 
               <CumulativeGrowthChart hourlyTrend={ht} />
 
@@ -194,7 +187,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
       open={open}
       onClose={onClose}
       title={title}
-      width="66.67vw"
+      width="80vw"
     >
       {content}
     </Sheet>
