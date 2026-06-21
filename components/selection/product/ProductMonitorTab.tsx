@@ -13,7 +13,7 @@ import {
 } from '@/lib/api/selection'
 import { ChevronUp, ChevronDown, Search, Trash2, ChevronRight, Check } from 'lucide-react'
 import { MiniTrendChart } from '@/components/selection/product/MiniTrendChart'
-import { ProductHistoryDrawer } from '@/components/selection/product/ProductHistoryDrawer'
+import { ProductDiagnosticDrawer } from '@/components/selection/product/ProductDiagnosticDrawer'
 
 // ===== 格式化工具 =====
 
@@ -580,9 +580,7 @@ export function ProductMonitorTab() {
         )}
       </div>
 
-      {/* 历史详情抽屉 */}
-      <ProductHistoryDrawer
-        gid={selectedProductId}
+      <ProductDiagnosticDrawer
         product={selectedProductId ? filtered.find(p => p.id === selectedProductId) ?? null : null}
         onClose={() => setSelectedProductId(null)}
       />
