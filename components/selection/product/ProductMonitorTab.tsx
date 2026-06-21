@@ -134,7 +134,7 @@ export function ProductMonitorTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['monitor-items'],
-    queryFn: listMonitorItems,
+    queryFn: () => listMonitorItems(),
   })
   const items = data?.items ?? []
   const lastFetchLogs = data?.lastFetchLogs ?? []

@@ -450,10 +450,13 @@ import { API_BASE_URL } from '@/lib/utils/api'
 
 const SELECTION_API_BASE = `${API_BASE_URL}/api/topic`
 
-async function selectionFetch<T>(path: string, options?: RequestInit): Promise<T> {
+async function selectionFetch<T>(path: string, options?: RequestInit, params?: Record<string, string | number>): Promise<T> {
   const { getAccessToken } = await import('@/lib/utils/auth')
   const token = getAccessToken()
-  const url = `${SELECTION_API_BASE}${path}`
+  const query = params ? '?' + new URLSearchParams(
+    Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)]))
+  ).toString() : ''
+  const url = `${SELECTION_API_BASE}${path}${query}`
   console.debug(`[SelectionAPI] ${options?.method || 'GET'} ${url}`)
   const res = await fetch(url, {
     ...options,
@@ -482,9 +485,9 @@ interface MonitorItemListResponse {
 }
 
 /** 列出监控商品 — GET /api/topic/monitor/items */
-export async function listMonitorItems(): Promise<MonitorItemListResponse> {
-  console.debug('[SelectionAPI] listMonitorItems')
-  return selectionFetch<MonitorItemListResponse>('/monitor/items')
+export async function listMonitorItems(page: number = 1, pageSize: number = 20): Promise<MonitorItemListResponse> {
+  console.debug(`[SelectionAPI] listMonitorItems page=${page} page_size=${pageSize}`)
+  return selectionFetch<MonitorItemListResponse>('/monitor/items', undefined, { page, page_size: pageSize })
 }
 
 /** 列出监控商家 — GET /api/topic/monitor/merchants */
