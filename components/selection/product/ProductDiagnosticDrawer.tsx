@@ -50,7 +50,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
       {/* Header 元数据 */}
       {product && (
         <div className="space-y-1.5">
-          <div className="text-xs text-gray-500 font-mono">
+          <div className="text-xs text-gray-600 font-mono">
             GID: {product.id}
             {' · '}
             状态: {product.monitorStatus != null
@@ -62,7 +62,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           {product.keywords.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {product.keywords.map(kw => (
-                <span key={kw} className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
+                <span key={kw} className="text-[10px] text-gray-600 bg-gray-100 rounded-full px-2 py-0.5">
                   {kw}
                 </span>
               ))}
@@ -110,7 +110,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           ) : (
             <>
               <span className="text-sm font-medium text-gray-600">无明显异常信号</span>
-              <span className="text-[10px] text-gray-500">各指标在正常范围内</span>
+              <span className="text-[10px] text-gray-600">各指标在正常范围内</span>
             </>
           )}
         </div>
@@ -125,7 +125,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
 
       {!hasData ? (
         /* windows_metrics 为 null：占位提示 */
-        <div className="flex items-center justify-center py-16 text-sm text-gray-400 text-center">
+        <div className="flex items-center justify-center py-16 text-sm text-gray-600 text-center">
           该商品指标尚未生成<br />请等待更多采集数据
         </div>
       ) : (
@@ -157,7 +157,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
               <TrafficActionChart hourlyTrend={ht} />
             </div>
           ) : (
-            <div className="flex items-center justify-center py-12 text-sm text-gray-400">
+            <div className="flex items-center justify-center py-12 text-sm text-gray-600">
               数据点不足，至少需要 3 次采集
             </div>
           )}
