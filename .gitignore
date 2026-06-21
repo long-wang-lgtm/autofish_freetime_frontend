@@ -2,8 +2,7 @@
 /node_modules
 
 .superpowers/
-
-.claude/worktrees/
+.worktrees/
 
 # next.js
 /.next/
