@@ -169,7 +169,7 @@ export function ProductMonitorTab() {
     }
   }, [sortKey])
 
-  const products = useMemo(() => items.map(dtoToProductItem), [items])
+  const products = useMemo(() => items.map(item => dtoToProductItem(item)), [items])
 
   const filtered = useMemo(() => {
     let result = products

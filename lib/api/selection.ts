@@ -63,6 +63,36 @@ export interface ProductItem {
   stabilityValue: number
   /** 最近一次采集时间（ISO 8601），供迷你图 tooltip */
   lastCollectedAt: string | null
+  // ===== 新增：Performance 引擎字段 =====
+  /** 三窗口性能指标（后端直传） */
+  windowsMetrics: WindowsSnapshotDTO | null
+  /** 趋势方向（后端直传） */
+  trendDirection: TrendDirectionDTO | null
+  /** 小时趋势（后端直传，供抽屉使用） */
+  hourlyTrend: HourlyTrendDTO | null
+  /** ===== 新增衍生字段 ===== */
+  /** d7 询单率（直接取自 windowsMetrics.d7.inquiry_rate） */
+  d7InquiryRate: number | null
+  /** d7 收藏率 */
+  d7FavoriteRate: number | null
+  /** d7 询藏比 */
+  d7IfRatio: number | null
+  /** 日均想要数 = d7.total_dwant / 7 */
+  d7DailyWant: number | null
+  /** 日均浏览数 = d7.total_dlook / 7 */
+  d7DailyLook: number | null
+  /** d7 流量增速 */
+  d7BrowseGrowth: number | null
+  /** 升温信号 = d1_inquiry_rate / d7_inquiry_rate - 1 */
+  acceleration: number | null
+  /** 想要稳定性 (d7) */
+  wantStability: number | null
+  /** 浏览稳定性 (d7) */
+  lookStability: number | null
+  /** 收藏稳定性 (d7) */
+  collectStability: number | null
+  /** 价格动向 (d7 price_trend) */
+  priceTrend: string | null
 }
 
 /** 可排序的列 key */
@@ -84,13 +114,27 @@ export type ProductSortKey =
   | 'status'
   | 'trendValue'
   | 'stabilityValue'
+  | 'd7InquiryRate'
+  | 'd7FavoriteRate'
+  | 'd7IfRatio'
+  | 'd7DailyWant'
+  | 'd7DailyLook'
+  | 'd7BrowseGrowth'
+  | 'acceleration'
+  | 'wantStability'
+  | 'lookStability'
+  | 'collectStability'
+  | 'priceTrend'
 
 /** 将 DTO 映射为 ProductItem，一并计算所有衍生字段 */
-export function dtoToProductItem(item: MonitoredItemDTO): ProductItem {
-  const price = item.price ?? 0
-  const wantCount = item.wantCount ?? 0
-  const lookCount = item.lookCount ?? 0
-  const collectCount = item.collectCount ?? 0
+export function dtoToProductItem(
+  item: MonitoredItemDTO,
+  lastFetchLog?: MonitoredItemFetchLogDTO
+): ProductItem {
+  const price = lastFetchLog?.price ?? item.price ?? 0
+  const wantCount = lastFetchLog?.wantCount ?? item.wantCount ?? 0
+  const lookCount = lastFetchLog?.lookCount ?? item.lookCount ?? 0
+  const collectCount = lastFetchLog?.collectCount ?? item.collectCount ?? 0
 
   const nowMs = Date.now()
   const daysSincePublish =
@@ -112,6 +156,29 @@ export function dtoToProductItem(item: MonitoredItemDTO): ProductItem {
   const publishDate = item.publishTime
     ? new Date(item.publishTime).toISOString().split('T')[0]
     : undefined
+
+  // ===== 新增：Performance 引擎衍生字段 =====
+  const wm = item.windows_metrics ?? null
+  const d7 = wm?.d7
+  const d1 = wm?.d1
+
+  const d7InquiryRate = d7?.inquiry_rate ?? null
+  const d7FavoriteRate = d7?.favorite_rate ?? null
+  const d7IfRatio = d7?.if_ratio ?? null
+  const d7DailyWant = d7 != null && d7.total_dwant > 0 ? d7.total_dwant / 7 : null
+  const d7DailyLook = d7 != null && d7.total_dlook > 0 ? d7.total_dlook / 7 : null
+  const d7BrowseGrowth = d7?.browse_growth ?? null
+
+  // 升温信号：d1_inquiry_rate / d7_inquiry_rate - 1
+  let acceleration: number | null = null
+  if (d1?.inquiry_rate != null && d7?.inquiry_rate != null && d7.inquiry_rate > 0) {
+    acceleration = d1.inquiry_rate / d7.inquiry_rate - 1
+  }
+
+  const wantStability = d7?.want_stability ?? null
+  const lookStability = d7?.look_stability ?? null
+  const collectStability = d7?.collect_stability ?? null
+  const priceTrend = d7?.price_trend ?? null
 
   return {
     id: item.gid,
@@ -141,6 +208,21 @@ export function dtoToProductItem(item: MonitoredItemDTO): ProductItem {
     trendValue: item.trendValue ?? 0,
     stabilityValue: item.stabilityValue ?? 0,
     lastCollectedAt: item.lastCollectedAt ?? null,
+    // 新增字段
+    windowsMetrics: wm,
+    trendDirection: item.trend_direction ?? null,
+    hourlyTrend: item.hourly_trend ?? null,
+    d7InquiryRate,
+    d7FavoriteRate,
+    d7IfRatio,
+    d7DailyWant,
+    d7DailyLook,
+    d7BrowseGrowth,
+    acceleration,
+    wantStability,
+    lookStability,
+    collectStability,
+    priceTrend,
   }
 }
 
@@ -181,6 +263,33 @@ export function getProductSortValue(item: ProductItem, key: ProductSortKey): num
       return item.trendValue
     case 'stabilityValue':
       return item.stabilityValue
+    case 'd7InquiryRate':
+      return item.d7InquiryRate ?? -1
+    case 'd7FavoriteRate':
+      return item.d7FavoriteRate ?? -1
+    case 'd7IfRatio':
+      return item.d7IfRatio ?? -1
+    case 'd7DailyWant':
+      return item.d7DailyWant ?? -1
+    case 'd7DailyLook':
+      return item.d7DailyLook ?? -1
+    case 'd7BrowseGrowth':
+      return item.d7BrowseGrowth ?? -Infinity
+    case 'acceleration':
+      return item.acceleration ?? -Infinity
+    case 'wantStability':
+      return item.wantStability ?? -1
+    case 'lookStability':
+      return item.lookStability ?? -1
+    case 'collectStability':
+      return item.collectStability ?? -1
+    case 'priceTrend': {
+      // up=1, flat=0, down=-1
+      if (item.priceTrend === 'up') return 1
+      if (item.priceTrend === 'flat') return 0
+      if (item.priceTrend === 'down') return -1
+      return -1
+    }
   }
 }
 
@@ -495,7 +604,7 @@ export async function getCategoryProducts(categoryId: string): Promise<ProductIt
     : items
 
   console.debug(`[SelectionAPI] getCategoryProducts filtered ${filtered.length} items`)
-  return filtered.map(dtoToProductItem)
+  return filtered.map(item => dtoToProductItem(item))
 }
 
 export async function getCategoryReports(categoryId: string): Promise<DailyReport[]> {
