@@ -31,23 +31,23 @@ export function CumulativeGrowthChart({ hourlyTrend: ht }: CumulativeGrowthChart
         },
       },
       legend: { show: false },
-      grid: { left: 48, right: 56, top: 20, bottom: 28 },
-      xAxis: { type: 'category', data: times, axisLabel: { fontSize: 10, color: '#9ca3af', rotate: 45 }, axisTick: { show: false } },
+      grid: { left: 48, right: 56, top: 20, bottom: 32 },
+      xAxis: { type: 'category', data: times, axisLabel: { fontSize: 12, color: '#6b7280', rotate: 45 }, axisTick: { show: false } },
       yAxis: [
         {
           type: 'value',
           name: '累计浏览',
           min: 'dataMin',
-          nameTextStyle: { fontSize: 10, color: '#059669' },
-          axisLabel: { fontSize: 10, color: '#059669', formatter: (v: number) => v.toLocaleString('zh-CN') },
+          nameTextStyle: { fontSize: 12, color: '#059669' },
+          axisLabel: { fontSize: 12, color: '#059669', formatter: (v: number) => v.toLocaleString('zh-CN') },
           splitLine: { lineStyle: { color: '#f3f4f6' } },
         },
         {
           type: 'value',
           name: '累计想要·收藏',
           min: 'dataMin',
-          nameTextStyle: { fontSize: 10, color: '#6b7280' },
-          axisLabel: { fontSize: 10, color: '#6b7280', formatter: (v: number) => v.toLocaleString('zh-CN') },
+          nameTextStyle: { fontSize: 12, color: '#6b7280' },
+          axisLabel: { fontSize: 12, color: '#6b7280', formatter: (v: number) => v.toLocaleString('zh-CN') },
           splitLine: { show: false },
         },
       ],
@@ -66,15 +66,15 @@ export function CumulativeGrowthChart({ hourlyTrend: ht }: CumulativeGrowthChart
   useEffect(() => { return () => { chartRef.current?.dispose(); chartRef.current = null } }, [])
 
   if (!ht.ts || ht.ts.length === 0) {
-    return <div className="flex items-center justify-center h-48 text-sm text-gray-600">暂无数据</div>
+    return <div className="flex items-center justify-center h-48 text-sm text-gray-700">暂无数据</div>
   }
 
   return (
     <div>
       {/* HTML Legend */}
       <div className="mb-1 ml-1">
-        <span className="text-[10px] text-gray-600">累计增长图</span>
-        <span className="flex gap-3 text-[10px] text-gray-600 flex-wrap mt-0.5">
+        <span className="text-xs text-gray-700">累计增长图</span>
+        <span className="flex gap-3 text-xs text-gray-700 flex-wrap mt-0.5">
           <span className="inline-flex items-center gap-1">
             <span className="w-2 h-0.5 bg-emerald-600 inline-block rounded" />累计浏览（左轴）
           </span>

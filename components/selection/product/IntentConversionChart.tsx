@@ -44,19 +44,19 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
         },
       },
       legend: { show: false },
-      grid: { left: 48, right: 56, top: 20, bottom: 28 },
-      xAxis: { type: 'category', data: times, axisLabel: { fontSize: 10, color: '#9ca3af', rotate: 45 }, axisTick: { show: false } },
+      grid: { left: 48, right: 56, top: 20, bottom: 32 },
+      xAxis: { type: 'category', data: times, axisLabel: { fontSize: 12, color: '#6b7280', rotate: 45 }, axisTick: { show: false } },
       yAxis: [
         {
           type: 'value',
           name: '%',
-          axisLabel: { fontSize: 10, color: '#6b7280', formatter: '{value}%' },
+          axisLabel: { fontSize: 12, color: '#6b7280', formatter: '{value}%' },
           splitLine: { lineStyle: { color: '#f3f4f6' } },
         },
         {
           type: 'value',
           name: '比值',
-          axisLabel: { fontSize: 10, color: '#6b7280' },
+          axisLabel: { fontSize: 12, color: '#6b7280' },
           splitLine: { show: false },
         },
       ],
@@ -75,7 +75,7 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
             silent: true,
             symbol: 'none',
             lineStyle: { color: '#2563eb', type: 'dashed', width: 1 },
-            data: [{ yAxis: 10, label: { formatter: '10%', fontSize: 10, color: '#2563eb' } }],
+            data: [{ yAxis: 10, label: { formatter: '10%', fontSize: 12, color: '#2563eb' } }],
           },
         },
         {
@@ -104,8 +104,8 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
             symbol: 'none',
             lineStyle: { color: '#0d9488', type: 'dashed', width: 1 },
             data: [
-              { yAxis: 0.8, label: { formatter: '0.8', fontSize: 10, color: '#0d9488' } },
-              { yAxis: 1.2, label: { formatter: '1.2', fontSize: 10, color: '#0d9488' } },
+              { yAxis: 0.8, label: { formatter: '0.8', fontSize: 12, color: '#0d9488' } },
+              { yAxis: 1.2, label: { formatter: '1.2', fontSize: 12, color: '#0d9488' } },
             ],
           },
         },
@@ -120,15 +120,15 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
   useEffect(() => { return () => { chartRef.current?.dispose(); chartRef.current = null } }, [])
 
   if (!ht.ts || ht.ts.length === 0) {
-    return <div className="flex items-center justify-center h-48 text-sm text-gray-600">暂无数据</div>
+    return <div className="flex items-center justify-center h-48 text-sm text-gray-700">暂无数据</div>
   }
 
   return (
     <div>
       {/* HTML Legend */}
       <div className="mb-1 ml-1">
-        <span className="text-[10px] text-gray-600">买卖意愿图</span>
-        <span className="flex gap-3 text-[10px] text-gray-600 flex-wrap mt-0.5">
+        <span className="text-xs text-gray-700">买卖意愿图</span>
+        <span className="flex gap-3 text-xs text-gray-700 flex-wrap mt-0.5">
           <span className="inline-flex items-center gap-1">
             <span className="w-2 h-0.5 bg-blue-600 inline-block rounded" />询单率
           </span>

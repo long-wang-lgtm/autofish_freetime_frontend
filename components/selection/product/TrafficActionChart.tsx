@@ -32,19 +32,21 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
         },
       },
       legend: { show: false },
-      grid: { left: 48, right: 56, top: 20, bottom: 28 },
-      xAxis: { type: 'category', data: times, axisLabel: { fontSize: 10, color: '#9ca3af', rotate: 45 }, axisTick: { show: false } },
+      grid: { left: 48, right: 56, top: 20, bottom: 32 },
+      xAxis: { type: 'category', data: times, axisLabel: { fontSize: 12, color: '#6b7280', rotate: 45 }, axisTick: { show: false } },
       yAxis: [
         {
           type: 'value',
           name: '浏览/小时',
-          axisLabel: { fontSize: 10, color: '#9ca3af' },
+          nameTextStyle: { fontSize: 12, color: '#6b7280' },
+          axisLabel: { fontSize: 12, color: '#6b7280' },
           splitLine: { lineStyle: { color: '#f3f4f6' } },
         },
         {
           type: 'value',
           name: '想要·收藏/小时',
-          axisLabel: { fontSize: 10, color: '#9ca3af' },
+          nameTextStyle: { fontSize: 12, color: '#6b7280' },
+          axisLabel: { fontSize: 12, color: '#6b7280' },
           splitLine: { show: false },
         },
       ],
@@ -88,15 +90,15 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
   useEffect(() => { return () => { chartRef.current?.dispose(); chartRef.current = null } }, [])
 
   if (!ht.ts || ht.ts.length === 0) {
-    return <div className="flex items-center justify-center h-48 text-sm text-gray-600">暂无数据</div>
+    return <div className="flex items-center justify-center h-48 text-sm text-gray-700">暂无数据</div>
   }
 
   return (
     <div>
       {/* HTML Legend */}
       <div className="mb-1 ml-1">
-        <span className="text-[10px] text-gray-600">流量转化匹配图</span>
-        <span className="flex gap-3 text-[10px] text-gray-600 flex-wrap mt-0.5">
+        <span className="text-xs text-gray-700">流量转化匹配图</span>
+        <span className="flex gap-3 text-xs text-gray-700 flex-wrap mt-0.5">
           <span className="inline-flex items-center gap-1">
             <span className="w-2 h-0.5 bg-emerald-400 inline-block rounded" />浏览流量
           </span>
