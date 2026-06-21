@@ -70,7 +70,7 @@ text-xs (12px)                  → 辅助文字、legend、badge
 
 | 角色 | 当前 | → 新 | 新色值 |
 |------|------|------|--------|
-| 数据值（矩阵表 td 数值、稳定性数字）| `text-gray-800` | `text-gray-900` | #111827 |
+| 数据值（矩阵表 td、稳定性数字、GrowthPricePanel Row value）| `text-gray-800` | `text-gray-900` | #111827 |
 | 字段名/标签（Row label、th 表头、辅助文字）| `text-gray-600` | `text-gray-700` | #374151 |
 | 模块小标题 | `text-gray-600` | `text-gray-700` | #374151 |
 | Delta 列头（"vs D1" / "vs D3"）| `text-gray-500` | `text-gray-600` | #4b5563 |
@@ -129,20 +129,22 @@ GID: 955244769833 · 状态: 监控中 · 优先级: 3 · 采集: 不足(3次)
 
 **代码：**
 
-在 Header 的 GID/状态/优先级行（`ProductDiagnosticDrawer.tsx:53-61`）末尾追加：
+在 Header 的 GID/状态/优先级行（`ProductDiagnosticDrawer.tsx` 第60行 `{' · '}` 之后）追加：
 
 ```tsx
-{wm?.d7 != null && (
+{' · '}
+采集:{' '}
+{wm?.d7 != null ? (
   <>
-    {' · '}
-    采集:{' '}
     {wm.d7.quality_label === 'reliable' ? '可靠' :
      wm.d7.quality_label === 'limited' ? '有限' :
      wm.d7.quality_label === 'insufficient' ? '不足' : '-'}
     ({wm.d7.fetch_count ?? '-'}次)
   </>
-)}
+) : '-'}
 ```
+
+同时删除现有的 `quality_label === 'insufficient'` 独立 badge（第77-81行），该信息已合并到 Header 元数据行。
 
 同时从 `GrowthPricePanel.tsx` 删除 `📊 采集质量` 整个 div 块。
 
@@ -204,13 +206,28 @@ function fmtDeltaInt(d: number | null): string {
 | 标签列（第一列）| 不变 |
 | D1/D3/vs D1/D7/vs D3/D1→D7总Δ | 不变（7 列总计） |
 
-### 5.4 移除的代码
+### 5.4 同时移除的底栏"规模参考"
+
+当前底栏第一段（`WindowCompareCards.tsx:232-236`）：
+```tsx
+规模参考: 7天日均浏览 {d7DailyLook}/天 · 日均想要 {d7DailyWant}/天
+```
+
+该数据现在已在矩阵 D7 列"浏览日均"/"想要日均"中展示，完全重复。移除此段，底栏仅保留增速/升温/窗口占比/价格信号。
+
+对应的 `d7DailyLook` 和 `d7DailyWant` props 也从 `WindowCompareCardsProps` 接口和调用处移除。
+
+### 5.5 移除的代码
 
 - `judgeThreeWindowTrend` 三个调用（inquiryTrend/favoriteTrend/ifTrend）
 - `allSampleEnough` 变量
 - `trendColor` 函数
-- `Info` lucide icon 导入（仅用于询藏比 trend tooltip）
+- `Info` lucide icon 导入
 - 表头 `<th>趋势</th>` 和三行 `<td>趋势</td>` 列
+- 底栏"规模参考"段（日均浏览/想要）
+- `d7DailyLook` / `d7DailyWant` props 从接口移除
+- `ProductDiagnosticDrawer.tsx` 中对应的 prop 传递
+- `hourlyTrendUtils.ts` 中 `judgeThreeWindowTrend` 函数定义（死代码）
 
 ---
 
@@ -218,11 +235,12 @@ function fmtDeltaInt(d: number | null): string {
 
 | 文件 | 改动要点 | 行数 |
 |------|---------|------|
-| `ProductDiagnosticDrawer.tsx` | text-[11px]→text-xs, text-gray-600→text-gray-700（标签/badge/Hero Metric）, Header 追加采集质量 | +5 / -3 |
-| `WindowCompareCards.tsx` | text-[11px]→text-xs, 颜色统一, 移除趋势列+judgeThreeWindowTrend/allSampleEnough/trendColor/Info, 新增浏览日均+想要日均两行+fmtDeltaInt | +45 / -45 |
+| `ProductDiagnosticDrawer.tsx` | text-[11px]→text-xs, 颜色统一, Header 追加采集质量+移除 insufficient 独立 badge, 移除 d7DailyLook/d7DailyWant prop 传递 | +8 / -8 |
+| `WindowCompareCards.tsx` | text-[11px]→text-xs, 颜色统一, 移除趋势列+allSampleEnough+底栏规模参考+d7DailyLook/d7DailyWant props, 新增浏览日均+想要日均两行+fmtDeltaInt | +50 / -55 |
+| `hourlyTrendUtils.ts` | 删除 judgeThreeWindowTrend 函数定义（死代码） | +0 / -15 |
 | `CumulativeGrowthChart.tsx` | text-[10px]→text-xs, ECharts fontSize 10→12, axisLabel color #9ca3af→#6b7280, nameTextStyle color #9ca3af→#6b7280, grid bottom 28→32 | +8 / -8 |
 | `IntentConversionChart.tsx` | text-[10px]→text-xs, ECharts fontSize 10→12, axisLabel color #9ca3af→#6b7280, markLine label fontSize 10→12, grid bottom 28→32 | +10 / -10 |
-| `TrafficActionChart.tsx` | text-[10px]→text-xs, ECharts fontSize 10→12, axisLabel color #9ca3af→#6b7280, grid bottom 28→32 | +8 / -8 |
+| `TrafficActionChart.tsx` | text-[10px]→text-xs, ECharts fontSize 10→12, axisLabel color #9ca3af→#6b7280, Y轴新增 nameTextStyle, grid bottom 28→32 | +10 / -8 |
 | `StabilityPanel.tsx` | text-[11px]→text-xs, text-gray-800→text-gray-900, text-gray-600→text-gray-700, text-gray-500→text-gray-600 | +5 / -5 |
 | `AnomalyBanner.tsx` | text-[11px]→text-xs, text-gray-600→text-gray-700 | +2 / -2 |
 | `GrowthPricePanel.tsx` | text-[11px]→text-xs, text-gray-600→text-gray-700, useState(true), 删除采集质量区块 | +3 / -12 |
