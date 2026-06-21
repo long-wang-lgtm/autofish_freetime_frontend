@@ -222,6 +222,13 @@ export interface WindowMetricsDTO {
   quality_label: string
 }
 
+/** 三窗口性能快照 — 对应后端 windows_metrics */
+export interface WindowsSnapshotDTO {
+  d1: WindowMetricsDTO
+  d3: WindowMetricsDTO
+  d7: WindowMetricsDTO
+}
+
 /** 趋势方向 — 对应后端 trend_direction */
 export interface TrendDirectionDTO {
   want_slope: string | null
@@ -284,11 +291,7 @@ export interface MonitoredItemDTO {
   lastCollectedAt?: string | null
   /** ===== 新增：Performance 引擎字段 ===== */
   /** 三窗口性能指标 */
-  windows_metrics?: {
-    d1: WindowMetricsDTO
-    d3: WindowMetricsDTO
-    d7: WindowMetricsDTO
-  } | null
+  windows_metrics?: WindowsSnapshotDTO | null
   /** 趋势方向 */
   trend_direction?: TrendDirectionDTO | null
   /** 小时级趋势时序数据 */
