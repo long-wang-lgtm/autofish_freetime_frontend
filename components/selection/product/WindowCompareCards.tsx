@@ -72,33 +72,33 @@ export function WindowCompareCards({
 }: WindowCompareCardsProps) {
   const { d1, d3, d7 } = wm
 
-  // D1→D3, D3→D7, D1→D7 delta calculations
-  const d3InquiryDelta = d3.inquiry_rate != null && d1.inquiry_rate != null ? d3.inquiry_rate - d1.inquiry_rate : null
-  const d7InquiryDelta = d7.inquiry_rate != null && d3.inquiry_rate != null ? d7.inquiry_rate - d3.inquiry_rate : null
-  const totalInquiryDelta = d7.inquiry_rate != null && d1.inquiry_rate != null ? d7.inquiry_rate - d1.inquiry_rate : null
+  // D7→D3→D1 delta calculations (reading right-to-left chronologically)
+  const d3VsD7InquiryDelta = d3.inquiry_rate != null && d7.inquiry_rate != null ? d3.inquiry_rate - d7.inquiry_rate : null
+  const d1VsD3InquiryDelta = d1.inquiry_rate != null && d3.inquiry_rate != null ? d1.inquiry_rate - d3.inquiry_rate : null
+  const totalInquiryDelta = d1.inquiry_rate != null && d7.inquiry_rate != null ? d1.inquiry_rate - d7.inquiry_rate : null
 
-  const d3FavDelta = d3.favorite_rate != null && d1.favorite_rate != null ? d3.favorite_rate - d1.favorite_rate : null
-  const d7FavDelta = d7.favorite_rate != null && d3.favorite_rate != null ? d7.favorite_rate - d3.favorite_rate : null
-  const totalFavDelta = d7.favorite_rate != null && d1.favorite_rate != null ? d7.favorite_rate - d1.favorite_rate : null
+  const d3VsD7FavDelta = d3.favorite_rate != null && d7.favorite_rate != null ? d3.favorite_rate - d7.favorite_rate : null
+  const d1VsD3FavDelta = d1.favorite_rate != null && d3.favorite_rate != null ? d1.favorite_rate - d3.favorite_rate : null
+  const totalFavDelta = d1.favorite_rate != null && d7.favorite_rate != null ? d1.favorite_rate - d7.favorite_rate : null
 
-  const d3IfDelta = d3.if_ratio != null && d1.if_ratio != null ? d3.if_ratio - d1.if_ratio : null
-  const d7IfDelta = d7.if_ratio != null && d3.if_ratio != null ? d7.if_ratio - d3.if_ratio : null
-  const totalIfDelta = d7.if_ratio != null && d1.if_ratio != null ? d7.if_ratio - d1.if_ratio : null
+  const d3VsD7IfDelta = d3.if_ratio != null && d7.if_ratio != null ? d3.if_ratio - d7.if_ratio : null
+  const d1VsD3IfDelta = d1.if_ratio != null && d3.if_ratio != null ? d1.if_ratio - d3.if_ratio : null
+  const totalIfDelta = d1.if_ratio != null && d7.if_ratio != null ? d1.if_ratio - d7.if_ratio : null
 
   // Daily averages: total / window_days
   const d1DailyLook = d1.total_dlook != null ? Math.round(d1.total_dlook / 1) : null
   const d3DailyLook = d3.total_dlook != null ? Math.round(d3.total_dlook / 3) : null
   const d7DailyLook = d7.total_dlook != null ? Math.round(d7.total_dlook / 7) : null
-  const d3DailyLookDelta = d3DailyLook != null && d1DailyLook != null ? d3DailyLook - d1DailyLook : null
-  const d7DailyLookDelta = d7DailyLook != null && d3DailyLook != null ? d7DailyLook - d3DailyLook : null
-  const totalDailyLookDelta = d7DailyLook != null && d1DailyLook != null ? d7DailyLook - d1DailyLook : null
+  const d3VsD7DailyLookDelta = d3DailyLook != null && d7DailyLook != null ? d3DailyLook - d7DailyLook : null
+  const d1VsD3DailyLookDelta = d1DailyLook != null && d3DailyLook != null ? d1DailyLook - d3DailyLook : null
+  const totalDailyLookDelta = d1DailyLook != null && d7DailyLook != null ? d1DailyLook - d7DailyLook : null
 
   const d1DailyWant = d1.total_dwant != null ? Math.round(d1.total_dwant / 1) : null
   const d3DailyWant = d3.total_dwant != null ? Math.round(d3.total_dwant / 3) : null
   const d7DailyWant = d7.total_dwant != null ? Math.round(d7.total_dwant / 7) : null
-  const d3DailyWantDelta = d3DailyWant != null && d1DailyWant != null ? d3DailyWant - d1DailyWant : null
-  const d7DailyWantDelta = d7DailyWant != null && d3DailyWant != null ? d7DailyWant - d3DailyWant : null
-  const totalDailyWantDelta = d7DailyWant != null && d1DailyWant != null ? d7DailyWant - d1DailyWant : null
+  const d3VsD7DailyWantDelta = d3DailyWant != null && d7DailyWant != null ? d3DailyWant - d7DailyWant : null
+  const d1VsD3DailyWantDelta = d1DailyWant != null && d3DailyWant != null ? d1DailyWant - d3DailyWant : null
+  const totalDailyWantDelta = d1DailyWant != null && d7DailyWant != null ? d1DailyWant - d7DailyWant : null
 
   return (
     <div className="space-y-3">
@@ -114,38 +114,38 @@ export function WindowCompareCards({
             <tr className="text-gray-700 border-b border-gray-100">
               <th className="text-left py-1.5 px-1 font-medium"></th>
               <th className="text-center py-1.5 px-2 font-medium">
-                D1 ({fetchCountLabel(d1.fetch_count)})
+                D7 ({fetchCountLabel(d7.fetch_count)})
               </th>
               <th className="text-center py-1.5 px-2 font-medium">
                 D3 ({fetchCountLabel(d3.fetch_count)})
               </th>
-              <th className="text-center py-1.5 px-1 text-gray-600">vs D1</th>
+              <th className="text-center py-1.5 px-1 text-gray-600">vs D7</th>
               <th className="text-center py-1.5 px-2 font-medium">
-                D7 ({fetchCountLabel(d7.fetch_count)})
+                D1 ({fetchCountLabel(d1.fetch_count)})
               </th>
               <th className="text-center py-1.5 px-1 text-gray-600">vs D3</th>
-              <th className="text-center py-1.5 px-2 font-semibold text-gray-900">D1→D7 总Δ</th>
+              <th className="text-center py-1.5 px-2 font-semibold text-gray-900">D7→D1 总Δ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {/* 询单率 row */}
             <tr>
               <td className="py-2 px-1 text-gray-700">询单率</td>
-              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d1.fetch_count ?? 99)}`}
-                  title={d1.fetch_count != null && d1.fetch_count < 6 ? `仅基于 ${d1.fetch_count} 次采集，置信度较低` : undefined}>
-                {pct(d1.inquiry_rate)}
+              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d7.fetch_count ?? 99)}`}>
+                {pct(d7.inquiry_rate)}
               </td>
               <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d3.fetch_count ?? 99)}`}>
                 {pct(d3.inquiry_rate)}
               </td>
-              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d3InquiryDelta)}`}>
-                {fmtDeltaPct(d3InquiryDelta)} {deltaArrow(d3InquiryDelta)}
+              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d3VsD7InquiryDelta)}`}>
+                {fmtDeltaPct(d3VsD7InquiryDelta)} {deltaArrow(d3VsD7InquiryDelta)}
               </td>
-              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d7.fetch_count ?? 99)}`}>
-                {pct(d7.inquiry_rate)}
+              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d1.fetch_count ?? 99)}`}
+                  title={d1.fetch_count != null && d1.fetch_count < 6 ? `仅基于 ${d1.fetch_count} 次采集，置信度较低` : undefined}>
+                {pct(d1.inquiry_rate)}
               </td>
-              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d7InquiryDelta)}`}>
-                {fmtDeltaPct(d7InquiryDelta)} {deltaArrow(d7InquiryDelta)}
+              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d1VsD3InquiryDelta)}`}>
+                {fmtDeltaPct(d1VsD3InquiryDelta)} {deltaArrow(d1VsD3InquiryDelta)}
               </td>
               <td className={`py-2 px-2 text-center tabular-nums font-semibold ${deltaColor(totalInquiryDelta)}`}>
                 {fmtDeltaPct(totalInquiryDelta)} {deltaArrow(totalInquiryDelta)}
@@ -155,20 +155,20 @@ export function WindowCompareCards({
             {/* 收藏率 row */}
             <tr>
               <td className="py-2 px-1 text-gray-700">收藏率</td>
-              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d1.fetch_count ?? 99)}`}>
-                {pct(d1.favorite_rate)}
+              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d7.fetch_count ?? 99)}`}>
+                {pct(d7.favorite_rate)}
               </td>
               <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d3.fetch_count ?? 99)}`}>
                 {pct(d3.favorite_rate)}
               </td>
-              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d3FavDelta)}`}>
-                {fmtDeltaPct(d3FavDelta)} {deltaArrow(d3FavDelta)}
+              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d3VsD7FavDelta)}`}>
+                {fmtDeltaPct(d3VsD7FavDelta)} {deltaArrow(d3VsD7FavDelta)}
               </td>
-              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d7.fetch_count ?? 99)}`}>
-                {pct(d7.favorite_rate)}
+              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d1.fetch_count ?? 99)}`}>
+                {pct(d1.favorite_rate)}
               </td>
-              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d7FavDelta)}`}>
-                {fmtDeltaPct(d7FavDelta)} {deltaArrow(d7FavDelta)}
+              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d1VsD3FavDelta)}`}>
+                {fmtDeltaPct(d1VsD3FavDelta)} {deltaArrow(d1VsD3FavDelta)}
               </td>
               <td className={`py-2 px-2 text-center tabular-nums font-semibold ${deltaColor(totalFavDelta)}`}>
                 {fmtDeltaPct(totalFavDelta)} {deltaArrow(totalFavDelta)}
@@ -178,20 +178,20 @@ export function WindowCompareCards({
             {/* 询藏比 row */}
             <tr>
               <td className="py-2 px-1 text-gray-700">询藏比</td>
-              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d1.fetch_count ?? 99)}`}>
-                {fmtRatio(d1.if_ratio)}
+              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d7.fetch_count ?? 99)}`}>
+                {fmtRatio(d7.if_ratio)}
               </td>
               <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d3.fetch_count ?? 99)}`}>
                 {fmtRatio(d3.if_ratio)}
               </td>
-              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d3IfDelta)}`}>
-                {fmtDelta(d3IfDelta)} {deltaArrow(d3IfDelta)}
+              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d3VsD7IfDelta)}`}>
+                {fmtDelta(d3VsD7IfDelta)} {deltaArrow(d3VsD7IfDelta)}
               </td>
-              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d7.fetch_count ?? 99)}`}>
-                {fmtRatio(d7.if_ratio)}
+              <td className={`py-2 px-2 text-center tabular-nums font-medium text-gray-900 ${lowSampleStyle(d1.fetch_count ?? 99)}`}>
+                {fmtRatio(d1.if_ratio)}
               </td>
-              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d7IfDelta)}`}>
-                {fmtDelta(d7IfDelta)} {deltaArrow(d7IfDelta)}
+              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d1VsD3IfDelta)}`}>
+                {fmtDelta(d1VsD3IfDelta)} {deltaArrow(d1VsD3IfDelta)}
               </td>
               <td className={`py-2 px-2 text-center tabular-nums font-semibold ${deltaColor(totalIfDelta)}`}>
                 {fmtDelta(totalIfDelta)} {deltaArrow(totalIfDelta)}
@@ -201,14 +201,14 @@ export function WindowCompareCards({
             {/* 浏览日均 row */}
             <tr>
               <td className="py-2 px-1 text-gray-700">浏览日均</td>
-              <td className="py-2 px-2 text-center tabular-nums font-medium text-gray-900">{d1DailyLook ?? '-'}</td>
-              <td className="py-2 px-2 text-center tabular-nums font-medium text-gray-900">{d3DailyLook ?? '-'}</td>
-              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d3DailyLookDelta)}`}>
-                {fmtDeltaInt(d3DailyLookDelta)} {deltaArrow(d3DailyLookDelta)}
-              </td>
               <td className="py-2 px-2 text-center tabular-nums font-medium text-gray-900">{d7DailyLook ?? '-'}</td>
-              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d7DailyLookDelta)}`}>
-                {fmtDeltaInt(d7DailyLookDelta)} {deltaArrow(d7DailyLookDelta)}
+              <td className="py-2 px-2 text-center tabular-nums font-medium text-gray-900">{d3DailyLook ?? '-'}</td>
+              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d3VsD7DailyLookDelta)}`}>
+                {fmtDeltaInt(d3VsD7DailyLookDelta)} {deltaArrow(d3VsD7DailyLookDelta)}
+              </td>
+              <td className="py-2 px-2 text-center tabular-nums font-medium text-gray-900">{d1DailyLook ?? '-'}</td>
+              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d1VsD3DailyLookDelta)}`}>
+                {fmtDeltaInt(d1VsD3DailyLookDelta)} {deltaArrow(d1VsD3DailyLookDelta)}
               </td>
               <td className={`py-2 px-2 text-center tabular-nums font-semibold ${deltaColor(totalDailyLookDelta)}`}>
                 {fmtDeltaInt(totalDailyLookDelta)} {deltaArrow(totalDailyLookDelta)}
@@ -218,14 +218,14 @@ export function WindowCompareCards({
             {/* 想要日均 row */}
             <tr>
               <td className="py-2 px-1 text-gray-700">想要日均</td>
-              <td className="py-2 px-2 text-center tabular-nums font-medium text-gray-900">{d1DailyWant ?? '-'}</td>
-              <td className="py-2 px-2 text-center tabular-nums font-medium text-gray-900">{d3DailyWant ?? '-'}</td>
-              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d3DailyWantDelta)}`}>
-                {fmtDeltaInt(d3DailyWantDelta)} {deltaArrow(d3DailyWantDelta)}
-              </td>
               <td className="py-2 px-2 text-center tabular-nums font-medium text-gray-900">{d7DailyWant ?? '-'}</td>
-              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d7DailyWantDelta)}`}>
-                {fmtDeltaInt(d7DailyWantDelta)} {deltaArrow(d7DailyWantDelta)}
+              <td className="py-2 px-2 text-center tabular-nums font-medium text-gray-900">{d3DailyWant ?? '-'}</td>
+              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d3VsD7DailyWantDelta)}`}>
+                {fmtDeltaInt(d3VsD7DailyWantDelta)} {deltaArrow(d3VsD7DailyWantDelta)}
+              </td>
+              <td className="py-2 px-2 text-center tabular-nums font-medium text-gray-900">{d1DailyWant ?? '-'}</td>
+              <td className={`py-2 px-1 text-center tabular-nums ${deltaColor(d1VsD3DailyWantDelta)}`}>
+                {fmtDeltaInt(d1VsD3DailyWantDelta)} {deltaArrow(d1VsD3DailyWantDelta)}
               </td>
               <td className={`py-2 px-2 text-center tabular-nums font-semibold ${deltaColor(totalDailyWantDelta)}`}>
                 {fmtDeltaInt(totalDailyWantDelta)} {deltaArrow(totalDailyWantDelta)}
