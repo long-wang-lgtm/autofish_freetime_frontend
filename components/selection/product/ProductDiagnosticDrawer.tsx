@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { Sheet, BottomSheet } from '@/components/ui/Sheet'
 import type { ProductItem } from '@/lib/api/selection'
 import { detectAnomalies } from '@/components/selection/product/hourlyTrendUtils'
@@ -19,6 +20,7 @@ interface ProductDiagnosticDrawerProps {
 
 export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticDrawerProps) {
   const open = !!product
+  const isMobile = useIsMobile()
 
   const alerts = useMemo(() => {
     if (!product) return []
@@ -77,6 +79,8 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
       {/* Part 0: 异常预警 */}
       <AnomalyBanner alerts={alerts} />
 
+      <hr className="border-gray-100 my-3" />
+
       {!hasData ? (
         /* windows_metrics 为 null：占位提示 */
         <div className="flex items-center justify-center py-16 text-sm text-gray-400 text-center">
@@ -95,15 +99,17 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
             priceTrend={product!.priceTrend}
           />
 
+          <hr className="border-gray-100 my-3" />
+
           {/* Part 2: 趋势诊断三图 */}
           {hasEnoughTrendPoints && ht ? (
             <div className="space-y-3">
-              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1">
+              <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider px-1">
                 趋势诊断
               </div>
 
               <div>
-                <div className="text-[10px] text-gray-500 mb-1 ml-1">累计增长图 · 窗口期内增量</div>
+                <div className="text-[10px] text-gray-600 mb-1 ml-1">累计增长图 · 窗口期内增量</div>
                 <CumulativeGrowthChart
                   hourlyTrend={ht}
                   d7TotalWant={wm.d7.total_dwant}
@@ -113,12 +119,12 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
               </div>
 
               <div>
-                <div className="text-[10px] text-gray-500 mb-1 ml-1">买卖意愿图</div>
+                <div className="text-[10px] text-gray-600 mb-1 ml-1">买卖意愿图</div>
                 <IntentConversionChart hourlyTrend={ht} />
               </div>
 
               <div>
-                <div className="text-[10px] text-gray-500 mb-1 ml-1">流量转化匹配图</div>
+                <div className="text-[10px] text-gray-600 mb-1 ml-1">流量转化匹配图</div>
                 <TrafficActionChart hourlyTrend={ht} />
               </div>
             </div>
@@ -128,8 +134,12 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
             </div>
           )}
 
+          <hr className="border-gray-100 my-3" />
+
           {/* Part 3: 稳定性诊断 */}
           <StabilityPanel hourlyTrend={ht ?? null} />
+
+          <hr className="border-gray-100 my-3" />
 
           {/* Part 4: 基础数据（折叠区） */}
           <GrowthPricePanel product={product} />
@@ -138,31 +148,27 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
     </div>
   )
 
+  if (isMobile) {
+    return (
+      <BottomSheet
+        open={open}
+        onClose={onClose}
+        title={product?.description || product?.title || '商品'}
+        subtitle={product ? `GID: ${product.id}` : undefined}
+        heightRatio={0.92}
+      >
+        {content}
+      </BottomSheet>
+    )
+  }
   return (
-    <>
-      {/* 桌面端 Sheet（md 及以上） */}
-      <div className="hidden md:block">
-        <Sheet
-          open={open}
-          onClose={onClose}
-          title={title}
-          width="520px"
-        >
-          {content}
-        </Sheet>
-      </div>
-      {/* 移动端 BottomSheet（md 以下） */}
-      <div className="block md:hidden">
-        <BottomSheet
-          open={open}
-          onClose={onClose}
-          title={product?.description || product?.title || '商品'}
-          subtitle={product ? `GID: ${product.id}` : undefined}
-          heightRatio={0.92}
-        >
-          {content}
-        </BottomSheet>
-      </div>
-    </>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={title}
+      width="66.67vw"
+    >
+      {content}
+    </Sheet>
   )
 }
