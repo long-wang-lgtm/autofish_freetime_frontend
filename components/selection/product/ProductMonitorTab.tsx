@@ -32,51 +32,50 @@ function fmtDaily(daily: number | null): string {
   return daily.toFixed(1)
 }
 
-function fmtMoney(amount: number | null): string {
-  if (amount === null) return '-'
-  return `¥${amount.toLocaleString('zh-CN', { maximumFractionDigits: 0 })}`
-}
-
-function fmtOrders(orders: number | null): string {
-  if (orders === null) return '-'
-  return String(Math.round(orders))
-}
-
-function fmtDays(days: number | null): string {
-  if (days === null) return '-'
-  return String(Math.round(days))
-}
-
-function fmtCount(count: number): string {
-  return count.toLocaleString('zh-CN')
-}
-
 function fmtPrice(price: number): string {
   return `¥${price.toLocaleString('zh-CN')}`
 }
 
-function fmtDate(isoString: string | null): string {
-  if (!isoString) return '-'
-  try {
-    const d = new Date(isoString)
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  } catch {
-    return '-'
-  }
+function fmtGrowth(growth: number | null): string {
+  if (growth === null) return '-'
+  const pct = (growth * 100).toFixed(1)
+  return growth > 0 ? `+${pct}%` : growth < 0 ? `${pct}%` : '0%'
+}
+
+function fmtAcceleration(acc: number | null): string {
+  if (acc === null) return '-'
+  const pct = (acc * 100).toFixed(0)
+  if (acc > 0.3) return `加速 +${pct}%`
+  if (acc < -0.3) return `降温 ${pct}%`
+  return '平稳'
+}
+
+function fmtCV(cv: number | null): string {
+  if (cv === null) return '-'
+  return cv.toFixed(2)
+}
+
+function cvColor(cv: number | null): string {
+  if (cv === null) return 'text-gray-400'
+  if (cv < 0.5) return 'text-green-600'
+  if (cv < 0.8) return 'text-yellow-600'
+  if (cv < 1.2) return 'text-orange-600'
+  return 'text-red-600'
 }
 
 // ===== 列分组定义 =====
 
-type ColumnGroup = 'identity' | 'core' | 'conversion' | 'time' | 'value' | 'meta' | 'trend'
+type ColumnGroup = 'identity' | 'core' | 'conversion' | 'daily' | 'growth' | 'stability' | 'trend' | 'meta'
 
 const GROUP_STYLE: Record<ColumnGroup, { bar: string }> = {
   identity:   { bar: '' },
   core:       { bar: 'bg-gradient-to-r from-amber-300 to-amber-400' },
   conversion: { bar: 'bg-gradient-to-r from-sky-300 to-sky-400' },
-  time:       { bar: 'bg-gradient-to-r from-gray-300 to-gray-400' },
-  value:      { bar: 'bg-gradient-to-r from-emerald-300 to-emerald-400' },
-  meta:       { bar: 'bg-gradient-to-r from-violet-300 to-violet-400' },
+  daily:      { bar: 'bg-gradient-to-r from-teal-300 to-teal-400' },
+  growth:     { bar: 'bg-gradient-to-r from-emerald-300 to-emerald-400' },
+  stability:  { bar: 'bg-gradient-to-r from-slate-300 to-slate-400' },
   trend:      { bar: 'bg-gradient-to-r from-rose-300 to-rose-400' },
+  meta:       { bar: 'bg-gradient-to-r from-violet-300 to-violet-400' },
 }
 
 interface ColumnDef {
@@ -91,38 +90,38 @@ interface ColumnDef {
 const GROUP_GAP = 'ml-2'
 
 const COLUMNS: ColumnDef[] = [
-  // ── 📦 商品标识 ──
+  // ── 📦 商品标识 (identity) ──
   { key: 'title',             label: '商品信息',       width: 'flex-1 min-w-[160px] max-w-[220px]', group: 'identity',   groupStart: true },
-  // ── 📊 核心指标（amber）──
+  // ── 📊 核心快照 (core, amber) ──
   { key: 'price',             label: '价格',           width: 'w-[72px] shrink-0',  group: 'core',       groupStart: true,  dataBar: true },
-  { key: 'lookCount',         label: '浏览数',         width: 'w-[68px] shrink-0',  group: 'core',       groupStart: false, dataBar: true },
-  { key: 'wantCount',         label: '想要数',         width: 'w-[64px] shrink-0',  group: 'core',       groupStart: false, dataBar: true },
-  // ── 📈 转化效率（sky）──
-  { key: 'wantCollectRatio',  label: '询藏比',         width: 'w-[64px] shrink-0',  group: 'conversion', groupStart: true },
-  { key: 'inquiryRate',       label: '询单率',         width: 'w-[64px] shrink-0',  group: 'conversion', groupStart: false },
-  { key: 'collectRate',       label: '收藏率',         width: 'w-[64px] shrink-0',  group: 'conversion', groupStart: false },
-  // ── ⏱️ 时间规模（gray）──
-  { key: 'dailyWant',         label: '日均询单',       width: 'w-[68px] shrink-0',  group: 'time',       groupStart: true },
-  { key: 'daysSincePublish',  label: '上架天数',       width: 'w-[72px] shrink-0',  group: 'time',       groupStart: false },
-  { key: 'publishedAt',       label: '上架时间',       width: 'w-[88px] shrink-0',  group: 'time',       groupStart: false },
-  // ── 💰 商业价值（emerald）──
-  { key: 'estimatedOrders',   label: '预估订单',       width: 'w-[80px] shrink-0',  group: 'value',      groupStart: true },
-  { key: 'estimatedSales',    label: '预估销售额',     width: 'w-[104px] shrink-0', group: 'value',      groupStart: false },
-  // ── 🏷️ 元数据（violet）──
+  // ── 📈 转化质量 (conversion, sky) ──
+  { key: 'd7IfRatio' as ProductSortKey,       label: '7天询藏比',     width: 'w-[72px] shrink-0',  group: 'conversion', groupStart: true },
+  { key: 'd7InquiryRate' as ProductSortKey,   label: '7天询单率',     width: 'w-[72px] shrink-0',  group: 'conversion', groupStart: false },
+  { key: 'd7FavoriteRate' as ProductSortKey,  label: '7天收藏率',     width: 'w-[72px] shrink-0',  group: 'conversion', groupStart: false },
+  // ── 📐 日均量 (daily, teal) ──
+  { key: 'd7DailyWant' as ProductSortKey,     label: '日均想要',      width: 'w-[72px] shrink-0',  group: 'daily',      groupStart: true },
+  { key: 'd7DailyLook' as ProductSortKey,     label: '日均浏览',      width: 'w-[72px] shrink-0',  group: 'daily',      groupStart: false },
+  // ── 🚀 增长信号 (growth, emerald) ──
+  { key: 'd7BrowseGrowth' as ProductSortKey,  label: '7天流量增速',   width: 'w-[84px] shrink-0',  group: 'growth',     groupStart: true },
+  { key: 'acceleration' as ProductSortKey,    label: '升温信号',      width: 'w-[72px] shrink-0',  group: 'growth',     groupStart: false },
+  // ── 📏 稳定性 (stability, slate) ──
+  { key: 'wantStability' as ProductSortKey,   label: '想要稳定性',    width: 'w-[78px] shrink-0',  group: 'stability',  groupStart: true },
+  { key: 'lookStability' as ProductSortKey,   label: '浏览稳定性',    width: 'w-[78px] shrink-0',  group: 'stability',  groupStart: false },
+  { key: 'collectStability' as ProductSortKey, label: '收藏稳定性',   width: 'w-[78px] shrink-0',  group: 'stability',  groupStart: false },
+  // ── 🧭 趋势信号 (trend, rose) ──
+  { key: 'trendChart' as any,                 label: '近期趋势',      width: 'w-[100px] shrink-0', group: 'trend',      groupStart: true },
+  // ── 🏷️ 元数据 (meta, violet) ──
   { key: 'keywords',          label: '关键词',         width: 'w-[110px] shrink-0', group: 'meta',       groupStart: true },
   { key: 'priority',          label: '优先级',         width: 'w-[56px] shrink-0',  group: 'meta',       groupStart: false },
   { key: 'monitorStatus',     label: '监控状态',       width: 'w-[72px] shrink-0',  group: 'meta',       groupStart: false },
-  // ── 📈 趋势表现（rose）──
-  { key: 'trendValue' as ProductSortKey,    label: '趋势指标',   width: 'w-[90px] shrink-0',  group: 'trend', groupStart: true },
-  { key: 'trendChart' as any,               label: '近期趋势',   width: 'w-[100px] shrink-0', group: 'trend', groupStart: false },
-  { key: 'stabilityValue' as ProductSortKey, label: '稳定性',    width: 'w-[90px] shrink-0',  group: 'trend', groupStart: false },
+  { key: 'priceTrend' as ProductSortKey,     label: '价格动向',      width: 'w-[72px] shrink-0',  group: 'meta',       groupStart: false },
 ]
 
 // ===== 组件 =====
 
 export function ProductMonitorTab() {
   const [searchText, setSearchText] = useState('')
-  const [sortKey, setSortKey] = useState<ProductSortKey>('estimatedSales')
+  const [sortKey, setSortKey] = useState<ProductSortKey>('d7DailyWant')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [copiedGid, setCopiedGid] = useState<string | null>(null)
   const [aiReportOpen, setAiReportOpen] = useState(false)
@@ -169,7 +168,14 @@ export function ProductMonitorTab() {
     }
   }, [sortKey])
 
-  const products = useMemo(() => items.map(item => dtoToProductItem(item)), [items])
+  const products = useMemo(() => {
+    if (Array.isArray(items)) {
+      return items.map(item => dtoToProductItem(item))
+    }
+    const { items: itemList, lastFetchLogs } = items as { items: any[]; lastFetchLogs: any[] }
+    const logMap = new Map(lastFetchLogs?.map((l: any) => [l.gid, l]) ?? [])
+    return itemList.map((item: any) => dtoToProductItem(item, logMap.get(item.gid)))
+  }, [items])
 
   const filtered = useMemo(() => {
     let result = products
@@ -198,8 +204,6 @@ export function ProductMonitorTab() {
   // 数据条最大值
   const dataBarMax = useMemo(() => ({
     price: Math.max(...filtered.map(p => p.price), 1),
-    lookCount: Math.max(...filtered.map(p => p.lookCount), 1),
-    wantCount: Math.max(...filtered.map(p => p.wantCount), 1),
   }), [filtered])
 
   const getBarPct = (val: number, max: number) =>
@@ -238,7 +242,7 @@ export function ProductMonitorTab() {
           </div>
         )
 
-      // ── 核心指标（带数据条）──
+      // ── 核心快照（带数据条）──
       case 'price': {
         const pct = getBarPct(p.price, dataBarMax.price)
         return (
@@ -248,54 +252,85 @@ export function ProductMonitorTab() {
           </span>
         )
       }
-      case 'lookCount': {
-        const pct = getBarPct(p.lookCount, dataBarMax.lookCount)
+
+      // ── 转化质量 ──
+      case 'd7IfRatio': {
+        const val = p.d7IfRatio
+        const wm = p.windowsMetrics
+        const d1v = wm?.d1?.if_ratio
+        const d3v = wm?.d3?.if_ratio
         return (
-          <span className="relative block w-full text-center px-1">
-            <span className="absolute left-0 top-0 bottom-0 rounded-sm bg-gradient-to-r from-amber-200/40 to-amber-100/10" style={{ width: pct }} />
-            <span className="relative text-[13px] font-semibold text-gray-900 tabular-nums">{fmtCount(p.lookCount)}</span>
+          <span
+            className="text-xs text-gray-700 tabular-nums cursor-help"
+            title={val != null && (d1v != null || d3v != null)
+              ? `D1: ${d1v?.toFixed(2) ?? '-'}  |  D3: ${d3v?.toFixed(2) ?? '-'}  |  D7: ${val.toFixed(2)}`
+              : (val == null ? '收藏数为零，无法计算' : undefined)
+            }
+          >
+            {fmtRatio(val)}
           </span>
         )
       }
-      case 'wantCount': {
-        const pct = getBarPct(p.wantCount, dataBarMax.wantCount)
+      case 'd7InquiryRate':
+        return <span className="text-xs text-gray-700 tabular-nums">{fmtPercent(p.d7InquiryRate)}</span>
+      case 'd7FavoriteRate':
+        return <span className="text-xs text-gray-700 tabular-nums">{fmtPercent(p.d7FavoriteRate)}</span>
+
+      // ── 日均量 ──
+      case 'd7DailyWant':
+        return <span className="text-xs text-gray-600 tabular-nums">{fmtDaily(p.d7DailyWant)}</span>
+      case 'd7DailyLook':
+        return <span className="text-xs text-gray-600 tabular-nums">{fmtDaily(p.d7DailyLook)}</span>
+
+      // ── 增长信号 ──
+      case 'd7BrowseGrowth': {
+        const v = p.d7BrowseGrowth
+        const color = v == null ? 'text-gray-400' : v > 0 ? 'text-green-600' : v < 0 ? 'text-red-600' : 'text-gray-400'
         return (
-          <span className="relative block w-full text-center px-1">
-            <span className="absolute left-0 top-0 bottom-0 rounded-sm bg-gradient-to-r from-amber-200/60 to-amber-100/20" style={{ width: pct }} />
-            <span className="relative text-[13px] font-semibold text-gray-900 tabular-nums">{fmtCount(p.wantCount)}</span>
+          <span className={`text-xs font-semibold tabular-nums ${color}`}>
+            {fmtGrowth(v)}
+          </span>
+        )
+      }
+      case 'acceleration': {
+        const v = p.acceleration
+        const color = v == null ? 'text-gray-400'
+          : v > 0.3 ? 'text-red-500'
+          : v < -0.3 ? 'text-blue-500'
+          : 'text-gray-500'
+        return (
+          <span className={`text-xs font-semibold tabular-nums ${color}`}>
+            {fmtAcceleration(v)}
           </span>
         )
       }
 
-      // ── 转化效率 ──
-      case 'wantCollectRatio':
-        return <span className="text-xs text-gray-700 tabular-nums">{fmtRatio(p.wantCollectRatio)}</span>
-      case 'inquiryRate':
-        return <span className="text-xs text-gray-700 tabular-nums">{fmtPercent(p.inquiryRate)}</span>
-      case 'collectRate':
-        return <span className="text-xs text-gray-700 tabular-nums">{fmtPercent(p.collectRate)}</span>
+      // ── 稳定性（三列）──
+      case 'wantStability': {
+        const cv = p.wantStability
+        return <span className={`text-xs font-semibold tabular-nums ${cvColor(cv)}`}>{fmtCV(cv)}</span>
+      }
+      case 'lookStability': {
+        const cv = p.lookStability
+        return <span className={`text-xs font-semibold tabular-nums ${cvColor(cv)}`}>{fmtCV(cv)}</span>
+      }
+      case 'collectStability': {
+        const cv = p.collectStability
+        return <span className={`text-xs font-semibold tabular-nums ${cvColor(cv)}`}>{fmtCV(cv)}</span>
+      }
 
-      // ── 时间规模 ──
-      case 'dailyWant':
-        return <span className="text-xs text-gray-600 tabular-nums">{fmtDaily(p.dailyWant)}</span>
-      case 'daysSincePublish':
-        return <span className="text-xs text-gray-600 tabular-nums">{fmtDays(p.daysSincePublish)}</span>
-      case 'publishedAt':
-        return <span className="text-xs text-gray-600 tabular-nums">{fmtDate(p.publishedAt)}</span>
-
-      // ── 商业价值（绿色 pill）──
-      case 'estimatedOrders':
+      // ── 趋势信号 ──
+      case 'trendChart': {
+        const trendData = p.hourlyTrend?.cumulative_want?.slice(-10) ?? p.recentInquiries
+        const trendDir = (p.trendDirection?.want_slope as 'up' | 'down' | 'flat' | undefined) ?? p.trend
         return (
-          <span className="inline-flex items-center justify-center w-full text-xs font-semibold text-emerald-700 tabular-nums bg-gradient-to-br from-emerald-100/70 to-emerald-50/30 rounded-lg px-2 py-1">
-            {fmtOrders(p.estimatedOrders)}
-          </span>
+          <MiniTrendChart
+            data={trendData}
+            trend={trendDir}
+            lastCollectedAt={p.lastCollectedAt}
+          />
         )
-      case 'estimatedSales':
-        return (
-          <span className="inline-flex items-center justify-center w-full text-xs font-semibold text-emerald-700 tabular-nums bg-gradient-to-br from-emerald-100/70 to-emerald-50/30 rounded-lg px-2 py-1">
-            {fmtMoney(p.estimatedSales)}
-          </span>
-        )
+      }
 
       // ── 元数据 ──
       case 'keywords':
@@ -360,39 +395,13 @@ export function ProductMonitorTab() {
         )
       }
 
-      // ── 趋势指标 ──
-      case 'trendValue': {
-        const v = p.trendValue
-        const isUp = p.trend === 'up'
-        const isDown = p.trend === 'down'
-        return (
-          <span className={`text-xs font-semibold tabular-nums ${
-            isUp ? 'text-green-600' : isDown ? 'text-red-600' : 'text-gray-400'
-          }`}>
-            {isUp ? '↑' : isDown ? '↓' : '→'} {Math.abs(v).toFixed(1)}%
-          </span>
-        )
-      }
-
-      // ── 迷你趋势图 ──
-      case 'trendChart':
-        return (
-          <MiniTrendChart
-            data={p.recentInquiries}
-            trend={p.trend}
-            lastCollectedAt={p.lastCollectedAt}
-          />
-        )
-
-      // ── 稳定性 ──
-      case 'stabilityValue': {
-        const cv = p.stabilityValue
-        const colorClass = cv <= 0.3 ? 'text-green-600' : cv <= 0.6 ? 'text-yellow-600' : 'text-red-600'
-        return (
-          <span className={`text-xs font-semibold tabular-nums ${colorClass}`}>
-            CV {cv.toFixed(2)}
-          </span>
-        )
+      // ── 价格动向 ──
+      case 'priceTrend': {
+        const pt = p.priceTrend
+        if (!pt || pt === 'flat') return <span className="text-xs text-gray-400">→平稳</span>
+        if (pt === 'down') return <span className="text-xs font-semibold text-red-600">↓降价</span>
+        if (pt === 'up') return <span className="text-xs font-semibold text-green-600">↑提价</span>
+        return <span className="text-xs text-gray-400">-</span>
       }
 
       default:
@@ -451,7 +460,7 @@ export function ProductMonitorTab() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div className="min-w-[1620px]">
+              <div className="min-w-[1400px]">
                 {/* ── 表头 ── */}
                 <div className="flex px-5 pt-2.5 pb-2 text-[11px] font-medium text-gray-500 bg-gradient-to-b from-gray-50 to-gray-50/50 select-none">
                   {COLUMNS.map(col => {
@@ -515,7 +524,7 @@ export function ProductMonitorTab() {
                         selectedProductId === p.id
                           ? 'bg-blue-50/60 hover:bg-blue-50/70'
                           : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent'
-                      }`}
+                      }${p.monitorStatus != null && p.monitorStatus !== 1 ? ' opacity-60' : ''}`}
                     >
                       {COLUMNS.map(col => {
                         const isGroupStart = col.groupStart && col.group !== 'identity'
