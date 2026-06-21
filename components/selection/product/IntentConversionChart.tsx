@@ -21,30 +21,31 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
       return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
     })
 
-    const collectRates = ht.hourly_collect_rate.map((v, i) =>
-      ht.hourly_look_rate[i] > 0 ? v / ht.hourly_look_rate[i] : null
-    )
-    const inquiryRates = ht.hourly_want_rate.map((v, i) =>
-      ht.hourly_look_rate[i] > 0 ? v / ht.hourly_look_rate[i] : null
-    )
-    const ifRatios = ht.hourly_want_rate.map((v, i) =>
-      ht.hourly_collect_rate[i] > 0 ? v / ht.hourly_collect_rate[i] : null
-    )
+    const collectRates = ht.hourly_collect_rate.map((v, i) => {
+      if (ht.hourly_look_rate[i] <= 0) return null
+      return +(v / ht.hourly_look_rate[i] * 100).toFixed(1)
+    })
+    const inquiryRates = ht.hourly_want_rate.map((v, i) => {
+      if (ht.hourly_look_rate[i] <= 0) return null
+      return +(v / ht.hourly_look_rate[i] * 100).toFixed(1)
+    })
+    const ifRatios = ht.hourly_want_rate.map((v, i) => {
+      if (ht.hourly_collect_rate[i] <= 0) return null
+      return +(v / ht.hourly_collect_rate[i]).toFixed(2)
+    })
 
     chartRef.current.setOption({
       tooltip: {
         trigger: 'axis',
-        valueFormatter: (value: number | string, seriesName?: string) => {
+        valueFormatter: (value: unknown) => {
           const v = Number(value)
           if (Number.isNaN(v)) return String(value)
-          if (seriesName?.includes('率')) return `${v.toFixed(1)}%`
-          if (seriesName?.includes('比')) return v.toFixed(2)
           return v.toLocaleString('zh-CN')
         },
       },
       legend: { show: false },
       grid: { left: 48, right: 56, top: 20, bottom: 28 },
-      xAxis: { type: 'category', data: times, axisLabel: { fontSize: 9, color: '#9ca3af', rotate: 45 }, axisTick: { show: false } },
+      xAxis: { type: 'category', data: times, axisLabel: { fontSize: 10, color: '#9ca3af', rotate: 45 }, axisTick: { show: false } },
       yAxis: [
         {
           type: 'value',
@@ -64,7 +65,7 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
           name: '询单率',
           type: 'line',
           yAxisIndex: 0,
-          data: inquiryRates.map(v => v != null ? v * 100 : null),
+          data: inquiryRates,
           smooth: true,
           symbol: 'circle',
           symbolSize: 4,
@@ -73,15 +74,15 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
           markLine: {
             silent: true,
             symbol: 'none',
-            lineStyle: { color: '#94a3b8', type: 'dashed', width: 1 },
-            data: [{ yAxis: 10, label: { formatter: '10%', fontSize: 9, color: '#94a3b8' } }],
+            lineStyle: { color: '#2563eb', type: 'dashed', width: 1 },
+            data: [{ yAxis: 10, label: { formatter: '10%', fontSize: 10, color: '#2563eb' } }],
           },
         },
         {
           name: '收藏率',
           type: 'line',
           yAxisIndex: 0,
-          data: collectRates.map(v => v != null ? v * 100 : null),
+          data: collectRates,
           smooth: true,
           symbol: 'circle',
           symbolSize: 4,
@@ -101,10 +102,10 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
           markLine: {
             silent: true,
             symbol: 'none',
-            lineStyle: { color: '#94a3b8', type: 'dashed', width: 1 },
+            lineStyle: { color: '#0d9488', type: 'dashed', width: 1 },
             data: [
-              { yAxis: 0.8, label: { formatter: '0.8', fontSize: 9, color: '#94a3b8' } },
-              { yAxis: 1.2, label: { formatter: '1.2', fontSize: 9, color: '#94a3b8' } },
+              { yAxis: 0.8, label: { formatter: '0.8', fontSize: 10, color: '#0d9488' } },
+              { yAxis: 1.2, label: { formatter: '1.2', fontSize: 10, color: '#0d9488' } },
             ],
           },
         },
@@ -119,7 +120,7 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
   useEffect(() => { return () => { chartRef.current?.dispose(); chartRef.current = null } }, [])
 
   if (!ht.ts || ht.ts.length === 0) {
-    return <div className="flex items-center justify-center h-40 text-sm text-gray-600">暂无数据</div>
+    return <div className="flex items-center justify-center h-48 text-sm text-gray-600">暂无数据</div>
   }
 
   return (
@@ -127,7 +128,7 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
       {/* HTML Legend */}
       <div className="mb-1 ml-1">
         <span className="text-[10px] text-gray-600">买卖意愿图</span>
-        <span className="flex gap-3 text-[9px] text-gray-600 flex-wrap mt-0.5">
+        <span className="flex gap-3 text-[10px] text-gray-600 flex-wrap mt-0.5">
           <span className="inline-flex items-center gap-1">
             <span className="w-2 h-0.5 bg-blue-600 inline-block rounded" />询单率
           </span>
@@ -139,7 +140,7 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
           </span>
         </span>
       </div>
-      <div ref={containerRef} className="w-full h-40" />
+      <div ref={containerRef} className="w-full h-48" />
     </div>
   )
 }
