@@ -165,8 +165,8 @@ export function dtoToProductItem(
   const d7InquiryRate = d7?.inquiry_rate ?? null
   const d7FavoriteRate = d7?.favorite_rate ?? null
   const d7IfRatio = d7?.if_ratio ?? null
-  const d7DailyWant = d7 != null && d7.total_dwant > 0 ? d7.total_dwant / 7 : null
-  const d7DailyLook = d7 != null && d7.total_dlook > 0 ? d7.total_dlook / 7 : null
+  const d7DailyWant = d7 != null ? d7.total_dwant / 7 : null
+  const d7DailyLook = d7 != null ? d7.total_dlook / 7 : null
   const d7BrowseGrowth = d7?.browse_growth ?? null
 
   // 升温信号：d1_inquiry_rate / d7_inquiry_rate - 1
