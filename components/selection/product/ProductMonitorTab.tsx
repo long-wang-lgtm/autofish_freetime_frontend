@@ -107,7 +107,7 @@ export function ProductMonitorTab() {
   const [searchText, setSearchText] = useState('')
   const [sortKey, setSortKey] = useState<ProductSortKey>('d7DailyWant')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
-  const [copiedGid, setCopiedGid] = useState<string | null>(null)
+  const [editingPriority, setEditingPriority] = useState<string | null>(null)
   const [aiReportOpen, setAiReportOpen] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
   const queryClient = useQueryClient()
@@ -134,15 +134,16 @@ export function ProductMonitorTab() {
     queryClient.invalidateQueries({ queryKey: ['monitor-items'] })
   }, [queryClient])
 
-  const handleCopyGid = useCallback(async (gid: string) => {
-    try {
-      await navigator.clipboard.writeText(gid)
-      setCopiedGid(gid)
-      setTimeout(() => setCopiedGid(null), 2000)
-    } catch {
-      // clipboard not available
-    }
-  }, [])
+  const handleStored = useCallback(async (gid: string) => {
+    await storedMonitorItem(gid)
+    queryClient.invalidateQueries({ queryKey: ['monitor-items'] })
+  }, [queryClient])
+
+  const handlePriorityChange = useCallback(async (gid: string, priority: number) => {
+    await updateMonitorItemPriority(gid, priority)
+    setEditingPriority(null)
+    queryClient.invalidateQueries({ queryKey: ['monitor-items'] })
+  }, [queryClient])
 
   const handleSort = useCallback((key: ProductSortKey) => {
     if (sortKey === key) {
@@ -193,42 +194,120 @@ export function ProductMonitorTab() {
 
   const renderCell = useCallback((p: typeof filtered[number], col: ColumnDef) => {
     switch (col.key) {
-      // ── 商品信息（描述 + GID，不显示标题）──
-      case 'title':
+      // ── 商品信息（描述 + GID链接 + 状态 + 优先级 + 入库）──
+      case 'title': {
+        const STATUS_MAP: Record<number, { label: string; dot: string; bg: string; text: string }> = {
+          0: { label: '已暂停', dot: 'bg-gray-400',   bg: 'bg-gray-100',   text: 'text-gray-500' },
+          1: { label: '监控中', dot: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+          2: { label: '已分析', dot: 'bg-blue-500',    bg: 'bg-blue-50',    text: 'text-blue-700' },
+          4: { label: '已入库', dot: 'bg-violet-500',  bg: 'bg-violet-50',  text: 'text-violet-700' },
+        }
+        const s = STATUS_MAP[p.monitorStatus ?? -1]
+        const isInteractive = p.monitorStatus === 0 || p.monitorStatus === 1
+        const isEditing = editingPriority === p.id
+
         return (
-          <div className="min-w-0 py-0.5 pr-2" title={p.description || p.id}>
+          <div className="min-w-0 py-0.5 pr-2">
+            {/* 第1行：描述 */}
             {p.description ? (
               <div className="text-[13px] text-gray-800 leading-snug line-clamp-2">
                 {p.description}
               </div>
             ) : (
-              <div className="text-[13px] text-gray-400 leading-snug italic">
-                无描述
-              </div>
+              <div className="text-[13px] text-gray-400 leading-snug italic">无描述</div>
             )}
-            <button
-              onClick={(e) => { e.stopPropagation(); handleCopyGid(p.id) }}
-              className="mt-0.5 text-[9px] text-gray-400 hover:text-gray-600 font-mono leading-snug truncate block w-full text-left transition-colors cursor-pointer select-none"
-              title="点击复制商品 GID"
-            >
-              {copiedGid === p.id ? (
-                <span className="inline-flex items-center gap-0.5 text-emerald-500">
-                  <Check className="w-2.5 h-2.5" /> 已复制
+
+            {/* 第2行：GID链接 + 状态badge + 优先级pill + 入库按钮 */}
+            <div className="flex items-center gap-1 flex-wrap mt-0.5">
+              {/* GID 链接 */}
+              <a
+                href={`https://www.goofish.com/item?id=${p.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-[9px] text-gray-500 font-mono border-b border-dotted border-gray-300 hover:text-gray-700 transition-colors"
+                title="在闲鱼打开"
+              >
+                {p.id} ↗
+              </a>
+
+              {/* 监控状态 badge */}
+              {s && isInteractive ? (
+                <button
+                  onClick={(e) => { e.stopPropagation(); p.monitorStatus === 1 ? handleCancel(p.id) : handleActivate(p.id) }}
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${s.bg} ${s.text} hover:opacity-80 transition-opacity cursor-pointer`}
+                  title={p.monitorStatus === 1 ? '点击暂停监控' : '点击启用监控'}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                  {s.label}
+                </button>
+              ) : s ? (
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${s.bg} ${s.text}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                  {s.label}
                 </span>
               ) : (
-                p.id
+                <span className="text-[9px] text-gray-400">-</span>
               )}
-            </button>
+
+              {/* 优先级 pill（null 时隐藏） */}
+              {p.priority !== null && (
+                isEditing ? (
+                  <select
+                    value={p.priority}
+                    onChange={(e) => {
+                      e.stopPropagation()
+                      handlePriorityChange(p.id, Number(e.target.value))
+                    }}
+                    onBlur={() => setEditingPriority(null)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[9px] px-1 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer"
+                    autoFocus
+                  >
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setEditingPriority(p.id) }}
+                    className="text-[9px] px-1 py-0.5 rounded bg-amber-50 text-amber-700 cursor-text hover:bg-amber-100 transition-colors"
+                    title="点击编辑优先级"
+                  >
+                    ⚡{p.priority}
+                  </button>
+                )
+              )}
+
+              {/* 入库按钮（已入库时隐藏） */}
+              {p.monitorStatus !== 4 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleStored(p.id) }}
+                  className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
+                  title="添加入库(商机库)"
+                >
+                  +入库
+                </button>
+              )}
+            </div>
           </div>
         )
+      }
 
       // ── 核心快照（带数据条）──
       case 'price': {
         const pct = getBarPct(p.price, dataBarMax.price)
+        const pt = p.priceTrend
         return (
-          <span className="relative block w-full text-center px-1">
+          <span className="relative block w-full text-center">
             <span className="absolute left-0 top-0 bottom-0 rounded-sm bg-gradient-to-r from-amber-200/50 to-amber-100/20" style={{ width: pct }} />
-            <span className="relative text-[13px] font-semibold text-gray-900 tabular-nums">{fmtPrice(p.price)}</span>
+            <span className="relative flex flex-col items-center">
+              <span className="text-[13px] font-semibold text-gray-900 tabular-nums">{fmtPrice(p.price)}</span>
+              {pt === 'up' && <span className="text-[9px] font-semibold text-green-600">↑提价</span>}
+              {pt === 'down' && <span className="text-[9px] font-semibold text-red-600">↓降价</span>}
+              {pt === 'flat' && <span className="text-[9px] text-gray-400">→平稳</span>}
+              {pt == null && <span className="text-[9px] text-gray-400">-</span>}
+            </span>
           </span>
         )
       }
@@ -387,7 +466,7 @@ export function ProductMonitorTab() {
       default:
         return null
     }
-  }, [copiedGid, dataBarMax, handleCopyGid, handleActivate, handleCancel])
+  }, [dataBarMax, editingPriority, handleActivate, handleCancel, handleStored, handlePriorityChange])
 
   // ===== 排序图标 =====
 
