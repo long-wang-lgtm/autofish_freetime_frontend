@@ -364,103 +364,42 @@ export function ProductMonitorTab() {
         )
       }
 
-      // ── 稳定性（三列）──
-      case 'wantStability': {
-        const cv = p.wantStability
-        return <span className={`text-xs font-semibold tabular-nums ${cvColor(cv)}`}>{fmtCV(cv)}</span>
-      }
-      case 'lookStability': {
-        const cv = p.lookStability
-        return <span className={`text-xs font-semibold tabular-nums ${cvColor(cv)}`}>{fmtCV(cv)}</span>
-      }
-      case 'collectStability': {
-        const cv = p.collectStability
-        return <span className={`text-xs font-semibold tabular-nums ${cvColor(cv)}`}>{fmtCV(cv)}</span>
-      }
-
-      // ── 趋势信号 ──
-      case 'trendChart': {
-        const trendData = p.hourlyTrend?.cumulative_want?.slice(-10) ?? p.recentInquiries
-        const trendDir = (p.trendDirection?.want_slope as 'up' | 'down' | 'flat' | undefined) ?? p.trend
+      // ── 趋势信号（三列，迷你图+指标）──
+      case 'wantTrend': {
+        const htData = p.hourlyTrend?.hourly_want_rate ?? []
         return (
           <MiniTrendChart
-            data={trendData}
-            trend={trendDir}
-            lastCollectedAt={p.lastCollectedAt}
+            hourlyData={htData.slice(-21)}
+            slope={(p.trendDirection?.want_slope as 'up' | 'down' | 'flat' | undefined) ?? null}
+            dailyAvg={p.d7DailyWant}
+            cv={p.wantStability}
+            color="amber"
           />
         )
       }
-
-      // ── 元数据 ──
-      case 'keywords':
+      case 'lookTrend': {
+        const htData = p.hourlyTrend?.hourly_look_rate ?? []
         return (
-          <div className="flex flex-wrap gap-1 justify-center">
-            {p.keywords.length === 0 ? (
-              <span className="text-xs text-gray-400">-</span>
-            ) : (
-              <>
-                {p.keywords.slice(0, 2).map(kw => (
-                  <span key={kw} className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-2 py-0.5 truncate max-w-[60px]" title={kw}>
-                    {kw}
-                  </span>
-                ))}
-                {p.keywords.length > 2 && (
-                  <span className="text-[10px] text-gray-400">+{p.keywords.length - 2}</span>
-                )}
-              </>
-            )}
-          </div>
-        )
-      case 'priority':
-        return (
-          <span className={`text-xs font-semibold tabular-nums ${
-            p.priority === null ? 'text-gray-400' :
-            p.priority >= 7 ? 'text-red-600' :
-            p.priority >= 4 ? 'text-amber-600' :
-            'text-gray-500'
-          }`}>
-            {p.priority ?? '-'}
-          </span>
-        )
-      case 'monitorStatus': {
-        const STATUS_MAP: Record<number, { label: string; dot: string; bg: string; text: string; interactive: boolean }> = {
-          0: { label: '已暂停',   dot: 'bg-gray-400',   bg: 'bg-gray-100',   text: 'text-gray-500',   interactive: true },
-          1: { label: '监控中',   dot: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', interactive: true },
-          2: { label: '已分析',   dot: 'bg-blue-500',    bg: 'bg-blue-50',    text: 'text-blue-700',    interactive: false },
-          3: { label: '已发布',   dot: 'bg-violet-500',  bg: 'bg-violet-50',  text: 'text-violet-700',  interactive: false },
-        }
-        const s = STATUS_MAP[p.monitorStatus ?? -1]
-        if (!s) return <span className="text-xs text-gray-400">-</span>
-
-        const badge = (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-            {s.label}
-          </span>
-        )
-
-        if (!s.interactive) return badge
-
-        // 监控中 → 点击取消；已暂停 → 点击启用
-        const isActive = p.monitorStatus === 1
-        return (
-          <button
-            onClick={(e) => { e.stopPropagation(); isActive ? handleCancel(p.id) : handleActivate(p.id) }}
-            className="hover:opacity-80 transition-opacity cursor-pointer"
-            title={isActive ? '点击暂停监控' : '点击启用监控'}
-          >
-            {badge}
-          </button>
+          <MiniTrendChart
+            hourlyData={htData.slice(-21)}
+            slope={(p.trendDirection?.look_slope as 'up' | 'down' | 'flat' | undefined) ?? null}
+            dailyAvg={p.d7DailyLook}
+            cv={p.lookStability}
+            color="blue"
+          />
         )
       }
-
-      // ── 价格动向 ──
-      case 'priceTrend': {
-        const pt = p.priceTrend
-        if (!pt || pt === 'flat') return <span className="text-xs text-gray-400">→平稳</span>
-        if (pt === 'down') return <span className="text-xs font-semibold text-red-600">↓降价</span>
-        if (pt === 'up') return <span className="text-xs font-semibold text-green-600">↑提价</span>
-        return <span className="text-xs text-gray-400">-</span>
+      case 'collectTrend': {
+        const htData = p.hourlyTrend?.hourly_collect_rate ?? []
+        return (
+          <MiniTrendChart
+            hourlyData={htData.slice(-21)}
+            slope={(p.trendDirection?.collect_slope as 'up' | 'down' | 'flat' | undefined) ?? null}
+            dailyAvg={p.d7DailyCollect}
+            cv={p.collectStability}
+            color="violet"
+          />
+        )
       }
 
       default:
