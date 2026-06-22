@@ -441,7 +441,7 @@ export function ProductMonitorTab() {
 
       {/* ── 数据表格 ── */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
+        <div className="max-h-[calc(100vh-280px)] overflow-auto custom-scrollbar">
           {isLoading ? (
             <p className="text-center py-12 text-gray-400">加载中...</p>
           ) : filtered.length === 0 ? (
@@ -457,8 +457,8 @@ export function ProductMonitorTab() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <div>
+            <div>
+              <div className="min-w-[1400px]">
                 {/* ── 表头 ── */}
                 <div
                   className="grid px-5 pt-2.5 pb-2 text-[11px] font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10 gap-x-2"
@@ -475,10 +475,12 @@ export function ProductMonitorTab() {
                         className={`
                           group flex items-center gap-1
                           transition-all duration-150
-                          ${isIdentity ? 'justify-start' : 'justify-center'}
+                          ${isIdentity ? 'justify-start sticky left-0 z-20 -ml-5 pl-5' : 'justify-center'}
                           ${isActive
                             ? 'text-blue-700 bg-blue-50/60 rounded-md -mx-0.5 px-0.5'
-                            : 'hover:text-gray-700'
+                            : isIdentity
+                              ? 'bg-gray-50 hover:text-gray-700'
+                              : 'hover:text-gray-700'
                           }
                         `}
                       >
@@ -497,8 +499,9 @@ export function ProductMonitorTab() {
                 >
                   {COLUMNS.map(col => {
                     const isGroupStart = col.groupStart && col.group !== 'identity'
+                    const isIdentity = col.group === 'identity'
                     return (
-                      <div key={`bar-${col.key}`}>
+                      <div key={`bar-${col.key}`} className={isIdentity ? 'sticky left-0 z-20 bg-white -ml-5 pl-5' : ''}>
                         {col.group !== 'identity' && (
                           <div className={`h-[3px] rounded-t-sm ${GROUP_STYLE[col.group].bar}`} />
                         )}
@@ -509,12 +512,14 @@ export function ProductMonitorTab() {
 
                 {/* ── 数据行 ── */}
                 <div className="divide-y divide-gray-50">
-                  {filtered.map(p => (
+                  {filtered.map(p => {
+                    const isSelected = selectedProductId === p.id
+                    return (
                     <div
                       key={p.id}
                       onClick={() => setSelectedProductId(prev => prev === p.id ? null : p.id)}
                       className={`group grid px-5 py-[12px] items-center transition-all duration-200 cursor-pointer gap-x-2 ${
-                        selectedProductId === p.id
+                        isSelected
                           ? 'bg-blue-50/60 hover:bg-blue-50/70'
                           : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent'
                       }${p.monitorStatus != null && p.monitorStatus !== 1 && p.monitorStatus !== 3 ? ' opacity-60' : ''}`}
@@ -525,7 +530,15 @@ export function ProductMonitorTab() {
                         return (
                           <div
                             key={col.key}
-                            className={isIdentity ? 'text-left' : 'text-center flex items-center justify-center'}
+                            className={
+                              isIdentity
+                                ? `text-left sticky left-0 z-10 -ml-5 pl-5 ${
+                                    isSelected
+                                      ? 'bg-blue-100 group-hover:bg-blue-200'
+                                      : 'bg-white group-hover:bg-blue-50'
+                                  }`
+                                : 'text-center flex items-center justify-center'
+                            }
                           >
                             {renderCell(p, col)}
                           </div>
@@ -543,7 +556,7 @@ export function ProductMonitorTab() {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  ); })}
                 </div>
               </div>
             </div>
