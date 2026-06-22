@@ -72,33 +72,33 @@ const GROUP_STYLE: Record<ColumnGroup, { bar: string }> = {
 interface ColumnDef {
   key: ProductSortKey
   label: string
-  width: string
   group: ColumnGroup
   groupStart: boolean
   dataBar?: boolean
 }
 
-const GROUP_GAP = 'ml-2'
+/** 表格 Grid 列模板，表头 / 分组色条 / 数据行共用 */
+const GRID_COLS = '3fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 2fr 2fr 2fr 40px'
 
 const COLUMNS: ColumnDef[] = [
   // ── 📦 商品标识 (identity) ──
-  { key: 'title',             label: '商品信息',       width: 'flex-1 min-w-[180px] max-w-[240px]', group: 'identity',   groupStart: true },
+  { key: 'title',             label: '商品信息', group: 'identity',   groupStart: true },
   // ── 📊 核心快照 (core, amber) ──
-  { key: 'price',             label: '价格',           width: 'w-[80px] shrink-0',  group: 'core',       groupStart: true,  dataBar: true },
+  { key: 'price',             label: '价格',     group: 'core',       groupStart: true,  dataBar: true },
   // ── 📈 转化质量 (conversion, sky) ──
-  { key: 'd7IfRatio' as ProductSortKey,       label: '7天询藏比',     width: 'w-[68px] shrink-0',  group: 'conversion', groupStart: true },
-  { key: 'd7InquiryRate' as ProductSortKey,   label: '7天询单率',     width: 'w-[68px] shrink-0',  group: 'conversion', groupStart: false },
-  { key: 'd7FavoriteRate' as ProductSortKey,  label: '7天收藏率',     width: 'w-[68px] shrink-0',  group: 'conversion', groupStart: false },
+  { key: 'd7IfRatio' as ProductSortKey,       label: '7天询藏比', group: 'conversion', groupStart: true },
+  { key: 'd7InquiryRate' as ProductSortKey,   label: '7天询单率', group: 'conversion', groupStart: false },
+  { key: 'd7FavoriteRate' as ProductSortKey,  label: '7天收藏率', group: 'conversion', groupStart: false },
   // ── 📐 日均量 (daily, teal) ──
-  { key: 'd7DailyWant' as ProductSortKey,     label: '日均想要',      width: 'w-[68px] shrink-0',  group: 'daily',      groupStart: true },
-  { key: 'd7DailyLook' as ProductSortKey,     label: '日均浏览',      width: 'w-[68px] shrink-0',  group: 'daily',      groupStart: false },
+  { key: 'd7DailyWant' as ProductSortKey,     label: '日均想要',  group: 'daily',      groupStart: true },
+  { key: 'd7DailyLook' as ProductSortKey,     label: '日均浏览',  group: 'daily',      groupStart: false },
   // ── 🚀 增长信号 (growth, emerald) ──
-  { key: 'd7BrowseGrowth' as ProductSortKey,  label: '流量增速',      width: 'w-[80px] shrink-0',  group: 'growth',     groupStart: true },
-  { key: 'acceleration' as ProductSortKey,    label: '升温信号',      width: 'w-[72px] shrink-0',  group: 'growth',     groupStart: false },
+  { key: 'd7BrowseGrowth' as ProductSortKey,  label: '流量增速',  group: 'growth',     groupStart: true },
+  { key: 'acceleration' as ProductSortKey,    label: '升温信号',  group: 'growth',     groupStart: false },
   // ── 📈 趋势信号 (trend, rose) ──
-  { key: 'wantTrend' as ProductSortKey,       label: '想要趋势',      width: 'w-[90px] shrink-0',  group: 'trend',      groupStart: true },
-  { key: 'lookTrend' as ProductSortKey,       label: '浏览趋势',      width: 'w-[90px] shrink-0',  group: 'trend',      groupStart: false },
-  { key: 'collectTrend' as ProductSortKey,    label: '收藏趋势',      width: 'w-[90px] shrink-0',  group: 'trend',      groupStart: false },
+  { key: 'wantTrend' as ProductSortKey,       label: '想要趋势',  group: 'trend',      groupStart: true },
+  { key: 'lookTrend' as ProductSortKey,       label: '浏览趋势',  group: 'trend',      groupStart: false },
+  { key: 'collectTrend' as ProductSortKey,    label: '收藏趋势',  group: 'trend',      groupStart: false },
 ]
 
 // ===== 组件 =====
