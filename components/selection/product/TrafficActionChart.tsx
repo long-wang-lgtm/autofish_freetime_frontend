@@ -58,8 +58,9 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
           data: ht.hourly_look_rate,
           smooth: true,
           symbol: 'none',
-          lineStyle: { color: '#6ee7b7', width: 1 },
-          areaStyle: { color: 'rgba(5, 150, 105, 0.10)' },
+          color: '#d97706',
+          lineStyle: { color: '#d97706', width: 1.5 },
+          areaStyle: { color: 'rgba(217, 119, 6, 0.08)' },
         },
         {
           name: '想要需求',
@@ -68,6 +69,7 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
           data: ht.hourly_want_rate,
           smooth: true,
           symbol: 'none',
+          color: '#2563eb',
           lineStyle: { color: '#2563eb', width: 2 },
         },
         {
@@ -77,7 +79,8 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
           data: ht.hourly_collect_rate,
           smooth: true,
           symbol: 'none',
-          lineStyle: { color: '#d97706', width: 1.5, type: 'dashed' },
+          color: '#7c3aed',
+          lineStyle: { color: '#7c3aed', width: 1.5, type: 'dashed' },
         },
       ],
     })
