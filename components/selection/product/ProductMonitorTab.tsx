@@ -7,11 +7,13 @@ import {
   removeMonitorItem,
   activateMonitorItem,
   cancelMonitorItem,
+  storedMonitorItem,
+  updateMonitorItemPriority,
   dtoToProductItem,
   getProductSortValue,
   type ProductSortKey,
 } from '@/lib/api/selection'
-import { ChevronUp, ChevronDown, Search, Trash2, ChevronRight, Check } from 'lucide-react'
+import { ChevronUp, ChevronDown, Search, Trash2, ChevronRight } from 'lucide-react'
 import { MiniTrendChart } from '@/components/selection/product/MiniTrendChart'
 import { ProductDiagnosticDrawer } from '@/components/selection/product/ProductDiagnosticDrawer'
 
@@ -50,26 +52,13 @@ function fmtAcceleration(acc: number | null): string {
   return '平稳'
 }
 
-function fmtCV(cv: number | null): string {
-  if (cv === null) return '-'
-  return cv.toFixed(2)
-}
-
-function cvColor(cv: number | null): string {
-  if (cv === null) return 'text-gray-400'
-  if (cv < 0.5) return 'text-green-600'
-  if (cv < 0.8) return 'text-yellow-600'
-  if (cv < 1.2) return 'text-orange-600'
-  return 'text-red-600'
-}
-
 function getBarPct(val: number, max: number): string {
   return max > 0 && val > 0 ? `${Math.max(3, Math.round((val / max) * 100))}%` : '0%'
 }
 
 // ===== 列分组定义 =====
 
-type ColumnGroup = 'identity' | 'core' | 'conversion' | 'daily' | 'growth' | 'stability' | 'trend' | 'meta'
+type ColumnGroup = 'identity' | 'core' | 'conversion' | 'daily' | 'growth' | 'trend'
 
 const GROUP_STYLE: Record<ColumnGroup, { bar: string }> = {
   identity:   { bar: '' },
@@ -77,13 +66,11 @@ const GROUP_STYLE: Record<ColumnGroup, { bar: string }> = {
   conversion: { bar: 'bg-gradient-to-r from-sky-300 to-sky-400' },
   daily:      { bar: 'bg-gradient-to-r from-teal-300 to-teal-400' },
   growth:     { bar: 'bg-gradient-to-r from-emerald-300 to-emerald-400' },
-  stability:  { bar: 'bg-gradient-to-r from-slate-300 to-slate-400' },
   trend:      { bar: 'bg-gradient-to-r from-rose-300 to-rose-400' },
-  meta:       { bar: 'bg-gradient-to-r from-violet-300 to-violet-400' },
 }
 
 interface ColumnDef {
-  key: ProductSortKey | 'keywords' | 'monitorStatus' | 'trendChart'
+  key: ProductSortKey
   label: string
   width: string
   group: ColumnGroup
@@ -95,30 +82,23 @@ const GROUP_GAP = 'ml-2'
 
 const COLUMNS: ColumnDef[] = [
   // ── 📦 商品标识 (identity) ──
-  { key: 'title',             label: '商品信息',       width: 'flex-1 min-w-[160px] max-w-[220px]', group: 'identity',   groupStart: true },
+  { key: 'title',             label: '商品信息',       width: 'flex-1 min-w-[180px] max-w-[240px]', group: 'identity',   groupStart: true },
   // ── 📊 核心快照 (core, amber) ──
-  { key: 'price',             label: '价格',           width: 'w-[72px] shrink-0',  group: 'core',       groupStart: true,  dataBar: true },
+  { key: 'price',             label: '价格',           width: 'w-[80px] shrink-0',  group: 'core',       groupStart: true,  dataBar: true },
   // ── 📈 转化质量 (conversion, sky) ──
-  { key: 'd7IfRatio' as ProductSortKey,       label: '7天询藏比',     width: 'w-[72px] shrink-0',  group: 'conversion', groupStart: true },
-  { key: 'd7InquiryRate' as ProductSortKey,   label: '7天询单率',     width: 'w-[72px] shrink-0',  group: 'conversion', groupStart: false },
-  { key: 'd7FavoriteRate' as ProductSortKey,  label: '7天收藏率',     width: 'w-[72px] shrink-0',  group: 'conversion', groupStart: false },
+  { key: 'd7IfRatio' as ProductSortKey,       label: '7天询藏比',     width: 'w-[68px] shrink-0',  group: 'conversion', groupStart: true },
+  { key: 'd7InquiryRate' as ProductSortKey,   label: '7天询单率',     width: 'w-[68px] shrink-0',  group: 'conversion', groupStart: false },
+  { key: 'd7FavoriteRate' as ProductSortKey,  label: '7天收藏率',     width: 'w-[68px] shrink-0',  group: 'conversion', groupStart: false },
   // ── 📐 日均量 (daily, teal) ──
-  { key: 'd7DailyWant' as ProductSortKey,     label: '日均想要',      width: 'w-[72px] shrink-0',  group: 'daily',      groupStart: true },
-  { key: 'd7DailyLook' as ProductSortKey,     label: '日均浏览',      width: 'w-[72px] shrink-0',  group: 'daily',      groupStart: false },
+  { key: 'd7DailyWant' as ProductSortKey,     label: '日均想要',      width: 'w-[68px] shrink-0',  group: 'daily',      groupStart: true },
+  { key: 'd7DailyLook' as ProductSortKey,     label: '日均浏览',      width: 'w-[68px] shrink-0',  group: 'daily',      groupStart: false },
   // ── 🚀 增长信号 (growth, emerald) ──
-  { key: 'd7BrowseGrowth' as ProductSortKey,  label: '7天流量增速',   width: 'w-[84px] shrink-0',  group: 'growth',     groupStart: true },
+  { key: 'd7BrowseGrowth' as ProductSortKey,  label: '流量增速',      width: 'w-[80px] shrink-0',  group: 'growth',     groupStart: true },
   { key: 'acceleration' as ProductSortKey,    label: '升温信号',      width: 'w-[72px] shrink-0',  group: 'growth',     groupStart: false },
-  // ── 📏 稳定性 (stability, slate) ──
-  { key: 'wantStability' as ProductSortKey,   label: '想要稳定性',    width: 'w-[78px] shrink-0',  group: 'stability',  groupStart: true },
-  { key: 'lookStability' as ProductSortKey,   label: '浏览稳定性',    width: 'w-[78px] shrink-0',  group: 'stability',  groupStart: false },
-  { key: 'collectStability' as ProductSortKey, label: '收藏稳定性',   width: 'w-[78px] shrink-0',  group: 'stability',  groupStart: false },
-  // ── 🧭 趋势信号 (trend, rose) ──
-  { key: 'trendChart' as any,                 label: '近期趋势',      width: 'w-[100px] shrink-0', group: 'trend',      groupStart: true },
-  // ── 🏷️ 元数据 (meta, violet) ──
-  { key: 'keywords',          label: '关键词',         width: 'w-[110px] shrink-0', group: 'meta',       groupStart: true },
-  { key: 'priority',          label: '优先级',         width: 'w-[56px] shrink-0',  group: 'meta',       groupStart: false },
-  { key: 'monitorStatus',     label: '监控状态',       width: 'w-[72px] shrink-0',  group: 'meta',       groupStart: false },
-  { key: 'priceTrend' as ProductSortKey,     label: '价格动向',      width: 'w-[72px] shrink-0',  group: 'meta',       groupStart: false },
+  // ── 📈 趋势信号 (trend, rose) ──
+  { key: 'wantTrend' as ProductSortKey,       label: '想要趋势',      width: 'w-[90px] shrink-0',  group: 'trend',      groupStart: true },
+  { key: 'lookTrend' as ProductSortKey,       label: '浏览趋势',      width: 'w-[90px] shrink-0',  group: 'trend',      groupStart: false },
+  { key: 'collectTrend' as ProductSortKey,    label: '收藏趋势',      width: 'w-[90px] shrink-0',  group: 'trend',      groupStart: false },
 ]
 
 // ===== 组件 =====
@@ -462,13 +442,12 @@ export function ProductMonitorTab() {
             <div className="overflow-x-auto">
               <div className="min-w-[1400px]">
                 {/* ── 表头 ── */}
-                <div className="flex px-5 pt-2.5 pb-2 text-[11px] font-medium text-gray-500 bg-gradient-to-b from-gray-50 to-gray-50/50 select-none">
+                <div className="flex px-5 pt-2.5 pb-2 text-[11px] font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10">
                   {COLUMNS.map(col => {
                     const isActive = sortKey === col.key
                     const isGroupStart = col.groupStart && col.group !== 'identity'
                     const isIdentity = col.group === 'identity'
-                    const unsortable = col.key === 'keywords' || col.key === 'monitorStatus' || col.key === 'trendChart'
-                    return !unsortable ? (
+                    return (
                       <button
                         key={col.key}
                         onClick={() => handleSort(col.key as ProductSortKey)}
@@ -487,20 +466,13 @@ export function ProductMonitorTab() {
                         <span>{col.label}</span>
                         {isIdentity && <SortIcon colKey={col.key as ProductSortKey} />}
                       </button>
-                    ) : (
-                      <div
-                        key={col.key}
-                        className={`flex items-center justify-center ${col.width} ${isGroupStart ? GROUP_GAP : ''}`}
-                      >
-                        <span>{col.label}</span>
-                      </div>
                     )
                   })}
                   <div className="w-[40px] shrink-0" />
                 </div>
 
                 {/* ── 分组色条（表头下方）── */}
-                <div className="flex px-5 pb-1 border-b border-gray-100">
+                <div className="flex px-5 pb-1 border-b border-gray-100 sticky top-[34px] z-10 bg-white">
                   {COLUMNS.map(col => {
                     const isGroupStart = col.groupStart && col.group !== 'identity'
                     return (
