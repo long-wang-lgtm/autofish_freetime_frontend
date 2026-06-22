@@ -102,13 +102,13 @@ export function CumulativeGrowthChart({ hourlyTrend: ht }: CumulativeGrowthChart
         <span className="text-xs text-gray-700">累计增长图</span>
         <span className="flex gap-3 text-xs text-gray-700 flex-wrap mt-0.5">
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-0.5 bg-emerald-600 inline-block rounded" />累计浏览（左轴）
+            <span className="w-2 h-0.5 bg-amber-600 inline-block rounded" />累计浏览（左轴）
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="w-2 h-0.5 bg-blue-600 inline-block rounded" />累计想要（右轴）
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-0.5 bg-amber-600 inline-block rounded" />累计收藏（右轴）
+            <span className="w-2 h-0.5 bg-violet-600 inline-block rounded" />累计收藏（右轴）
           </span>
         </span>
       </div>
