@@ -75,20 +75,7 @@ identity (灰) → core (琥珀) → conversion (天蓝) → daily (青) → gro
 
 ## 3. 趋势列（迷你图+指标）
 
-### 3.1 视觉效果
-
-每列 90px 宽、32px 高，半透明 SVG 折线做背景层，三个指标数字叠加显示：
-
-```
-┌──────────────────────┐
-│  ╱╲  ╱╲   ╱╲        │  ← 半透明折线背景 (opacity 0.20-0.35)
-│ ╱  ╲╱  ╲_╱  ╲___    │
-│                      │
-│  日13.9  ↗  CV0.63  │  ← 三个指标叠加显示
-└──────────────────────┘
-```
-
-### 3.2 数据源
+### 3.1 数据源
 
 | 指标 | 想要趋势 | 浏览趋势 | 收藏趋势 |
 |------|---------|---------|---------|
@@ -97,7 +84,7 @@ identity (灰) → core (琥珀) → conversion (天蓝) → daily (青) → gro
 | 日均 | `d7DailyWant` (d7.total_dwant/7) | `d7DailyLook` (d7.total_dlook/7) | `d7DailyCollect` (d7.total_dcollect/7) |
 | CV | `want_stability` | `look_stability` | `collect_stability` |
 
-### 3.3 方向映射
+### 3.2 方向映射
 
 | slope 值 | 显示 | 颜色 |
 |-----------|------|------|
@@ -106,13 +93,13 @@ identity (灰) → core (琥珀) → conversion (天蓝) → daily (青) → gro
 | `"flat"` | → | `#9ca3af`(灰) |
 | `null` | - | `#9ca3af` |
 
-### 3.4 折线颜色
+### 3.3 折线颜色
 
 - 想要趋势：`#d97706` (amber-600)
 - 浏览趋势：`#2563eb` (blue-600)
 - 收藏趋势：`#7c3aed` (violet-600)
 
-### 3.5 像素级视觉规格
+### 3.4 像素级视觉规格
 
 每列尺寸：**90px × 32px**，容器结构：
 
@@ -158,7 +145,7 @@ identity (灰) → core (琥珀) → conversion (天蓝) → daily (青) → gro
 
 `down` 方向箭头统一用 `#ef4444`(red-500)，`flat` 统一用 `#9ca3af`(gray-400)。
 
-### 3.6 组件改造
+### 3.5 组件改造
 
 修改 `MiniTrendChart` 组件，从纯 SVG 变为上述三层容器。或新建 `TrendCell` 组件承接此逻辑。Props：
 
