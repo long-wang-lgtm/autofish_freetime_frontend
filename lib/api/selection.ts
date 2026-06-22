@@ -81,6 +81,8 @@ export interface ProductItem {
   d7DailyWant: number | null
   /** 日均浏览数 = d7.total_dlook / 7 */
   d7DailyLook: number | null
+  /** 日均收藏数 = d7.total_dcollect / 7 */
+  d7DailyCollect: number | null
   /** d7 流量增速 */
   d7BrowseGrowth: number | null
   /** 升温信号 = d1_inquiry_rate / d7_inquiry_rate - 1 */
@@ -121,10 +123,9 @@ export type ProductSortKey =
   | 'd7DailyLook'
   | 'd7BrowseGrowth'
   | 'acceleration'
-  | 'wantStability'
-  | 'lookStability'
-  | 'collectStability'
-  | 'priceTrend'
+  | 'wantTrend'
+  | 'lookTrend'
+  | 'collectTrend'
 
 /** 将 DTO 映射为 ProductItem，一并计算所有衍生字段 */
 export function dtoToProductItem(
@@ -167,6 +168,7 @@ export function dtoToProductItem(
   const d7IfRatio = d7?.if_ratio ?? null
   const d7DailyWant = d7 != null ? d7.total_dwant / 7 : null
   const d7DailyLook = d7 != null ? d7.total_dlook / 7 : null
+  const d7DailyCollect = d7 != null ? d7.total_dcollect / 7 : null
   const d7BrowseGrowth = d7?.browse_growth ?? null
 
   // 升温信号：d1_inquiry_rate / d7_inquiry_rate - 1
@@ -217,6 +219,7 @@ export function dtoToProductItem(
     d7IfRatio,
     d7DailyWant,
     d7DailyLook,
+    d7DailyCollect,
     d7BrowseGrowth,
     acceleration,
     wantStability,
@@ -277,18 +280,17 @@ export function getProductSortValue(item: ProductItem, key: ProductSortKey): num
       return item.d7BrowseGrowth ?? -Infinity
     case 'acceleration':
       return item.acceleration ?? -Infinity
-    case 'wantStability':
-      return item.wantStability ?? -1
-    case 'lookStability':
-      return item.lookStability ?? -1
-    case 'collectStability':
-      return item.collectStability ?? -1
-    case 'priceTrend': {
-      // up=1, flat=0, down=-1
-      if (item.priceTrend === 'up') return 1
-      if (item.priceTrend === 'flat') return 0
-      if (item.priceTrend === 'down') return -1
-      return -1
+    case 'wantTrend': {
+      const s = item.trendDirection?.want_slope
+      return s === 'up' ? 2 : s === 'flat' ? 1 : s === 'down' ? 0 : -1
+    }
+    case 'lookTrend': {
+      const s = item.trendDirection?.look_slope
+      return s === 'up' ? 2 : s === 'flat' ? 1 : s === 'down' ? 0 : -1
+    }
+    case 'collectTrend': {
+      const s = item.trendDirection?.collect_slope
+      return s === 'up' ? 2 : s === 'flat' ? 1 : s === 'down' ? 0 : -1
     }
   }
 }
@@ -529,6 +531,21 @@ export async function activateMonitorItem(gid: string): Promise<OperationRespons
 export async function cancelMonitorItem(gid: string): Promise<OperationResponse> {
   console.debug(`[SelectionAPI] cancelMonitorItem gid=${gid}`)
   return selectionFetch<OperationResponse>(`/monitor/item/cancel?gid=${encodeURIComponent(gid)}`)
+}
+
+/** 商品入库（商机库）— GET /monitor/item/stored?gid= */
+export async function storedMonitorItem(gid: string): Promise<{ gid: string; monitorStatus: number }> {
+  console.debug(`[SelectionAPI] storedMonitorItem gid=${gid}`)
+  return selectionFetch<{ gid: string; monitorStatus: number }>(`/monitor/item/stored?gid=${encodeURIComponent(gid)}`)
+}
+
+/** 修改监控优先级 — POST /monitor/item/priority */
+export async function updateMonitorItemPriority(gid: string, priority: number): Promise<{ gid: string; priority: number }> {
+  console.debug(`[SelectionAPI] updateMonitorItemPriority gid=${gid} priority=${priority}`)
+  return selectionFetch<{ gid: string; priority: number }>('/monitor/item/priority', {
+    method: 'POST',
+    body: JSON.stringify({ gid, priority }),
+  })
 }
 
 /** 移除商家监控 — DELETE /api/topic/monitor/merchant/delete?uid= */
