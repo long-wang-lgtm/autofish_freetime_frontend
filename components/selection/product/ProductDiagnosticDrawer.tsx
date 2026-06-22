@@ -67,7 +67,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
     queryClient.invalidateQueries({ queryKey: ['monitor-items'] })
   }, [queryClient])
 
-  const title = product ? `${product.description || product.title || '商品'} / ${product.id}` : ''
+  const title = product ? `${product.title || '商品'} / ${product.id}` : ''
 
   const content = (
     <div className="p-4 space-y-4 overflow-y-auto h-full">
@@ -77,7 +77,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           {/* 第1行：标题 + 价格 */}
           <div className="flex justify-between items-start">
             <div className="text-sm font-semibold text-gray-900 leading-snug flex-1 min-w-0">
-              {product.description || product.title || '商品'}
+              {product.title || '商品'}
             </div>
             <div className="text-right ml-3 shrink-0">
               <div className="text-[15px] font-bold text-gray-900 tabular-nums">{fmtPrice(product.price)}</div>

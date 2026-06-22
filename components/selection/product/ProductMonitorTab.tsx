@@ -458,7 +458,7 @@ export function ProductMonitorTab() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div className="min-w-[1280px]">
+              <div className="min-w-[1400px]">
                 {/* ── 表头 ── */}
                 <div className="flex px-5 pt-2.5 pb-2 text-[11px] font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10">
                   {COLUMNS.map(col => {
@@ -472,7 +472,7 @@ export function ProductMonitorTab() {
                         className={`
                           group flex items-center gap-1 ${col.width}
                           transition-all duration-150
-                          ${isIdentity ? 'justify-start sticky left-0 z-[6] bg-gray-50' : 'justify-center'}
+                          ${isIdentity ? 'justify-start sticky left-0 z-[5] bg-gray-50' : 'justify-center'}
                           ${isActive
                             ? 'text-blue-700 bg-blue-50/60 rounded-md -mx-0.5 px-0.5'
                             : 'hover:text-gray-700'
@@ -524,7 +524,7 @@ export function ProductMonitorTab() {
                             key={col.key}
                             className={`
                               ${col.width}
-                              ${isIdentity ? `text-left sticky left-0 z-[5] ${selectedProductId === p.id ? 'bg-blue-50/60' : 'bg-white'}` : 'text-center flex items-center justify-center'}
+                              ${isIdentity ? 'text-left sticky left-0 z-[5] bg-white group-hover:bg-gradient-to-r group-hover:from-blue-50/30' : 'text-center flex items-center justify-center'}
                               ${isGroupStart ? GROUP_GAP : ''}
                             `}
                           >
