@@ -84,6 +84,8 @@ identity (灰) → core (琥珀) → conversion (天蓝) → daily (青) → gro
 | 日均 | `d7DailyWant` (d7.total_dwant/7) | `d7DailyLook` (d7.total_dlook/7) | `d7DailyCollect` (d7.total_dcollect/7) |
 | CV | `want_stability` | `look_stability` | `collect_stability` |
 
+> ⚠️ `d7DailyCollect` 为新增衍生字段（`d7.total_dcollect / 7`），需在 `ProductItem` 接口和 `dtoToProductItem` 中新增。
+
 ### 3.2 方向映射
 
 | slope 值 | 显示 | 颜色 |
@@ -109,10 +111,10 @@ identity (灰) → core (琥珀) → conversion (天蓝) → daily (青) → gro
 │  第1层：背景渐变 (absolute, inset-0, z-0)                                    │
 │    linear-gradient(180deg, rgba(SERIES_RGB,0.10), rgba(SERIES_RGB,0.02))   │
 │                                                                             │
-│  第2层：SVG折线 (absolute, left:0, top:0, z-0)                              │
-│    100×32 viewBox · polyline fill:none · stroke-width:1.2                  │
-│    opacity: 有数据→0.28-0.35 / flat→0.20                                    │
-│    · 取 hourly_*_rate 最近 ~21 个点，Y轴映射到 32px 高度                      │
+│  第2层：SVG折线 (absolute, inset-0, z-[1])                                   │
+│    90×32 viewBox（与容器等宽）· polyline fill:none · stroke-width:1.2        │
+│    opacity: 有数据→0.30 / flat→0.20                                          │
+│    · 取 hourly_*_rate 最近 21 个点（不足则取全部），Y 轴映射到 32px 高度       │
 │    · 不需要末点圆，不需要坐标轴                                                │
 │                                                                             │
 │  第3层：指标数字 (relative, z-1, flex, justify-around, items-center, h-full) │
@@ -145,9 +147,14 @@ identity (灰) → core (琥珀) → conversion (天蓝) → daily (青) → gro
 
 `down` 方向箭头统一用 `#ef4444`(red-500)，`flat` 统一用 `#9ca3af`(gray-400)。
 
-### 3.5 组件改造
+### 3.6 CV 显示格式
 
-修改 `MiniTrendChart` 组件，从纯 SVG 变为上述三层容器。或新建 `TrendCell` 组件承接此逻辑。Props：
+- 保留 2 位小数（`toFixed(2)`），与当前 `fmtCV` 一致
+- 趋势列内 CV 统一用 `text-gray-500`（中性灰），**不使用**当前 `cvColor()` 的绿/黄/橙/红色阶梯
+
+### 3.7 组件改造
+
+修改 `MiniTrendChart` 组件，从纯 SVG 折线图改造为上述三层容器（渐变背景 + SVG 折线 + 指标数字叠加）。组件内部实现三层结构，对外暴露新 Props：
 
 | prop | 类型 | 说明 |
 |------|------|------|
@@ -205,10 +212,8 @@ identity (灰) → core (琥珀) → conversion (天蓝) → daily (青) → gro
 
 ### 4.2 GID 链接
 
-- 当前：`<button>` 点击复制 GID 到剪贴板，`copiedGid` 状态管理
-- 改为：`<a>` 链接，href=`https://www.goofish.com/item?id={gid}`，`target="_blank" rel="noopener noreferrer"`
-- 字体：`text-[9px] text-gray-500 font-mono`，底部虚线下划线
-- 移除 `copiedGid` 状态、`handleCopyGid` 函数、`Check` 图标引用
+由当前 `<button>` 复制剪贴板改为 `<a>` 链接跳转（样式和 URL 见 §4.1 像素布局）。
+移除 `copiedGid` 状态、`handleCopyGid` 函数、`Check` 图标引用。
 
 ### 4.3 监控状态 badge
 
@@ -235,7 +240,7 @@ const STATUS_MAP = {
 - 显示：数字 1-10，黄色背景 pill（`bg-amber-50 text-amber-700`），带 ⚡ 前缀
 - 点击：展开为 `<select>` 下拉（1-10），自动聚焦
 - onChange / onBlur：调用 `POST /monitor/item/priority` → 乐观更新本地状态
-- `priority === null` 时显示 `-`
+- `priority === null` 时不显示此 pill（与 4.1 像素布局一致）
 
 ### 4.5 入库按钮
 
@@ -335,7 +340,7 @@ const STATUS_MAP = {
 | 关键词 | 已存在 | 保留（从表格移入） |
 | 采集质量 | 已存在 | 保留 |
 | 上架天数 | 已存在 | 保留 |
-| 商家名 | 无 | 🆕 添加 `product.shopName` |
+| 商家名 | 无 | 🆕 展示 `product.shopName`（数据已有，仅新增 UI 渲染） |
 | 非活跃警告 | 已存在（红色条） | 保留 |
 
 ### 6.3 与表格共享逻辑
@@ -390,6 +395,8 @@ export async function updateMonitorItemPriority(gid: string, priority: number): 
 
 **移除 3 (PUBLISHED/已发布)。** 商品入库后不再有"发布"概念，统一为 STORED。
 
+**兼容处理：** 后端可能存在尚未迁移的 `monitorStatus===3` 数据。前端 STATUS_MAP 不包含 key 3 时，`STATUS_MAP[3]` 为 `undefined`，fallback 显示 `-`（与当前 `s?.label ?? '-'` 逻辑一致）。
+
 ---
 
 ## 9. 改动范围汇总
@@ -399,8 +406,7 @@ export async function updateMonitorItemPriority(gid: string, priority: number): 
 | `components/selection/product/ProductMonitorTab.tsx` | ~150 行 | 列重组、表头 sticky、商品信息列扩展、趋势列重写、交互逻辑新增 |
 | `components/selection/product/MiniTrendChart.tsx` | ~50 行 | 重构：纯SVG → 背景折线+指标叠加 |
 | `components/selection/product/ProductDiagnosticDrawer.tsx` | ~60 行 | 元数据区重构、新增价格/链接/入库/共享组件 |
-| `lib/api/selection.ts` | ~20 行 | 新增 `storedMonitorItem`、`updateMonitorItemPriority` |
-| `components/selection/product/ProductItem.ts` | 0 行 | `d7DailyCollect` 需在 dtoToProductItem 中新增计算 |
+| `lib/api/selection.ts` | ~30 行 | 新增 `storedMonitorItem`、`updateMonitorItemPriority`；`ProductItem` 新增 `d7DailyCollect` 衍生字段；`dtoToProductItem` 新增计算；`ProductSortKey` 更新 |
 
 ### 新增文件（可选提取）
 
