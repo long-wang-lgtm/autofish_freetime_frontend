@@ -303,10 +303,10 @@ export function ProductMonitorTab() {
             <span className="absolute left-0 top-0 bottom-0 rounded-sm bg-gradient-to-r from-amber-200/50 to-amber-100/20" style={{ width: pct }} />
             <span className="relative flex flex-col items-center">
               <span className="text-[13px] font-semibold text-gray-900 tabular-nums">{fmtPrice(p.price)}</span>
-              {pt === 'up' && <span className="text-[9px] font-semibold text-green-600">↑提价</span>}
-              {pt === 'down' && <span className="text-[9px] font-semibold text-red-600">↓降价</span>}
-              {pt === 'flat' && <span className="text-[9px] text-gray-400">→平稳</span>}
-              {(pt == null) && <span className="text-[9px] text-gray-400">-</span>}
+              {pt === 'up' && <span className="text-[9px] font-semibold text-green-600">(↑提价)</span>}
+              {pt === 'down' && <span className="text-[9px] font-semibold text-red-600">(↓降价)</span>}
+              {pt === 'flat' && <span className="text-[9px] text-gray-400">(→平稳)</span>}
+              {pt == null && <span className="text-[9px] text-gray-400">(-)</span>}
             </span>
           </span>
         )

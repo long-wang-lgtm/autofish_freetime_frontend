@@ -175,9 +175,9 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
             <span>
               <span className="font-semibold text-gray-900">{fmtPrice(product.price)}</span>
               <span className="ml-1">
-                {product.priceTrend === 'up' && <span className="text-green-600">↑提价</span>}
-                {product.priceTrend === 'down' && <span className="text-red-600">↓降价</span>}
-                {product.priceTrend === 'flat' && <span className="text-gray-400">→平稳</span>}
+                {product.priceTrend === 'up' && <span className="text-green-600">(↑提价)</span>}
+                {product.priceTrend === 'down' && <span className="text-red-600">(↓降价)</span>}
+                {product.priceTrend === 'flat' && <span className="text-gray-400">(→平稳)</span>}
               </span>
             </span>
             <span>
