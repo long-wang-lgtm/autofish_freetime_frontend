@@ -200,7 +200,7 @@ export function ProductMonitorTab() {
           0: { label: '已暂停', dot: 'bg-gray-400',   bg: 'bg-gray-100',   text: 'text-gray-500' },
           1: { label: '监控中', dot: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
           2: { label: '已分析', dot: 'bg-blue-500',    bg: 'bg-blue-50',    text: 'text-blue-700' },
-          4: { label: '已入库', dot: 'bg-violet-500',  bg: 'bg-violet-50',  text: 'text-violet-700' },
+          3: { label: '已入库', dot: 'bg-violet-500',  bg: 'bg-violet-50',  text: 'text-violet-700' },
         }
         const s = STATUS_MAP[p.monitorStatus ?? -1]
         const isInteractive = p.monitorStatus === 0 || p.monitorStatus === 1
@@ -517,7 +517,7 @@ export function ProductMonitorTab() {
                         selectedProductId === p.id
                           ? 'bg-blue-50/60 hover:bg-blue-50/70'
                           : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent'
-                      }${p.monitorStatus != null && p.monitorStatus !== 1 ? ' opacity-60' : ''}`}
+                      }${p.monitorStatus != null && p.monitorStatus !== 1 && p.monitorStatus !== 3 ? ' opacity-60' : ''}`}
                       style={{ gridTemplateColumns: GRID_COLS }}
                     >
                       {COLUMNS.map(col => {
