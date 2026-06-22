@@ -112,23 +112,109 @@ identity (灰) → core (琥珀) → conversion (天蓝) → daily (青) → gro
 - 浏览趋势：`#2563eb` (blue-600)
 - 收藏趋势：`#7c3aed` (violet-600)
 
-### 3.5 组件改造
+### 3.5 像素级视觉规格
 
-修改 `MiniTrendChart` 组件，从纯 SVG 变为带背景折线+指标叠加的容器。或新建 `TrendCell` 组件承接此逻辑。
+每列尺寸：**90px × 32px**，容器结构：
+
+```
+┌─ 外层容器 position:relative; w-[90px]; h-[32px]; rounded; overflow-hidden ─┐
+│                                                                             │
+│  第1层：背景渐变 (absolute, inset-0, z-0)                                    │
+│    linear-gradient(180deg, rgba(SERIES_RGB,0.10), rgba(SERIES_RGB,0.02))   │
+│                                                                             │
+│  第2层：SVG折线 (absolute, left:0, top:0, z-0)                              │
+│    100×32 viewBox · polyline fill:none · stroke-width:1.2                  │
+│    opacity: 有数据→0.28-0.35 / flat→0.20                                    │
+│    · 取 hourly_*_rate 最近 ~21 个点，Y轴映射到 32px 高度                      │
+│    · 不需要末点圆，不需要坐标轴                                                │
+│                                                                             │
+│  第3层：指标数字 (relative, z-1, flex, justify-around, items-center, h-full) │
+│    font-size: 8.5px (约 text-[9px])                                         │
+│    · 左侧: 日均值     color: #6b7280 (gray-500)                             │
+│    · 中间: 方向箭头   color: 按系列色 / 红 / 灰, font-weight: 600            │
+│    · 右侧: CV值       color: #6b7280                                        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**三层叠加示意（以想要趋势-上升为例）：**
+
+```
+┌──────────────────────┐
+│  ╱╲   ╱╲    ╱╲      │  ← 背景渐变(琥珀 0.10→0.02) + SVG折线(opacity 0.30)
+│ ╱  ╲_╱  ╲__╱  ╲     │
+│                      │
+│ 日13.9   ↗   CV0.63 │  ← 三个指标数字 (z-1, 叠在SVG上方)
+└──────────────────────┘
+```
+
+**颜色方案：**
+
+| 列 | 背景渐变 rgba | SVG stroke | 方向箭头(up)色 |
+|----|-------------|-----------|---------------|
+| 想要趋势 | `rgba(217,119,6,0.10)` → `rgba(217,119,6,0.02)` | `#d97706` | `#d97706` |
+| 浏览趋势 | `rgba(37,99,235,0.08)` → `rgba(37,99,235,0.01)` | `#2563eb` | `#2563eb` |
+| 收藏趋势 | `rgba(124,58,237,0.08)` → `rgba(124,58,237,0.02)` | `#7c3aed` | `#7c3aed` |
+
+`down` 方向箭头统一用 `#ef4444`(red-500)，`flat` 统一用 `#9ca3af`(gray-400)。
+
+### 3.6 组件改造
+
+修改 `MiniTrendChart` 组件，从纯 SVG 变为上述三层容器。或新建 `TrendCell` 组件承接此逻辑。Props：
+
+| prop | 类型 | 说明 |
+|------|------|------|
+| `hourlyData` | `number[]` | 小时级时序数据（如 hourly_want_rate） |
+| `slope` | `'up' \| 'down' \| 'flat' \| null` | 趋势方向 |
+| `dailyAvg` | `number \| null` | 日均值 |
+| `cv` | `number \| null` | 变异系数（stability） |
+| `color` | `'amber' \| 'blue' \| 'violet'` | 颜色主题 |
 
 ---
 
 ## 4. 商品信息列
 
-### 4.1 布局
+### 4.1 像素级布局
 
 ```
-描述文本 (line-clamp-2, text-[13px])
-GID链接 ↗  [监控中]  ⚡3  +入库
+┌─ 商品信息列 (flex-1, text-left) ──────────────────────────────┐
+│                                                                │
+│  第1行：描述文本                                                │
+│    text-[13px] text-gray-800 leading-snug line-clamp-2         │
+│    无描述时：text-gray-400 italic "无描述"                       │
+│                                                                │
+│  第2行：元数据行                                                │
+│    display:flex; align-items:center; gap:4px; flex-wrap:wrap   │
+│    margin-top: 1-2px                                           │
+│                                                                │
+│    [GID链接] [状态badge] [优先级pill] [入库按钮]                 │
+│                                                                │
+│    GID链接:                                                    │
+│      <a> text-[9px] text-gray-500 font-mono                    │
+│      border-bottom: 1px dotted #9ca3af                         │
+│      href="https://www.goofish.com/item?id={gid}"              │
+│      target="_blank" rel="noopener noreferrer"                 │
+│      末尾带 " ↗" 后缀                                           │
+│                                                                │
+│    状态badge:                                                  │
+│      text-[9px] px-1.5 py-0.5 rounded-full                    │
+│      可交互时 cursor-pointer hover:opacity-80                  │
+│                                                                │
+│    优先级pill:                                                 │
+│      text-[9px] px-1 py-0.5 rounded                           │
+│      bg-amber-50 text-amber-700 cursor-text                    │
+│      显示 "⚡3" (点击展开select)                                 │
+│      null 时不显示此pill                                        │
+│                                                                │
+│    入库按钮:                                                   │
+│      text-[9px] px-1.5 py-0.5 rounded                         │
+│      bg-indigo-50 text-indigo-600                              │
+│      border border-indigo-200 cursor-pointer                   │
+│      显示 "+入库"                                               │
+│      monitorStatus===4 时不显示                                 │
+│                                                                │
+└────────────────────────────────────────────────────────────────┘
 ```
-
-- 描述：与当前一致，最多两行截断
-- 第二行：水平排列，flex-wrap，gap-1
 
 ### 4.2 GID 链接
 
@@ -175,39 +261,79 @@ const STATUS_MAP = {
 
 ## 5. 价格列（合并价格动向）
 
-### 5.1 布局
+### 5.1 像素级布局
 
 ```
-¥2.50        ← 大字价格
-→ 平稳        ← 小字动向
+┌─ 价格列 (w-[80px], text-center) ──────────────┐
+│                                                 │
+│  第1行：¥价格                                    │
+│    text-[13px] font-semibold text-gray-900      │
+│    tabular-nums                                  │
+│    例: "¥2.50"                                  │
+│                                                 │
+│  第2行：价格动向                                  │
+│    text-[9px] font-semibold (有动向时)           │
+│    "up"   → "↑提价" text-green-600              │
+│    "down" → "↓降价" text-red-600                │
+│    "flat" → "→平稳" text-gray-400               │
+│    null   → 不显示                               │
+│                                                 │
+│  数据条（保留）:                                  │
+│    absolute left-0 top-0 bottom-0               │
+│    bg-gradient-to-r from-amber-200/50            │
+│    width由getBarPct计算                          │
+│    z-0（数字在z-1上层）                           │
+│                                                 │
+└─────────────────────────────────────────────────┘
 ```
-
-### 5.2 价格动向映射
-
-| priceTrend | 显示 | 颜色 |
-|-----------|------|------|
-| `"up"` | ↑ 提价 | `text-green-600` |
-| `"down"` | ↓ 降价 | `text-red-600` |
-| `"flat"` | → 平稳 | `text-gray-400` |
-| `null` | - | `text-gray-400` |
-
-### 5.3 数据条
-
-保留当前价格数据条（`getBarPct` + 渐变背景），数据条在价格数字下方。
 
 ---
 
 ## 6. 抽屉顶部元数据重构
 
-### 6.1 布局
+### 6.1 像素级布局
+
+完整替换当前 ProductDiagnosticDrawer 的 Header 元数据区（第 50-93 行）。
 
 ```
-第一行: 标题 (font-semibold)               ¥2.50
-                                            → 价格平稳
-第二行: GID ↗  [监控中]  ⚡优先级3  [+入库]
-第三行: 采集: 可靠(21次)  上架336天  商家: 书韵学姐
-第四行: [复刻] [微习惯] [科学休息法] [摆烂躺平]
+┌─ 抽屉顶部元数据区 (space-y-1.5 → 改为结构化网格) ──────────────────────┐
+│                                                                        │
+│  第1行：标题 + 价格（flex, justify-between, items-start）                │
+│    左：标题                                                             │
+│      text-sm font-semibold text-gray-900 leading-snug                  │
+│      取 product.description || product.title                           │
+│    右：价格区块（text-right, ml-3, shrink-0）                            │
+│      第1行：¥价格  text-[15px] font-bold text-gray-900                 │
+│      第2行：动向   text-[10px]                                          │
+│        "up"→"↑提价" text-green-600                                     │
+│        "down"→"↓降价" text-red-600                                     │
+│        "flat"→"→平稳" text-gray-400                                    │
+│        null→"价格未知" text-gray-400                                    │
+│                                                                        │
+│  第2行：GID + 状态 + 优先级 + 入库（flex, gap-2, flex-wrap）             │
+│    GID链接: 与表格 4.1 完全一致的 <a> 标签                                │
+│    状态badge: 与表格 4.1 完全一致的交互逻辑                                │
+│    优先级pill: 与表格 4.1 完全一致的原地编辑                               │
+│    入库按钮: 与表格 4.1 完全一致                                         │
+│                                                                        │
+│  第3行：采集 + 上架 + 商家（flex, gap-3, text-[11px] text-gray-500）      │
+│    采集: "采集: {可靠/有限/不足} ({N}次)"                                │
+│    上架: "上架 {N} 天"                                                   │
+│    商家: product.shopName                                               │
+│        · 当前 `shopName` 来自 `MonitoredItemDTO.name`                   │
+│        · 抽屉内共享此逻辑                                                │
+│                                                                        │
+│  第4行：关键词 pills（flex, flex-wrap, gap-1）                           │
+│    text-[11px] bg-gray-100 text-gray-700 rounded-full px-2 py-0.5      │
+│    (与当前抽屉内关键词样式保持一致)                                        │
+│                                                                        │
+│  保留：非活跃状态警告条（当前第87-91行红色提示），逻辑不变                    │
+│  保留：触发信号 Hero Metric（当前第95-122行），逻辑不变                     │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
 ```
+
+**与表格共享原则：** 表格行和抽屉顶部的 GID链接、状态badge、优先级pill、入库按钮 四个元素使用完全相同的渲染逻辑和样式。如果提取共享子组件（`MonitorStatusBadge` / `PriorityEditor` / `StoredButton`），抽屉和表格共同引用。
 
 ### 6.2 变更明细
 
