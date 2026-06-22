@@ -458,9 +458,12 @@ export function ProductMonitorTab() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div className="min-w-[1400px]">
+              <div>
                 {/* ── 表头 ── */}
-                <div className="flex px-5 pt-2.5 pb-2 text-[11px] font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10">
+                <div
+                  className="grid px-5 pt-2.5 pb-2 text-[11px] font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10 gap-x-2"
+                  style={{ gridTemplateColumns: GRID_COLS }}
+                >
                   {COLUMNS.map(col => {
                     const isActive = sortKey === col.key
                     const isGroupStart = col.groupStart && col.group !== 'identity'
@@ -470,14 +473,13 @@ export function ProductMonitorTab() {
                         key={col.key}
                         onClick={() => handleSort(col.key as ProductSortKey)}
                         className={`
-                          group flex items-center gap-1 ${col.width}
+                          group flex items-center gap-1
                           transition-all duration-150
                           ${isIdentity ? 'justify-start' : 'justify-center'}
                           ${isActive
                             ? 'text-blue-700 bg-blue-50/60 rounded-md -mx-0.5 px-0.5'
                             : 'hover:text-gray-700'
                           }
-                          ${isGroupStart ? GROUP_GAP : ''}
                         `}
                       >
                         {!isIdentity && <SortIcon colKey={col.key as ProductSortKey} />}
@@ -486,22 +488,23 @@ export function ProductMonitorTab() {
                       </button>
                     )
                   })}
-                  <div className="w-[40px] shrink-0" />
                 </div>
 
                 {/* ── 分组色条（表头下方）── */}
-                <div className="flex px-5 pb-1 border-b border-gray-100 sticky top-[34px] z-10 bg-white">
+                <div
+                  className="grid px-5 pb-1 border-b border-gray-100 sticky top-[34px] z-10 bg-white gap-x-2"
+                  style={{ gridTemplateColumns: GRID_COLS }}
+                >
                   {COLUMNS.map(col => {
                     const isGroupStart = col.groupStart && col.group !== 'identity'
                     return (
-                      <div key={`bar-${col.key}`} className={`${col.width} ${isGroupStart ? GROUP_GAP : ''}`}>
+                      <div key={`bar-${col.key}`}>
                         {col.group !== 'identity' && (
                           <div className={`h-[3px] rounded-t-sm ${GROUP_STYLE[col.group].bar}`} />
                         )}
                       </div>
                     )
                   })}
-                  <div className="w-[40px] shrink-0" />
                 </div>
 
                 {/* ── 数据行 ── */}
@@ -510,23 +513,19 @@ export function ProductMonitorTab() {
                     <div
                       key={p.id}
                       onClick={() => setSelectedProductId(prev => prev === p.id ? null : p.id)}
-                      className={`group flex px-5 py-[12px] items-center transition-all duration-200 cursor-pointer ${
+                      className={`group grid px-5 py-[12px] items-center transition-all duration-200 cursor-pointer gap-x-2 ${
                         selectedProductId === p.id
                           ? 'bg-blue-50/60 hover:bg-blue-50/70'
                           : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent'
                       }${p.monitorStatus != null && p.monitorStatus !== 1 ? ' opacity-60' : ''}`}
+                      style={{ gridTemplateColumns: GRID_COLS }}
                     >
                       {COLUMNS.map(col => {
-                        const isGroupStart = col.groupStart && col.group !== 'identity'
                         const isIdentity = col.group === 'identity'
                         return (
                           <div
                             key={col.key}
-                            className={`
-                              ${col.width}
-                              ${isIdentity ? 'text-left' : 'text-center flex items-center justify-center'}
-                              ${isGroupStart ? GROUP_GAP : ''}
-                            `}
+                            className={isIdentity ? 'text-left' : 'text-center flex items-center justify-center'}
                           >
                             {renderCell(p, col)}
                           </div>
@@ -534,7 +533,7 @@ export function ProductMonitorTab() {
                       })}
 
                       {/* 行操作 */}
-                      <div className="w-[40px] shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                      <div className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleRemove(p.id) }}
                           className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
