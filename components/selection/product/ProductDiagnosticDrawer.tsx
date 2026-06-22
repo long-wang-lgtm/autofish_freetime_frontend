@@ -74,25 +74,8 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
       {/* Header 元数据 */}
       {product && (
         <div className="space-y-2">
-          {/* 第1行：价格 + GID链接 + 状态 + 优先级 + 入库 */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* 价格 */}
-            <span className="text-[15px] font-bold text-gray-900 tabular-nums">{fmtPrice(product.price)}</span>
-            <span className="text-[10px]">
-              {product.priceTrend === 'up' && <span className="text-green-600 font-semibold">↑提价</span>}
-              {product.priceTrend === 'down' && <span className="text-red-600 font-semibold">↓降价</span>}
-              {product.priceTrend === 'flat' && <span className="text-gray-400">→平稳</span>}
-              {(product.priceTrend == null) && <span className="text-gray-400">价格未知</span>}
-            </span>
-            <a
-              href={`https://www.goofish.com/item?id=${product.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[9px] text-gray-500 font-mono border-b border-dotted border-gray-300 hover:text-gray-700 transition-colors"
-            >
-              {product.id} ↗
-            </a>
-
+          {/* 第1行：状态 + 优先级 + 入库 */}
+          <div className="flex items-center gap-2">
             {/* 状态 badge */}
             {(() => {
               const STATUS_MAP: Record<number, { label: string; dot: string; bg: string; text: string }> = {
@@ -161,26 +144,51 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
             )}
           </div>
 
-          {/* 第2行：采集 + 上架 + 商家 */}
-          <div className="flex gap-3 text-[11px] text-gray-500">
+          {/* 第2行：GID · 商家 · 上架日期(天数) · 价格(动向) · 采集 */}
+          <div className="flex items-center gap-3 text-[11px] text-gray-500 flex-wrap">
+            <a
+              href={`https://www.goofish.com/item?id=${product.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-500 font-mono border-b border-dotted border-gray-300 hover:text-gray-700 transition-colors"
+            >
+              {product.id} ↗
+            </a>
+            {product.uid && (
+              <a
+                href={`https://www.goofish.com/personal?userId=${product.uid}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-500 border-b border-dotted border-gray-300 hover:text-gray-700 transition-colors"
+              >
+                {product.shopName || product.uid} ↗
+              </a>
+            )}
+            {product.publishedAt && (
+              <span>
+                {new Date(product.publishedAt).toLocaleDateString('zh-CN')}
+                {product.daysSincePublish != null && (
+                  <span className="text-gray-400 ml-0.5">({Math.round(product.daysSincePublish)}天)</span>
+                )}
+              </span>
+            )}
             <span>
-              采集:{' '}
+              <span className="font-semibold text-gray-900">{fmtPrice(product.price)}</span>
+              <span className="ml-1">
+                {product.priceTrend === 'up' && <span className="text-green-600">↑提价</span>}
+                {product.priceTrend === 'down' && <span className="text-red-600">↓降价</span>}
+                {product.priceTrend === 'flat' && <span className="text-gray-400">→平稳</span>}
+              </span>
+            </span>
+            <span>
+              采集
               {wm?.d7 != null ? (
-                <span className="font-medium text-gray-700">
-                  {wm.d7.quality_label === 'reliable' ? '可靠' :
-                   wm.d7.quality_label === 'limited' ? '有限' :
-                   wm.d7.quality_label === 'insufficient' ? '不足' : '-'}
-                  ({wm.d7.fetch_count ?? '-'}次)
-                </span>
+                <span className="font-medium text-gray-700">{wm.d7.fetch_count ?? '-'}次</span>
               ) : '-'}
             </span>
-            {product.daysSincePublish != null && (
-              <span>上架 {Math.round(product.daysSincePublish)} 天</span>
-            )}
-            <span>商家: {product.shopName || '-'}</span>
           </div>
 
-          {/* 第3行：关键词 pills */}
+          {/* 关键词 pills */}
           {product.keywords.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {product.keywords.map(kw => (
@@ -189,13 +197,6 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
                 </span>
               ))}
             </div>
-          )}
-
-          {/* 非活跃状态警告 */}
-          {product.monitorStatus != null && product.monitorStatus !== 1 && (
-            <span className="inline-block text-xs font-medium text-red-600 bg-red-50 rounded px-2 py-0.5">
-              {product.monitorStatus === 0 ? '已暂停' : product.monitorStatus === 2 ? '已分析' : product.monitorStatus === 4 ? '已入库' : '未知'}
-            </span>
           )}
         </div>
       )}

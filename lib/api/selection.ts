@@ -13,6 +13,7 @@ export interface Category {
 
 export interface ProductItem {
   id: string
+  uid: string | null
   title: string
   price: number
   wantCount: number
@@ -184,6 +185,7 @@ export function dtoToProductItem(
 
   return {
     id: item.gid,
+    uid: item.uid ?? null,
     title: item.title || '',
     price,
     wantCount,
