@@ -306,7 +306,7 @@ export function ProductMonitorTab() {
               {pt === 'up' && <span className="text-[9px] font-semibold text-green-600">↑提价</span>}
               {pt === 'down' && <span className="text-[9px] font-semibold text-red-600">↓降价</span>}
               {pt === 'flat' && <span className="text-[9px] text-gray-400">→平稳</span>}
-              {pt == null && <span className="text-[9px] text-gray-400">-</span>}
+              {(pt == null) && <span className="text-[9px] text-gray-400">-</span>}
             </span>
           </span>
         )
@@ -472,7 +472,7 @@ export function ProductMonitorTab() {
                         className={`
                           group flex items-center gap-1 ${col.width}
                           transition-all duration-150
-                          ${isIdentity ? 'justify-start sticky left-0 z-[5] bg-gray-50' : 'justify-center'}
+                          ${isIdentity ? 'justify-start' : 'justify-center'}
                           ${isActive
                             ? 'text-blue-700 bg-blue-50/60 rounded-md -mx-0.5 px-0.5'
                             : 'hover:text-gray-700'
@@ -494,7 +494,7 @@ export function ProductMonitorTab() {
                   {COLUMNS.map(col => {
                     const isGroupStart = col.groupStart && col.group !== 'identity'
                     return (
-                      <div key={`bar-${col.key}`} className={`${col.width} ${isGroupStart ? GROUP_GAP : ''} ${col.group === 'identity' ? 'sticky left-0 z-[5] bg-white' : ''}`}>
+                      <div key={`bar-${col.key}`} className={`${col.width} ${isGroupStart ? GROUP_GAP : ''}`}>
                         {col.group !== 'identity' && (
                           <div className={`h-[3px] rounded-t-sm ${GROUP_STYLE[col.group].bar}`} />
                         )}
@@ -524,7 +524,7 @@ export function ProductMonitorTab() {
                             key={col.key}
                             className={`
                               ${col.width}
-                              ${isIdentity ? 'text-left sticky left-0 z-[5] bg-white group-hover:bg-gradient-to-r group-hover:from-blue-50/30' : 'text-center flex items-center justify-center'}
+                              ${isIdentity ? 'text-left' : 'text-center flex items-center justify-center'}
                               ${isGroupStart ? GROUP_GAP : ''}
                             `}
                           >
