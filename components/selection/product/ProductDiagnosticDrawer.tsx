@@ -67,31 +67,23 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
     queryClient.invalidateQueries({ queryKey: ['monitor-items'] })
   }, [queryClient])
 
-  const title = product ? `${product.title || '商品'} / ${product.id}` : ''
+  const title = product ? `${product.description || product.title || '商品'} / ${product.id}` : ''
 
   const content = (
     <div className="p-4 space-y-4 overflow-y-auto h-full">
       {/* Header 元数据 */}
       {product && (
         <div className="space-y-2">
-          {/* 第1行：标题 + 价格 */}
-          <div className="flex justify-between items-start">
-            <div className="text-sm font-semibold text-gray-900 leading-snug flex-1 min-w-0">
-              {product.title || '商品'}
-            </div>
-            <div className="text-right ml-3 shrink-0">
-              <div className="text-[15px] font-bold text-gray-900 tabular-nums">{fmtPrice(product.price)}</div>
-              <div className="text-[10px]">
-                {product.priceTrend === 'up' && <span className="text-green-600 font-semibold">↑提价</span>}
-                {product.priceTrend === 'down' && <span className="text-red-600 font-semibold">↓降价</span>}
-                {product.priceTrend === 'flat' && <span className="text-gray-400">→平稳</span>}
-                {(product.priceTrend == null) && <span className="text-gray-400">价格未知</span>}
-              </div>
-            </div>
-          </div>
-
-          {/* 第2行：GID链接 + 状态 + 优先级 + 入库 */}
+          {/* 第1行：价格 + GID链接 + 状态 + 优先级 + 入库 */}
           <div className="flex items-center gap-2 flex-wrap">
+            {/* 价格 */}
+            <span className="text-[15px] font-bold text-gray-900 tabular-nums">{fmtPrice(product.price)}</span>
+            <span className="text-[10px]">
+              {product.priceTrend === 'up' && <span className="text-green-600 font-semibold">↑提价</span>}
+              {product.priceTrend === 'down' && <span className="text-red-600 font-semibold">↓降价</span>}
+              {product.priceTrend === 'flat' && <span className="text-gray-400">→平稳</span>}
+              {(product.priceTrend == null) && <span className="text-gray-400">价格未知</span>}
+            </span>
             <a
               href={`https://www.goofish.com/item?id=${product.id}`}
               target="_blank"
@@ -169,7 +161,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
             )}
           </div>
 
-          {/* 第3行：采集 + 上架 + 商家 */}
+          {/* 第2行：采集 + 上架 + 商家 */}
           <div className="flex gap-3 text-[11px] text-gray-500">
             <span>
               采集:{' '}
@@ -188,7 +180,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
             <span>商家: {product.shopName || '-'}</span>
           </div>
 
-          {/* 第4行：关键词 pills */}
+          {/* 第3行：关键词 pills */}
           {product.keywords.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {product.keywords.map(kw => (
