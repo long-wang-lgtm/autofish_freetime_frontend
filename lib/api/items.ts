@@ -71,15 +71,61 @@ export interface ItemFilters {
   gid?: string
 }
 
-export async function listItems(filters?: ItemFilters): Promise<Item[]> {
-  const params = new URLSearchParams()
-  if (filters?.uid) params.append("uid", filters.uid)
-  if (filters?.status !== undefined) params.append("status", String(filters.status))
-  if (filters?.title) params.append("title", filters.title)
-  if (filters?.gid) params.append("gid", filters.gid)
+/** 后端支持的排序字段白名单 */
+export const ITEM_SORTABLE_FIELDS = [
+  "gid", "title", "price", "lookCount", "wantCount",
+  "collectCount", "publishTime", "deliveryType",
+] as const
 
-  const query = params.toString()
+export type ItemSortField = typeof ITEM_SORTABLE_FIELDS[number]
+
+/** 商品列表请求参数（筛选 + 分页 + 排序） */
+export interface ItemListParams extends ItemFilters {
+  page?: number
+  page_size?: number
+  order_by?: ItemSortField
+  asc?: boolean
+}
+
+/** 商品统计信息 */
+export interface ItemStats {
+  total: number
+  onSale: number    // status === 0
+  offSale: number   // status === -2
+  sold: number      // status === 1
+}
+
+export async function listItems(params: ItemListParams = {}): Promise<Item[]> {
+  const searchParams = new URLSearchParams()
+  // 筛选
+  if (params.uid) searchParams.append("uid", params.uid)
+  if (params.status !== undefined) searchParams.append("status", String(params.status))
+  if (params.title) searchParams.append("title", params.title)
+  if (params.gid) searchParams.append("gid", params.gid)
+  // 分页
+  if (params.page !== undefined) searchParams.append("page", String(params.page))
+  if (params.page_size !== undefined) searchParams.append("page_size", String(params.page_size))
+  // 排序
+  if (params.order_by) searchParams.append("order_by", params.order_by)
+  if (params.asc !== undefined) searchParams.append("asc", String(params.asc))
+
+  const query = searchParams.toString()
   return fetchApi<Item[]>(`/api/items/list${query ? `?${query}` : ""}`)
+}
+
+export async function getItemsStats(uid?: string): Promise<ItemStats> {
+  const params = new URLSearchParams()
+  if (uid) params.append("uid", uid)
+  const query = params.toString()
+  const data = await fetchApi<{ status: Record<number, number> }>(
+    `/api/items/stats${query ? `?${query}` : ""}`
+  )
+  return {
+    total: Object.values(data.status).reduce((a, b) => a + b, 0),
+    onSale: data.status[0] || 0,
+    offSale: data.status[-2] || 0,
+    sold: data.status[1] || 0,
+  }
 }
 
 export async function getItem(gid: string): Promise<Item> {
