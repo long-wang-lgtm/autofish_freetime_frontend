@@ -139,20 +139,20 @@ export async function getItemStats(uid?: string, status?: number): Promise<ItemS
 ### 4.2 查询变更
 
 ```diff
-- useQuery({ queryKey: ["items", filters], queryFn: () => listItems(filters) })
+- useQuery({ queryKey: ["items", filters], queryFn: () => listItems(filters), refetchInterval: 30000 })
 + useQuery({
 +   queryKey: ["items", filters, page, pageSize, orderBy, asc],
-+   queryFn: () => listItems({ ...filters, page, page_size: pageSize, order_by: orderBy, asc })
++   queryFn: () => listItems({ ...filters, page, page_size: pageSize, order_by: orderBy, asc }),
++   // 取消 30s 轮询
 + })
 ```
 
-stats 独立查询（**不传 status 参数**，始终获取全量统计，不受当前状态筛选影响。`ItemStats.status` 字典包含所有状态的计数，统计栏的「在售/已下架/已售出」从字典取值即可）：
+stats 查询 — 传 `status` 确保 `deliveryEmpty`/`receiptEmpty`/`reviewEmpty` 按当前筛选状态统计。`ItemStats.status` 字典始终包含所有状态的计数（后端在 status 过滤前计算），统计栏的「在售/已下架/已售出」从字典取值，不受 status 参数影响：
 
 ```typescript
 const { data: statsData, isLoading: statsLoading } = useQuery({
-  queryKey: ["itemStats", filters.uid],
-  queryFn: () => getItemStats(filters.uid),       // 不传 status
-  refetchInterval: 30000,                         // 与 items 查询同步轮询
+  queryKey: ["itemStats", filters.uid, filters.status],
+  queryFn: () => getItemStats(filters.uid, filters.status),
 })
 ```
 
@@ -174,7 +174,7 @@ if (result.success) {
 }
 ```
 
-**注意**：`refetchInterval: 30000`（30s 自动刷新）保留，轮询时 `useQuery` 自动 refetch 当前 queryKey 包含的数据，stats 查询也需加入相同轮询间隔以保持统计同步。
+**注意**：原有的 `refetchInterval: 30000`（30s 自动刷新）已移除，数据更新依赖用户手动刷新或操作后的缓存失效。
 
 ### 4.3 派生数据
 
