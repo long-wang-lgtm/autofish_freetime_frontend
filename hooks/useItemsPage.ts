@@ -40,10 +40,13 @@ export function useItemsPage() {
     }))
   }, [debouncedFilters])
 
-  const { data, isLoading, error } = useQuery({
+  const { data: listData, isLoading, error } = useQuery({
     queryKey: ["items", filters, page, pageSize, orderBy, asc],
-    queryFn: () => listItems({ ...filters, page, page_size: pageSize, order_by: orderBy ?? undefined, asc }),
+    queryFn: () => listItems({ ...filters, page, size: pageSize, order_by: orderBy ?? undefined, asc }),
   })
+
+  const data = listData?.items
+  const totalFromList = listData?.total ?? 0
 
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ["itemStats", filters.uid, filters.status],
@@ -110,7 +113,7 @@ export function useItemsPage() {
   }, [filters.uid, queryClient, addToast])
 
   // ——— 派生数据 ———
-  const totalItems = statsData ? Object.values(statsData.status).reduce((a, b) => a + b, 0) : 0
+  const totalItems = totalFromList
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
 
   const stats = useMemo(() => ({

@@ -84,30 +84,38 @@ export interface ItemStats {
   reviewEmpty: number
 }
 
+/** 商品列表分页响应 — GET /api/items/list */
+export interface ItemListResponse {
+  total: number
+  page: number
+  size: number
+  items: Item[]
+}
+
 export interface ItemFilters {
   uid?: string
   status?: number
   title?: string
   gid?: string
   page?: number
-  page_size?: number
+  size?: number
   order_by?: string
   asc?: boolean
 }
 
-export async function listItems(filters?: ItemFilters): Promise<Item[]> {
+export async function listItems(filters?: ItemFilters): Promise<ItemListResponse> {
   const params = new URLSearchParams()
   if (filters?.uid) params.append("uid", filters.uid)
   if (filters?.status !== undefined) params.append("status", String(filters.status))
   if (filters?.title) params.append("title", filters.title)
   if (filters?.gid) params.append("gid", filters.gid)
   if (filters?.page) params.append("page", String(filters.page))
-  if (filters?.page_size) params.append("page_size", String(filters.page_size))
+  if (filters?.size) params.append("size", String(filters.size))
   if (filters?.order_by) params.append("order_by", filters.order_by)
   if (filters?.asc !== undefined) params.append("asc", String(filters.asc))
 
   const query = params.toString()
-  return fetchApi<Item[]>(`/api/items/list${query ? `?${query}` : ""}`)
+  return fetchApi<ItemListResponse>(`/api/items/list${query ? `?${query}` : ""}`)
 }
 
 export async function getItem(gid: string): Promise<Item> {
