@@ -5,6 +5,7 @@ import { SlidersHorizontal, X, RefreshCw } from "lucide-react"
 import { AccountName } from "@/lib/api/accounts"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useIsMobile } from "@/hooks/useIsMobile"
+import { ITEM_SORT_FIELDS } from "@/lib/api/items"
 
 interface FilterBarProps {
   accounts: AccountName[]
@@ -19,9 +20,9 @@ interface FilterBarProps {
   isRefreshing: boolean
   selectedUid?: string
   stats: { total: number; onSale: number; offSale: number; sold: number }
-  sortField: string | null
-  sortDirection: "asc" | "desc" | null
-  onSortChange: (field: "title" | "price" | "publishTime" | "status") => void
+  orderBy: string | null
+  asc: boolean
+  onSortChange: (fieldKey: string) => void
 }
 
 export function FilterBar(props: FilterBarProps) {
@@ -45,6 +46,9 @@ function FilterBarDesktop({
   onClear,
   isRefreshing,
   selectedUid,
+  orderBy,
+  asc,
+  onSortChange,
 }: FilterBarProps) {
   return (
     <div className="p-4 border-b border-gray-100">
@@ -137,6 +141,21 @@ function FilterBarDesktop({
           清空筛选
         </button>
       </div>
+
+      {/* 排序 Pill 组 */}
+      <div className="flex items-center gap-1.5 mt-3">
+        <span className="text-xs text-gray-400 shrink-0">排序</span>
+        {ITEM_SORT_FIELDS.map((f) => (
+          <SortChip
+            key={f.key}
+            label={f.label}
+            field={f.key}
+            orderBy={orderBy}
+            asc={asc}
+            onClick={() => onSortChange(f.key)}
+          />
+        ))}
+      </div>
     </div>
   )
 }
@@ -154,8 +173,8 @@ function FilterBarMobile({
   isRefreshing,
   selectedUid,
   stats,
-  sortField,
-  sortDirection,
+  orderBy,
+  asc,
   onSortChange,
 }: FilterBarProps) {
   const [expanded, setExpanded] = useState(false)
@@ -247,29 +266,23 @@ function FilterBarMobile({
           已售出 <span className="font-medium text-red-500">{stats.sold}</span>
         </span>
 
-        <div className="ml-auto flex items-center gap-1">
+      </div>
+
+      {/* 排序滑动栏 */}
+      <div
+        className="flex items-center gap-1.5 px-3 pb-2 overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: "none" } as React.CSSProperties}
+      >
+        {ITEM_SORT_FIELDS.map((f) => (
           <SortChip
-            label="标题"
-            field="title"
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onClick={() => onSortChange("title")}
+            key={f.key}
+            label={f.label}
+            field={f.key}
+            orderBy={orderBy}
+            asc={asc}
+            onClick={() => onSortChange(f.key)}
           />
-          <SortChip
-            label="价格"
-            field="price"
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onClick={() => onSortChange("price")}
-          />
-          <SortChip
-            label="时间"
-            field="publishTime"
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onClick={() => onSortChange("publishTime")}
-          />
-        </div>
+        ))}
       </div>
 
       {/* 展开的筛选面板 */}
@@ -330,32 +343,34 @@ function FilterBarMobile({
   )
 }
 
-/** 排序标签（MobileFilterBar 内部组件，保留在 FilterBar 内） */
+/** 排序标签（FilterBar 内部组件，桌面/移动端共用） */
 function SortChip({
   label,
   field,
-  sortField,
-  sortDirection,
+  orderBy,
+  asc,
   onClick,
 }: {
   label: string
   field: string
-  sortField: string | null
-  sortDirection: "asc" | "desc" | null
+  orderBy: string | null
+  asc: boolean
   onClick: () => void
 }) {
-  const isActive = sortField === field
+  const isActive = orderBy === field
   return (
     <button
       onClick={onClick}
-      className={`px-1.5 py-0.5 text-[10px] rounded transition-colors ${
+      className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full transition-colors ${
         isActive
-          ? "bg-blue-100 text-blue-700 font-medium"
-          : "text-gray-400 hover:text-gray-600"
+          ? "bg-blue-50 text-blue-700 font-medium"
+          : "bg-gray-100 text-gray-500"
       }`}
     >
       {label}
-      {isActive && (sortDirection === "asc" ? "↑" : "↓")}
+      <span className="text-[10px]">
+        {isActive ? (asc ? "↑" : "↓") : "↕"}
+      </span>
     </button>
   )
 }
