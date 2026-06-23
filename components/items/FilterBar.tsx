@@ -4,18 +4,6 @@ import { useState } from "react"
 import { SlidersHorizontal, X, RefreshCw } from "lucide-react"
 import { AccountName } from "@/lib/api/accounts"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { type ItemSortField } from "@/lib/api/items"
-
-const SORT_LABELS: Record<string, string> = {
-  gid: "商品ID",
-  title: "标题",
-  price: "价格",
-  lookCount: "浏览量",
-  wantCount: "想要数",
-  collectCount: "收藏数",
-  publishTime: "发布时间",
-  deliveryType: "发货类型",
-}
 import { useIsMobile } from "@/hooks/useIsMobile"
 
 interface FilterBarProps {
@@ -33,7 +21,7 @@ interface FilterBarProps {
   stats: { total: number; onSale: number; offSale: number; sold: number }
   sortField: string | null
   sortDirection: "asc" | "desc" | null
-  onSortChange: (field: ItemSortField) => void
+  onSortChange: (field: "title" | "price" | "publishTime" | "status") => void
 }
 
 export function FilterBar(props: FilterBarProps) {
@@ -47,43 +35,6 @@ export function FilterBar(props: FilterBarProps) {
 
 // ========== 桌面端 ==========
 
-function SortPills({
-  sortField,
-  sortDirection,
-  onSortChange,
-}: {
-  sortField: string | null
-  sortDirection: "asc" | "desc" | null
-  onSortChange: (field: ItemSortField) => void
-}) {
-  return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {Object.entries(SORT_LABELS).map(([key, label]) => {
-        const isActive = sortField === key
-        return (
-          <button
-            key={key}
-            type="button"
-            onClick={() => onSortChange(key as ItemSortField)}
-            className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
-              isActive
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            {label}
-            {isActive && (
-              <span className="ml-0.5">
-                {sortDirection === "asc" ? "↑" : "↓"}
-              </span>
-            )}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 function FilterBarDesktop({
   accounts,
   searchInput,
@@ -94,9 +45,6 @@ function FilterBarDesktop({
   onClear,
   isRefreshing,
   selectedUid,
-  sortField,
-  sortDirection,
-  onSortChange,
 }: FilterBarProps) {
   return (
     <div className="p-4 border-b border-gray-100">
@@ -189,77 +137,11 @@ function FilterBarDesktop({
           清空筛选
         </button>
       </div>
-      {/* 排序 */}
-      <div className="px-4 pb-3 border-b border-gray-100">
-        <SortPills
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSortChange={onSortChange}
-        />
-      </div>
     </div>
   )
 }
 
 // ========== 移动端（来源：MobileFilterBar.tsx，逻辑完全保留） ==========
-
-function SortTrigger({
-  sortField,
-  sortDirection,
-  onSortChange,
-}: {
-  sortField: string | null
-  sortDirection: "asc" | "desc" | null
-  onSortChange: (field: ItemSortField) => void
-}) {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-colors ${
-          sortField
-            ? "bg-blue-100 text-blue-700 font-medium"
-            : "text-gray-400 hover:text-gray-600"
-        }`}
-      >
-        {sortField ? `${SORT_LABELS[sortField]}` : "排序"}
-        {sortField && (sortDirection === "asc" ? "↑" : "↓")}
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[120px]">
-            {Object.entries(SORT_LABELS).map(([key, label]) => {
-              const isActive = sortField === key
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => {
-                    onSortChange(key as ItemSortField)
-                    setOpen(false)
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${
-                    isActive
-                      ? "bg-blue-50 text-blue-700 font-medium"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  <span>{label}</span>
-                  {isActive && (
-                    <span>{sortDirection === "asc" ? "↑" : "↓"}</span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
 
 function FilterBarMobile({
   accounts,
@@ -366,10 +248,26 @@ function FilterBarMobile({
         </span>
 
         <div className="ml-auto flex items-center gap-1">
-          <SortTrigger
+          <SortChip
+            label="标题"
+            field="title"
             sortField={sortField}
             sortDirection={sortDirection}
-            onSortChange={onSortChange}
+            onClick={() => onSortChange("title")}
+          />
+          <SortChip
+            label="价格"
+            field="price"
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onClick={() => onSortChange("price")}
+          />
+          <SortChip
+            label="时间"
+            field="publishTime"
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onClick={() => onSortChange("publishTime")}
           />
         </div>
       </div>
@@ -432,3 +330,32 @@ function FilterBarMobile({
   )
 }
 
+/** 排序标签（MobileFilterBar 内部组件，保留在 FilterBar 内） */
+function SortChip({
+  label,
+  field,
+  sortField,
+  sortDirection,
+  onClick,
+}: {
+  label: string
+  field: string
+  sortField: string | null
+  sortDirection: "asc" | "desc" | null
+  onClick: () => void
+}) {
+  const isActive = sortField === field
+  return (
+    <button
+      onClick={onClick}
+      className={`px-1.5 py-0.5 text-[10px] rounded transition-colors ${
+        isActive
+          ? "bg-blue-100 text-blue-700 font-medium"
+          : "text-gray-400 hover:text-gray-600"
+      }`}
+    >
+      {label}
+      {isActive && (sortDirection === "asc" ? "↑" : "↓")}
+    </button>
+  )
+}

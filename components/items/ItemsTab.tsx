@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import type { Item } from "@/lib/api/items"
 import type { AccountName } from "@/lib/api/accounts"
 import type { ConfigField } from "@/components/items/config"
@@ -27,12 +27,10 @@ interface ItemsTabProps {
   onClearFilters: () => void
   onSortChange: (field: string) => void
   data: Item[] | undefined
+  sortedItems: Item[]
   itemKeywordCounts: Record<string, number>
   isLoading: boolean
   error: unknown
-  hasNextPage: boolean | undefined
-  isFetchingNextPage: boolean
-  fetchNextPage: () => void
   onToggle: (item: Item, field: string) => void
   updateMutation: { mutate: (args: { gid: string; data: Record<string, unknown> }) => void }
 }
@@ -52,12 +50,10 @@ export function ItemsTab({
   onClearFilters,
   onSortChange,
   data,
+  sortedItems,
   itemKeywordCounts,
   isLoading,
   error,
-  hasNextPage,
-  isFetchingNextPage,
-  fetchNextPage,
   onToggle,
   updateMutation,
 }: ItemsTabProps) {
@@ -65,24 +61,6 @@ export function ItemsTab({
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [keywordItem, setKeywordItem] = useState<Item | null>(null)
   const [mobileConfig, setMobileConfig] = useState<{ item: Item; field: ConfigField } | null>(null)
-
-  // — 哨兵 —
-  const sentinelRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage()
-        }
-      },
-      { threshold: 0.1 }
-    )
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   return (
     <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
@@ -170,7 +148,7 @@ export function ItemsTab({
               </div>
 
               {/* 内容区域 */}
-              {data.map((item, index) => (
+              {sortedItems.map((item, index) => (
                 <ItemRow
                   key={item.gid}
                   item={item}
@@ -188,7 +166,7 @@ export function ItemsTab({
 
             {/* === 移动端卡片列表 === */}
             <div className="flex-1 overflow-auto md:hidden px-1 pb-2 space-y-2.5" style={{ minHeight: "200px" }}>
-              {data.map((item) => (
+              {sortedItems.map((item) => (
                 <MobileProductCard
                   key={item.gid}
                   item={item}
@@ -201,14 +179,6 @@ export function ItemsTab({
                 />
               ))}
             </div>
-            {/* 滚动哨兵 + 分页状态 */}
-            <div ref={sentinelRef} className="h-px" />
-            {isFetchingNextPage && (
-              <div className="text-center py-3 text-xs text-gray-400">加载更多...</div>
-            )}
-            {!hasNextPage && data && data.length > 0 && (
-              <div className="text-center py-3 text-xs text-gray-300">已加载全部商品</div>
-            )}
           </>
         )}
 

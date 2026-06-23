@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useCallback, useMemo, useEffect } from "react"
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { listItems, getItemsStats, Item, ItemFilters, updateItem, refreshItems, type ItemSortField } from "@/lib/api/items"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { listItems, Item, ItemFilters, updateItem, refreshItems } from "@/lib/api/items"
 import { getAccountNames } from "@/lib/api/accounts"
 import { useToast } from "@/components/ui/toaster"
 import { useDebounce } from "@/hooks/useDebounce"
@@ -17,7 +17,7 @@ export function useItemsPage() {
   // ——— 状态 ———
   const [filters, setFilters] = useState<ItemFilters>({ status: 0 })
   const [searchInput, setSearchInput] = useState({ uid: "", title: "", gid: "" })
-  const [sortField, setSortField] = useState<ItemSortField | null>(null)
+  const [sortField, setSortField] = useState<"title" | "price" | "publishTime" | "status" | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -38,35 +38,10 @@ export function useItemsPage() {
     }))
   }, [debouncedFilters])
 
-  const PAGE_SIZE = 20
-
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["items", filters, sortField, sortDirection],
-    queryFn: ({ pageParam = 1 }) =>
-      listItems({
-        ...filters,
-        page: pageParam,
-        page_size: PAGE_SIZE,
-        order_by: sortField ?? undefined,
-        asc: sortField ? (sortDirection === "asc") : undefined,
-      }),
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length < PAGE_SIZE) return undefined
-      return allPages.length + 1
-    },
-    initialPageParam: 1,
-  })
-
-  const { data: statsData } = useQuery({
-    queryKey: ["itemStats", filters.uid],
-    queryFn: () => getItemsStats(filters.uid),
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["items", filters],
+    queryFn: () => listItems(filters),
+    refetchInterval: 30000,
   })
 
   const { rules: keywordRules, isLoading: keywordsLoading, error: keywordsError, stats: rulesStats, itemKeywordCounts } = useKeywords()
@@ -91,16 +66,11 @@ export function useItemsPage() {
     setFilters({ status: 0 })
   }, [])
 
-  const handleSort = (field: ItemSortField) => {
-    if (sortField !== field) {
-      setSortField(field)
-      setSortDirection("asc")
-    } else if (sortDirection === "asc") {
-      setSortDirection("desc")
-    } else {
-      setSortField(null)
-      setSortDirection(null)
-    }
+  // 注意：不包裹 useCallback — handler 内部直接读取最新 state，避免闭包陷阱
+  const handleSort = (field: "title" | "price" | "publishTime" | "status") => {
+    if (sortField !== field) { setSortField(field); setSortDirection("asc") }
+    else if (sortDirection === "asc") { setSortDirection("desc") }
+    else { setSortField(null); setSortDirection(null) }
   }
 
   const handleRefresh = useCallback(async () => {
@@ -116,17 +86,27 @@ export function useItemsPage() {
   }, [filters.uid, queryClient, addToast])
 
   // ——— 派生数据 ———
-  const flatItems = useMemo(() => {
-    if (!data) return []
-    return data.pages.flat()
-  }, [data])
+  const sortedItems = useMemo(() => {
+    if (!sortField || !sortDirection || !data) return data || []
+    return [...data].sort((a, b) => {
+      let aVal: any = a[sortField]
+      let bVal: any = b[sortField]
+      if (sortField === "publishTime") { aVal = aVal ? Number(aVal) : 0; bVal = bVal ? Number(bVal) : 0 }
+      else if (sortField === "price") { aVal = Number(aVal) || 0; bVal = Number(bVal) || 0 }
+      else if (sortField === "status") { aVal = Number(aVal) || 0; bVal = Number(bVal) || 0 }
+      else { aVal = String(aVal || ""); bVal = String(bVal || "") }
+      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1
+      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1
+      return 0
+    })
+  }, [data, sortField, sortDirection])
 
   const stats = useMemo(() => ({
-    total: statsData?.total || 0,
-    onSale: statsData?.onSale || 0,
-    offSale: statsData?.offSale || 0,
-    sold: statsData?.sold || 0,
-  }), [statsData])
+    total: data?.length || 0,
+    onSale: data?.filter(i => i.status === 0).length || 0,
+    offSale: data?.filter(i => i.status === 1).length || 0,
+    sold: data?.filter(i => i.status === -2).length || 0,
+  }), [data])
 
   return {
     // 状态
@@ -136,17 +116,14 @@ export function useItemsPage() {
     isRefreshing,
     // 查询结果
     accountsData,
-    data: flatItems,
-    isLoading, error,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
+    data, isLoading, error,
     keywordsLoading, keywordsError,
     // 关键词数据
     keywordRules,
     rulesStats,
     itemKeywordCounts,
     // 派生数据
+    sortedItems,
     stats,
     // 处理器
     updateMutation,

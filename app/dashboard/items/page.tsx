@@ -6,7 +6,6 @@ import { TabBar } from "@/components/ui/Tab"
 import { ItemsTab } from "@/components/items/ItemsTab"
 import { RulesTab } from "@/components/items/RulesTab"
 import { useItemsPage } from "@/hooks/useItemsPage"
-import { type ItemSortField } from "@/lib/api/items"
 
 function ItemsPageContent() {
   const {
@@ -16,13 +15,11 @@ function ItemsPageContent() {
     isRefreshing,
     accountsData,
     data, isLoading, error,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
     keywordsLoading, keywordsError,
     keywordRules,
     rulesStats,
     itemKeywordCounts,
+    sortedItems,
     stats,
     updateMutation,
     handleToggle,
@@ -68,14 +65,12 @@ function ItemsPageContent() {
           onStatusChange={(status) => setFilters((prev) => ({ ...prev, status }))}
           onRefresh={handleRefresh}
           onClearFilters={handleClearFilters}
-          onSortChange={(field) => handleSort(field as ItemSortField)}
+          onSortChange={(field) => handleSort(field as "title" | "price" | "publishTime" | "status")}
           data={data}
+          sortedItems={sortedItems}
           itemKeywordCounts={itemKeywordCounts}
           isLoading={isLoading}
           error={error}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          fetchNextPage={fetchNextPage}
           onToggle={(item, field) => handleToggle(item, field as "auto_reply" | "auto_delivery" | "auto_ai_reply" | "auto_restock")}
           updateMutation={updateMutation}
         />

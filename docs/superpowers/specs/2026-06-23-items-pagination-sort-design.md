@@ -173,16 +173,24 @@ const { data: statsData } = useQuery({
 
 ### 4.4 handleSort 逻辑变更
 
-```diff
-- 3 态循环：同字段 asc → desc → off；异字段 → asc
-+ 2 态切换：同字段切换 asc；异字段 → desc（asc=false）
-```
+3 态循环，但首次点击从降序开始（点击一次倒序，再点升序，再点清除）：
+
+| 当前状态 | 点击同字段 | 点击异字段 |
+|----------|-----------|-----------|
+| 无排序 | → desc | → desc |
+| desc | → asc | → desc |
+| asc | → 清除（orderBy=null） | → desc |
 
 ```typescript
 const handleSort = (fieldKey: string) => {
   if (orderBy === fieldKey) {
-    // 同字段：切换升降序
-    setAsc(!asc)
+    if (asc === false) {
+      // desc → asc
+      setAsc(true)
+    } else {
+      // asc → 清除排序
+      setOrderBy(null)
+    }
   } else {
     // 异字段：默认降序
     setOrderBy(fieldKey)
