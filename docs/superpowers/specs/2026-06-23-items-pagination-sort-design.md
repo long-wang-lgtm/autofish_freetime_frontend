@@ -146,14 +146,35 @@ export async function getItemStats(uid?: string, status?: number): Promise<ItemS
 + })
 ```
 
-stats 独立查询：
+stats 独立查询（**不传 status 参数**，始终获取全量统计，不受当前状态筛选影响。`ItemStats.status` 字典包含所有状态的计数，统计栏的「在售/已下架/已售出」从字典取值即可）：
 
 ```typescript
-const { data: statsData } = useQuery({
+const { data: statsData, isLoading: statsLoading } = useQuery({
   queryKey: ["itemStats", filters.uid],
-  queryFn: () => getItemStats(filters.uid),
+  queryFn: () => getItemStats(filters.uid),       // 不传 status
+  refetchInterval: 30000,                         // 与 items 查询同步轮询
 })
 ```
+
+### 4.2.1 数据变更时失效 stats 缓存
+
+`updateMutation.onSuccess` 和 `handleRefresh` 成功回调中需同时失效 stats 查询：
+
+```typescript
+// updateMutation
+onSuccess: () => {
+  queryClient.invalidateQueries({ queryKey: ["items"] })
+  queryClient.invalidateQueries({ queryKey: ["itemStats"] })    // ← 新增
+}
+
+// handleRefresh
+if (result.success) {
+  queryClient.invalidateQueries({ queryKey: ["items"] })
+  queryClient.invalidateQueries({ queryKey: ["itemStats"] })    // ← 新增
+}
+```
+
+**注意**：`refetchInterval: 30000`（30s 自动刷新）保留，轮询时 `useQuery` 自动 refetch 当前 queryKey 包含的数据，stats 查询也需加入相同轮询间隔以保持统计同步。
 
 ### 4.3 派生数据
 
@@ -163,11 +184,13 @@ const { data: statsData } = useQuery({
 + // data 已是服务端排序+分页后的结果，直接使用
 + totalItems = statsData ? Object.values(statsData.status).reduce((a, b) => a + b, 0) : 0
 + totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
++ // 注意：修正了旧代码中 status 值与语义的映射 —— status=1 是「已售出」, status=-2 是「已下架」
++ // 旧代码中 offSale/sold 取反了（offSale 取了 status=1, sold 取了 status=-2）
 + stats = {
 +   total: totalItems,
 +   onSale: statsData?.status[0] || 0,
-+   offSale: statsData?.status[-2] || 0,
-+   sold: statsData?.status[1] || 0,
++   offSale: statsData?.status[-2] || 0,   // ← 修正: status=-2 后端语义为已下架
++   sold: statsData?.status[1] || 0,       // ← 修正: status=1 后端语义为已售出
 + }
 ```
 
@@ -234,6 +257,7 @@ return {
 
   // ——— 统计（结构不变，来源改为 stats 接口） ———
   stats,
+  statsLoading,                 // ← 新增，供 UI 处理加载态
 }
 ```
 
