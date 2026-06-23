@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import type { Item } from "@/lib/api/items"
 import type { AccountName } from "@/lib/api/accounts"
 import type { ConfigField } from "@/components/items/config"
@@ -18,16 +18,19 @@ interface ItemsTabProps {
   searchInput: { uid: string; title: string; gid: string }
   filters: { status?: number; uid?: string }
   stats: { total: number; onSale: number; offSale: number; sold: number }
-  sortField: string | null
-  sortDirection: "asc" | "desc" | null
+  orderBy: string | null
+  asc: boolean
+  page: number
+  totalPages: number
+  totalItems: number
   isRefreshing: boolean
   onSearchChange: (updater: (prev: { uid: string; title: string; gid: string }) => { uid: string; title: string; gid: string }) => void
   onStatusChange: (status: number | undefined) => void
   onRefresh: () => void
   onClearFilters: () => void
   onSortChange: (field: string) => void
+  onPageChange: (page: number) => void
   data: Item[] | undefined
-  sortedItems: Item[]
   itemKeywordCounts: Record<string, number>
   isLoading: boolean
   error: unknown
@@ -41,16 +44,19 @@ export function ItemsTab({
   searchInput,
   filters,
   stats,
-  sortField,
-  sortDirection,
+  orderBy,
+  asc,
+  page,
+  totalPages,
+  totalItems,
   isRefreshing,
   onSearchChange,
   onStatusChange,
   onRefresh,
   onClearFilters,
   onSortChange,
+  onPageChange,
   data,
-  sortedItems,
   itemKeywordCounts,
   isLoading,
   error,
@@ -61,6 +67,12 @@ export function ItemsTab({
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [keywordItem, setKeywordItem] = useState<Item | null>(null)
   const [mobileConfig, setMobileConfig] = useState<{ item: Item; field: ConfigField } | null>(null)
+
+  // — 列表滚动 ref，翻页时滚回顶部 —
+  const listRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+  }, [page])
 
   return (
     <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
@@ -76,8 +88,8 @@ export function ItemsTab({
           isRefreshing={isRefreshing}
           selectedUid={filters.uid}
           stats={stats}
-          sortField={sortField}
-          sortDirection={sortDirection}
+          orderBy={orderBy}
+          asc={asc}
           onSortChange={onSortChange}
         />
 
@@ -102,38 +114,20 @@ export function ItemsTab({
         {!isLoading && !error && data && data.length > 0 && (
           <>
             {/* === 桌面端表格 === */}
-            <div className="flex-1 overflow-auto hidden md:block" style={{ minHeight: "200px" }}>
+            <div ref={listRef} className="flex-1 overflow-auto hidden md:block" style={{ minHeight: "200px" }}>
               {/* 表头 */}
               <div
                 className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600"
                 style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}
               >
                 <div className="col-span-2">
-                  <button className="flex items-center gap-1 hover:text-blue-600" onClick={() => onSortChange("title")}>
-                    商品信息
-                    {sortField === "title"
-                      ? <span className="text-blue-600">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                      : <span className="text-gray-300">↕</span>
-                    }
-                  </button>
+                  <span>商品信息</span>
                 </div>
                 <div className="col-span-1 text-right">
-                  <button className="flex items-center gap-1 ml-auto hover:text-blue-600" onClick={() => onSortChange("price")}>
-                    价格
-                    {sortField === "price"
-                      ? <span className="text-blue-600">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                      : <span className="text-gray-300">↕</span>
-                    }
-                  </button>
+                  <span>价格</span>
                 </div>
                 <div className="col-span-1 text-center">
-                  <button className="flex items-center gap-1 mx-auto hover:text-blue-600" onClick={() => onSortChange("publishTime")}>
-                    发布时间
-                    {sortField === "publishTime"
-                      ? <span className="text-blue-600">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                      : <span className="text-gray-300">↕</span>
-                    }
-                  </button>
+                  <span>发布时间</span>
                 </div>
                 <div className="col-span-1 text-center">数据</div>
                 <div className="col-span-1 text-center">AI回复</div>
@@ -148,7 +142,7 @@ export function ItemsTab({
               </div>
 
               {/* 内容区域 */}
-              {sortedItems.map((item, index) => (
+              {data.map((item, index) => (
                 <ItemRow
                   key={item.gid}
                   item={item}
@@ -166,7 +160,7 @@ export function ItemsTab({
 
             {/* === 移动端卡片列表 === */}
             <div className="flex-1 overflow-auto md:hidden px-1 pb-2 space-y-2.5" style={{ minHeight: "200px" }}>
-              {sortedItems.map((item) => (
+              {data.map((item) => (
                 <MobileProductCard
                   key={item.gid}
                   item={item}
@@ -180,6 +174,37 @@ export function ItemsTab({
               ))}
             </div>
           </>
+        )}
+
+        {/* 分页器 */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 py-3 border-t border-gray-100">
+            <button
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1}
+              className={`text-sm px-3 py-1.5 rounded-md ${
+                page <= 1
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-blue-600 hover:bg-blue-50 cursor-pointer"
+              }`}
+            >
+              ← 上一页
+            </button>
+            <span className="text-sm text-gray-500">
+              共 {totalItems} 件，{page} / {totalPages}
+            </span>
+            <button
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages}
+              className={`text-sm px-3 py-1.5 rounded-md ${
+                page >= totalPages
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-blue-600 hover:bg-blue-50 cursor-pointer"
+              }`}
+            >
+              下一页 →
+            </button>
+          </div>
         )}
 
       {/* ==== 抽屉（内部调度）==== */}
