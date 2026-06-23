@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import {
   listMonitorItems,
   removeMonitorItem,
@@ -111,13 +111,39 @@ export function ProductMonitorTab() {
   const [aiReportOpen, setAiReportOpen] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
   const queryClient = useQueryClient()
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
-  const { data, isLoading } = useQuery({
+  const PAGE_SIZE = 20
+
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['monitor-items'],
-    queryFn: () => listMonitorItems(),
+    queryFn: ({ pageParam = 1 }) => listMonitorItems(pageParam, PAGE_SIZE),
+    getNextPageParam: (lastPage, allPages) => {
+      // 返回条数少于 pageSize 说明已是最后一页
+      if (lastPage.items.length < PAGE_SIZE) return undefined
+      return allPages.length + 1
+    },
+    initialPageParam: 1,
   })
-  const items = data?.items ?? []
-  const lastFetchLogs = data?.lastFetchLogs ?? []
+
+  const items = useMemo(() => data?.pages.flatMap(p => p.items) ?? [], [data])
+  const lastFetchLogs = useMemo(() => data?.pages.flatMap(p => p.lastFetchLogs) ?? [], [data])
+
+  // 哨兵可见时加载下一页
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   const handleRemove = useCallback(async (gid: string) => {
     await removeMonitorItem(gid)
@@ -557,6 +583,12 @@ export function ProductMonitorTab() {
                       </div>
                     </div>
                   ); })}
+
+                  {/* 滚动哨兵：可见时自动加载下一页 */}
+                  <div ref={sentinelRef} className="h-px" />
+                  {isFetchingNextPage && (
+                    <div className="text-center py-3 text-xs text-gray-400">加载更多...</div>
+                  )}
                 </div>
               </div>
             </div>
