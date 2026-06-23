@@ -11,7 +11,8 @@ function ItemsPageContent() {
   const {
     filters, setFilters,
     searchInput, setSearchInput,
-    sortField, sortDirection,
+    orderBy, asc,
+    page, pageSize, totalPages, setPage, totalItems,
     isRefreshing,
     accountsData,
     data, isLoading, error,
@@ -19,8 +20,8 @@ function ItemsPageContent() {
     keywordRules,
     rulesStats,
     itemKeywordCounts,
-    sortedItems,
     stats,
+    statsLoading,
     updateMutation,
     handleToggle,
     handleClearFilters,
@@ -58,16 +59,19 @@ function ItemsPageContent() {
           searchInput={searchInput}
           filters={filters}
           stats={stats}
-          sortField={sortField}
-          sortDirection={sortDirection}
+          orderBy={orderBy}
+          asc={asc}
+          page={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
           isRefreshing={isRefreshing}
           onSearchChange={setSearchInput}
           onStatusChange={(status) => setFilters((prev) => ({ ...prev, status }))}
           onRefresh={handleRefresh}
           onClearFilters={handleClearFilters}
-          onSortChange={(field) => handleSort(field as "title" | "price" | "publishTime" | "status")}
+          onSortChange={handleSort}
+          onPageChange={setPage}
           data={data}
-          sortedItems={sortedItems}
           itemKeywordCounts={itemKeywordCounts}
           isLoading={isLoading}
           error={error}
