@@ -35,7 +35,7 @@ export default function DashboardLayout({
         <Header />
 
         {/* 主内容区域 */}
-        <main className="flex-1 min-h-0 p-4 lg:p-6 overflow-auto">
+        <main className="flex-1 min-h-0 p-4 lg:p-6 max-lg:pt-0 max-lg:px-0 overflow-auto">
           {children}
         </main>
       </div>
