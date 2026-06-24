@@ -12,6 +12,5 @@
 | 模块 | 用途 |
 |------|------|
 | `@.claude/rules/frontend-tabs.md` | Tab 页面视觉设计规范 |
-| `@.claude/rules/frontend-mobile-layout.md` | 移动端布局设计规范 |
 | `@.claude/rules/frontend-api.md` | API 接口设计规范 |
 | `@components/ui/` | UI 组件库 |

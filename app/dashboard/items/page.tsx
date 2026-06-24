@@ -33,19 +33,17 @@ function ItemsPageContent() {
   const [activeTab, setActiveTab] = useTabRouting(['items', 'rules'] as const, 'items')
 
   return (
-    <div className="flex flex-col min-h-0 h-full space-y-5 max-lg:space-y-3">
-      {/* Tab 栏 — 移动端 sticky 贴顶，PC 端正常流 */}
-      <div className="sticky top-0 z-10 bg-white max-lg:pr-16">
-        <TabBar
-          tabs={[
-            { key: "items", label: "商品管理" },
-            { key: "rules", label: "回复规则" },
-          ]}
-          activeTab={activeTab}
-          onTabChange={(key) => setActiveTab(key as "items" | "rules")}
-          variant="overline"
-        />
-      </div>
+    <div className="flex flex-col min-h-0 h-full space-y-5">
+      {/* Tab 栏 */}
+      <TabBar
+        tabs={[
+          { key: "items", label: "商品管理" },
+          { key: "rules", label: "回复规则" },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(key) => setActiveTab(key as "items" | "rules")}
+        variant="overline"
+      />
 
       {/* Tab 描述 */}
       <p className="text-sm text-gray-500 -mt-3 hidden md:block">
