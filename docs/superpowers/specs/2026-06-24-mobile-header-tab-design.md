@@ -9,7 +9,7 @@
 ```
 移动端布局：
 ┌──────────────────────────────┐
-│  tab1  tab2  tab3  →滑动  [逸][U]│  TabBar sticky top-0 + Header absolute 右上角
+│  tab1  tab2  tab3  →滑动  [U][逸]│  TabBar sticky top-0 + Header absolute 右上角
 │  🔍 搜索 / 筛选               │  页面自有内容
 ├──────────────────────────────┤
 │  卡片内容区 (pt-0)            │
@@ -22,7 +22,7 @@ PC 端布局不变。
 ## 1. Header.tsx — 移动端退到右上角
 
 - 移动端：`absolute top-0 right-0 z-20`，脱离文档流，透明无背景
-- 只渲染两个小方块：Logo 图标（`w-7 h-7`）+ 用户头像单字（`w-7 h-7`），水平排列
+- 只渲染两个小方块：用户头像单字（`w-7 h-7`） + Logo 图标（`w-7 h-7`），水平排列
 - Logo 方块点击 → 跳转管理员页（仅 `role === 'administrators'`）
 - 管理员按钮从独立位置**移除**，入口移入下拉菜单（排在「设置」上方）
 - 移动端不渲染 `children` slot
