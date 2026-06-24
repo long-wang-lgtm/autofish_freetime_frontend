@@ -35,7 +35,7 @@ export function ItemRow({
         className={`grid gap-2 px-4 py-2 items-center text-xs border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-colors ${
           isEven ? "bg-white" : "bg-gray-50/30"
         }`}
-        style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}
+        style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}
       >
         {/* 商品信息 */}
         <div className="col-span-2 min-w-0">
@@ -64,12 +64,12 @@ export function ItemRow({
         </div>
 
         {/* 浏览/想要/收藏 */}
-        <div className="col-span-1 text-center text-[11px] leading-tight">
+        {/* <div className="col-span-1 text-center text-[11px] leading-tight">
           <div>{item.lookCount} / <span className="text-red-400">{item.wantCount}</span> / {item.collectCount}</div>
           <div className="text-gray-400">
             {item.collectCount > 0 ? (item.wantCount / item.collectCount).toFixed(1) : "-"}
           </div>
-        </div>
+        </div> */}
 
         {/* AI回复开关 */}
         <div className="col-span-1 flex items-center justify-center">

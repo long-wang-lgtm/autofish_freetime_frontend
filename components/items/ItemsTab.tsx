@@ -118,7 +118,7 @@ export function ItemsTab({
               {/* 表头 */}
               <div
                 className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600"
-                style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}
+                style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}
               >
                 <div className="col-span-2">
                   <span>商品信息</span>
@@ -129,7 +129,7 @@ export function ItemsTab({
                 <div className="col-span-1 text-center">
                   <span>发布时间</span>
                 </div>
-                <div className="col-span-1 text-center">数据</div>
+                {/* <div className="col-span-1 text-center">数据</div> */}
                 <div className="col-span-1 text-center">AI回复</div>
                 <div className="col-span-1 text-center">自动发货</div>
                 <div className="col-span-1 text-center">付款后发货</div>
