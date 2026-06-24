@@ -33,9 +33,9 @@ function ItemsPageContent() {
   const [activeTab, setActiveTab] = useTabRouting(['items', 'rules'] as const, 'items')
 
   return (
-    <div className="flex flex-col min-h-0 h-full space-y-5">
+    <div className="flex flex-col min-h-0 h-full space-y-5 max-lg:space-y-3">
       {/* Tab 栏 — 移动端 sticky 贴顶，PC 端正常流 */}
-      <div className="sticky top-0 z-10 bg-white max-lg:pr-14">
+      <div className="sticky top-0 z-10 bg-white max-lg:pr-16">
         <TabBar
           tabs={[
             { key: "items", label: "商品管理" },

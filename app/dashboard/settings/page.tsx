@@ -47,8 +47,8 @@ function SettingsPageContent() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="sticky top-0 z-10 bg-white max-lg:pr-14">
+    <div className="space-y-5 max-lg:space-y-3">
+      <div className="sticky top-0 z-10 bg-white max-lg:pr-16">
         <TabBar
           tabs={MAIN_TABS}
           activeTab={activeMainTab}

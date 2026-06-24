@@ -114,10 +114,10 @@ export default function Header({ children }: HeaderProps) {
         {isMobile && user?.role === 'administrators' && (
           <button
             onClick={() => router.push('/admin')}
-            className="min-h-11 min-w-11 w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center"
+            className="min-h-11 min-w-11 w-8 h-8 rounded-md bg-blue-600 flex items-center justify-center"
             title="管理员"
           >
-            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </button>
@@ -129,7 +129,7 @@ export default function Header({ children }: HeaderProps) {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className={
               isMobile
-                ? 'min-h-11 min-w-11 w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-xs font-medium text-white shadow-sm'
+                ? 'min-h-11 min-w-11 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-sm font-medium text-white shadow-sm'
                 : 'flex items-center gap-1.5 lg:gap-2 max-lg:[@media(max-height:500px)]:gap-1 px-1.5 py-1 lg:px-2 lg:py-1.5 max-lg:[@media(max-height:500px)]:px-1 max-lg:[@media(max-height:500px)]:py-0.5 rounded-lg hover:bg-gray-100 transition-colors max-lg:min-h-11 max-lg:[@media(max-height:500px)]:min-h-10'
             }
           >
