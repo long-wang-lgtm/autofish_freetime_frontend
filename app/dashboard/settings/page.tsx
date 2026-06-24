@@ -48,12 +48,14 @@ function SettingsPageContent() {
 
   return (
     <div className="space-y-5">
-      <TabBar
-        tabs={MAIN_TABS}
-        activeTab={activeMainTab}
-        onTabChange={(key) => setActiveMainTab(key as MainTabType)}
-        variant="overline"
-      />
+      <div className="sticky top-0 z-10 bg-white max-lg:pr-14">
+        <TabBar
+          tabs={MAIN_TABS}
+          activeTab={activeMainTab}
+          onTabChange={(key) => setActiveMainTab(key as MainTabType)}
+          variant="overline"
+        />
+      </div>
 
       {/* AI 配置 Tab 内容 */}
       {activeMainTab === 'ai-config' && <AIConfigTab isMobile={isMobile} />}
