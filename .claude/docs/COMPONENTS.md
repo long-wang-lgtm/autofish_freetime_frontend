@@ -14,7 +14,7 @@
 
 | 组件 | 文件 | 用途 | 关键 Props |
 |------|------|------|-----------|
-| `TabBar` | `ui/Tab/index.tsx` | 核心 Tab 组件，支持 overline/inset 变体，响应式三档 | `tabs`, `activeTab`, `onTabChange`, `variant?` |
+| `TabBar` | `ui/Tab/index.tsx` | 核心 Tab 组件，overline 样式，响应式三档 | `tabs`, `activeTab`, `onTabChange` |
 | `Sheet` | `ui/Sheet.tsx` | 抽屉/底部弹出容器，支持手势拖拽关闭 | `open`, `onClose`, `width?`, `children` |
 | `LoadingSpinner` | `ui/loading-spinner.tsx` | 加载动画指示器 | `size?: 'sm' \| 'md' \| 'lg'` |
 | `useToast` / `Toaster` | `ui/toaster.tsx` | Toast 通知系统（封装 sonner） | —（hook 返回 `toast.xxx()` 方法） |

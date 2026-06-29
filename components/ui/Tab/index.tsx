@@ -4,8 +4,8 @@ import { type ReactNode } from 'react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
-/** Tab 样式变体 */
-export type TabVariant = 'inset' | 'overline'
+/** Tab 样式变体（仅 overline） */
+export type TabVariant = 'overline'
 
 interface Tab {
   key: string
@@ -17,7 +17,7 @@ interface TabBarProps {
   tabs: Tab[]
   activeTab: string
   onTabChange: (key: string) => void
-  /** inset = 栏在容器内，overline = 栏在容器外 */
+  /** Tab 栏样式（栏在容器外，底部边框指示器） */
   variant?: TabVariant
 }
 
@@ -46,51 +46,25 @@ const SIZE_STYLES = {
   },
 } as const
 
-export function TabBar({ tabs, activeTab, onTabChange, variant = 'inset' }: TabBarProps) {
+export function TabBar({ tabs, activeTab, onTabChange, variant = 'overline' }: TabBarProps) {
   const size = useTabSize()
   const sizeStyles = SIZE_STYLES[size]
   const isMobile = size !== 'pc'
 
-  if (variant === 'overline') {
-    return (
-      <div className="border-b border-gray-200">
-        <div className={`flex items-center ${sizeStyles.outer} ${isMobile ? 'tab-mask' : ''}`}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => onTabChange(tab.key)}
-              className={`inline-flex items-center gap-1.5 transition-all border-b-2 -mb-[2px] font-semibold ${sizeStyles.button} ${
-                activeTab === tab.key
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {tab.icon && tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  // inset — 栏在容器内，tab 栏本身带卡片背景
   return (
-    <div className={`bg-white rounded-xl ${isMobile ? 'px-3' : 'px-5'}`}>
-      <div className={`flex ${size === 'pc' ? 'gap-6' : 'gap-1 overflow-x-auto hide-scrollbar tab-mask'}`}>
+    <div className="border-b border-gray-200">
+      <div className={`flex items-center ${sizeStyles.outer} ${isMobile ? 'tab-mask' : ''}`}>
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => onTabChange(tab.key)}
-            className={`flex items-center gap-2 font-medium border-b-2 transition-all ${
-              isMobile ? `whitespace-nowrap ${sizeStyles.button}` : 'py-4 text-sm'
-            } ${
+            className={`inline-flex items-center gap-1.5 transition-all border-b-2 -mb-[2px] font-semibold ${sizeStyles.button} ${
               activeTab === tab.key
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-400 hover:text-gray-600'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            {tab.icon}
+            {tab.icon && tab.icon}
             {tab.label}
           </button>
         ))}

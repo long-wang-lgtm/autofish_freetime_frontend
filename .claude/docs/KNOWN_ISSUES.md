@@ -227,14 +227,14 @@
 | **涉及文件** | `components/items/RulesItemsingleDrawer.tsx` |
 | **建议修复** | 重命名为预期名称，更新所有 import 引用 |
 
-### #24 TabBar inset 变体未被使用
+### #24 TabBar inset 变体未被使用 ✅ 已修复 (Phase 1, 2026-06-29)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 低 |
-| **问题** | `TabBar` 组件支持 `variant="inset"` 变体，但全项目中无任何地方使用该变体（全部使用 `overline`） |
-| **涉及文件** | `components/ui/Tab.tsx` |
-| **建议修复** | 删除 `inset` 变体代码和样式，或保留但添加注释说明未来用途 |
+| **严重度** | —（已修复） |
+| **问题** | ~~`TabBar` 组件支持 `variant="inset"` 变体，但全项目中无任何地方使用该变体（全部使用 `overline`）~~ |
+| **修复** | 已删除 `inset` 变体代码和样式，`TabVariant` 简化为仅 `'overline'` |
+| **涉及文件** | ~~`components/ui/Tab.tsx`~~（已修改） |
 
 ### #25 stores/selection.store.ts 零引用 ✅ 已修复 (Phase 1, 2026-06-29)
 
@@ -263,7 +263,7 @@
 | 严重 | 3（#1 阻塞于后端） |
 | 高 | 6 |
 | 中 | 9 |
-| 低 | 5 |
+| 低 | 4 |
 | 已排除 | 1（#2 后端已有校验） |
-| 已修复 | 2（#3 ErrorBoundary Phase 0, #25 selection.store Phase 1） |
-| **合计** | **23 个待修复 + 1 个已排除 + 2 个已修复** |
+| 已修复 | 3（#3 ErrorBoundary Phase 0, #25+#24 Phase 1） |
+| **合计** | **22 个待修复 + 1 个已排除 + 3 个已修复** |
