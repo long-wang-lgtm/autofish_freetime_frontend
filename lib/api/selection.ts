@@ -461,7 +461,6 @@ async function selectionFetch<T>(path: string, options?: RequestInit, params?: R
     Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)]))
   ).toString() : ''
   const url = `${SELECTION_API_BASE}${path}${query}`
-  console.debug(`[SelectionAPI] ${options?.method || 'GET'} ${url}`)
   const res = await fetch(url, {
     ...options,
     headers: {
@@ -476,7 +475,6 @@ async function selectionFetch<T>(path: string, options?: RequestInit, params?: R
     throw new Error(`API Error: ${res.status}`)
   }
   const data = await res.json()
-  console.debug(`[SelectionAPI] Response ${url}:`, data)
   return data
 }
 
@@ -490,19 +488,16 @@ interface MonitorItemListResponse {
 
 /** 列出监控商品 — GET /api/topic/monitor/items */
 export async function listMonitorItems(page: number = 1, pageSize: number = 20): Promise<MonitorItemListResponse> {
-  console.debug(`[SelectionAPI] listMonitorItems page=${page} page_size=${pageSize}`)
   return selectionFetch<MonitorItemListResponse>('/monitor/items', undefined, { page, page_size: pageSize })
 }
 
 /** 列出监控商家 — GET /api/topic/monitor/merchants */
 export async function listMonitorMerchants(): Promise<MonitoredMerchantDTO[]> {
-  console.debug('[SelectionAPI] listMonitorMerchants')
   return selectionFetch<MonitoredMerchantDTO[]>('/monitor/merchants')
 }
 
 /** 添加监控商家 — POST /api/topic/monitor/merchant/create (JSON body) */
 export async function addMonitorMerchant(uid: string, name: string = ''): Promise<OperationResponse> {
-  console.debug(`[SelectionAPI] addMonitorMerchant uid=${uid}, name=${name}`)
   return selectionFetch<OperationResponse>('/monitor/merchant/create', {
     method: 'POST',
     body: JSON.stringify({ uid, name: name || uid }),
@@ -511,13 +506,11 @@ export async function addMonitorMerchant(uid: string, name: string = ''): Promis
 
 /** 获取选品统计 — GET /api/topic/stats */
 export async function getTopicStats(): Promise<TopicStatsDTO> {
-  console.debug('[SelectionAPI] getTopicStats')
   return selectionFetch<TopicStatsDTO>('/stats')
 }
 
 /** 移除商品监控 — DELETE /api/topic/monitor/item/delete?gid= */
 export async function removeMonitorItem(gid: string): Promise<OperationResponse> {
-  console.debug(`[SelectionAPI] removeMonitorItem gid=${gid}`)
   return selectionFetch<OperationResponse>(`/monitor/item/delete?gid=${encodeURIComponent(gid)}`, {
     method: 'DELETE',
   })
@@ -525,25 +518,21 @@ export async function removeMonitorItem(gid: string): Promise<OperationResponse>
 
 /** 启用监控 — GET /api/topic/monitor/item/active?gid= */
 export async function activateMonitorItem(gid: string): Promise<OperationResponse> {
-  console.debug(`[SelectionAPI] activateMonitorItem gid=${gid}`)
   return selectionFetch<OperationResponse>(`/monitor/item/active?gid=${encodeURIComponent(gid)}`)
 }
 
 /** 取消监控 — GET /api/topic/monitor/item/cancel?gid= */
 export async function cancelMonitorItem(gid: string): Promise<OperationResponse> {
-  console.debug(`[SelectionAPI] cancelMonitorItem gid=${gid}`)
   return selectionFetch<OperationResponse>(`/monitor/item/cancel?gid=${encodeURIComponent(gid)}`)
 }
 
 /** 商品入库（商机库）— GET /monitor/item/stored?gid= */
 export async function storedMonitorItem(gid: string): Promise<{ gid: string; monitorStatus: number }> {
-  console.debug(`[SelectionAPI] storedMonitorItem gid=${gid}`)
   return selectionFetch<{ gid: string; monitorStatus: number }>(`/monitor/item/stored?gid=${encodeURIComponent(gid)}`)
 }
 
 /** 修改监控优先级 — POST /monitor/item/priority */
 export async function updateMonitorItemPriority(gid: string, priority: number): Promise<{ gid: string; priority: number }> {
-  console.debug(`[SelectionAPI] updateMonitorItemPriority gid=${gid} priority=${priority}`)
   return selectionFetch<{ gid: string; priority: number }>('/monitor/item/priority', {
     method: 'POST',
     body: JSON.stringify({ gid, priority }),
@@ -552,7 +541,6 @@ export async function updateMonitorItemPriority(gid: string, priority: number): 
 
 /** 移除商家监控 — DELETE /api/topic/monitor/merchant/delete?uid= */
 export async function removeMonitorMerchant(uid: string): Promise<OperationResponse> {
-  console.debug(`[SelectionAPI] removeMonitorMerchant uid=${uid}`)
   return selectionFetch<OperationResponse>(`/monitor/merchant/delete?uid=${encodeURIComponent(uid)}`, {
     method: 'DELETE',
   })
@@ -562,13 +550,11 @@ export async function removeMonitorMerchant(uid: string): Promise<OperationRespo
 
 /** 列出关键词 — GET /api/topic/keywords */
 export async function listKeywords(): Promise<MonitoredKeywordDTO[]> {
-  console.debug('[SelectionAPI] listKeywords')
   return selectionFetch<MonitoredKeywordDTO[]>('/keywords')
 }
 
 /** 添加关键词 — POST /api/topic/keyword/create (JSON body) */
 export async function addKeyword(keyword: string): Promise<OperationResponse> {
-  console.debug(`[SelectionAPI] addKeyword keyword=${keyword}`)
   return selectionFetch<OperationResponse>('/keyword/create', {
     method: 'POST',
     body: JSON.stringify({ keyword }),
@@ -577,7 +563,6 @@ export async function addKeyword(keyword: string): Promise<OperationResponse> {
 
 /** 删除关键词 — DELETE /api/topic/keyword/delete?id= */
 export async function removeKeyword(keywordId: number): Promise<OperationResponse> {
-  console.debug(`[SelectionAPI] removeKeyword keywordId=${keywordId}`)
   return selectionFetch<OperationResponse>(`/keyword/delete?id=${keywordId}`, {
     method: 'DELETE',
   })
@@ -587,7 +572,6 @@ export async function removeKeyword(keywordId: number): Promise<OperationRespons
 
 /** 触发采集 — POST /api/topic/collection/run（后端待实现） */
 export async function triggerCollection(keywordIds: string[] = []): Promise<OperationResponse> {
-  console.debug(`[SelectionAPI] triggerCollection keywordIds=${JSON.stringify(keywordIds)}`)
   return selectionFetch<OperationResponse>('/collection/run', {
     method: 'POST',
     body: JSON.stringify({ keyword_ids: keywordIds }),
@@ -598,9 +582,7 @@ export async function triggerCollection(keywordIds: string[] = []): Promise<Oper
 
 /** 将 MonitoredKeyword 映射为前端 Category 格式 */
 export async function listCategories(type?: CategoryType): Promise<Category[]> {
-  console.debug(`[SelectionAPI] listCategories type=${type}`)
   const keywords = await listKeywords()
-  console.debug(`[SelectionAPI] listCategories got ${keywords.length} keywords`)
 
   const categories: Category[] = keywords.map(k => ({
     id: String(k.id ?? ''),
@@ -619,31 +601,26 @@ export async function listCategories(type?: CategoryType): Promise<Category[]> {
 
 /** 根据关键词 ID 获取采集商品列表 */
 export async function getCategoryProducts(categoryId: string): Promise<ProductItem[]> {
-  console.debug(`[SelectionAPI] getCategoryProducts categoryId=${categoryId}`)
   const { items } = await listMonitorItems()
   const filtered = categoryId
     ? items.filter(item => item.keywords?.includes(categoryId))
     : items
 
-  console.debug(`[SelectionAPI] getCategoryProducts filtered ${filtered.length} items`)
   return filtered.map(item => dtoToProductItem(item))
 }
 
 export async function getCategoryReports(categoryId: string): Promise<DailyReport[]> {
-  console.debug(`[SelectionAPI] getCategoryReports categoryId=${categoryId}`)
   return []
 }
 
 /** 按日期统计商品数量 */
 export async function getDailyProductCounts(categoryId: string): Promise<Record<string, number>> {
-  console.debug(`[SelectionAPI] getDailyProductCounts categoryId=${categoryId}`)
   const { items } = await listMonitorItems()
   const counts: Record<string, number> = {}
   for (const item of items) {
     const date = item.created_at ? item.created_at.split('T')[0] : 'unknown'
     counts[date] = (counts[date] || 0) + 1
   }
-  console.debug(`[SelectionAPI] getDailyProductCounts counts=${JSON.stringify(counts)}`)
   return counts
 }
 
@@ -676,7 +653,6 @@ export async function getProductHistory(
   gid: string,
   days: 7 | 30 | 90 = 7
 ): Promise<ProductHistoryResponse> {
-  console.debug(`[SelectionAPI] getProductHistory gid=${gid} days=${days}`)
   return selectionFetch<ProductHistoryResponse>(
     `/monitor/item/${encodeURIComponent(gid)}/history?days=${days}`
   )
