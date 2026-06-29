@@ -16,13 +16,11 @@ import {
 import { ChevronUp, ChevronDown, Search, Trash2, ChevronRight } from 'lucide-react'
 import { MiniTrendChart } from '@/components/selection/product/MiniTrendChart'
 import { ProductDiagnosticDrawer } from '@/components/selection/product/ProductDiagnosticDrawer'
+import { STATUS_MAP } from '@/components/selection/product/constants'
+import { COLUMNS, GRID_COLS, GROUP_STYLE, type ColumnDef } from '@/components/selection/product/columnDefs'
+import { fmtPrice, fmtPercent, fmtGrowth, fmtAcceleration } from '@/lib/utils/format'
 
-// ===== 格式化工具 =====
-
-function fmtPercent(rate: number | null): string {
-  if (rate === null) return '-'
-  return `${(rate * 100).toFixed(1)}%`
-}
+// ===== 格式化工具（仅本文件使用） =====
 
 function fmtRatio(ratio: number | null): string {
   if (ratio === null) return '-'
@@ -34,72 +32,9 @@ function fmtDaily(daily: number | null): string {
   return daily.toFixed(1)
 }
 
-function fmtPrice(price: number): string {
-  return `¥${price.toLocaleString('zh-CN')}`
-}
-
-function fmtGrowth(growth: number | null): string {
-  if (growth === null) return '-'
-  const pct = (growth * 100).toFixed(1)
-  return growth > 0 ? `+${pct}%` : growth < 0 ? `${pct}%` : '0%'
-}
-
-function fmtAcceleration(acc: number | null): string {
-  if (acc === null) return '-'
-  const pct = (acc * 100).toFixed(1)
-  if (acc > 0.3) return `加速 +${pct}%`
-  if (acc < -0.3) return `降温 ${pct}%`
-  return '平稳'
-}
-
 function getBarPct(val: number, max: number): string {
   return max > 0 && val > 0 ? `${Math.max(3, Math.round((val / max) * 100))}%` : '0%'
 }
-
-// ===== 列分组定义 =====
-
-type ColumnGroup = 'identity' | 'core' | 'conversion' | 'daily' | 'growth' | 'trend'
-
-const GROUP_STYLE: Record<ColumnGroup, { bar: string }> = {
-  identity:   { bar: '' },
-  core:       { bar: 'bg-gradient-to-r from-amber-300 to-amber-400' },
-  conversion: { bar: 'bg-gradient-to-r from-sky-300 to-sky-400' },
-  daily:      { bar: 'bg-gradient-to-r from-teal-300 to-teal-400' },
-  growth:     { bar: 'bg-gradient-to-r from-emerald-300 to-emerald-400' },
-  trend:      { bar: 'bg-gradient-to-r from-rose-300 to-rose-400' },
-}
-
-interface ColumnDef {
-  key: ProductSortKey
-  label: string
-  group: ColumnGroup
-  groupStart: boolean
-  dataBar?: boolean
-}
-
-/** 表格 Grid 列模板，表头 / 分组色条 / 数据行共用 */
-const GRID_COLS = '3fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 2fr 2fr 2fr 40px'
-
-const COLUMNS: ColumnDef[] = [
-  // ── 📦 商品标识 (identity) ──
-  { key: 'title',             label: '商品信息', group: 'identity',   groupStart: true },
-  // ── 📊 核心快照 (core, amber) ──
-  { key: 'price',             label: '价格',     group: 'core',       groupStart: true,  dataBar: true },
-  // ── 📈 转化质量 (conversion, sky) ──
-  { key: 'd7IfRatio' as ProductSortKey,       label: '7天询藏比', group: 'conversion', groupStart: true },
-  { key: 'd7InquiryRate' as ProductSortKey,   label: '7天询单率', group: 'conversion', groupStart: false },
-  { key: 'd7FavoriteRate' as ProductSortKey,  label: '7天收藏率', group: 'conversion', groupStart: false },
-  // ── 📐 日均量 (daily, teal) ──
-  { key: 'd7DailyWant' as ProductSortKey,     label: '日均想要',  group: 'daily',      groupStart: true },
-  { key: 'd7DailyLook' as ProductSortKey,     label: '日均浏览',  group: 'daily',      groupStart: false },
-  // ── 🚀 增长信号 (growth, emerald) ──
-  { key: 'd7BrowseGrowth' as ProductSortKey,  label: '流量增速',  group: 'growth',     groupStart: true },
-  { key: 'acceleration' as ProductSortKey,    label: '升温信号',  group: 'growth',     groupStart: false },
-  // ── 📈 趋势信号 (trend, rose) ──
-  { key: 'wantTrend' as ProductSortKey,       label: '想要趋势',  group: 'trend',      groupStart: true },
-  { key: 'lookTrend' as ProductSortKey,       label: '浏览趋势',  group: 'trend',      groupStart: false },
-  { key: 'collectTrend' as ProductSortKey,    label: '收藏趋势',  group: 'trend',      groupStart: false },
-]
 
 // ===== 组件 =====
 
@@ -222,12 +157,6 @@ export function ProductMonitorTab() {
     switch (col.key) {
       // ── 商品信息（描述 + GID链接 + 状态 + 优先级 + 入库）──
       case 'title': {
-        const STATUS_MAP: Record<number, { label: string; dot: string; bg: string; text: string }> = {
-          0: { label: '已暂停', dot: 'bg-gray-400',   bg: 'bg-gray-100',   text: 'text-gray-500' },
-          1: { label: '监控中', dot: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-          2: { label: '已分析', dot: 'bg-blue-500',    bg: 'bg-blue-50',    text: 'text-blue-700' },
-          3: { label: '已入库', dot: 'bg-violet-500',  bg: 'bg-violet-50',  text: 'text-violet-700' },
-        }
         const s = STATUS_MAP[p.monitorStatus ?? -1]
         const isInteractive = p.monitorStatus === 0 || p.monitorStatus === 1
         const isEditing = editingPriority === p.id
@@ -548,7 +477,7 @@ export function ProductMonitorTab() {
                         isSelected
                           ? 'bg-blue-50/60 hover:bg-blue-50/70'
                           : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent'
-                      }${p.monitorStatus != null && p.monitorStatus !== 1 && p.monitorStatus !== 3 ? ' opacity-60' : ''}`}
+                      }${p.monitorStatus != null && p.monitorStatus !== 1 ? ' opacity-60' : ''}`}
                       style={{ gridTemplateColumns: GRID_COLS }}
                     >
                       {COLUMNS.map(col => {

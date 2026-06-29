@@ -311,12 +311,6 @@ export interface DailyReport {
 
 // ============ 后端 DTO 类型（字段对齐 backend/free/common/schema.py）============
 
-export interface OperationResponse {
-  success: boolean
-  message: string
-  data?: Record<string, unknown>
-}
-
 /** 窗口性能指标 — 对应后端 windows_metrics 单窗口数据 */
 export interface WindowMetricsDTO {
   inquiry_rate: number | null
@@ -450,33 +444,9 @@ export interface TopicStatsDTO {
 
 // ============ API 客户端 ============
 
-import { API_BASE_URL } from '@/lib/utils/api'
+import { fetchApi, API_BASE_URL, type OperationResponse } from '@/lib/utils/api'
 
-const SELECTION_API_BASE = `${API_BASE_URL}/api/topic`
-
-async function selectionFetch<T>(path: string, options?: RequestInit, params?: Record<string, string | number>): Promise<T> {
-  const { getAccessToken } = await import('@/lib/utils/auth')
-  const token = getAccessToken()
-  const query = params ? '?' + new URLSearchParams(
-    Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)]))
-  ).toString() : ''
-  const url = `${SELECTION_API_BASE}${path}${query}`
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options?.headers,
-    },
-    credentials: 'include',
-  })
-  if (!res.ok) {
-    console.error(`[SelectionAPI] Error ${res.status} for ${url}`)
-    throw new Error(`API Error: ${res.status}`)
-  }
-  const data = await res.json()
-  return data
-}
+const SEL_BASE = `${API_BASE_URL}/api/topic`
 
 // ============ API 函数 ============
 
@@ -488,17 +458,19 @@ interface MonitorItemListResponse {
 
 /** 列出监控商品 — GET /api/topic/monitor/items */
 export async function listMonitorItems(page: number = 1, pageSize: number = 20): Promise<MonitorItemListResponse> {
-  return selectionFetch<MonitorItemListResponse>('/monitor/items', undefined, { page, page_size: pageSize })
+  return fetchApi<MonitorItemListResponse>('/monitor/items', { baseUrl: SEL_BASE, credentials_: 'include', params: { page, page_size: pageSize } })
 }
 
 /** 列出监控商家 — GET /api/topic/monitor/merchants */
 export async function listMonitorMerchants(): Promise<MonitoredMerchantDTO[]> {
-  return selectionFetch<MonitoredMerchantDTO[]>('/monitor/merchants')
+  return fetchApi<MonitoredMerchantDTO[]>('/monitor/merchants', { baseUrl: SEL_BASE, credentials_: 'include' })
 }
 
 /** 添加监控商家 — POST /api/topic/monitor/merchant/create (JSON body) */
 export async function addMonitorMerchant(uid: string, name: string = ''): Promise<OperationResponse> {
-  return selectionFetch<OperationResponse>('/monitor/merchant/create', {
+  return fetchApi<OperationResponse>('/monitor/merchant/create', {
+    baseUrl: SEL_BASE,
+    credentials_: 'include',
     method: 'POST',
     body: JSON.stringify({ uid, name: name || uid }),
   })
@@ -506,34 +478,39 @@ export async function addMonitorMerchant(uid: string, name: string = ''): Promis
 
 /** 获取选品统计 — GET /api/topic/stats */
 export async function getTopicStats(): Promise<TopicStatsDTO> {
-  return selectionFetch<TopicStatsDTO>('/stats')
+  return fetchApi<TopicStatsDTO>('/stats', { baseUrl: SEL_BASE, credentials_: 'include' })
 }
 
 /** 移除商品监控 — DELETE /api/topic/monitor/item/delete?gid= */
 export async function removeMonitorItem(gid: string): Promise<OperationResponse> {
-  return selectionFetch<OperationResponse>(`/monitor/item/delete?gid=${encodeURIComponent(gid)}`, {
+  return fetchApi<OperationResponse>('/monitor/item/delete', {
+    baseUrl: SEL_BASE,
+    credentials_: 'include',
     method: 'DELETE',
+    params: { gid },
   })
 }
 
 /** 启用监控 — GET /api/topic/monitor/item/active?gid= */
 export async function activateMonitorItem(gid: string): Promise<OperationResponse> {
-  return selectionFetch<OperationResponse>(`/monitor/item/active?gid=${encodeURIComponent(gid)}`)
+  return fetchApi<OperationResponse>('/monitor/item/active', { baseUrl: SEL_BASE, credentials_: 'include', params: { gid } })
 }
 
 /** 取消监控 — GET /api/topic/monitor/item/cancel?gid= */
 export async function cancelMonitorItem(gid: string): Promise<OperationResponse> {
-  return selectionFetch<OperationResponse>(`/monitor/item/cancel?gid=${encodeURIComponent(gid)}`)
+  return fetchApi<OperationResponse>('/monitor/item/cancel', { baseUrl: SEL_BASE, credentials_: 'include', params: { gid } })
 }
 
 /** 商品入库（商机库）— GET /monitor/item/stored?gid= */
 export async function storedMonitorItem(gid: string): Promise<{ gid: string; monitorStatus: number }> {
-  return selectionFetch<{ gid: string; monitorStatus: number }>(`/monitor/item/stored?gid=${encodeURIComponent(gid)}`)
+  return fetchApi<{ gid: string; monitorStatus: number }>('/monitor/item/stored', { baseUrl: SEL_BASE, credentials_: 'include', params: { gid } })
 }
 
 /** 修改监控优先级 — POST /monitor/item/priority */
 export async function updateMonitorItemPriority(gid: string, priority: number): Promise<{ gid: string; priority: number }> {
-  return selectionFetch<{ gid: string; priority: number }>('/monitor/item/priority', {
+  return fetchApi<{ gid: string; priority: number }>('/monitor/item/priority', {
+    baseUrl: SEL_BASE,
+    credentials_: 'include',
     method: 'POST',
     body: JSON.stringify({ gid, priority }),
   })
@@ -541,8 +518,11 @@ export async function updateMonitorItemPriority(gid: string, priority: number): 
 
 /** 移除商家监控 — DELETE /api/topic/monitor/merchant/delete?uid= */
 export async function removeMonitorMerchant(uid: string): Promise<OperationResponse> {
-  return selectionFetch<OperationResponse>(`/monitor/merchant/delete?uid=${encodeURIComponent(uid)}`, {
+  return fetchApi<OperationResponse>('/monitor/merchant/delete', {
+    baseUrl: SEL_BASE,
+    credentials_: 'include',
     method: 'DELETE',
+    params: { uid },
   })
 }
 
@@ -550,12 +530,14 @@ export async function removeMonitorMerchant(uid: string): Promise<OperationRespo
 
 /** 列出关键词 — GET /api/topic/keywords */
 export async function listKeywords(): Promise<MonitoredKeywordDTO[]> {
-  return selectionFetch<MonitoredKeywordDTO[]>('/keywords')
+  return fetchApi<MonitoredKeywordDTO[]>('/keywords', { baseUrl: SEL_BASE, credentials_: 'include' })
 }
 
 /** 添加关键词 — POST /api/topic/keyword/create (JSON body) */
 export async function addKeyword(keyword: string): Promise<OperationResponse> {
-  return selectionFetch<OperationResponse>('/keyword/create', {
+  return fetchApi<OperationResponse>('/keyword/create', {
+    baseUrl: SEL_BASE,
+    credentials_: 'include',
     method: 'POST',
     body: JSON.stringify({ keyword }),
   })
@@ -563,8 +545,11 @@ export async function addKeyword(keyword: string): Promise<OperationResponse> {
 
 /** 删除关键词 — DELETE /api/topic/keyword/delete?id= */
 export async function removeKeyword(keywordId: number): Promise<OperationResponse> {
-  return selectionFetch<OperationResponse>(`/keyword/delete?id=${keywordId}`, {
+  return fetchApi<OperationResponse>('/keyword/delete', {
+    baseUrl: SEL_BASE,
+    credentials_: 'include',
     method: 'DELETE',
+    params: { id: keywordId },
   })
 }
 
@@ -572,7 +557,9 @@ export async function removeKeyword(keywordId: number): Promise<OperationRespons
 
 /** 触发采集 — POST /api/topic/collection/run（后端待实现） */
 export async function triggerCollection(keywordIds: string[] = []): Promise<OperationResponse> {
-  return selectionFetch<OperationResponse>('/collection/run', {
+  return fetchApi<OperationResponse>('/collection/run', {
+    baseUrl: SEL_BASE,
+    credentials_: 'include',
     method: 'POST',
     body: JSON.stringify({ keyword_ids: keywordIds }),
   })
@@ -653,7 +640,8 @@ export async function getProductHistory(
   gid: string,
   days: 7 | 30 | 90 = 7
 ): Promise<ProductHistoryResponse> {
-  return selectionFetch<ProductHistoryResponse>(
-    `/monitor/item/${encodeURIComponent(gid)}/history?days=${days}`
+  return fetchApi<ProductHistoryResponse>(
+    `/monitor/item/${encodeURIComponent(gid)}/history`,
+    { baseUrl: SEL_BASE, credentials_: 'include', params: { days } }
   )
 }

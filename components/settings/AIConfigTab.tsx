@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { Sheet, BottomSheet } from '@/components/ui/Sheet'
+import { AIConfigFormFields } from '@/components/ai-config/form-fields'
 import {
   listAIConfigs,
   deleteAIConfig,
@@ -28,19 +29,6 @@ const CONFIG_TYPE_LABELS: Record<string, string> = {
   text: '文字',
   image: '生图',
 }
-
-const PROVIDERS: { value: string; label: string }[] = [
-  { value: 'deepseek', label: 'DeepSeek' },
-  { value: 'siliconflow', label: '硅基流动' },
-  { value: 'volcano', label: '火山方舟' },
-  { value: 'bailian', label: '阿里百炼' },
-  { value: 'minimax', label: 'MiniMax' },
-]
-
-const CONFIG_TYPES: { value: 'text' | 'image'; label: string }[] = [
-  { value: 'text', label: '文字模型' },
-  { value: 'image', label: '生图模型' },
-]
 
 interface AIConfigTabProps {
   isMobile: boolean
@@ -440,51 +428,27 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
           }
         >
           <div className="p-5 space-y-4">
-            {/* 名称 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">名称</label>
-              <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} required placeholder="例如：我的DeepSeek文字模型" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
-            </div>
-            {/* 服务商 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">服务商</label>
-              <select value={formProvider} onChange={(e) => { setFormProvider(e.target.value); if (providerDefaults[e.target.value]) setFormBaseUrl(providerDefaults[e.target.value]) }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-                {PROVIDERS.map((p) => (<option key={p.value} value={p.value}>{p.label}</option>))}
-              </select>
-            </div>
-            {/* 用途 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">用途</label>
-              <div className="flex gap-4">
-                {CONFIG_TYPES.map((type) => (
-                  <label key={type.value} className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="formConfigType" value={type.value} checked={formConfigType === type.value} onChange={(e) => setFormConfigType(e.target.value as 'text' | 'image')} className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm text-gray-700">{type.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            {/* Base URL */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Base URL</label>
-              <input type="text" value={formBaseUrl} onChange={(e) => setFormBaseUrl(e.target.value)} required placeholder="https://api.example.com" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
-              {providerDefaults[formProvider] && (<p className="mt-1 text-xs text-gray-400">默认值：{providerDefaults[formProvider]}</p>)}
-            </div>
-            {/* API Key */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
-              <input type="password" value={formApiKey} onChange={(e) => setFormApiKey(e.target.value)} required placeholder="sk-..." className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
-            </div>
-            {/* 模型名称 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">模型名称</label>
-              <input type="text" value={formModel} onChange={(e) => setFormModel(e.target.value)} required placeholder="例如：deepseek-chat、flux-quick" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
-            </div>
-            {/* 设为默认 */}
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="formIsDefaultMobile" checked={formIsDefault} onChange={(e) => setFormIsDefault(e.target.checked)} className="w-4 h-4 text-blue-600 rounded" />
-              <label htmlFor="formIsDefaultMobile" className="text-sm text-gray-700">设为该用途的默认模型</label>
-            </div>
+            <AIConfigFormFields
+              name={formName}
+              provider={formProvider}
+              configType={formConfigType}
+              baseUrl={formBaseUrl}
+              apiKey={formApiKey}
+              model={formModel}
+              isDefault={formIsDefault}
+              onNameChange={setFormName}
+              onProviderChange={(v) => {
+                setFormProvider(v)
+                if (providerDefaults[v]) setFormBaseUrl(providerDefaults[v])
+              }}
+              onConfigTypeChange={setFormConfigType}
+              onBaseUrlChange={setFormBaseUrl}
+              onApiKeyChange={setFormApiKey}
+              onModelChange={setFormModel}
+              onIsDefaultChange={setFormIsDefault}
+              providerDefaults={providerDefaults}
+              idPrefix="mobile-"
+            />
           </div>
         </BottomSheet>
       ) : (
@@ -495,51 +459,26 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
           width="500px"
         >
           <form onSubmit={handleSubmit} className="h-full overflow-y-auto p-6 space-y-6">
-            {/* 名称 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">名称</label>
-              <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} required placeholder="例如：我的DeepSeek文字模型" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
-            </div>
-            {/* 服务商 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">服务商</label>
-              <select value={formProvider} onChange={(e) => { setFormProvider(e.target.value); if (providerDefaults[e.target.value]) setFormBaseUrl(providerDefaults[e.target.value]) }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                {PROVIDERS.map((p) => (<option key={p.value} value={p.value}>{p.label}</option>))}
-              </select>
-            </div>
-            {/* 用途 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">用途</label>
-              <div className="flex gap-4">
-                {CONFIG_TYPES.map((type) => (
-                  <label key={type.value} className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="formConfigType" value={type.value} checked={formConfigType === type.value} onChange={(e) => setFormConfigType(e.target.value as 'text' | 'image')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                    <span className="text-sm text-gray-700">{type.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            {/* Base URL */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Base URL</label>
-              <input type="text" value={formBaseUrl} onChange={(e) => setFormBaseUrl(e.target.value)} required placeholder="https://api.example.com" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
-              {providerDefaults[formProvider] && (<p className="mt-1 text-xs text-gray-400">默认值：{providerDefaults[formProvider]}</p>)}
-            </div>
-            {/* API Key */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
-              <input type="password" value={formApiKey} onChange={(e) => setFormApiKey(e.target.value)} required placeholder="sk-..." className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
-            </div>
-            {/* 模型名称 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">模型名称</label>
-              <input type="text" value={formModel} onChange={(e) => setFormModel(e.target.value)} required placeholder="例如：deepseek-chat、flux-quick" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
-            </div>
-            {/* 设为默认 */}
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="formIsDefault" checked={formIsDefault} onChange={(e) => setFormIsDefault(e.target.checked)} className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded" />
-              <label htmlFor="formIsDefault" className="text-sm text-gray-700 cursor-pointer">设为该用途的默认模型</label>
-            </div>
+            <AIConfigFormFields
+              name={formName}
+              provider={formProvider}
+              configType={formConfigType}
+              baseUrl={formBaseUrl}
+              apiKey={formApiKey}
+              model={formModel}
+              isDefault={formIsDefault}
+              onNameChange={setFormName}
+              onProviderChange={(v) => {
+                setFormProvider(v)
+                if (providerDefaults[v]) setFormBaseUrl(providerDefaults[v])
+              }}
+              onConfigTypeChange={setFormConfigType}
+              onBaseUrlChange={setFormBaseUrl}
+              onApiKeyChange={setFormApiKey}
+              onModelChange={setFormModel}
+              onIsDefaultChange={setFormIsDefault}
+              providerDefaults={providerDefaults}
+            />
             {/* 底部按钮 */}
             <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
               <button type="submit" disabled={saveMutation.isPending} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">

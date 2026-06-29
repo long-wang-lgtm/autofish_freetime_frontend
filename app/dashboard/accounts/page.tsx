@@ -1,11 +1,12 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { listAccounts} from "@/lib/api/accounts"
 import { AccountRow } from "@/components/accounts/AccountTable"
 import { AccountCard } from "@/components/accounts/AccountCard"
+import { useIsMobile } from "@/hooks/useIsMobile"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import QrLoginModal from "@/components/accounts/QrLoginModal"
 import LinkLoginModal from "@/components/accounts/LinkLoginModal"
@@ -21,14 +22,7 @@ export default function AccountsPage() {
   const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [reloginUid, setReloginUid] = useState<string | null>(null)
   const [bulkLoading, setBulkLoading] = useState<"start" | "stop" | null>(null)
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
+  const isMobile = useIsMobile()
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["accounts"],

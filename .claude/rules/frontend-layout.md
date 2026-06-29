@@ -114,7 +114,7 @@ style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}
 - `useMediaQuery()` — `frontend/hooks/useMediaQuery.ts`（通用版，保留给特殊断点）
 - `window.innerWidth` — `frontend/app/dashboard/accounts/page.tsx` 第 27 行（**反模式**，有 hydration 不匹配风险）
 
-**铁律**：所有页面/组件的移动端判断统一使用 `useIsMobile()`。仅在需要非 768px 断点时使用 `useMediaQuery(query)`。禁止直接读取 `window.innerWidth`。
+**铁律**：所有页面/组件的移动端判断统一使用 `useIsMobile()`。横屏手机宽度 ≥ 768px 自动走 PC 布局，不单独维护第 3 套横屏移动端布局。`useMediaQuery` 仅用于非移动端检测场景（如 `prefers-color-scheme`）。禁止直接读取 `window.innerWidth`。
 
 ### 3. 触摸目标最小 44x44px
 

@@ -7,14 +7,11 @@ import { NewKeywordModal } from './NewKeywordModal'
 import { VerticalTimeline } from './VerticalTimeline'
 import { Eye, Heart, Search, Play } from 'lucide-react'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { fmtNumber } from '@/lib/utils/format'
 
 interface KeywordCollectionTabProps {
   selectedKeywordId: string | null
   onSelectKeyword: (id: string | null) => void
-}
-
-function fmtCount(count: number): string {
-  return count.toLocaleString('zh-CN')
 }
 
 export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: KeywordCollectionTabProps) {
@@ -190,14 +187,14 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
                       {'lookCount' in p && (
                         <span className="inline-flex items-center gap-1 text-xs text-gray-400 tabular-nums w-16 justify-end">
                           <Eye className="w-3 h-3" />
-                          {fmtCount(p.lookCount)}
+                          {fmtNumber(p.lookCount)}
                         </span>
                       )}
                       {/* 收藏 */}
                       {'collectCount' in p && (
                         <span className="inline-flex items-center gap-1 text-xs text-gray-400 tabular-nums w-16 justify-end">
                           <Heart className="w-3 h-3" />
-                          {fmtCount(p.collectCount)}
+                          {fmtNumber(p.collectCount)}
                         </span>
                       )}
                     </div>

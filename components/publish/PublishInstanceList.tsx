@@ -12,26 +12,12 @@ import {
   triggerImageGenerate,
   triggerPublish,
   getChannelCategories,
-  imageDisplayUrl,
   sortImages,
 } from '@/lib/api/publish-items'
 import { uploadFileToFlare } from '@/lib/api/upload'
-import { CreationProgressBar } from './CreationProgressBar'
 import { ImageLightbox } from './ImageLightbox'
+import { PublishInstanceRow } from './PublishInstanceRow'
 
-function getStatusLabel(item: PublishedItem): { label: string; color: string } {
-  if (item.status === 'publish_failed') return { label: '失败', color: 'text-red-500' }
-  if (item.item_gid) return { label: '已发布', color: 'text-green-600' }
-  if (item.status === 'publishing') return { label: '发布中', color: 'text-teal-500' }
-  if (item.images?.length) return { label: '生图完成', color: 'text-orange-500' }
-  if (item.status === 'image_generating') return { label: '生图中', color: 'text-orange-500' }
-  if (item.cover_plan_prompt) return { label: '封面完成', color: 'text-purple-500' }
-  if (item.status === 'cover_planning') return { label: '封面规划中', color: 'text-purple-500' }
-  if (item.description) return { label: '改写完成', color: 'text-blue-500' }
-  if (item.status === 'rewriting') return { label: '改写中', color: 'text-blue-500' }
-  if (item.status === 'rewrite_done') return { label: '改写完成', color: 'text-blue-500' }
-  return { label: item.status, color: 'text-gray-400' }
-}
 
 interface PublishInstanceListProps {
   opportunityId: number
@@ -313,14 +299,22 @@ export function PublishInstanceList({
     }
   }
 
-  const initForm = (item: PublishedItem) => {
+  const handleSaveField = useCallback((itemId: number, data: Partial<PublishedItem>) => {
+    saveMutation.mutate({ id: itemId, data })
+  }, [saveMutation.mutate])
+
+  const handleFormInit = useCallback((item: PublishedItem) => {
     setForm({
       id: item.id,
       price: item.price,
       account_id: item.account_id,
       category: item.category,
     })
-  }
+  }, [])
+
+  const handleFormUpdate = useCallback((updates: Partial<PublishedItem>) => {
+    setForm(f => ({ ...f, ...updates }))
+  }, [])
 
   const toggleSelect = (id: number) => {
     setSelectedIds(prev => {
@@ -387,289 +381,35 @@ export function PublishInstanceList({
         ) : items.length === 0 ? (
           <div className="text-center py-8 text-gray-400">暂无发布素材</div>
         ) : (
-          items.map(item => {
-            const statusInfo = getStatusLabel(item)
-            const isSelected = selectedItemId === item.id
-            const isEditing = form.id === item.id
-
-            return (
-              <div
-                key={item.id}
-                onClick={() => {
-                  onEditItem(item)
-                }}
-                className={
-                  'flex items-stretch gap-1.5 px-3 min-h-[96px] border-b text-xs min-w-[900px] cursor-pointer select-none' +
-                  (isEditing ? ' bg-blue-50 ring-1 ring-blue-300' : isSelected ? ' bg-blue-50/50' : ' hover:bg-gray-50')
-                }
-              >
-                {/* checkbox */}
-                <div className="w-[18px] flex-shrink-0 flex items-center" onClick={e => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(item.id)}
-                    onChange={() => toggleSelect(item.id)}
-                    className="rounded"
-                  />
-                </div>
-
-                {/* 封面图 + 附加图片 */}
-                <div
-                  className="w-[280px] flex-shrink-0 flex items-center gap-1.5 overflow-x-auto"
-                  onClick={e => e.stopPropagation()}
-                  onWheel={e => {
-                    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-                      e.currentTarget.scrollLeft += e.deltaY
-                      e.preventDefault()
-                    }
-                  }}
-                >
-                  {/* 封面 */}
-                  {/* {item.images?.[0] ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={imageDisplayUrl(item.images[0])}
-                      alt="封面"
-                      className="w-14 h-14 object-cover rounded cursor-pointer hover:ring-2 hover:ring-blue-400 flex-shrink-0"
-                      onClick={() => setLightboxSrc(imageDisplayUrl(item.images[0]))}
-                    />
-                  ) : (
-                    <div className="w-14 h-14 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-xl flex-shrink-0">📷</div>
-                  )} */}
-
-                  {/* 附加图片缩略图（可拖拽排序） */}
-                  {(item.images || []).map((img, idx) => {
-                    const key = `${item.id}-${idx}`
-                    const isDragging = dragKey === key
-                    return (
-                    <div
-                      key={img.md5 || idx}
-                      draggable
-                      onDragStart={e => handleImageDragStart(e, item.id, idx)}
-                      onDragOver={handleImageDragOver}
-                      onDragEnd={handleImageDragEnd}
-                      onDrop={e => handleImageDrop(e, item.id, idx)}
-                      className={`relative w-14 h-14 flex-shrink-0 group cursor-grab active:cursor-grabbing transition-opacity ${isDragging ? 'opacity-30' : ''}`}
-                      onClick={() => setLightboxSrc(imageDisplayUrl(img))}
-                    >
-                      <img
-                        src={imageDisplayUrl(img)}
-                        alt=""
-                        draggable={false}
-                        className="w-14 h-14 object-cover rounded border border-gray-200 pointer-events-none"
-                      />
-                      <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          handleImageDelete(item.id, idx)
-                        }}
-                        className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center leading-none text-[9px]"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    )
-                  })}
-
-                  {/* + 号上传入口（末尾） */}
-                  {(item.images || []).length < 8 ? (
-                    <label className={
-                      'w-14 h-14 flex-shrink-0 flex items-center justify-center rounded border border-dashed cursor-pointer ' +
-                      (uploadingItemIds.has(item.id)
-                        ? 'border-blue-300 bg-blue-50 text-blue-400'
-                        : 'border-gray-300 text-gray-400 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-500')
-                    }>
-                      {uploadingItemIds.has(item.id) ? (
-                        <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={e => {
-                          handleImageUpload(item.id, e.target.files)
-                          e.target.value = ''
-                        }}
-                      />
-                    </label>
-                  ) : null}
-                </div>
-
-                {/* 改写内容 — 只读，点击行在抽屉编辑 */}
-                <div className="flex-1 min-w-[160px] flex items-center">
-                  <div
-                    className="w-full text-gray-700 leading-tight"
-                    style={{
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {item.description || <span className="text-gray-300">（空）</span>}
-                  </div>
-                </div>
-
-                {/* 封面规划 — 只读，点击行在抽屉编辑 */}
-                <div className="flex-1 min-w-[200px] flex items-center">
-                  <div
-                    className="w-full text-gray-400 leading-tight"
-                    style={{
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {item.cover_plan_prompt || <span className="text-gray-300">（空）</span>}
-                  </div>
-                </div>
-
-                {/* 价格 — 点击编辑 */}
-                <div className="w-[70px] flex-shrink-0 flex items-center">
-                  <input
-                    type="number"
-                    value={isEditing ? (form.price ?? 0) : item.price}
-                    onChange={e => {
-                      if (form.id !== item.id) initForm(item)
-                      setForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))
-                    }}
-                    onClick={e => {
-                      e.stopPropagation()
-                      if (form.id !== item.id) initForm(item)
-                    }}
-                    onBlur={e => {
-                      e.stopPropagation()
-                      if (form.id === item.id && form.price !== undefined) {
-                        updatePublishedItem(item.id, { price: form.price }).then(updated => {
-                          queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
-                            if (!old) return old
-                            return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
-                          })
-                        })
-                      }
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        if (form.id === item.id && form.price !== undefined) {
-                          updatePublishedItem(item.id, { price: form.price }).then(updated => {
-                            queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
-                              if (!old) return old
-                              return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
-                            })
-                          })
-                        }
-                      }
-                    }}
-                    className="w-full p-1 border border-blue-400 rounded text-xs bg-white"
-                    step="0.01"
-                  />
-                </div>
-
-                {/* 账号 — 下拉即时保存 */}
-                <div className="w-[90px] flex-shrink-0 flex items-center">
-                  <select
-                    value={isEditing ? (form.account_id ?? '') : (item.account_id ?? '')}
-                    onChange={e => {
-                      e.stopPropagation()
-                      if (form.id !== item.id) initForm(item)
-                      setForm(f => ({ ...f, account_id: e.target.value }))
-                      updatePublishedItem(item.id, { account_id: e.target.value }).then(updated => {
-                        queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
-                          if (!old) return old
-                          return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
-                        })
-                        fetchChannelIfReady(item.id)
-                      })
-                    }}
-                    onClick={e => {
-                      e.stopPropagation()
-                      if (form.id !== item.id) initForm(item)
-                    }}
-                    className="w-full p-1 border border-blue-400 rounded text-xs bg-white cursor-pointer"
-                  >
-                    <option value="">未选择</option>
-                    {accounts.map(acc => (
-                      <option key={acc.uid} value={acc.uid}>{acc.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 类目 — 下拉即时保存 */}
-                <div className="w-[100px] flex-shrink-0 flex items-center">
-                  <select
-                    value={item.category ?? ''}
-                    onChange={e => {
-                      e.stopPropagation()
-                      if (form.id !== item.id) initForm(item)
-                      setForm(f => ({ ...f, category: e.target.value }))
-                      updatePublishedItem(item.id, { category: e.target.value }).then(updated => {
-                        queryClient.setQueryData(['published-items', opportunityId], (old: any) => {
-                          if (!old) return old
-                          return { ...old, items: old.items.map((i: PublishedItem) => i.id === updated.id ? { ...i, ...updated } : i) }
-                        })
-                      })
-                    }}
-                    onClick={e => {
-                      e.stopPropagation()
-                      if (form.id !== item.id) initForm(item)
-                    }}
-                    className="w-full p-1 border border-blue-400 rounded text-xs bg-white cursor-pointer"
-                  >
-                    <option value="">未选择</option>
-                    {item.category && !channelCategories[item.id]?.some(c => c.channelCateName === item.category) && (
-                      <option value={item.category}>{item.category}</option>
-                    )}
-                    {channelCategories[item.id]?.map(cat => (
-                      <option key={cat.channelCateId} value={cat.channelCateName}>{cat.channelCateName}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 创作进度 */}
-                <div
-                  className="w-[130px] flex-shrink-0 flex items-center"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <CreationProgressBar
-                    item={item}
-                    onStageClick={stage => handleStageClick(item, stage)}
-                    size="sm"
-                  />
-                </div>
-
-                {/* 状态 */}
-                <div className={'w-[60px] flex-shrink-0 flex items-center text-xs ' + statusInfo.color}>
-                  {statusInfo.label}
-                </div>
-
-                {/* 删除 */}
-                <div className="w-[40px] flex-shrink-0 flex items-center justify-center" onClick={e => e.stopPropagation()}>
-                  <button
-                    onClick={() => {
-                      if (window.confirm('确认删除该发布素材？')) {
-                        deleteMutation.mutate(item.id)
-                      }
-                    }}
-                    className="text-gray-300 hover:text-red-500 text-sm"
-                    title="删除"
-                  >
-                    🗑
-                  </button>
-                </div>
-              </div>
-            )
-          })
+          items.map(item => (
+            <PublishInstanceRow
+              key={item.id}
+              item={item}
+              accounts={accounts}
+              channelCategories={channelCategories}
+              isSelected={selectedItemId === item.id}
+              isEditing={form.id === item.id}
+              isChecked={selectedIds.has(item.id)}
+              dragKey={dragKey}
+              isUploading={uploadingItemIds.has(item.id)}
+              form={form}
+              onToggleSelect={toggleSelect}
+              onSelect={onEditItem}
+              onDelete={(id) => deleteMutation.mutate(id)}
+              onSaveField={handleSaveField}
+              onFetchChannel={fetchChannelIfReady}
+              onStageClick={handleStageClick}
+              onImageUpload={handleImageUpload}
+              onImageDelete={handleImageDelete}
+              onImageDragStart={handleImageDragStart}
+              onImageDragOver={handleImageDragOver}
+              onImageDragEnd={handleImageDragEnd}
+              onImageDrop={handleImageDrop}
+              onLightbox={setLightboxSrc}
+              onFormInit={handleFormInit}
+              onFormUpdate={handleFormUpdate}
+            />
+          ))
         )}
       </div>
 

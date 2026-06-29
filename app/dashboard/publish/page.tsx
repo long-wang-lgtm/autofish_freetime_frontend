@@ -11,7 +11,7 @@ import { MobileTabView } from '@/components/publish/MobileTabView'
 import { listOpportunities, type Opportunity } from '@/lib/api/opportunities'
 import { type PublishedItem } from '@/lib/api/publish-items'
 import { getAccountNames } from '@/lib/api/accounts'
-import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 const PUBLISH_TABS: { key: string; label: string }[] = [
   { key: 'publish', label: '商品发布' },
@@ -23,7 +23,7 @@ const LEFT_PANEL_MAX_WIDTH = 480
 
 export default function PublishPage() {
   const queryClient = useQueryClient()
-  const isMobile = useMediaQuery('(max-width: 768px)')
+  const isMobile = useIsMobile()
 
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null)
 

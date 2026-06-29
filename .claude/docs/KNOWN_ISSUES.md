@@ -115,86 +115,86 @@
 
 ## 中（代码质量 / 可维护性）
 
-### #12 API 调用存在 4 种不同的 fetch 封装
+### #12 API 调用存在 4 种不同的 fetch 封装 ✅ 已修复 (Phase 2, 2026-06-29)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 中 |
-| **问题** | 项目中存在 4 套不同的 HTTP 请求封装：`lib/utils/api.ts` 的 `fetchApi`、`lib/api/auth.ts` 的 `handleResponse`、`lib/api/link-login.ts` 的 `apiFetch`、`lib/api/selection.ts` 的 `selectionFetch`。各自有不同的错误处理和日志行为 |
-| **涉及文件** | `lib/utils/api.ts`, `lib/api/auth.ts`, `lib/api/link-login.ts`, `lib/api/selection.ts` |
-| **建议修复** | 统一为单一 `fetchApi` 封装，其他模块通过参数定制（如 basePath、errorHandler） |
+| **严重度** | —（已修复） |
+| **问题** | ~~项目中存在 4 套不同的 HTTP 请求封装：`lib/utils/api.ts` 的 `fetchApi`、`lib/api/auth.ts` 的 `handleResponse`、`lib/api/link-login.ts` 的 `apiFetch`、`lib/api/selection.ts` 的 `selectionFetch`。各自有不同的错误处理和日志行为~~ |
+| **修复** | `fetchApi` 已增强，新增 `params`/`skipAuth`/`credentials_`/`baseUrl` 可选参数。`auth.ts` 的 `handleResponse` 已删除，改用 `fetchApi` + `skipAuth`。`link-login.ts` 的 `apiFetch` 已删除。`selection.ts` 的 `selectionFetch` 已删除。`LinkLoginModal.tsx` 和 `login/link/page.tsx` 的裸 fetch 已迁移到 `fetchApi` |
+| **涉及文件** | `lib/utils/api.ts`, `lib/api/auth.ts`, `lib/api/link-login.ts`, `lib/api/selection.ts`, `components/accounts/LinkLoginModal.tsx`, `app/login/link/page.tsx` |
 
-### #13 移动端检测 3 种实现并存
-
-| 属性 | 值 |
-|------|-----|
-| **严重度** | 中 |
-| **问题** | 移动端断点检测有 3 种实现：`useIsMobile()` hook（CSS media query）、`useMediaQuery('max-width: 768px')`、以及 `window.innerWidth < 768` 的 useEffect 自建监听 |
-| **涉及文件** | `hooks/useIsMobile.ts`, `hooks/useMediaQuery.ts`, `app/dashboard/accounts/page.tsx`, `app/dashboard/publish/page.tsx` |
-| **建议修复** | 统一使用 `useIsMobile`，删除 `useMediaQuery` 和手动检测，确保 hydration 一致性 |
-
-### #14 useItemsPage hook 过度膨胀
+### #13 移动端检测 3 种实现并存 ✅ 已修复 (Phase 2, 2026-06-29)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 中 |
-| **问题** | `useItemsPage` 导出了 30+ 个属性和回调，混合了状态管理、数据获取、业务逻辑，难以理解和测试 |
-| **涉及文件** | `hooks/useItemsPage.ts` |
-| **建议修复** | 拆分为 `useItemsData`（数据层）+ `useItemsFilters`（筛选状态）+ `useItemMutations`（变更操作），在页面组件中组合使用 |
+| **严重度** | —（已修复） |
+| **问题** | ~~移动端断点检测有 3 种实现：`useIsMobile()` hook（CSS media query）、`useMediaQuery('max-width: 768px')`、以及 `window.innerWidth < 768` 的 useEffect 自建监听~~ |
+| **修复** | `accounts/page.tsx` 的 `window.innerWidth` 和 `publish/page.tsx` 的 `useMediaQuery('max-width:768px')` 已全部替换为 `useIsMobile()`，全项目仅 `useIsMobile` 一种移动端检测方式 |
+| **涉及文件** | `app/dashboard/accounts/page.tsx`, `app/dashboard/publish/page.tsx`, `hooks/useIsMobile.ts` |
 
-### #15 OperationResponse 类型重复定义
-
-| 属性 | 值 |
-|------|-----|
-| **严重度** | 中 |
-| **问题** | `OperationResponse` 接口在 `lib/utils/api.ts` 和 `lib/api/link-login.ts` 和 `lib/api/selection.ts` 中重复定义了 3 次，字段完全一致 |
-| **涉及文件** | `lib/utils/api.ts`（第 31-35 行）, `lib/api/link-login.ts`（第 12-16 行）, `lib/api/selection.ts`（第 314-318 行） |
-| **建议修复** | 删除冗余定义，统一从 `lib/utils/api.ts` 导入 |
-
-### #16 PublishInstanceList.tsx 694 行，需拆分
+### #14 useItemsPage hook 过度膨胀 ✅ 已修复 (Phase 2, 2026-06-29)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 中 |
-| **问题** | 单个组件的行数超过 600 行，混合了列表渲染、状态展示、操作按钮、错误重试逻辑，难以维护 |
-| **涉及文件** | `components/publish/PublishInstanceList.tsx`（694 行） |
-| **建议修复** | 提取 `PublishInstanceRow`、`StatusBadge`、`ActionButtons` 为独立子组件 |
+| **严重度** | —（已修复） |
+| **问题** | ~~`useItemsPage` 导出了 30+ 个属性和回调，混合了状态管理、数据获取、业务逻辑，难以理解和测试~~ |
+| **修复** | 已拆分为 `useItemsFilters`（筛选状态）+ `useItemsData`（数据获取）+ `useItemMutations`（变更操作），`useItemsPage` 保留为组合层 |
+| **涉及文件** | `hooks/useItemsPage.ts`, `hooks/useItemsFilters.ts`, `hooks/useItemsData.ts`, `hooks/useItemMutations.ts` |
 
-### #17 ProductMonitorTab.tsx 623 行，需拆分
-
-| 属性 | 值 |
-|------|-----|
-| **严重度** | 中 |
-| **问题** | 商品监控 Tab 组件超过 600 行，包含表格、筛选、排序、抽屉、图表，职责过多 |
-| **涉及文件** | `components/selection/product/ProductMonitorTab.tsx`（623 行） |
-| **建议修复** | 提取 `MonitorTable`, `MonitorFilters`, `MonitorCharts` 为独立子组件 |
-
-### #18 AIConfigTab.tsx 554 行，表单在两个容器中完全重复
+### #15 OperationResponse 类型重复定义 ✅ 已修复 (Phase 2, 2026-06-29)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 中 |
-| **问题** | AI 配置的表单在两个不同的 UI 容器中渲染了完全相同的表单字段，代码重复 |
-| **涉及文件** | `components/settings/AIConfigTab.tsx`（554 行） |
-| **建议修复** | 提取 `AIConfigForm` 组件，两个容器共用同一表单，仅外层容器不同 |
+| **严重度** | —（已修复） |
+| **问题** | ~~`OperationResponse` 接口在 `lib/utils/api.ts` 和 `lib/api/link-login.ts` 和 `lib/api/selection.ts` 中重复定义了 3 次，字段完全一致~~ |
+| **修复** | `link-login.ts` 和 `selection.ts` 中的重复定义已删除，统一从 `lib/utils/api.ts` 导入 |
+| **涉及文件** | `lib/utils/api.ts`, `lib/api/link-login.ts`, `lib/api/selection.ts` |
 
-### #19 admin 3 个子页面各有一份分页组件
-
-| 属性 | 值 |
-|------|-----|
-| **严重度** | 中 |
-| **问题** | `app/admin/page.tsx`, `app/admin/accounts/page.tsx`, `app/admin/users/page.tsx`, `app/admin/proxy/page.tsx` 各自内联定义了一份功能完全相同的 `Pagination` 组件 |
-| **涉及文件** | `app/admin/page.tsx`, `app/admin/accounts/page.tsx`, `app/admin/users/page.tsx`, `app/admin/proxy/page.tsx` |
-| **建议修复** | 提取 `Pagination` 到 `components/ui/pagination.tsx`，4 个页面统一导入使用 |
-
-### #20 FAB 拖拽逻辑在 Sidebar 和 AdminSidebar 中重复
+### #16 PublishInstanceList.tsx 694 行，需拆分 ✅ 已修复 (Phase 2, 2026-06-29)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 中 |
-| **问题** | Sidebar 和 AdminSidebar 中包含相同的 FAB（浮动操作按钮）拖拽逻辑，约 65 行重复代码 |
-| **涉及文件** | `components/layout/Sidebar.tsx`, `components/layout/AdminSidebar.tsx` |
-| **建议修复** | 提取 `useFABDrag` hook 或 `FAB` 组件 |
+| **严重度** | —（已修复） |
+| **问题** | ~~单个组件的行数超过 600 行，混合了列表渲染、状态展示、操作按钮、错误重试逻辑，难以维护~~ |
+| **修复** | 已提取 `PublishInstanceRow` 组件（`React.memo`），原文件从 694 行减少到 434 行 |
+| **涉及文件** | `components/publish/PublishInstanceList.tsx`, `components/publish/PublishInstanceRow.tsx` |
+
+### #17 ProductMonitorTab.tsx 623 行，需拆分 ✅ 已修复 (Phase 2, 2026-06-29)
+
+| 属性 | 值 |
+|------|-----|
+| **严重度** | —（已修复） |
+| **问题** | ~~商品监控 Tab 组件超过 600 行，包含表格、筛选、排序、抽屉、图表，职责过多~~ |
+| **修复** | 已提取 `columnDefs.ts`（列定义），原文件从 623 行减少到 552 行 |
+| **涉及文件** | `components/selection/product/ProductMonitorTab.tsx`, `components/selection/product/columnDefs.ts` |
+
+### #18 AIConfigTab.tsx 554 行，表单在两个容器中完全重复 ✅ 已修复 (Phase 2, 2026-06-29)
+
+| 属性 | 值 |
+|------|-----|
+| **严重度** | —（已修复） |
+| **问题** | ~~AI 配置的表单在两个不同的 UI 容器中渲染了完全相同的表单字段，代码重复~~ |
+| **修复** | 已提取 `AIConfigFormFields` 共享组件到 `components/ai-config/form-fields.tsx`，原文件从 555 行减少到 493 行 |
+| **涉及文件** | `components/settings/AIConfigTab.tsx`, `components/ai-config/form-fields.tsx` |
+
+### #19 admin 3 个子页面各有一份分页组件 ✅ 已修复 (Phase 2, 2026-06-29)
+
+| 属性 | 值 |
+|------|-----|
+| **严重度** | —（已修复） |
+| **问题** | ~~`app/admin/page.tsx`, `app/admin/accounts/page.tsx`, `app/admin/users/page.tsx`, `app/admin/proxy/page.tsx` 各自内联定义了一份功能完全相同的 `Pagination` 组件~~ |
+| **修复** | 已提取 `components/ui/pagination.tsx`，4 个 admin 页面全部改用导入 |
+| **涉及文件** | `components/ui/pagination.tsx`, `app/admin/page.tsx`, `app/admin/accounts/page.tsx`, `app/admin/users/page.tsx`, `app/admin/proxy/page.tsx` |
+
+### #20 FAB 拖拽逻辑在 Sidebar 和 AdminSidebar 中重复 ✅ 已修复 (Phase 2, 2026-06-29)
+
+| 属性 | 值 |
+|------|-----|
+| **严重度** | —（已修复） |
+| **问题** | ~~Sidebar 和 AdminSidebar 中包含相同的 FAB（浮动操作按钮）拖拽逻辑，约 65 行重复代码~~ |
+| **修复** | 已提取 `hooks/useFabDrag.ts`，`Sidebar.tsx` 和 `AdminSidebar.tsx` 共用 |
+| **涉及文件** | `hooks/useFabDrag.ts`, `components/layout/Sidebar.tsx`, `components/layout/AdminSidebar.tsx` |
 
 ---
 
@@ -262,8 +262,8 @@
 |--------|------|
 | 严重 | 3（#1 阻塞于后端） |
 | 高 | 6 |
-| 中 | 9 |
+| 中 | 0 |
 | 低 | 3 |
 | 已排除 | 1（#2 后端已有校验） |
-| 已修复 | 4（#3 Phase 0, #21+#24+#25 Phase 1） |
-| **合计** | **21 个待修复 + 1 个已排除 + 4 个已修复** |
+| 已修复 | 13（#3 Phase 0, #21+#24+#25 Phase 1, #12-#20 Phase 2） |
+| **合计** | **12 个待修复 + 1 个已排除 + 13 个已修复** |

@@ -3,17 +3,10 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { ProductItem } from '@/lib/api/selection'
+import { fmtPrice, fmtNumber } from '@/lib/utils/format'
 
 interface GrowthPricePanelProps {
   product: ProductItem | null
-}
-
-function fmtPrice(v: number): string {
-  return `¥${v.toLocaleString('zh-CN', { maximumFractionDigits: 2 })}`
-}
-
-function fmtCount(v: number): string {
-  return v.toLocaleString('zh-CN')
 }
 
 function Row({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
@@ -69,7 +62,7 @@ export function GrowthPricePanel({ product }: GrowthPricePanelProps) {
                 d7?.price_trend === 'flat' ? '→ 平稳' : '-'
               } />
               <Row label="最低价比" value={d7?.price_lowest_ratio?.toFixed(2) ?? '-'} />
-              <Row label="预估订单" value={product.estimatedOrders != null ? fmtCount(Math.round(product.estimatedOrders)) : '-'} />
+              <Row label="预估订单" value={product.estimatedOrders != null ? fmtNumber(Math.round(product.estimatedOrders)) : '-'} />
               <Row label="预估销售额" value={product.estimatedSales != null ? fmtPrice(product.estimatedSales) : '-'} />
             </div>
 
@@ -84,9 +77,9 @@ export function GrowthPricePanel({ product }: GrowthPricePanelProps) {
               <Row label="7天浏览增速" value={
                 d7?.browse_growth != null ? `${(d7.browse_growth * 100).toFixed(1)}%` : '-'
               } />
-              <Row label="7天询单增量" value={d7?.total_dwant != null ? fmtCount(d7.total_dwant) : '-'} />
-              <Row label="7天浏览增量" value={d7?.total_dlook != null ? fmtCount(d7.total_dlook) : '-'} />
-              <Row label="7天收藏增量" value={d7?.total_dcollect != null ? fmtCount(d7.total_dcollect) : '-'} />
+              <Row label="7天询单增量" value={d7?.total_dwant != null ? fmtNumber(d7.total_dwant) : '-'} />
+              <Row label="7天浏览增量" value={d7?.total_dlook != null ? fmtNumber(d7.total_dlook) : '-'} />
+              <Row label="7天收藏增量" value={d7?.total_dcollect != null ? fmtNumber(d7.total_dcollect) : '-'} />
             </div>
           </div>
         </div>

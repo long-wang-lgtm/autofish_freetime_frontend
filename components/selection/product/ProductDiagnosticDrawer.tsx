@@ -18,15 +18,13 @@ import { CumulativeGrowthChart } from '@/components/selection/product/Cumulative
 import { IntentConversionChart } from '@/components/selection/product/IntentConversionChart'
 import { TrafficActionChart } from '@/components/selection/product/TrafficActionChart'
 import { StabilityPanel } from '@/components/selection/product/StabilityPanel'
+import { STATUS_MAP } from '@/components/selection/product/constants'
 import { GrowthPricePanel } from '@/components/selection/product/GrowthPricePanel'
+import { fmtPrice } from '@/lib/utils/format'
 
 interface ProductDiagnosticDrawerProps {
   product: ProductItem | null
   onClose: () => void
-}
-
-function fmtPrice(v: number): string {
-  return `¥${v.toLocaleString('zh-CN')}`
 }
 
 export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticDrawerProps) {
@@ -78,12 +76,6 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           <div className="flex items-center gap-2">
             {/* 状态 badge */}
             {(() => {
-              const STATUS_MAP: Record<number, { label: string; dot: string; bg: string; text: string }> = {
-                0: { label: '已暂停', dot: 'bg-gray-400',   bg: 'bg-gray-100',   text: 'text-gray-500' },
-                1: { label: '监控中', dot: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-                2: { label: '已分析', dot: 'bg-blue-500',    bg: 'bg-blue-50',    text: 'text-blue-700' },
-                4: { label: '已入库', dot: 'bg-violet-500',  bg: 'bg-violet-50',  text: 'text-violet-700' },
-              }
               const s = STATUS_MAP[product.monitorStatus ?? -1]
               const isInteractive = product.monitorStatus === 0 || product.monitorStatus === 1
               if (!s) return <span className="text-xs text-gray-400">-</span>

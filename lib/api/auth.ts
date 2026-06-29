@@ -1,6 +1,6 @@
 import { LoginData, RegisterData } from '@/lib/utils/validation'
 import { getAccessToken } from '@/lib/utils/auth'
-import { API_BASE_URL } from '@/lib/utils/api'
+import { fetchApi } from '@/lib/utils/api'
 
 /**
  * 获取认证头信息
@@ -60,68 +60,38 @@ export interface GetCurrentUserResponse {
   data: UserInfo
 }
 
-export interface ApiError {
-  success: boolean
-  error: string
-  details?: Record<string, string>
-}
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const error: ApiError = await response.json()
-    throw new Error(error.error || `请求失败: ${response.status}`)
-  }
-  return response.json()
-}
-
 export const authApi = {
   login: async (data: LoginData): Promise<LoginResponse> => {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    return fetchApi<LoginResponse>('/api/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
+      skipAuth: true,
     })
-    return handleResponse<LoginResponse>(response)
   },
 
   register: async (data: RegisterData): Promise<RegisterResponse> => {
-    const body = { ...data, email: data.email || undefined }
-    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    const body = JSON.stringify({ ...data, email: data.email || undefined })
+    return fetchApi<RegisterResponse>('/api/auth/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body,
+      skipAuth: true,
     })
-    return handleResponse<RegisterResponse>(response)
   },
 
   getCurrentUser: async (): Promise<UserInfo> => {
-    const token = getAccessToken()
-    if (!token) throw new Error('未找到访问令牌')
-
-    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const json = await handleResponse<GetCurrentUserResponse>(response)
+    const json = await fetchApi<GetCurrentUserResponse>('/api/auth/me')
     return json.data
   },
 
   logout: async (): Promise<{ success: boolean; message: string }> => {
-    const token = getAccessToken()
-    if (!token) throw new Error('未找到访问令牌')
-
-    const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    return handleResponse(response)
+    return fetchApi('/api/auth/logout', { method: 'POST' })
   },
 
   refreshToken: async (refreshToken: string): Promise<{ access_token: string }> => {
-    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+    return fetchApi('/api/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken }),
+      skipAuth: true,
     })
-    return handleResponse(response)
   },
 }

@@ -4,10 +4,9 @@ import { useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { useQrLogin } from "@/hooks/useQrLogin"
 import { QrCodeDisplay } from "@/components/ui/qr-code-display"
+import { fetchApi } from "@/lib/utils/api"
 
 export const runtime = "edge"
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
 
 export default function LinkLoginPage() {
   const searchParams = useSearchParams()
@@ -29,23 +28,18 @@ export default function LinkLoginPage() {
     cleanup,
   } = useQrLogin({
     startLogin: async () => {
-      const response = await fetch(
-        `${API_BASE}/api/login/link/start?token=${token}${uid ? `&uid=${uid}` : ""}`,
-        { method: "POST" }
+      const data = await fetchApi<{ session_id: string }>(
+        '/api/login/link/start',
+        {
+          method: 'POST',
+          params: { token: token!, ...(uid ? { uid } : {}) },
+          skipAuth: true,
+        }
       )
-      if (!response.ok) {
-        const error = await response
-          .json()
-          .catch(() => ({ detail: "请求失败" }))
-        throw new Error(error.detail || `HTTP ${response.status}`)
-      }
-      const data = await response.json()
       return { session_id: data.session_id }
     },
     cancelLogin: async (sessionId) => {
-      await fetch(`${API_BASE}/api/login/link/${sessionId}`, {
-        method: "DELETE",
-      })
+      await fetchApi(`/api/login/link/${sessionId}`, { method: 'DELETE', skipAuth: true })
     },
     onSuccess: handleSuccess,
     autoStart: !!token,

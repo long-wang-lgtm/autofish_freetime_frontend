@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { getAuthHeader } from "@/lib/api/auth"
+import { fetchApi } from "@/lib/utils/api"
 
 interface LinkLoginModalProps {
   open: boolean
@@ -10,32 +10,12 @@ interface LinkLoginModalProps {
   onSuccess: () => void
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
-
-interface CreateLinkResponse {
-  link: string
-  token: string
-}
-
-async function createLinkLogin(): Promise<CreateLinkResponse> {
-  const headers = await getAuthHeader()
-  const response = await fetch(`${API_BASE}/api/login/link/create`, {
-    method: "POST",
-    headers,
-  })
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "请求失败" }))
-    throw new Error(error.detail || `HTTP ${response.status}`)
-  }
-  return response.json()
+async function createLinkLogin(): Promise<{ link: string; token: string }> {
+  return fetchApi<{ link: string; token: string }>('/api/login/link/create', { method: 'POST' })
 }
 
 async function deleteLinkLogin(token: string): Promise<void> {
-  const headers = await getAuthHeader()
-  await fetch(`${API_BASE}/api/login/link/${token}`, {
-    method: "DELETE",
-    headers,
-  })
+  await fetchApi(`/api/login/link/${encodeURIComponent(token)}`, { method: 'DELETE' })
 }
 
 export default function LinkLoginModal({ open, onClose, onSuccess }: LinkLoginModalProps) {

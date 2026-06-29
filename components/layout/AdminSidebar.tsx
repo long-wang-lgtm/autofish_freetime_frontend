@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useFabDrag } from '@/hooks/useFabDrag'
 
 interface NavItem {
   label: string
@@ -59,71 +60,7 @@ export default function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps)
   const pathname = usePathname()
 
   // FAB 拖拽定位（移动端）
-  const fabPosRef = useRef({ right: 16, bottom: 16 })
-  const [fabPos, setFabPos] = useState({ right: 16, bottom: 16 })
-  const dragStart = useRef({ x: 0, y: 0, right: 0, bottom: 0 })
-  const dragDist = useRef(0)
-  const dragging = useRef(false)
-
-  // 从 localStorage 恢复 FAB 位置
-  useEffect(() => {
-    const saved = localStorage.getItem('admin-sidebar-fab-pos')
-    if (saved) {
-      try {
-        const pos = JSON.parse(saved)
-        const clamped = clampFabPos(pos.right, pos.bottom)
-        setFabPos(clamped)
-        fabPosRef.current = clamped
-      } catch { /* ignore corrupt data */ }
-    }
-  }, [])
-
-  const clampFabPos = (right: number, bottom: number) => ({
-    right: Math.max(0, Math.min(right, window.innerWidth - 48)),
-    bottom: Math.max(0, Math.min(bottom, window.innerHeight - 48)),
-  })
-
-  const handleFabPointerDown = (clientX: number, clientY: number) => {
-    dragging.current = true
-    dragDist.current = 0
-    dragStart.current = {
-      x: clientX,
-      y: clientY,
-      right: fabPosRef.current.right,
-      bottom: fabPosRef.current.bottom,
-    }
-  }
-
-  const handleFabPointerMove = (clientX: number, clientY: number) => {
-    if (!dragging.current) return
-    const deltaX = dragStart.current.x - clientX
-    const deltaY = dragStart.current.y - clientY
-    dragDist.current = Math.abs(deltaX) + Math.abs(deltaY)
-    const newPos = clampFabPos(
-      dragStart.current.right + deltaX,
-      dragStart.current.bottom + deltaY,
-    )
-    fabPosRef.current = newPos
-    setFabPos({ ...newPos })
-  }
-
-  const handleFabPointerUp = () => {
-    if (!dragging.current) return
-    dragging.current = false
-    localStorage.setItem('admin-sidebar-fab-pos', JSON.stringify(fabPosRef.current))
-  }
-
-  // 全局鼠标移动/释放监听（鼠标可能移出按钮）
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => handleFabPointerMove(e.clientX, e.clientY)
-    const onMouseUp = () => handleFabPointerUp()
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-    }
-  }, [])
+  const { fabStyle, dragDistRef, fabHandlers } = useFabDrag('admin-sidebar-fab-pos')
 
   const isActive = (path: string) => {
     if (path === '/admin') {
@@ -215,26 +152,11 @@ export default function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps)
       {/* 移动端浮动菜单按钮 — 右下角，支持拖拽调整位置 */}
       <button
         onClick={() => {
-          if (dragDist.current < 5) setMobileOpen(true)
+          if (dragDistRef.current < 5) setMobileOpen(true)
         }}
-        onTouchStart={(e) => {
-          const t = e.touches[0]
-          handleFabPointerDown(t.clientX, t.clientY)
-        }}
-        onTouchMove={(e) => {
-          const t = e.touches[0]
-          handleFabPointerMove(t.clientX, t.clientY)
-        }}
-        onTouchEnd={handleFabPointerUp}
-        onMouseDown={(e) => {
-          handleFabPointerDown(e.clientX, e.clientY)
-        }}
+        {...fabHandlers}
         className="fixed z-40 p-2.5 bg-gray-900/90 backdrop-blur-sm text-white rounded-full lg:hidden shadow-lg shadow-gray-900/20 active:scale-95 transition-transform select-none"
-        style={{
-          right: fabPos.right,
-          bottom: fabPos.bottom,
-          touchAction: 'none',
-        }}
+        style={fabStyle}
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />

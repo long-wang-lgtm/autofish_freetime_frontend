@@ -104,11 +104,19 @@
 - ✅ 删除 TabBar inset 变体 → 详见 KNOWN_ISSUES #24
 - ✅ 删除 axios 依赖 → 详见 KNOWN_ISSUES #21
 
-### Phase 2: 去重复
-**完成标准**：全项目仅 `fetchApi` 一种 HTTP 封装、仅 `useIsMobile` 一种移动端检测、Pagination/ConfigModal/STATUS_MAP 无重复定义
-- 统一 API 调用（4套→1套 fetchApi）→ 详见 KNOWN_ISSUES #12
-- 统一移动端检测（useIsMobile）→ 详见 KNOWN_ISSUES #13
-- 合并重复组件（ConfigModal, STATUS_MAP, Pagination, fmtPrice/fmtGrowth）→ 详见 KNOWN_ISSUES #14-#20
+### Phase 2: 去重复 ✅ 已完成 (2026-06-29)
+**完成标准**：全项目仅 `fetchApi` 一种 HTTP 封装、仅 `useIsMobile` 一种移动端检测、Pagination/STATUS_MAP/fmtPrice 无重复定义
+- ✅ 统一 API 调用（6种→1种 fetchApi）— 增强 fetchApi 支持 params/skipAuth/credentials_/baseUrl，迁移 auth.ts/link-login.ts/selection.ts/LinkLoginModal/login/link/page → KNOWN_ISSUES #12
+- ✅ 统一移动端检测（3种→1种 useIsMobile）— accounts/page.tsx 和 publish/page.tsx 替换 → KNOWN_ISSUES #13
+- ✅ 拆分 useItemsPage hook（1→3子hook）→ KNOWN_ISSUES #14
+- ✅ 统一 OperationResponse 类型（3处→1处）→ KNOWN_ISSUES #15
+- ✅ 拆分 PublishInstanceList.tsx（694→434行）→ KNOWN_ISSUES #16
+- ✅ 拆分 ProductMonitorTab.tsx（623→552行 + columnDefs.ts）→ KNOWN_ISSUES #17
+- ✅ 拆分 AIConfigTab.tsx 提取 AIConfigFormFields → KNOWN_ISSUES #18
+- ✅ 提取统一 Pagination 组件（4处内联→1处共享）→ KNOWN_ISSUES #19
+- ✅ 提取 useFabDrag hook（2处重复→1共享hook）→ KNOWN_ISSUES #20
+- ✅ 创建 lib/utils/format.ts 统一 8 个格式化函数
+- ✅ 创建 components/selection/product/constants.ts 统一 STATUS_MAP（修复 key 3→4 bug）
 
 ### Phase 3: 统一设计
 **完成标准**：页面顶级容器统一、圆角统一为 rounded-xl、92 处任意值字号已替换、accounts 页有 Tab 栏
