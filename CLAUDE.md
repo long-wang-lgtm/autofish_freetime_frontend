@@ -98,11 +98,11 @@
 - ✅ 清理生产环境调试代码 — 删除 selection.ts 23 处 console.debug，auth.store.ts warn→error
 - ✅ 添加 Error Boundary — `components/ui/error-boundary.tsx` 包裹 DashboardLayout + AdminLayout
 
-### Phase 1: 删死代码
-**完成标准**：selection.store.ts ✅ 已删除、inset 变体 ✅ 已删除、axios 已从 dependencies 移除
+### Phase 1: 删死代码 ✅ 已完成 (2026-06-29)
+**完成标准**：selection.store.ts ✅ 已删除、inset 变体 ✅ 已删除、axios ✅ 已从 dependencies 移除
 - ✅ 删除 stores/selection.store.ts → 详见 KNOWN_ISSUES #25
 - ✅ 删除 TabBar inset 变体 → 详见 KNOWN_ISSUES #24
-- 删除 axios 依赖 → 详见 KNOWN_ISSUES #21
+- ✅ 删除 axios 依赖 → 详见 KNOWN_ISSUES #21
 
 ### Phase 2: 去重复
 **完成标准**：全项目仅 `fetchApi` 一种 HTTP 封装、仅 `useIsMobile` 一种移动端检测、Pagination/ConfigModal/STATUS_MAP 无重复定义

@@ -200,14 +200,14 @@
 
 ## 低（轻微 / 技术改进）
 
-### #21 axios 在 package.json 中但未被使用
+### #21 axios 在 package.json 中但未被使用 ✅ 已修复 (Phase 1, 2026-06-29)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 低 |
-| **问题** | `package.json` 中依赖了 `axios: ^1.6.0`，但全项目代码中无任何 `import axios` 或 `require('axios')`。所有 HTTP 请求均使用原生 `fetch` |
-| **涉及文件** | `package.json` |
-| **建议修复** | 从 `dependencies` 中移除 `axios`，运行 `npm uninstall axios` |
+| **严重度** | —（已修复） |
+| **问题** | ~~`package.json` 中依赖了 `axios: ^1.6.0`，但全项目代码中无任何 `import axios` 或 `require('axios')`~~ |
+| **修复** | 已运行 `npm uninstall axios`，移除 11 个关联包 |
+| **涉及文件** | ~~`package.json`~~（已修改） |
 
 ### #22 NEXT_PUBLIC_CHUNK_SIZE 环境变量未被使用
 
@@ -263,7 +263,7 @@
 | 严重 | 3（#1 阻塞于后端） |
 | 高 | 6 |
 | 中 | 9 |
-| 低 | 4 |
+| 低 | 3 |
 | 已排除 | 1（#2 后端已有校验） |
-| 已修复 | 3（#3 ErrorBoundary Phase 0, #25+#24 Phase 1） |
-| **合计** | **22 个待修复 + 1 个已排除 + 3 个已修复** |
+| 已修复 | 4（#3 Phase 0, #21+#24+#25 Phase 1） |
+| **合计** | **21 个待修复 + 1 个已排除 + 4 个已修复** |
