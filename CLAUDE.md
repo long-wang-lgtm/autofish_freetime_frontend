@@ -99,8 +99,8 @@
 - ✅ 添加 Error Boundary — `components/ui/error-boundary.tsx` 包裹 DashboardLayout + AdminLayout
 
 ### Phase 1: 删死代码
-**完成标准**：selection.store.ts 已删除、inset 变体已删除、axios 已从 dependencies 移除
-- 删除 stores/selection.store.ts → 详见 KNOWN_ISSUES #25
+**完成标准**：selection.store.ts ✅ 已删除、inset 变体已删除、axios 已从 dependencies 移除
+- ✅ 删除 stores/selection.store.ts → 详见 KNOWN_ISSUES #25
 - 删除 TabBar inset 变体 → 详见 KNOWN_ISSUES #24
 - 删除 axios 依赖 → 详见 KNOWN_ISSUES #21
 

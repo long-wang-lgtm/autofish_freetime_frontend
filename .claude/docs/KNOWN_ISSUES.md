@@ -236,14 +236,14 @@
 | **涉及文件** | `components/ui/Tab.tsx` |
 | **建议修复** | 删除 `inset` 变体代码和样式，或保留但添加注释说明未来用途 |
 
-### #25 stores/selection.store.ts 零引用
+### #25 stores/selection.store.ts 零引用 ✅ 已修复 (Phase 1, 2026-06-29)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 低 |
-| **问题** | `stores/selection.store.ts` 定义了 zustand store，但全项目中无任何文件 import 该 store |
-| **涉及文件** | `stores/selection.store.ts` |
-| **建议修复** | 删除该文件，确认选品模块是否需要改用该 store |
+| **严重度** | —（已修复） |
+| **问题** | ~~`stores/selection.store.ts` 定义了 zustand store，但全项目中无任何文件 import 该 store~~ |
+| **修复** | 已删除该文件 |
+| **涉及文件** | ~~`stores/selection.store.ts`~~（已删除） |
 
 ### #26 暗色主题 CSS 变量已定义但零组件支持
 
@@ -263,7 +263,7 @@
 | 严重 | 3（#1 阻塞于后端） |
 | 高 | 6 |
 | 中 | 9 |
-| 低 | 6 |
+| 低 | 5 |
 | 已排除 | 1（#2 后端已有校验） |
-| 已修复 | 1（#3 ErrorBoundary, Phase 0） |
-| **合计** | **24 个待修复 + 1 个已排除 + 1 个已修复** |
+| 已修复 | 2（#3 ErrorBoundary Phase 0, #25 selection.store Phase 1） |
+| **合计** | **23 个待修复 + 1 个已排除 + 2 个已修复** |
