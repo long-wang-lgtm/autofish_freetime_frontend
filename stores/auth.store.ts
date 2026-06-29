@@ -64,7 +64,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       await authApi.logout()
     } catch (error) {
       // 即使API调用失败也要清理本地存储
-      console.warn('登出API调用失败:', error)
+      console.error('登出API调用失败:', error)
     } finally {
       // 清理本地存储
       clearTokens()
