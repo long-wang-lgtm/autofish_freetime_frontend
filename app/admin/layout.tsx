@@ -6,6 +6,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import AdminSidebar from '@/components/layout/AdminSidebar'
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 export default function AdminLayout({
   children,
@@ -139,7 +140,7 @@ export default function AdminLayout({
 
         {/* 主内容区域 */}
         <main className="flex-1 min-h-0 p-4 lg:p-6 overflow-auto">
-          {children}
+          <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>
     </div>
