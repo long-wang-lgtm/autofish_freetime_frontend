@@ -148,7 +148,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* 主内容区域 */}
-        <main className="flex-1 min-h-0 p-1 lg:p-6 overflow-auto">
+        <main className="flex-1 min-h-0 p-1 lg:p-2 overflow-auto">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>

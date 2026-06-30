@@ -98,7 +98,7 @@ export function ItemsFilterBarDesktop({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-2">
       {/* Row 1: 账号 + 状态 + 清空 + 刷新 */}
       <div className="flex items-end gap-3 flex-wrap">
         {/* 账号下拉 */}
@@ -107,7 +107,7 @@ export function ItemsFilterBarDesktop({
           <select
             value={uid ?? ''}
             onChange={(e) => setUid(e.target.value)}
-            className="w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full h-8 px-1 py-0 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">全部账号</option>
             {accounts.map((acc) => (
@@ -126,7 +126,7 @@ export function ItemsFilterBarDesktop({
             onChange={(e) =>
               setStatus(e.target.value ? Number(e.target.value) : undefined)
             }
-            className="w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full h-8 px-1 py-0 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">全部</option>
             <option value="0">在售</option>
@@ -140,7 +140,7 @@ export function ItemsFilterBarDesktop({
           <button
             type="button"
             onClick={clearAll}
-            className="h-10 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+            className="h-8 px-4 py-0 text-sm font-medium rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
           >
             清空筛选
           </button>
@@ -150,7 +150,7 @@ export function ItemsFilterBarDesktop({
             onClick={onRefresh}
             disabled={!uid || isRefreshing}
             title={!uid ? '请先选择账号' : '从闲鱼刷新商品列表'}
-            className={`h-10 px-4 py-2 text-sm font-medium rounded-lg border flex items-center gap-2 transition-colors ${
+            className={`h-8 px-2 py-0 text-sm font-medium rounded-lg border flex items-center gap-2 transition-colors ${
               !uid || isRefreshing
                 ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
                 : 'border-blue-600 bg-blue-600 hover:bg-blue-700 text-white'
@@ -174,7 +174,7 @@ export function ItemsFilterBarDesktop({
             type="button"
             onClick={() => setAddMenuOpen(!addMenuOpen)}
             disabled={usedFields.size >= ALL_SEARCH_FIELDS.length}
-            className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full border transition-colors ${
+            className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full border transition-colors ${
               usedFields.size >= ALL_SEARCH_FIELDS.length
                 ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
                 : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'

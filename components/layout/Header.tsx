@@ -56,8 +56,8 @@ export function Header({ children, onMenuClick }: HeaderProps) {
   const displayName = user?.username || '未登录'
 
   return (
-    <header className="h-9 lg:h-14 max-lg:[@media(max-height:500px)]:h-10 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
-      <div className="h-full px-3 lg:px-6 max-lg:[@media(max-height:500px)]:px-3 flex items-center justify-between">
+    <header className="h-9 lg:h-10 max-lg:[@media(max-height:500px)]:h-10 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
+      <div className="h-full px-3 lg:px-3 max-lg:[@media(max-height:500px)]:px-3 flex items-center justify-between">
         {/* 移动端汉堡菜单 — 贴左边缘，高度跟随 header */}
         {onMenuClick && (
           <button
@@ -78,7 +78,7 @@ export function Header({ children, onMenuClick }: HeaderProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <span className="text-base font-semibold text-gray-900">闲逸通</span>
+          <span className="text-sm font-semibold text-gray-900">闲逸通</span>
         </div>
 
         {/* 中间：可扩展区域 */}
@@ -90,7 +90,7 @@ export function Header({ children, onMenuClick }: HeaderProps) {
         {isAdminRole(user?.role) && (
           <button
             onClick={() => router.push('/admin')}
-            className="hidden lg:flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mr-2"
+            className="hidden lg:flex items-center gap-1.5 px-0 py-1 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mr-2"
             title="管理员"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

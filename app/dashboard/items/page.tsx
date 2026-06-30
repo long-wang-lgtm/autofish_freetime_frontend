@@ -46,11 +46,11 @@ function ItemsPageContent() {
       />
 
       {/* Tab 描述 */}
-      <p className="text-sm text-gray-500 hidden md:block">
+      {/* <p className="text-sm text-gray-500 hidden md:block">
         {activeTab === "items"
           ? "可配置功能：自动发货、发货配置、自动上架、自动回复规则绑定、AI回复、AI提示词"
           : "可配置功能：自动回复关键词规则，匹配买家消息并自动发送预设回复"}
-      </p>
+      </p> */}
 
       {/* 筛选卡片（卡片外部，Tab 下方） */}
       {activeTab === "items" && (

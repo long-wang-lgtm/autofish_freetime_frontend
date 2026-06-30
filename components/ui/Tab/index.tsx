@@ -34,15 +34,15 @@ function useTabSize() {
 const SIZE_STYLES = {
   pc: {
     outer: 'gap-0',
-    button: 'px-4 py-3 text-base',
+    button: 'pl-1 pr-3 py-1 text-base',
   },
   'landscape-mobile': {
     outer: 'gap-1 overflow-x-auto hide-scrollbar',
-    button: 'px-3 py-1 text-xs whitespace-nowrap',
+    button: 'px-1 py-1 text-xs whitespace-nowrap',
   },
   'portrait-mobile': {
     outer: 'gap-1 overflow-x-auto hide-scrollbar',
-    button: 'px-3 py-1 text-sm whitespace-nowrap',
+    button: 'px-1 py-1 text-sm whitespace-nowrap',
   },
 } as const
 
