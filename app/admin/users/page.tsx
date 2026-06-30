@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { adminApi, type AdminUserInfo, type ProxyLong } from "@/lib/api/admin"
+import { isAdminRole } from '@/lib/constants/admin'
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { SlidePanel } from "@/components/ui/slide-panel"
 import { ProxyItem } from "@/components/ui/proxy-item"
@@ -267,7 +268,7 @@ export default function AdminUsersPage() {
               {/* 角色 */}
               <div className="col-span-1 min-w-0">
                 <span className="text-gray-600 text-xs truncate">
-                  {user.role === "administrators" ? "管理员" : "用户"}
+                  {isAdminRole(user.role) ? "管理员" : "用户"}
                 </span>
               </div>
 

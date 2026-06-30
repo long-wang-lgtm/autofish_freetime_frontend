@@ -12,6 +12,7 @@ import QrLoginModal from "@/components/accounts/QrLoginModal"
 import LinkLoginModal from "@/components/accounts/LinkLoginModal"
 import LinkManagement from "@/components/accounts/LinkManagement"
 import { useToast } from "@/components/ui/toaster"
+import { TabBar } from "@/components/ui/Tab"
 
 export default function AccountsPage() {
   const queryClient = useQueryClient()
@@ -31,13 +32,19 @@ export default function AccountsPage() {
   })
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">账号管理</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          管理您的闲鱼账号，配置自动回复和自动发货功能
-        </p>
-      </div>
+    <div className="flex flex-col min-h-0 h-full space-y-5">
+      {/* Tab 栏 — 标签充当标题 */}
+      <TabBar
+        tabs={[{ key: "accounts", label: "账号管理" }]}
+        activeTab="accounts"
+        onTabChange={() => {}}
+        variant="overline"
+      />
+
+      {/* 页面描述 */}
+      <p className="text-sm text-gray-500 -mt-3">
+        管理您的闲鱼账号，配置自动回复和自动发货功能
+      </p>
 
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative">

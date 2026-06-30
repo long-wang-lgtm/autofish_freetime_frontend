@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import * as echarts from 'echarts'
 import { useAuth } from '@/stores/auth.store'
+import { isAdminRole } from '@/lib/constants/admin'
 import {
   adminApi,
   type DashboardData,
@@ -423,11 +424,11 @@ function UserTable({
                 <Td>
                   <span className={
                     'inline-block px-2 py-0.5 text-xs rounded-full ' +
-                    (u.role === 'admin' || u.role === 'administrators'
+                    isAdminRole(u.role
                       ? 'bg-amber-100 text-amber-700'
                       : 'bg-gray-100 text-gray-600')
                   }>
-                    {u.role === 'admin' || u.role === 'administrators' ? '管理员' : '用户'}
+                    {isAdminRole(u.role) ? '管理员' : '用户'}
                   </span>
                 </Td>
                 <Td>{u.accountCount}</Td>

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useFabDrag } from '@/hooks/useFabDrag'
+import { SidebarBase } from './SidebarBase'
 
 // 可展开的子导航配置
 interface ChildItem {
@@ -70,7 +70,9 @@ const navItems: NavItem[] = [
 
 interface SidebarProps {
   collapsed: boolean
+  mobileOpen: boolean
   onToggle: () => void
+  onMobileClose: () => void
 }
 
 // 判断当前路径是否是某个导航项的子路径
@@ -78,16 +80,10 @@ function isChildOfPath(pathname: string, parentPath: string): boolean {
   return pathname === parentPath || pathname.startsWith(parentPath + '/')
 }
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
-  const [mobileOpen, setMobileOpen] = useState(false)
+export default function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: SidebarProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const pathname = usePathname()
 
-  // FAB 拖拽定位（移动端）
-  const { fabStyle, dragDistRef, fabHandlers } = useFabDrag('sidebar-fab-pos')
-
-
-  // 切换展开/收起
   const toggleExpand = (path: string) => {
     setExpandedItems((prev) => {
       const next = new Set(prev)
@@ -100,7 +96,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     })
   }
 
-  // 判断项是否激活（用于高亮）
   const isItemActive = (item: NavItem): boolean => {
     if (item.children) {
       return isChildOfPath(pathname, item.path) || pathname.startsWith(item.path + '/')
@@ -108,13 +103,14 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     return pathname === item.path || pathname.startsWith(item.path + '/')
   }
 
-  // 判断子项是否激活
   const isChildActive = (childPath: string): boolean => {
     return pathname === childPath
   }
 
+  const handleNavClick = () => {
+    onMobileClose()
+  }
 
-  // 渲染单个导航项
   const renderNavItem = (item: NavItem) => {
     const hasChildren = item.children && item.children.length > 0
     const isActive = isItemActive(item)
@@ -125,7 +121,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <li key={item.path}>
           {hasChildren ? (
             <div
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
+              className={`flex items-center gap-3 px-3 py-2 lg:py-2.5 rounded-lg transition-colors cursor-pointer ${
                 isActive
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
@@ -138,8 +134,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           ) : (
             <Link
               href={item.path}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+              onClick={handleNavClick}
+              className={`flex items-center gap-3 px-3 py-2 lg:py-2.5 rounded-lg transition-colors ${
                 isActive
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
@@ -158,7 +154,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {hasChildren ? (
           <>
             <div
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
+              className={`flex items-center gap-3 px-3 py-2 lg:py-2.5 rounded-lg transition-colors cursor-pointer ${
                 isActive
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
@@ -176,7 +172,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </div>
-            {/* 子导航 */}
             {isExpanded && (
               <ul className="ml-4 mt-1 space-y-0.5 border-l border-gray-700 pl-3">
                 {item.children!.map((child) => {
@@ -185,7 +180,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     <li key={child.path}>
                       <Link
                         href={child.path}
-                        onClick={() => setMobileOpen(false)}
+                        onClick={handleNavClick}
                         className={`block px-3 py-2 text-sm rounded-lg transition-colors ${
                           isChildAct
                             ? 'bg-blue-600/20 text-blue-400 font-medium'
@@ -203,8 +198,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         ) : (
           <Link
             href={item.path}
-            onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+            onClick={handleNavClick}
+            className={`flex items-center gap-3 px-3 py-2 lg:py-2.5 rounded-lg transition-colors ${
               isActive
                 ? 'bg-blue-600 text-white'
                 : 'text-gray-300 hover:bg-gray-700 hover:text-white'
@@ -219,65 +214,16 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   }
 
   return (
-    <>
-      {/* 移动端遮罩 */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      {/* 侧边栏 - 移动端从右侧滑入，桌面端固定左侧 */}
-      <aside
-        className={`fixed top-0 right-0 lg:left-0 lg:right-auto h-full bg-gray-900 text-white z-50 transition-all duration-300 flex flex-col ${
-          collapsed ? 'w-16' : 'w-64'
-        } ${mobileOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`}
-      >
-        {/* Logo 区域 */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-700">
-          {!collapsed && (
-            <span className="text-lg font-bold truncate">闲逸通</span>
-          )}
-          <button
-            onClick={onToggle}
-            className="p-1.5 rounded-md hover:bg-gray-700 transition-colors"
-          >
-            <svg className="w-5 h-5 max-lg:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d={collapsed ? 'M13 5l7 7-7 7M5 5l7 7-7 7' : 'M11 19l-7-7 7-7m8 14l-7-7 7-7'}
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* 导航菜单 */}
-        <nav className="flex-1 py-4 overflow-y-auto">
-          <ul className="space-y-1 px-2">
-            {navItems.map((item) => renderNavItem(item))}
-          </ul>
-        </nav>
-
-        {/* 底部留空 - 后续可放置其他控件 */}
-        <div className="border-t border-gray-700 p-3" />
-      </aside>
-
-      {/* 移动端浮动菜单按钮 — 右下角，支持拖拽调整位置 */}
-      <button
-        onClick={() => {
-          if (dragDistRef.current < 5) setMobileOpen(true)
-        }}
-        {...fabHandlers}
-        className="fixed z-40 p-2.5 bg-gray-900/90 backdrop-blur-sm text-white rounded-full lg:hidden shadow-lg shadow-gray-900/20 active:scale-95 transition-transform select-none"
-        style={fabStyle}
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-    </>
+    <SidebarBase
+      collapsed={collapsed}
+      mobileOpen={mobileOpen}
+      onToggle={onToggle}
+      onMobileClose={onMobileClose}
+      headerExpanded={<span className="text-base font-bold">闲逸通</span>}
+    >
+      <ul className="space-y-1 px-2">
+        {navItems.map((item) => renderNavItem(item))}
+      </ul>
+    </SidebarBase>
   )
 }
