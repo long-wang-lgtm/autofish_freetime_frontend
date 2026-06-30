@@ -211,5 +211,457 @@ export interface ItemFilters {
 | frontend-tabs.md | Tab 在卡片外部，不变 ✅ |
 | frontend-design-tokens.md | 卡片使用 rounded-xl shadow-sm border ✅ |
 | frontend-design-tokens.md | 芯片使用 rounded-full ✅ |
-| frontend-components.md | 使用 ErrorBanner/EmptyState/Pagination 统一组件（另行修复） |
+| frontend-components.md | 使用 ErrorBanner/EmptyState/Pagination 统一组件（本设计覆盖） |
 | frontend-colors.md | 芯片激活态 bg-blue-50 text-blue-700 ✅ |
+
+---
+
+## 九、组件规范
+
+### 9.1 组件树（重构后）
+
+```
+app/dashboard/items/page.tsx
+├── TabBar                          ← 已有，不变
+├── ItemsFilterBar                  ← 重写（原 FilterBar），筛选卡片
+│   ├── AccountSelect               ← 内联：账号下拉
+│   ├── StatusSelect                ← 内联：状态下拉
+│   ├── RefreshButton               ← 内联：刷新按钮（需选中账号）
+│   ├── ClearFiltersButton          ← 内联：清空筛选按钮
+│   ├── SearchFieldDropdown         ← 新增："+添加条件" 下拉菜单
+│   ├── SearchChip[]                ← 新增：已确认的搜索芯片列表
+│   │   └── SearchChipInput         ← 新增：芯片内联编辑输入框
+│   └── SortChipRow                 ← 内联：排序胶囊条（复用已有 SortChip）
+├── ItemsTab                        ← 简化：退化为纯内容卡片
+│   ├── ErrorBanner                 ← 替换内联错误 div
+│   ├── EmptyState                  ← 替换内联空状态 div
+│   ├── [桌面端] RowHeader + ItemRow[]
+│   ├── [移动端] MobileProductCard[]
+│   └── Pagination                  ← 替换内联分页器
+└── RulesTab                        ← 不变
+```
+
+**层级关系**（符合 `frontend-layout.md`）：
+
+```
+<div class="flex flex-col gap-5 h-full">    ← 页面顶级
+  <TabBar />                                 ← 第1层：卡片外
+  <ItemsFilterBar />                         ← 第2层：卡片外（筛选卡片）
+  <ItemsTab />                               ← 第3层：内容卡片
+</div>
+```
+
+---
+
+### 9.2 新增组件：SearchChip
+
+**文件路径**：`components/items/parts/SearchChip.tsx`
+
+**用途**：展示一个已确认的搜索条件。包含字段标签、当前值、删除按钮。点击值可进入编辑模式。
+
+```typescript
+interface SearchChipProps {
+  field: SearchField
+  value: string
+  /** 字段显示名称（来自 FIELD_LABELS） */
+  label: string
+  /** 点击 ✕ 删除该芯片 */
+  onRemove: () => void
+  /** 修改值后确认，传入新值 */
+  onChange: (newValue: string) => void
+}
+```
+
+**视觉设计**：
+
+```
+┌──────────────────────────┐
+│ 标题: 手机壳          ✕  │
+└──────────────────────────┘
+  ←   编辑模式   →
+┌──────────────────────────┐
+│ [手机壳______________] ✓ │
+└──────────────────────────┘
+```
+
+- 默认态：`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-blue-50 text-blue-700 border border-blue-200`
+- 字段名 (`label`)：`font-medium`
+- 值文本：`max-w-[120px] truncate`，超长省略
+- 删除按钮 (`✕`)：`ml-0.5 p-0.5 rounded-full hover:bg-blue-100`，点击即刻触发 `onRemove`
+- 编辑模式（点击值触发）：chip 替换为内联 `<input>` + 确认按钮 (`✓`)，回车或失焦提交 `onChange`
+- 同一字段只允许一个 chip（在 `SearchFieldDropdown` 中控制）
+
+**行为规范**：
+- `onRemove`：立即从 chips 列表移除 → 触发父组件重新搜索（走 400ms 防抖）
+- `onChange`：确认后更新 chip 值 → 触发父组件重新搜索（走 400ms 防抖）
+- 编辑模式下按 Escape 取消编辑，恢复原值
+
+---
+
+### 9.3 新增组件：SearchFieldDropdown
+
+**文件路径**：内联于 `ItemsFilterBar.tsx`（不单独文件，< 50 行）
+
+**用途**："+添加条件" 按钮 + 下拉菜单，选择搜索字段后通知父组件。
+
+**下拉菜单交互**：
+
+```
+点击 [+添加条件▼]
+  ↓
+┌─────────────────────┐
+│ 商品标题            │  ← 已添加的字段置灰不可选
+│ 商品ID (GID)        │
+│ 发货配置内容         │
+│ 收货后赠送配置       │
+│ 评价后赠送配置       │
+│ AI 提示词           │
+│ 指令码              │
+└─────────────────────┘
+  ↓ 选中字段
+菜单关闭 → 触发父组件 `onAddField(field)` → 父组件创建空值 chip → 自动进入编辑模式
+```
+
+**Props（内部组件）**：
+
+```typescript
+interface SearchFieldDropdownProps {
+  /** 已添加的字段列表（这些字段在下拉中置灰） */
+  usedFields: SearchField[]
+  /** 选中字段后回调 */
+  onAddField: (field: SearchField) => void
+}
+```
+
+- 下拉使用绝对定位，`absolute top-full left-0 mt-1 z-20`
+- 点击外部区域关闭（`useEffect` + `mousedown` 监听）
+- 选项 hover 态 `bg-gray-50`
+- 已用字段添加 `text-gray-300 cursor-not-allowed` 并拦截点击
+
+---
+
+### 9.4 重写组件：ItemsFilterBar
+
+**文件路径**：`components/items/ItemsFilterBar.tsx`（从 `FilterBar.tsx` 重命名）
+
+**重构范围**：全面重写。桌面端和移动端布局差异较大，内部各拆分为独立子组件文件（如果任一超过 200 行）。
+
+#### 9.4.1 顶级 Props
+
+```typescript
+interface ItemsFilterBarProps {
+  accounts: AccountName[]
+
+  // — 筛选状态（统一替代旧 searchInput + filters）—
+  filterState: ItemsFilterState
+  onFilterChange: (updater: (prev: ItemsFilterState) => ItemsFilterState) => void
+
+  // — 操作回调 —
+  onRefresh: () => void
+  isRefreshing: boolean
+}
+```
+
+**注意**：
+- 不再接收 `stats`（统计信息已删除）
+- 不再接收 `onClear` / `onSearchChange` / `onStatusChange`（统一为 `onFilterChange`）
+- 排序状态内聚到 `ItemsFilterState.orderBy` / `ItemsFilterState.asc`
+
+#### 9.4.2 内部分支
+
+```typescript
+export function ItemsFilterBar(props: ItemsFilterBarProps) {
+  const isMobile = useIsMobile()
+  if (isMobile) return <ItemsFilterBarMobile {...props} />
+  return <ItemsFilterBarDesktop {...props} />
+}
+```
+
+#### 9.4.3 ItemsFilterBarDesktop
+
+**文件路径**：`components/items/parts/ItemsFilterBarDesktop.tsx`（如果 ≥200 行）
+
+**布局**（对应设计文档 三）：
+
+```
+┌─ 筛选卡片 bg-white border rounded-xl shadow-sm p-4 ──────────┐
+│ Row 1: [账号▼] [状态▼]              [清空筛选] │ [🔄 刷新商品] │
+│ Row 2: [+添加条件▼] [标题:手机壳 ✕] [发货:激活码 ✕] ...      │
+│ Row 3: [排序: ID 价格 浏览 想要 收藏 时间 发货方式]           │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Row 1**（`flex items-end gap-3`）：
+- 账号下拉：`flex-1 min-w-0`，`<select>`，`h-10 px-3 py-2 text-sm border-gray-200 rounded-lg`
+- 状态下拉：`w-32`，`<select>`，同上样式
+- 右侧按钮组（`ml-auto flex items-center gap-2`）：
+  - "清空筛选" 按钮：`h-10 px-4 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700`，当无筛选条件时隐藏
+  - 竖线分隔：`w-px h-5 bg-gray-200`
+  - "刷新商品" 按钮：`h-10 px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white`，需选中账号才可点击，刷新中显示 `LoadingSpinner size="sm"` + "刷新中..."
+
+**Row 2**（`flex items-center gap-2 flex-wrap`，当 chips.length > 0 时 `mt-3`）：
+- `SearchFieldDropdown`（"+添加条件" 按钮 + 下拉）
+- `SearchChip[]`（循环渲染已确认的芯片）
+
+**Row 3**（`flex items-center gap-1.5 mt-3`，排序标签行）：
+- 标签 `text-xs text-gray-400 shrink-0`："排序"
+- 排序胶囊列表（复用已有 `SortChip` 内部组件）
+- `ITEM_SORT_FIELDS` 已有的 8 个字段不变
+
+**内部状态**：
+- `editingField?: SearchField`：当前正在编辑的芯片字段（控制 SearchChip 的编辑模式）
+
+**Props（内部）**：与 `ItemsFilterBarProps` 完全相同。
+
+#### 9.4.4 ItemsFilterBarMobile
+
+**文件路径**：`components/items/parts/ItemsFilterBarMobile.tsx`（如果 ≥200 行）
+
+**布局**（对应设计文档 四）：
+
+```
+┌─ 筛选栏（非卡片，无背景/border）──────────────────────────────┐
+│ Row 1: [账号▼] [状态▼]      [🔍] [🔄]                        │
+│ Row 2: [搜索字段▼] [____输入____] [搜索]                      │  ← 搜索字段选择器+输入+按钮
+│ Row 3: [排序: 横向滚动胶囊]                                   │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Row 1**（`flex items-center gap-2 px-3 py-2 border-b border-gray-100`）：
+- 账号下拉：`flex-1 min-w-0`，`<select>`
+- 状态下拉：`w-20`，`<select>`
+- 筛选展开按钮（`SlidersHorizontal` 图标）：已选芯片数量 badge，点击展开已添加芯片的编辑面板
+- 刷新按钮：`p-3`，需选中账号才可点击
+
+**Row 2**（`flex items-center gap-2 px-3 py-2 border-b border-gray-100`）：
+
+搜索字段选择器 + 输入框 + 搜索按钮，模仿大厂 App：
+
+```
+[搜索字段▼] [____输入关键词____] [搜索]
+```
+
+- 搜索字段下拉（`w-20 flex-shrink-0`）：可选字段列表，默认选中第一个可用字段
+- 搜索输入框（`flex-1 min-w-0`）：`h-10 px-3 py-2`，placeholder 随字段变化（如选"标题"="搜索标题..."）
+- 搜索按钮（`flex-shrink-0`）：`h-10 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm`
+  - 点击后：创建/更新对应字段的 chip → 触发搜索
+  - 搜索后不清空输入框（保留便于调整）
+- 输入框与搜索按钮之间 `gap-2`
+
+**Row 3**（排序胶囊，不变）：`overflow-x-auto` 横向滚动，隐藏滚动条
+
+**筛选展开面板**（`expanded` 状态，`border-t border-gray-100`）：
+- 显示已添加的所有 `SearchChip` 列表（可删除、可编辑）
+- "清空全部筛选" 按钮（有芯片时显示）
+
+**内部状态**：
+- `expanded: boolean`：筛选面板展开/折叠
+- `searchField: SearchField`：Row 2 中当前选中的搜索字段
+- `searchValue: string`：Row 2 中的输入值
+
+---
+
+### 9.5 简化组件：ItemsTab
+
+**文件路径**：`components/items/ItemsTab.tsx`
+
+**变更**：删除统计卡片、简化 props。
+
+**Props（变更后）**：
+
+```typescript
+interface ItemsTabProps {
+  isMobile: boolean
+  data: Item[] | undefined
+  isLoading: boolean
+  error: unknown
+  itemKeywordCounts: Record<string, number>
+  page: number
+  totalPages: number
+  totalItems: number
+  onPageChange: (page: number) => void
+  onToggle: (item: Item, field: string) => void
+  updateMutation: { mutate: (args: { gid: string; data: Record<string, unknown> }) => void }
+}
+```
+
+**移除的 props**（已上移到 `ItemsFilterBar`）：
+- ~~`accountsData`~~
+- ~~`searchInput`~~
+- ~~`filters`~~
+- ~~`stats`~~
+- ~~`orderBy` / `asc`~~
+- ~~`isRefreshing`~~
+- ~~`onSearchChange` / `onStatusChange` / `onRefresh` / `onClearFilters` / `onSortChange`~~
+
+**渲染结构（变更后）**：
+
+```tsx
+<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+  {/* 加载/错误/空状态 — 使用统一组件 */}
+  {isLoading && (
+    <div className="flex items-center justify-center py-12">
+      <LoadingSpinner size="lg" />
+    </div>
+  )}
+  {!!error && <ErrorBanner message={`加载商品列表失败: ${String(error)}`} variant="banner" onRetry={...} />}
+  {!isLoading && !error && data && data.length === 0 && (
+    <EmptyState icon="📦" title="暂无商品" description="没有找到符合条件的商品" />
+  )}
+
+  {/* 数据列表（不变） */}
+  {!isLoading && !error && data && data.length > 0 && (
+    <>
+      {/* 桌面端表格（不变） */}
+      <div ref={listRef} className="flex-1 overflow-auto hidden md:block min-h-[200px]">
+        {/* sticky 表头 */}
+        {data.map((item, index) => <ItemRow ... />)}
+      </div>
+      {/* 移动端卡片列表（不变） */}
+      <div className="flex-1 overflow-auto md:hidden px-1 pb-3 space-y-2 min-h-[200px]">
+        {data.map((item) => <MobileProductCard ... />)}
+      </div>
+    </>
+  )}
+
+  {/* 分页器 — 使用统一 Pagination 组件 */}
+  <Pagination
+    page={page}
+    totalPages={totalPages}
+    totalItems={totalItems}
+    onPageChange={onPageChange}
+  />
+</div>
+```
+
+**drawer 状态保持不变**（`editingItem` / `keywordItem` / `mobileConfig`），三个抽屉组件不变。
+
+---
+
+### 9.6 数据模型定义位置
+
+所有新类型定义在 `lib/api/items.ts`（遵循 API 就近定义原则）：
+
+```typescript
+// ——— 搜索字段枚举 ———
+export type SearchField =
+  | 'title'
+  | 'gid'
+  | 'deliveryContent'
+  | 'receiptAfter'
+  | 'positiveReviewAfter'
+  | 'aiReplyItemPrompt'
+  | 'sendCode'
+
+// ——— 搜索字段显示标签 ———
+export const SEARCH_FIELD_LABELS: Record<SearchField, string> = {
+  title: '商品标题',
+  gid: '商品ID',
+  deliveryContent: '发货配置内容',
+  receiptAfter: '收货后赠送配置',
+  positiveReviewAfter: '评价后赠送配置',
+  aiReplyItemPrompt: 'AI 提示词',
+  sendCode: '指令码',
+}
+
+// ——— 搜索芯片 ———
+export interface SearchChip {
+  field: SearchField
+  value: string
+}
+
+// ——— 筛选状态（替代旧 searchInput + filters）———
+export interface ItemsFilterState {
+  uid?: string
+  status?: number
+  chips: SearchChip[]
+  orderBy: string | null
+  asc: boolean
+  page: number
+}
+
+// ——— ItemFilters 扩展（已有，新增字段）———
+export interface ItemFilters {
+  uid?: string
+  status?: number
+  title?: string
+  gid?: string
+  // 新增 ↓
+  deliveryContent?: string
+  receiptAfter?: string
+  positiveReviewAfter?: string
+  aiReplyItemPrompt?: string
+  defaultReplyContent?: string
+  sendCode?: string
+  // 已有 ↓
+  page?: number
+  size?: number
+  order_by?: string
+  asc?: boolean
+}
+```
+
+---
+
+### 9.7 统一组件使用清单
+
+当前 ItemsTab 中内联的错误/空状态/分页器全部替换为统一组件：
+
+| 位置 | 旧实现 | 新组件 | 说明 |
+|------|--------|--------|------|
+| 错误展示 | 内联 `div.bg-red-50`（ItemsTab:123-125） | `<ErrorBanner variant="banner">` | 组件已存在：`components/ui/error-banner.tsx` |
+| 空数据 | 内联 `div.bg-gray-50`（ItemsTab:127-131） | `<EmptyState>` | 组件已存在：`components/ui/empty-state.tsx` |
+| 分页器 | 内联 `<button>` 组（ItemsTab:200-228） | `<Pagination>` | 组件已存在：`components/ui/pagination.tsx` |
+| 加载中 | 已是 `<LoadingSpinner>` ✅ | — | 无需变更 |
+
+**ErrorBanner Props 确认**：
+
+```typescript
+interface ErrorBannerProps {
+  message: string
+  variant?: 'banner' | 'inline'       // 内容卡片内用 banner
+  onRetry?: () => void
+  onDismiss?: () => void
+}
+```
+
+**EmptyState Props 确认**：
+
+```typescript
+interface EmptyStateProps {
+  icon?: React.ReactNode               // 图标或 emoji
+  title: string
+  description?: string
+  action?: { label: string; onClick: () => void }  // 可选 CTA 按钮
+  size?: 'sm' | 'md'                   // md=默认
+}
+```
+
+**Pagination Props 确认**：
+
+```typescript
+interface PaginationProps {
+  page: number
+  totalPages: number
+  totalItems?: number                  // 用于显示"共N件"
+  onPageChange: (page: number) => void
+}
+```
+
+---
+
+### 9.8 文件清单（新增 + 变更）
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `components/items/parts/SearchChip.tsx` | **新建** | 搜索芯片组件（~60行） |
+| `components/items/ItemsFilterBar.tsx` | **新建** | 筛选卡片入口（~30行，isMobile 分支） |
+| `components/items/parts/ItemsFilterBarDesktop.tsx` | **新建** | 桌面端筛选卡片（~120行） |
+| `components/items/parts/ItemsFilterBarMobile.tsx` | **新建** | 移动端筛选栏（~150行） |
+| `components/items/FilterBar.tsx` | **删除** | 替换为 ItemsFilterBar |
+| `components/items/ItemsTab.tsx` | **重写** | 删除统计卡片、简化 props、使用统一组件 |
+| `app/dashboard/items/page.tsx` | **修改** | ItemsFilterBar 插入 Tab 下方、删除 stats 传递 |
+| `lib/api/items.ts` | **修改** | 新增类型、扩展 ItemFilters |
+| `hooks/useItemsFilters.ts` | **重写** | 芯片状态管理 |
+| `hooks/useItemsData.ts` | **修改** | 删除 getItemStats |
+| `hooks/useItemsPage.ts` | **修改** | 移除 stats 传递 |
