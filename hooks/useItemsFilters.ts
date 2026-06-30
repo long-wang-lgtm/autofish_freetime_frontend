@@ -1,65 +1,81 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
-import type { ItemFilters } from "@/lib/api/items"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useDebounce } from "@/hooks/useDebounce"
+import {
+  chipsToFilters,
+  type ItemFilters,
+  type ItemsFilterState,
+} from "@/lib/api/items"
 
 /**
  * 商品管理页 — 筛选/搜索/排序/分页状态
  *
- * 纯 UI 状态层，不包含任何数据获取逻辑。
+ * 纯 UI 状态层：ItemsFilterState 统一管理所有筛选条件（芯片搜索 + 账号 + 状态 + 排序），
+ * 400ms 防抖后派生 ItemFilters 供 useItemsData 使用。
  */
 export function useItemsFilters() {
-  const [filters, setFilters] = useState<ItemFilters>({ status: 0 })
-  const [searchInput, setSearchInput] = useState({ uid: "", title: "", gid: "" })
-  const [orderBy, setOrderBy] = useState<string | null>(null)
-  const [asc, setAsc] = useState<boolean>(false)
-  const [page, setPage] = useState(1)
+  const [filterState, setFilterState] = useState<ItemsFilterState>({
+    status: 0,
+    chips: [],
+    orderBy: null,
+    asc: false,
+    page: 1,
+  })
   const pageSize = 20
 
-  const debouncedFilters = useDebounce(searchInput, 400)
+  // 400ms 防抖芯片搜索（即时变化项：uid/status/page/sort 也一起走防抖，UX 可接受）
+  const debouncedState = useDebounce(filterState, 400)
 
-  // 将防抖后的搜索输入同步到 filters
-  useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      uid: debouncedFilters.uid || undefined,
-      title: debouncedFilters.title || undefined,
-      gid: debouncedFilters.gid || undefined,
-    }))
-  }, [debouncedFilters])
-
-  // 筛选条件变化时重置到第 1 页
-  useEffect(() => {
-    setPage(1)
-  }, [filters.uid, filters.status, filters.title, filters.gid])
-
-  const handleClearFilters = useCallback(() => {
-    setSearchInput({ uid: "", title: "", gid: "" })
-    setFilters({ status: 0 })
-  }, [])
-
-  // 注意：不包裹 useCallback — handler 内部直接读取最新 state，避免闭包陷阱
-  const handleSort = (fieldKey: string) => {
-    if (orderBy === fieldKey) {
-      if (asc === false) {
-        setAsc(true)
-      } else {
-        setOrderBy(null)
-      }
-    } else {
-      setOrderBy(fieldKey)
-      setAsc(false)
+  // 防抖后的 ItemFilters（供 useItemsData 查询用）
+  const filters: ItemFilters = useMemo(() => {
+    const chipFilters = chipsToFilters(debouncedState.chips)
+    return {
+      uid: debouncedState.uid,
+      status: debouncedState.status,
+      ...chipFilters,
+      order_by: debouncedState.orderBy ?? undefined,
+      asc: debouncedState.asc,
     }
-    setPage(1)
+  }, [debouncedState])
+
+  // 筛选条件变化时重置到第 1 页（跳过 page 自身变化触发）
+  const prevFilterKey = useRef<string>("")
+  const filterKey = JSON.stringify({
+    uid: debouncedState.uid,
+    status: debouncedState.status,
+    chips: debouncedState.chips.map(c => `${c.field}:${c.value}`).sort().join(","),
+    orderBy: debouncedState.orderBy,
+    asc: debouncedState.asc,
+  })
+
+  useEffect(() => {
+    if (prevFilterKey.current && prevFilterKey.current !== filterKey) {
+      setFilterState((prev) => ({ ...prev, page: 1 }))
+    }
+    prevFilterKey.current = filterKey
+  }, [filterKey])
+
+  // ——— 供 ItemsFilterBar 使用的回调 ———
+  const onFilterChange = (
+    updater: (prev: ItemsFilterState) => ItemsFilterState,
+  ) => {
+    setFilterState(updater)
+  }
+
+  // 提取 page 从 filterState 中，供外部使用
+  const page = filterState.page
+
+  const setPage = (p: number) => {
+    setFilterState((prev) => ({ ...prev, page: p }))
   }
 
   return {
-    filters, setFilters,
-    searchInput, setSearchInput,
-    orderBy, asc,
-    page, pageSize, setPage,
-    handleClearFilters,
-    handleSort,
+    filterState,
+    onFilterChange,
+    filters,
+    page,
+    pageSize,
+    setPage,
   }
 }

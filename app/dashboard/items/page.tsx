@@ -4,28 +4,28 @@ import { Suspense } from "react"
 import { useTabRouting } from "@/hooks/useTabRouting"
 import { TabBar } from "@/components/ui/Tab"
 import { ItemsTab } from "@/components/items/ItemsTab"
+import { ItemsFilterBar } from "@/components/items/ItemsFilterBar"
 import { RulesTab } from "@/components/items/RulesTab"
 import { useItemsPage } from "@/hooks/useItemsPage"
 
 function ItemsPageContent() {
   const {
-    filters, setFilters,
-    searchInput, setSearchInput,
-    orderBy, asc,
-    page, pageSize, totalPages, setPage, totalItems,
+    filterState,
+    onFilterChange,
+    page,
+    pageSize,
+    totalPages,
+    setPage,
+    totalItems,
     isRefreshing,
     accountsData,
-    data, isLoading, error,
+    data, isLoading, error, refetch,
     keywordsLoading, keywordsError,
     keywordRules,
     rulesStats,
     itemKeywordCounts,
-    stats,
-    statsLoading,
     updateMutation,
     handleToggle,
-    handleClearFilters,
-    handleSort,
     handleRefresh,
     isMobile,
   } = useItemsPage()
@@ -33,7 +33,7 @@ function ItemsPageContent() {
   const [activeTab, setActiveTab] = useTabRouting(['items', 'rules'] as const, 'items')
 
   return (
-    <div className="flex flex-col gap-5 h-full">
+    <div className="flex flex-col gap-2 h-full">
       {/* Tab 栏 */}
       <TabBar
         tabs={[
@@ -52,30 +52,34 @@ function ItemsPageContent() {
           : "可配置功能：自动回复关键词规则，匹配买家消息并自动发送预设回复"}
       </p>
 
+      {/* 筛选卡片（卡片外部，Tab 下方） */}
+      {activeTab === "items" && (
+        <ItemsFilterBar
+          accounts={accountsData || []}
+          filterState={filterState}
+          onFilterChange={onFilterChange}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+        />
+      )}
+
+      {/* 内容卡片 */}
       {activeTab === "items" && (
         <ItemsTab
           isMobile={isMobile}
-          accountsData={accountsData}
-          searchInput={searchInput}
-          filters={filters}
-          stats={stats}
-          orderBy={orderBy}
-          asc={asc}
+          data={data}
+          isLoading={isLoading}
+          error={error}
+          itemKeywordCounts={itemKeywordCounts}
           page={page}
           totalPages={totalPages}
           totalItems={totalItems}
-          isRefreshing={isRefreshing}
-          onSearchChange={setSearchInput}
-          onStatusChange={(status) => setFilters((prev) => ({ ...prev, status }))}
-          onRefresh={handleRefresh}
-          onClearFilters={handleClearFilters}
-          onSortChange={handleSort}
+          pageSize={pageSize}
           onPageChange={setPage}
-          data={data}
-          itemKeywordCounts={itemKeywordCounts}
-          isLoading={isLoading}
-          error={error}
-          onToggle={(item, field) => handleToggle(item, field as "auto_reply" | "auto_delivery" | "auto_ai_reply" | "auto_restock")}
+          onRetry={() => refetch()}
+          onToggle={(item, field) =>
+            handleToggle(item, field as "auto_reply" | "auto_delivery" | "auto_ai_reply" | "auto_restock")
+          }
           updateMutation={updateMutation}
         />
       )}

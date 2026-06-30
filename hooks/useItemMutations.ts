@@ -21,7 +21,6 @@ export function useItemMutations() {
       updateItem(gid, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["items"] })
-      queryClient.invalidateQueries({ queryKey: ["itemStats"] })
     },
     onError: (e: Error) => {
       addToast({ title: "更新失败", description: e.message, variant: "error" })
@@ -46,7 +45,6 @@ export function useItemMutations() {
         const result = await refreshItems(uid)
         if (result.success) {
           queryClient.invalidateQueries({ queryKey: ["items"] })
-          queryClient.invalidateQueries({ queryKey: ["itemStats"] })
         } else {
           addToast({ title: "刷新失败", description: result.message, variant: "error" })
         }

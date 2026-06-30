@@ -10,11 +10,11 @@ import { useIsMobile } from "@/hooks/useIsMobile"
  * 商品管理页 — 组合 hook
  *
  * 组合三个子 hook（筛选状态 / 数据获取 / 变更操作），
- * 保持向后兼容的完整接口。
+ * 提供页面所需的完整接口。
  *
  * 如需按需导入单个职责层：
- * - useItemsFilters — 筛选/搜索/排序/分页状态
- * - useItemsData    — React Query 数据获取（items + stats + accounts + keywords）
+ * - useItemsFilters — 筛选/搜索/排序/分页状态（芯片搜索）
+ * - useItemsData    — React Query 数据获取（items + accounts + keywords）
  * - useItemMutations — 变更操作（toggle + refresh）
  */
 export function useItemsPage() {
@@ -22,22 +22,21 @@ export function useItemsPage() {
 
   // —— 筛选状态 ——
   const {
-    filters, setFilters,
-    searchInput, setSearchInput,
-    orderBy, asc,
-    page, pageSize, setPage,
-    handleClearFilters,
-    handleSort,
+    filterState,
+    onFilterChange,
+    filters,
+    page,
+    pageSize,
+    setPage,
   } = useItemsFilters()
 
   // —— 数据获取 ——
   const {
     accountsData,
-    data, isLoading, error,
+    data, isLoading, error, refetch,
     totalItems, totalPages,
-    stats, statsLoading,
     keywordRules, keywordsLoading, keywordsError, rulesStats, itemKeywordCounts,
-  } = useItemsData({ filters, page, pageSize, orderBy, asc })
+  } = useItemsData({ filters, page, pageSize })
 
   // —— 变更操作 ——
   const {
@@ -49,32 +48,30 @@ export function useItemsPage() {
 
   // 将当前筛选账号传入 refresh
   const handleRefresh = useCallback(() => {
-    refreshFn(filters.uid)
-  }, [refreshFn, filters.uid])
+    refreshFn(filterState.uid)
+  }, [refreshFn, filterState.uid])
 
   return {
     // 状态
-    filters, setFilters,
-    searchInput, setSearchInput,
-    orderBy, asc,
-    page, pageSize, totalPages, setPage, totalItems,
+    filterState,
+    onFilterChange,
+    page,
+    pageSize,
+    totalPages,
+    setPage,
+    totalItems,
     isRefreshing,
     // 查询结果
     accountsData,
-    data, isLoading, error,
+    data, isLoading, error, refetch,
     keywordsLoading, keywordsError,
     // 关键词数据
     keywordRules,
     rulesStats,
     itemKeywordCounts,
-    // 派生数据
-    stats,
-    statsLoading,
-    // 处理器
+    // 变更操作
     updateMutation,
     handleToggle,
-    handleClearFilters,
-    handleSort,
     handleRefresh,
     // 工具
     isMobile,
