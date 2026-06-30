@@ -3,6 +3,7 @@ import { memo, useCallback } from 'react'
 import type { PublishedItem, ChannelCategory } from '@/lib/api/publish-items'
 import { imageDisplayUrl } from '@/lib/api/publish-items'
 import { CreationProgressBar } from './CreationProgressBar'
+import { PUBLISH_GRID_COLS } from './constants'
 
 function getStatusLabel(item: PublishedItem): { label: string; color: string } {
   if (item.status === 'publish_failed') return { label: '失败', color: 'text-red-500' }
@@ -78,16 +79,17 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
   }, [form.id, item.id, onFormInit, item])
 
   const rowClassName =
-    'flex items-stretch gap-1.5 px-3 min-h-[96px] border-b text-xs min-w-[900px] cursor-pointer select-none' +
+    'grid items-stretch gap-1.5 px-3 min-h-[96px] border-b text-xs cursor-pointer select-none' +
     (isEditing ? ' bg-blue-50 ring-1 ring-blue-300' : isSelected ? ' bg-blue-50/50' : ' hover:bg-gray-50')
 
   return (
     <div
       className={rowClassName}
+      style={{ gridTemplateColumns: PUBLISH_GRID_COLS }}
       onClick={() => onSelect(item)}
     >
       {/* checkbox */}
-      <div className="w-[18px] flex-shrink-0 flex items-center" onClick={e => e.stopPropagation()}>
+      <div className="flex items-center" onClick={e => e.stopPropagation()}>
         <input
           type="checkbox"
           checked={isChecked}
@@ -98,7 +100,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
 
       {/* 封面图 + 附加图片 */}
       <div
-        className="w-[280px] flex-shrink-0 flex items-center gap-1.5 overflow-x-auto"
+        className="flex items-center gap-1.5 overflow-x-auto"
         onClick={e => e.stopPropagation()}
         onWheel={e => {
           if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
@@ -174,21 +176,21 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
       </div>
 
       {/* 改写内容 — 只读，点击行在抽屉编辑 */}
-      <div className="flex-1 min-w-[160px] flex items-center">
+      <div className="flex items-center">
         <div className="w-full text-gray-700 leading-tight line-clamp-3">
           {item.description || <span className="text-gray-300">（空）</span>}
         </div>
       </div>
 
       {/* 封面规划 — 只读，点击行在抽屉编辑 */}
-      <div className="flex-1 min-w-[200px] flex items-center">
+      <div className="flex items-center">
         <div className="w-full text-gray-400 leading-tight line-clamp-3">
           {item.cover_plan_prompt || <span className="text-gray-300">（空）</span>}
         </div>
       </div>
 
       {/* 价格 — 点击编辑 */}
-      <div className="w-[70px] flex-shrink-0 flex items-center">
+      <div className="flex items-center">
         <input
           type="number"
           value={isEditing ? (form.price ?? 0) : item.price}
@@ -221,7 +223,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
       </div>
 
       {/* 账号 — 下拉即时保存 */}
-      <div className="w-[90px] flex-shrink-0 flex items-center">
+      <div className="flex items-center">
         <select
           value={isEditing ? (form.account_id ?? '') : (item.account_id ?? '')}
           onChange={e => {
@@ -246,7 +248,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
       </div>
 
       {/* 类目 — 下拉即时保存 */}
-      <div className="w-[100px] flex-shrink-0 flex items-center">
+      <div className="flex items-center">
         <select
           value={item.category ?? ''}
           onChange={e => {
@@ -274,7 +276,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
 
       {/* 创作进度 */}
       <div
-        className="w-[130px] flex-shrink-0 flex items-center"
+        className="flex items-center"
         onClick={e => e.stopPropagation()}
       >
         <CreationProgressBar
@@ -290,7 +292,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
       </div>
 
       {/* 删除 */}
-      <div className="w-[40px] flex-shrink-0 flex items-center justify-center" onClick={e => e.stopPropagation()}>
+      <div className="flex items-center justify-center" onClick={e => e.stopPropagation()}>
         <button
           onClick={() => {
             if (window.confirm('确认删除该发布素材？')) {

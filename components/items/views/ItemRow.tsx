@@ -2,6 +2,9 @@
 
 import { useState } from "react"
 import { Item } from "@/lib/api/items"
+
+/** Items 表格列宽定义 — 13 列 grid-template-columns（前2列为商品标题区，后11列为数据列） */
+export const ITEMS_GRID_COLS = '2fr 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
 import { Bot, Truck, Upload } from "lucide-react"
 import { ConfigField, formatPublishTime } from "../config"
 import { IconToggle } from "../parts/IconToggle"
@@ -35,7 +38,7 @@ export function ItemRow({
         className={`grid gap-2 px-4 py-2 items-center text-xs border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-colors ${
           isEven ? "bg-white" : "bg-gray-50/30"
         }`}
-        style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}
+        style={{ gridTemplateColumns: ITEMS_GRID_COLS }}
       >
         {/* 商品信息 */}
         <div className="col-span-2 min-w-0">

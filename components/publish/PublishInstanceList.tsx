@@ -17,6 +17,7 @@ import {
 import { uploadFileToFlare } from '@/lib/api/upload'
 import { ImageLightbox } from './ImageLightbox'
 import { PublishInstanceRow } from './PublishInstanceRow'
+import { PUBLISH_GRID_COLS } from './constants'
 
 
 interface PublishInstanceListProps {
@@ -354,8 +355,8 @@ export function PublishInstanceList({
   return (
     <div className="flex flex-col h-full">
       {/* 表头 */}
-      <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 border-b text-xs font-medium text-gray-500 min-w-[900px]">
-        <div className="w-[18px] flex-shrink-0">
+      <div className="grid items-center gap-1.5 px-3 py-1 bg-gray-50 border-b text-xs font-medium text-gray-500" style={{ gridTemplateColumns: PUBLISH_GRID_COLS }}>
+        <div>
           <input
             type="checkbox"
             checked={selectedIds.size === items.length && items.length > 0}
@@ -363,15 +364,15 @@ export function PublishInstanceList({
             className="rounded-lg"
           />
         </div>
-        <div className="w-[280px] flex-shrink-0">封面</div>
-        <div className="flex-1 min-w-[160px]">改写内容</div>
-        <div className="flex-1 min-w-[200px]">封面规划</div>
-        <div className="w-[70px] flex-shrink-0">价格</div>
-        <div className="w-[90px] flex-shrink-0">账号</div>
-        <div className="w-[100px] flex-shrink-0">类目</div>
-        <div className="w-[130px] flex-shrink-0">创作进度</div>
-        <div className="w-[60px] flex-shrink-0">状态</div>
-        <div className="w-[40px] flex-shrink-0">操作</div>
+        <div>封面</div>
+        <div>改写内容</div>
+        <div>封面规划</div>
+        <div>价格</div>
+        <div>账号</div>
+        <div>类目</div>
+        <div>创作进度</div>
+        <div>状态</div>
+        <div>操作</div>
       </div>
 
       {/* 列表 */}

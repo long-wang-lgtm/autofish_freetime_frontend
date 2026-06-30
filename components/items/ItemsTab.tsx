@@ -5,7 +5,7 @@ import type { Item } from "@/lib/api/items"
 import type { AccountName } from "@/lib/api/accounts"
 import type { ConfigField } from "@/components/items/config"
 import { FilterBar } from "@/components/items/FilterBar"
-import { ItemRow } from "@/components/items/views/ItemRow"
+import { ItemRow, ITEMS_GRID_COLS } from "@/components/items/views/ItemRow"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
 import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
 import { KeywordDrawer } from "@/components/items/drawers/RulesItemsingleDrawer"
@@ -138,7 +138,7 @@ export function ItemsTab({
               {/* 表头 */}
               <div
                 className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-100 text-xs font-medium text-gray-600"
-                style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}
+                style={{ gridTemplateColumns: ITEMS_GRID_COLS }}
               >
                 <div className="col-span-2">
                   <span>商品信息</span>
@@ -179,7 +179,7 @@ export function ItemsTab({
             </div>
 
             {/* === 移动端卡片列表 === */}
-            <div className="flex-1 overflow-auto md:hidden px-1 pb-3 space-y-2.5 min-h-[200px]">
+            <div className="flex-1 overflow-auto md:hidden px-1 pb-3 space-y-2 min-h-[200px]">
               {data.map((item) => (
                 <MobileProductCard
                   key={item.gid}

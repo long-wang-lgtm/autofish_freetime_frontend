@@ -287,8 +287,8 @@ function FilterBarMobile({
 
       {/* 展开的筛选面板 */}
       {expanded && (
-        <div className="px-3 pb-3 pt-1 border-t border-gray-100 space-y-2.5">
-          <div className="grid grid-cols-2 gap-2.5">
+        <div className="px-3 pb-3 pt-1 border-t border-gray-100 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-xs text-gray-500 mb-1">商品标题</label>
               <div className="relative">

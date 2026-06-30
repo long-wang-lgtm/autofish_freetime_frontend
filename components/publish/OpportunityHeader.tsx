@@ -86,7 +86,7 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
   return (
     <div className="flex-shrink-0">
       {/* 折叠行 — 始终可见 */}
-      <div className="flex items-center gap-2.5 px-4 h-[44px]">
+      <div className="flex items-center gap-2 px-4 h-[44px]">
         {/* 展开/折叠 — 左置 */}
         <button
           onClick={toggleExpanded}

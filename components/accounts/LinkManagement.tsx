@@ -126,7 +126,7 @@ export function LinkManagement({ open, onClose }: LinkManagementProps) {
             <button
               onClick={handleCreate}
               disabled={createMutation.isPending}
-              className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 disabled:from-purple-400 disabled:to-fuchsia-400 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 disabled:from-purple-400 disabled:to-fuchsia-400 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:cursor-not-allowed"
             >
               {createMutation.isPending ? (
                 <LoadingSpinner size="sm" />
