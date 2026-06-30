@@ -45,15 +45,6 @@ export function SidebarBase({
       >
         {/* Header 区域 */}
         <div className="flex items-center justify-between h-10 lg:h-12 px-3 lg:px-4 border-b border-gray-700 flex-shrink-0">
-          {collapsed ? (
-            headerIcon && (
-              <div className="flex items-center justify-center w-full">
-                {headerIcon}
-              </div>
-            )
-          ) : (
-            <div className="truncate">{headerExpanded}</div>
-          )}
           <button
             onClick={onToggle}
             className="p-1.5 rounded-lg hover:bg-gray-700 transition-colors flex-shrink-0"
