@@ -135,7 +135,7 @@ export function AccountCard({ account, onRelogin }: AccountCardProps) {
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
         {/* 头部：名称在左，状态在右 */}
         <div className="flex items-center justify-between mb-2">
           <div className="min-w-0 flex-1 pr-2">

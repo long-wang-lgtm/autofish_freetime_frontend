@@ -226,7 +226,7 @@ export default function NotificationTab({
                 <button onClick={copyJsonMessage} className="w-full px-4 py-2.5 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">复制 JSON 消息</button>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0">
+            <div className="px-6 py-4 border-t border-gray-100 flex-shrink-0">
               <button onClick={handleSave} disabled={notificationMutation.isPending || !webhookInput.trim()} className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium">
                 {notificationMutation.isPending ? '保存中...' : '保存'}
               </button>

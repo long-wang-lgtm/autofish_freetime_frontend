@@ -33,7 +33,7 @@ function ItemsPageContent() {
   const [activeTab, setActiveTab] = useTabRouting(['items', 'rules'] as const, 'items')
 
   return (
-    <div className="flex flex-col min-h-0 h-full space-y-5">
+    <div className="flex flex-col gap-5 h-full">
       {/* Tab 栏 */}
       <TabBar
         tabs={[
@@ -46,7 +46,7 @@ function ItemsPageContent() {
       />
 
       {/* Tab 描述 */}
-      <p className="text-sm text-gray-500 -mt-3 hidden md:block">
+      <p className="text-sm text-gray-500 hidden md:block">
         {activeTab === "items"
           ? "可配置功能：自动发货、发货配置、自动上架、自动回复规则绑定、AI回复、AI提示词"
           : "可配置功能：自动回复关键词规则，匹配买家消息并自动发送预设回复"}

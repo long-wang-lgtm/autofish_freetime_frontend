@@ -47,7 +47,7 @@ function SettingsPageContent() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-5 h-full">
       <TabBar
         tabs={MAIN_TABS}
         activeTab={activeMainTab}

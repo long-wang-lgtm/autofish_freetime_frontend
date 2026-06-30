@@ -45,7 +45,7 @@ export function RuleTable({
   }
 
   return (
-    <div className={["bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden", className].filter(Boolean).join(" ")}>
+    <div className={["bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden", className].filter(Boolean).join(" ")}>
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>

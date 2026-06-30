@@ -32,7 +32,7 @@ export default function AccountsPage() {
   })
 
   return (
-    <div className="flex flex-col min-h-0 h-full space-y-5">
+    <div className="flex flex-col gap-5 h-full">
       {/* Tab 栏 — 标签充当标题 */}
       <TabBar
         tabs={[{ key: "accounts", label: "账号管理" }]}
@@ -42,7 +42,7 @@ export default function AccountsPage() {
       />
 
       {/* 页面描述 */}
-      <p className="text-sm text-gray-500 -mt-3">
+      <p className="text-sm text-gray-500">
         管理您的闲鱼账号，配置自动回复和自动发货功能
       </p>
 
@@ -177,8 +177,8 @@ export default function AccountsPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600">
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-100 text-sm font-medium text-gray-600">
               <div className="col-span-1">账号信息</div>
               <div className="col-span-1 text-center">状态</div>
               {/* <div className="col-span-1 text-center">IM</div> */}

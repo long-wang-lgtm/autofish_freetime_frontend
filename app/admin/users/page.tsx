@@ -230,8 +230,8 @@ export default function AdminUsersPage() {
 
       {/* 表格 */}
       {!loading && !error && users.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <div className="grid grid-cols-10 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div className="grid grid-cols-10 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-100 text-sm font-medium text-gray-600">
             <div className="col-span-2">用户名</div>
             <div className="col-span-2">联系方式</div>
             <div className="col-span-1">角色</div>

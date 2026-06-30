@@ -358,8 +358,8 @@ export default function AdminAccountsPage() {
 
       {/* 账号表格 */}
       {!loading && !error && accounts && accounts.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-auto max-h-[600px]">
-          <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600 sticky top-0 z-10">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-auto max-h-[600px]">
+          <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-100 text-sm font-medium text-gray-600 sticky top-0 z-10">
             <div className="col-span-1">账号信息</div>
             <div className="col-span-1 text-center">状态</div>
             <div className="col-span-1 text-center">商品数量</div>

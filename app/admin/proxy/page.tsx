@@ -155,7 +155,7 @@ function ProxyEditPanel({ open, onClose, proxy, onSuccess }: { open: boolean; on
         </div>
         <div className="text-xs text-gray-400">类型（{proxy.direction ? "直连" : "代理"}）不可修改。</div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <button type="button" onClick={handleDelete} disabled={deleting} className="flex items-center gap-1 px-3 py-2 text-sm text-red-600 bg-white border border-red-200 rounded hover:bg-red-50 disabled:opacity-50">
             {deleting ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}删除代理
           </button>
@@ -300,9 +300,9 @@ export default function AdminProxyPage() {
 
       {/* 表格 — 无操作列，状态点击切换，店铺只展示数量 */}
       {!loading && !error && filteredProxies.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
           {/* 表头: 代理IP(2) 类型(1) 账号(1) 密钥(1) 来源(1) 状态(1) 用户(2) 店铺(3) */}
-          <div className="grid grid-cols-9 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-sm font-medium text-gray-600">
+          <div className="grid grid-cols-9 gap-2 px-4 py-3 bg-gray-100 border-b border-gray-100 text-sm font-medium text-gray-600">
             <div className="col-span-2">代理IP</div>
             <div className="col-span-1">类型</div>
             <div className="col-span-1">账号</div>

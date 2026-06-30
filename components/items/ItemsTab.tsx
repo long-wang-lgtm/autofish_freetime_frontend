@@ -75,7 +75,7 @@ export function ItemsTab({
   }, [page])
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         {/* 筛选栏 — 桌面端与移动端统一位置 */}
         <FilterBar
           accounts={accountsData || []}
@@ -117,7 +117,7 @@ export function ItemsTab({
             <div ref={listRef} className="flex-1 overflow-auto hidden md:block" style={{ minHeight: "200px" }}>
               {/* 表头 */}
               <div
-                className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-medium text-gray-600"
+                className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-100 text-xs font-medium text-gray-600"
                 style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}
               >
                 <div className="col-span-2">

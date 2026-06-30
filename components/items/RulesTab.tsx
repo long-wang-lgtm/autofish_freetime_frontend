@@ -94,7 +94,7 @@ export function RulesTab({
   }, [queryClient, addToast])
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
       {/* 统计信息 + 操作（移动端合并为一行，节约横屏垂直空间） */}
       {isMobile ? (
         <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-gray-100">

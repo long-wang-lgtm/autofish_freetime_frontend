@@ -89,7 +89,7 @@ export default function ImStatusChart({
   className?: string
 }) {
   const snapshots = useImStatusSnapshots()
-  const cardClass = `bg-white rounded-lg border border-gray-200 shadow-sm p-5 flex flex-col ${className || ''}`
+  const cardClass = `bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col ${className || ''}`
 
   // --- 构建固定槽位数据 ---
   const frame = useMemo<ChartFrame | null>(() => buildChartFrame(snapshots), [snapshots])

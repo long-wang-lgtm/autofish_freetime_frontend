@@ -22,7 +22,7 @@ export default function AccountPieChart({
   loading?: boolean
   className?: string
 }) {
-  const cardClass = `bg-white rounded-lg border border-gray-200 shadow-sm p-5 ${className || ''}`
+  const cardClass = `bg-white rounded-xl border border-gray-200 shadow-sm p-5 ${className || ''}`
   // --- 饼图配置 ---
   const option = useMemo<echarts.EChartsOption | null>(() => {
     if (!data || data.length === 0) return null

@@ -294,12 +294,12 @@ export default function AdminPage() {
         {/* 两个趋势图 — 占据剩余空间 */}
         <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* 用户注册趋势 */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">用户注册趋势（近30天）</h3>
             <div ref={trendRef} className="w-full" style={{ height: 260 }} />
           </div>
           {/* 账号注册趋势 */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">店铺注册趋势（近30天）</h3>
             <div ref={accountTrendRef} className="w-full" style={{ height: 260 }} />
           </div>
@@ -336,7 +336,7 @@ export default function AdminPage() {
       </div>
 
       {/* ===== 列表内容（卡片内） ===== */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         {tab === 'users' ? (
           <UserTable
             users={users}
@@ -372,7 +372,7 @@ function StatCard({
   highlight?: boolean
 }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
       <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
         <span className={fg}>{icon}</span>
       </div>
