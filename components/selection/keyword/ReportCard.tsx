@@ -19,7 +19,7 @@ export function ReportCard({ report }: ReportCardProps) {
   const action = actionConfig[report.actionTag]
 
   return (
-    <div className="bg-white rounded-xl p-5 hover:shadow-sm transition-all">
+    <div className="bg-white rounded-xl p-4 hover:shadow-sm transition-all">
       {/* 卡片头部 */}
       <div
         className="cursor-pointer"
@@ -29,7 +29,7 @@ export function ReportCard({ report }: ReportCardProps) {
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <h3 className="font-semibold text-gray-900">{report.title}</h3>
-              <span className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full ${action.color}`}>
+              <span className={`flex items-center gap-1 text-xs px-3 py-1 rounded-full ${action.color}`}>
                 {action.icon}
                 {report.actionTag}
               </span>

@@ -128,7 +128,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
       </div>
 
       {linkedLoading ? (
-        <div className="flex items-center justify-center py-8">
+        <div className="flex items-center justify-center py-6">
           <LoadingSpinner size="md" />
         </div>
       ) : linkedRulesData?.rules && linkedRulesData.rules.length > 0 ? (
@@ -142,7 +142,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span
-                      className={`px-2 py-0.5 text-xs rounded ${
+                      className={`px-1.5 py-0.5 text-xs rounded ${
                         rule.enabled
                           ? "bg-green-100 text-green-700"
                           : "bg-gray-100 text-gray-500"
@@ -181,7 +181,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-400">
+        <div className="text-center py-6 text-gray-400">
           <p>暂无关联的关键词规则</p>
           <p className="text-xs mt-1">点击上方按钮创建新规则</p>
         </div>

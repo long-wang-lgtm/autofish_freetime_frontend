@@ -275,7 +275,7 @@ export default function AdminUsersPage() {
               {/* 状态 */}
               <div className="col-span-1">
                 <span
-                  className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                  className={`inline-block px-1.5 py-0.5 text-xs font-medium rounded-full ${
                     user.is_active
                       ? "text-green-600 bg-green-50"
                       : "text-red-600 bg-red-50"

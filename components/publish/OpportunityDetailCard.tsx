@@ -103,7 +103,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
         {/* 固定行：价格 + 商品组 */}
         <div className="flex items-center gap-4 mt-2 flex-shrink-0">
           <span className="text-gray-400 flex-shrink-0 text-sm uppercase tracking-wide">价格</span>
-          <div className="flex items-center bg-gray-50 rounded-md px-2 py-0.5 hover:bg-white hover:shadow-sm focus-within:bg-white focus-within:shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition-all">
+          <div className="flex items-center bg-gray-50 rounded-md px-1.5 py-0.5 hover:bg-white hover:shadow-sm focus-within:bg-white focus-within:shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition-all">
             <span className="text-gray-400 text-sm">¥</span>
             <input
               type="number"
@@ -117,7 +117,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
           <input
             value={form.item_group_id}
             onChange={e => updateField('item_group_id', e.target.value)}
-            className="flex-1 min-w-0 bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-2 py-0.5 focus:outline-none text-gray-600 font-mono text-sm transition-all"
+            className="flex-1 min-w-0 bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-1.5 py-0.5 focus:outline-none text-gray-600 font-mono text-sm transition-all"
             placeholder="—"
           />
         </div>
@@ -128,7 +128,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
           <input
             value={form.tags}
             onChange={e => updateField('tags', e.target.value)}
-            className="flex-1 min-w-0 bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-2 py-0.5 focus:outline-none text-gray-600 transition-all"
+            className="flex-1 min-w-0 bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-1.5 py-0.5 focus:outline-none text-gray-600 transition-all"
             placeholder="逗号分隔"
           />
           {form.tags && (
@@ -162,7 +162,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
             <textarea
               value={form.source_description}
               onChange={e => updateField('source_description', e.target.value)}
-              className="w-full h-full bg-gray-50 hover:bg-white focus:bg-white border border-gray-100 hover:border-gray-200 focus:border-blue-400 rounded-md px-2 py-1 focus:outline-none text-gray-600 resize-none text-sm leading-relaxed transition-all"
+              className="w-full h-full bg-gray-50 hover:bg-white focus:bg-white border border-gray-100 hover:border-gray-200 focus:border-blue-400 rounded-md px-3 py-1 focus:outline-none text-gray-600 resize-none text-sm leading-relaxed transition-all"
               placeholder="输入或粘贴来源描述..."
             />
           </div>

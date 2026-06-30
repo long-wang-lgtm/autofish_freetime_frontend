@@ -357,7 +357,7 @@ export default function AdminProxyPage() {
                     {togglingId === proxy.id ? (
                       <LoadingSpinner size="sm" />
                     ) : (
-                      <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full cursor-pointer hover:ring-2 ring-offset-1 ${STATUS_COLORS[proxy.status || ""] || "text-gray-500 bg-gray-100"}`}>
+                      <span className={`inline-block px-1.5 py-0.5 text-xs font-medium rounded-full cursor-pointer hover:ring-2 ring-offset-1 ${STATUS_COLORS[proxy.status || ""] || "text-gray-500 bg-gray-100"}`}>
                         {STATUS_LABELS[proxy.status || ""] || proxy.status}
                       </span>
                     )}

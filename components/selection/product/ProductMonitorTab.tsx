@@ -162,7 +162,7 @@ export function ProductMonitorTab() {
         const isEditing = editingPriority === p.id
 
         return (
-          <div className="min-w-0 py-0.5 pr-2">
+          <div className="min-w-0 py-0.5 pr-3">
             {/* 第1行：描述 */}
             {p.description ? (
               <div className="text-sm text-gray-800 leading-snug line-clamp-2">
@@ -416,7 +416,7 @@ export function ProductMonitorTab() {
               <div className="min-w-[1400px]">
                 {/* ── 表头 ── */}
                 <div
-                  className="grid px-4 pt-2 pb-2 text-sm font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10 gap-x-2"
+                  className="grid px-4 pt-3 pb-3 text-sm font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10 gap-x-2"
                   style={{ gridTemplateColumns: GRID_COLS }}
                 >
                   {COLUMNS.map(col => {
@@ -529,7 +529,7 @@ export function ProductMonitorTab() {
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <button
           onClick={() => setAiReportOpen(prev => !prev)}
-          className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50/50 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50/50 transition-colors"
         >
           <h3 className="font-semibold text-gray-900 text-sm">AI 商品分析报告</h3>
           <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${aiReportOpen ? 'rotate-90' : ''}`} />

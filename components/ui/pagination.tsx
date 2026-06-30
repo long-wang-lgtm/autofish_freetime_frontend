@@ -34,7 +34,7 @@ export function Pagination({
       </button>
       {pages.map((p, i) =>
         p === '...' ? (
-          <span key={`dot-${i}`} className="px-2 text-gray-400">
+          <span key={`dot-${i}`} className="px-3 text-gray-400">
             …
           </span>
         ) : (

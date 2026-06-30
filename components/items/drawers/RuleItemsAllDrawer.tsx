@@ -166,7 +166,7 @@ export default function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawe
       onToggleGroup={toggleGroup}
     />
   ) : (
-    <div className="flex items-center justify-center py-8">
+    <div className="flex items-center justify-center py-6">
       <LoadingSpinner />
     </div>
   )

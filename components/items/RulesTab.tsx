@@ -97,12 +97,12 @@ export function RulesTab({
     <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
       {/* 统计信息 + 操作（移动端合并为一行，节约横屏垂直空间） */}
       {isMobile ? (
-        <div className="flex items-center gap-1.5 px-2 py-1 border-b border-gray-100">
+        <div className="flex items-center gap-1.5 px-3 py-1 border-b border-gray-100">
           <div className="flex gap-1.5 overflow-x-auto flex-shrink min-w-0">
             {MOBILE_STAT_PILLS.map(({ key, label, color }) => (
               <div
                 key={key}
-                className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2.5 py-1 flex-shrink-0"
+                className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-3 py-1 flex-shrink-0"
               >
                 <span className={`text-xs font-semibold ${color}`}>{rulesStats[key]}</span>
                 <span className="text-xs text-gray-500">{label}</span>
@@ -112,7 +112,7 @@ export function RulesTab({
           <div className="flex-1 min-w-[4px]" />
           <button
             onClick={() => setShowCreateForm(true)}
-            className="flex-shrink-0 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors flex items-center gap-1"
+            className="flex-shrink-0 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors flex items-center gap-1"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

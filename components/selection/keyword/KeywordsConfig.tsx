@@ -19,7 +19,7 @@ export function KeywordsConfig() {
   }
 
   return (
-    <div className="bg-white rounded-xl p-5">
+    <div className="bg-white rounded-xl p-4">
       <h3 className="font-semibold text-gray-900 mb-4">对标关键词</h3>
 
       {/* 输入区 */}

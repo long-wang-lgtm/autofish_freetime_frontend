@@ -81,7 +81,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
               if (!s) return <span className="text-xs text-gray-400">-</span>
               if (!isInteractive) {
                 return (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text}`}>
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                     {s.label}
                   </span>
@@ -93,7 +93,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
                     const fn = product.monitorStatus === 1 ? cancelMonitorItem : activateMonitorItem
                     fn(product.id).then(() => queryClient.invalidateQueries({ queryKey: ['monitor-items'] }))
                   }}
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text} hover:opacity-80 transition-opacity cursor-pointer`}
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text} hover:opacity-80 transition-opacity cursor-pointer`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                   {s.label}
@@ -129,7 +129,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
             {product.monitorStatus !== 4 && (
               <button
                 onClick={() => handleStored(product.id)}
-                className="text-xs px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
+                className="text-xs px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
               >
                 + 入库
               </button>
@@ -184,7 +184,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           {product.keywords.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {product.keywords.map(kw => (
-                <span key={kw} className="text-sm text-gray-700 bg-gray-100 rounded-full px-2 py-0.5">
+                <span key={kw} className="text-sm text-gray-700 bg-gray-100 rounded-full px-1.5 py-0.5">
                   {kw}
                 </span>
               ))}
@@ -195,7 +195,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
 
       {/* Hero Metric — 表格触发的关键信号 */}
       {product && (
-        <div className="flex items-center gap-4 px-2 py-2 bg-amber-50/50 rounded-lg border border-amber-100">
+        <div className="flex items-center gap-4 px-3 py-2 bg-amber-50/50 rounded-lg border border-amber-100">
           <span className="text-xs text-gray-700">触发信号</span>
           {acceleration != null && acceleration > 0.3 ? (
             <>

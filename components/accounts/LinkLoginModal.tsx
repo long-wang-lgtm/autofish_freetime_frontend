@@ -77,7 +77,7 @@ export default function LinkLoginModal({ open, onClose, onSuccess }: LinkLoginMo
         </div>
         <div className="p-6">
           {loading && (
-            <div className="flex flex-col items-center py-8">
+            <div className="flex flex-col items-center py-6">
               <LoadingSpinner size="lg" />
               <p className="mt-4 text-gray-500">生成链接中...</p>
             </div>

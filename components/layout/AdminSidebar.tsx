@@ -104,7 +104,7 @@ export default function AdminSidebar({ collapsed, mobileOpen, onToggle, onMobile
         </Link>
       }
     >
-      <ul className="space-y-1 px-2">
+      <ul className="space-y-1 px-3">
         {adminNavItems.map((item) => (
           <li key={item.path}>
             <Link

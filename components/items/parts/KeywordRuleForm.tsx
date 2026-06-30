@@ -166,7 +166,7 @@ export function KeywordRuleForm({
                   <button
                     type="button"
                     onClick={() => setValue("reply_type", "custom", { shouldDirty: true })}
-                    className={`px-2 py-0.5 text-sm rounded transition-colors ${
+                    className={`px-1.5 py-0.5 text-sm rounded transition-colors ${
                       replyType === "custom"
                         ? "bg-white text-blue-700 font-medium shadow-sm"
                         : "text-blue-500 hover:text-blue-700"
@@ -177,7 +177,7 @@ export function KeywordRuleForm({
                   <button
                     type="button"
                     onClick={() => setValue("reply_type", "predefined", { shouldDirty: true })}
-                    className={`px-2 py-0.5 text-sm rounded transition-colors ${
+                    className={`px-1.5 py-0.5 text-sm rounded transition-colors ${
                       replyType === "predefined"
                         ? "bg-white text-blue-700 font-medium shadow-sm"
                         : "text-blue-500 hover:text-blue-700"
@@ -265,7 +265,7 @@ export function KeywordRuleForm({
 
           {/* 关联商品信息 / 警告 */}
           {linkedItem && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-2.5">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
               <div className="text-xs text-green-700">
                 <span className="font-medium">关联商品：</span>
                 {linkedItem.title || "无标题"}
@@ -274,7 +274,7 @@ export function KeywordRuleForm({
             </div>
           )}
           {bindingWarning && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
               <div className="text-xs text-amber-700">{bindingWarning}</div>
             </div>
           )}

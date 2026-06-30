@@ -157,7 +157,7 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
             {/* 价格 */}
             <div className="flex flex-col gap-0.5">
               <span className="text-xs text-gray-400 uppercase tracking-wide">价格</span>
-              <div className="flex items-center bg-gray-50 rounded-md px-2 py-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
+              <div className="flex items-center bg-gray-50 rounded-md px-3 py-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
                 <span className="text-gray-400 text-sm">¥</span>
                 <input
                   type="number"
@@ -175,7 +175,7 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
               <input
                 value={form.item_group_id}
                 onChange={e => updateField('item_group_id', e.target.value)}
-                className="w-full bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-2 py-1 focus:outline-none text-gray-600 font-mono text-sm transition-all"
+                className="w-full bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-3 py-1 focus:outline-none text-gray-600 font-mono text-sm transition-all"
                 placeholder="—"
               />
             </div>

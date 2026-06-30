@@ -187,14 +187,14 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {/* 工具栏 */}
         <div className={`flex items-center border-b border-gray-100 ${
-          isMobile ? 'gap-1.5 px-2 pt-3 pb-2' : 'gap-3 px-6 pt-4 pb-3'
+          isMobile ? 'gap-1.5 px-3 pt-3 pb-3' : 'gap-3 px-6 pt-4 pb-3'
         }`}>
           {(['all', 'text', 'image'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveSubTab(tab)}
               className={`font-medium rounded-lg transition-all ${
-                isMobile ? 'px-2.5 py-1 text-sm' : 'px-4 py-2 text-sm'
+                isMobile ? 'px-3 py-1 text-sm' : 'px-4 py-2 text-sm'
               } ${
                 activeSubTab === tab
                   ? 'bg-blue-100 text-blue-700'
@@ -209,7 +209,7 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
             onClick={() => openDrawer()}
             title="每个ai模型调用方法不一致，添加模型后若不可用，请联系作者！后续添加模型连接测试功能"
             className={`bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center flex-shrink-0 ${
-              isMobile ? 'px-2.5 py-1 text-sm gap-1' : 'px-4 py-2 gap-2'
+              isMobile ? 'px-3 py-1 text-sm gap-1' : 'px-4 py-2 gap-2'
             }`}
           >
             <svg className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,7 +246,7 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
                   <span className="text-sm font-semibold text-gray-900 leading-tight truncate flex-1 min-w-0">
                     {config.name}
                   </span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ${
+                  <span className={`px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0 ${
                     config.config_type === 'text' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
                   }`}>
                     {CONFIG_TYPE_LABELS[config.config_type]}
@@ -259,7 +259,7 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
                   <span className="font-mono">{config.model}</span>
                 </div>
                 {/* 默认状态 */}
-                <div className="px-3 pb-2 text-xs">
+                <div className="px-3 pb-3 text-xs">
                   {config.is_active ? (
                     <span className="text-green-600">✓ 默认模型</span>
                   ) : (
@@ -275,7 +275,7 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
                 <div className="flex items-center justify-end gap-1 px-3 py-2 border-t border-gray-100">
                   <button
                     onClick={() => handleCopy(config)}
-                    className="px-2 py-1 text-xs text-gray-500 hover:text-blue-600"
+                    className="px-3 py-1 text-xs text-gray-500 hover:text-blue-600"
                   >
                     复制
                   </button>
@@ -284,13 +284,13 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
                       <button
                         onClick={() => handleDelete(config.id)}
                         disabled={deleteMutation.isPending}
-                        className="px-2 py-1 text-xs text-red-600"
+                        className="px-3 py-1 text-xs text-red-600"
                       >
                         {deleteMutation.isPending ? '...' : '确认'}
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(null)}
-                        className="px-2 py-1 text-xs text-gray-400"
+                        className="px-3 py-1 text-xs text-gray-400"
                       >
                         取消
                       </button>
@@ -335,7 +335,7 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
                     {PROVIDER_LABELS[config.provider] || config.provider}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
+                    <span className={`px-3 py-1 rounded-full text-xs ${
                       config.config_type === 'text' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
                     }`}>
                       {CONFIG_TYPE_LABELS[config.config_type]}
@@ -427,7 +427,7 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
             </div>
           }
         >
-          <div className="p-5 space-y-4">
+          <div className="p-4 space-y-4">
             <AIConfigFormFields
               name={formName}
               provider={formProvider}

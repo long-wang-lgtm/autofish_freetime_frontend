@@ -66,9 +66,9 @@ export function VerticalTimeline({
 
   return (
     <div className="h-full">
-      <div className="relative h-full pl-2">
+      <div className="relative h-full pl-3">
         {/* 多选状态指示器 - 常驻显示 */}
-        <div className="mb-3 p-2 bg-gray-50 rounded-xl border border-gray-200">
+        <div className="mb-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
@@ -93,7 +93,7 @@ export function VerticalTimeline({
         {/* 滚动容器 */}
         <div
           ref={containerRef}
-          className="h-full overflow-y-auto custom-scrollbar pr-2"
+          className="h-full overflow-y-auto custom-scrollbar pr-3"
         >
           <div className="space-y-0.5 pb-4">
             {sortedDates.map((date) => {
@@ -117,7 +117,7 @@ export function VerticalTimeline({
                 <button
                   key={date}
                   onClick={handleClick}
-                  className={`flex items-center w-full text-left pr-2 py-1 gap-2 transition-all duration-150 ${
+                  className={`flex items-center w-full text-left pr-3 py-1 gap-2 transition-all duration-150 ${
                     isSelected
                       ? 'bg-blue-50 shadow-sm ring-1 ring-blue-100 rounded'  // 添加边框光环
                       : 'hover:bg-gray-50'

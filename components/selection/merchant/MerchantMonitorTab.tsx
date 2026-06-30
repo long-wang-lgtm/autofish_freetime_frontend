@@ -66,20 +66,20 @@ export function MerchantMonitorTab() {
 
         <div className="overflow-x-auto">
           {isLoading ? (
-            <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
+            <div className="flex justify-center py-6"><LoadingSpinner size="md" /></div>
           ) : filtered.length === 0 ? (
-            <p className="text-center py-8 text-gray-400">
+            <p className="text-center py-6 text-gray-400">
               {searchText ? '无匹配商家' : '暂无监控商家，点击上方添加'}
             </p>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-500 border-b border-gray-100">
-                  <th className="pb-2 font-medium">商家UID</th>
-                  <th className="pb-2 font-medium">名称</th>
-                  <th className="pb-2 font-medium text-right">优先级</th>
-                  <th className="pb-2 font-medium">最后采集</th>
-                  <th className="pb-2 font-medium w-12"></th>
+                  <th className="pb-3 font-medium">商家UID</th>
+                  <th className="pb-3 font-medium">名称</th>
+                  <th className="pb-3 font-medium text-right">优先级</th>
+                  <th className="pb-3 font-medium">最后采集</th>
+                  <th className="pb-3 font-medium w-12"></th>
                 </tr>
               </thead>
               <tbody>
@@ -114,7 +114,7 @@ export function MerchantMonitorTab() {
       {/* 添加商家弹窗 */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-4">
             <h3 className="font-semibold text-gray-900 mb-4">添加监控商家</h3>
             <form onSubmit={handleAddMerchant} className="space-y-4">
               <div>
@@ -137,7 +137,7 @@ export function MerchantMonitorTab() {
                   className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}

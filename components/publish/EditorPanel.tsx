@@ -131,7 +131,7 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange, 
           value={description}
           data-field="description"
           onChange={e => handleDescriptionChange(e.target.value)}
-          className="flex-1 w-full p-2 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-0 leading-relaxed"
+          className="flex-1 w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-0 leading-relaxed"
           placeholder="输入改写内容..."
         />
       </div>
@@ -143,7 +143,7 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange, 
           value={coverPlanPrompt}
           data-field="cover_plan_prompt"
           onChange={e => handleCoverPlanPromptChange(e.target.value)}
-          className="flex-1 w-full p-2 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-0 leading-relaxed"
+          className="flex-1 w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-0 leading-relaxed"
           placeholder="输入封面规划..."
         />
       </div>

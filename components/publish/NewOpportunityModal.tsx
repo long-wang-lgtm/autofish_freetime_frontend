@@ -125,7 +125,7 @@ export function NewOpportunityModal({ onClose }: NewOpportunityModalProps) {
             <p className="text-sm text-red-500">{error}</p>
           )}
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-3">
             <button
               type="button"
               onClick={onClose}

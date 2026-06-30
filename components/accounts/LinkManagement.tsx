@@ -225,7 +225,7 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
                           <span className="text-sm font-mono text-gray-800 truncate">
                             {item.token.substring(0, 16)}...
                           </span>
-                          <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full shrink-0">
+                          <span className="px-1.5 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full shrink-0">
                             有效
                           </span>
                         </div>

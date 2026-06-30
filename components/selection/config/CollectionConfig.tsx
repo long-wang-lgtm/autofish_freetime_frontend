@@ -2,7 +2,7 @@
 
 export function CollectionConfig() {
   return (
-    <div className="bg-white rounded-xl p-5">
+    <div className="bg-white rounded-xl p-4">
       <h3 className="font-semibold text-gray-900 mb-4">采集配置</h3>
       <div className="grid grid-cols-3 gap-6">
         {/* 每日采集次数 */}

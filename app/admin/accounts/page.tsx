@@ -166,13 +166,13 @@ function ProxySelectPanel({
                         <button
                           onClick={() => doBind(p.id!)}
                           disabled={bindingId === p.id}
-                          className="px-2.5 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+                          className="px-3 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
                         >
                           {bindingId === p.id ? <LoadingSpinner size="sm" /> : "确认绑定"}
                         </button>
                         <button
                           onClick={() => setConfirmingId(null)}
-                          className="px-2.5 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                          className="px-3 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50"
                         >
                           取消
                         </button>
@@ -398,7 +398,7 @@ export default function AdminAccountsPage() {
                 {/* 状态（只读） */}
                 <div className="col-span-1 text-center">
                   <span
-                    className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                    className={`inline-block px-1.5 py-0.5 text-xs font-medium rounded-full ${
                       statusColors[account.status ?? 0] || "text-gray-500 bg-gray-100"
                     }`}
                   >

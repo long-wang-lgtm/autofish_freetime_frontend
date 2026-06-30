@@ -32,7 +32,7 @@ function ConfigModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
         {/* 右上角关闭按钮 */}
-        <div className="flex justify-end p-2">
+        <div className="flex justify-end p-3">
           <button
             onClick={onClose}
             className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
@@ -43,7 +43,7 @@ function ConfigModal({
           </button>
         </div>
 
-        <div className="px-4 pb-2">
+        <div className="px-4 pb-3">
           <h3 className="font-semibold text-gray-900">
             {field === "full_ai_reply_system_prompt" ? "AI提示词" : "默认回复内容"}
           </h3>
@@ -63,7 +63,7 @@ function ConfigModal({
         </div>
 
         {/* 右下角确认取消按钮 */}
-        <div className="flex justify-end gap-2 px-4 pb-4 pt-2">
+        <div className="flex justify-end gap-2 px-4 pb-4 pt-3">
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
@@ -138,14 +138,14 @@ export function AccountCard({ account, onRelogin }: AccountCardProps) {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
         {/* 头部：名称在左，状态在右 */}
         <div className="flex items-center justify-between mb-2">
-          <div className="min-w-0 flex-1 pr-2">
+          <div className="min-w-0 flex-1 pr-3">
             <h3 className="font-semibold text-gray-900 truncate text-sm">{account.name}</h3>
             <p className="text-xs text-gray-400 truncate">{account.uid}</p>
           </div>
           <button
             onClick={handleStatusToggle}
             disabled={loading === "status"}
-            className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[account.status]} ${
+            className={`px-1.5 py-0.5 rounded text-xs font-medium ${statusColors[account.status]} ${
               account.status === 3 ? "cursor-not-allowed" : "cursor-pointer"
             }`}
             title={account.status === 3 ? "异常状态无法自行切换" : "点击切换状态"}

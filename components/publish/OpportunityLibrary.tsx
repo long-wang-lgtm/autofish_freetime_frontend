@@ -69,11 +69,11 @@ export function OpportunityLibrary({
       </div>
 
       {/* 商机列表 */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-2">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {isLoading ? (
-          <div className="text-center py-8 text-gray-400 text-sm">加载中...</div>
+          <div className="text-center py-6 text-gray-400 text-sm">加载中...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 text-sm">
+          <div className="text-center py-6 text-gray-400 text-sm">
             {search ? '无匹配商机' : '暂无商机'}
           </div>
         ) : (

@@ -44,7 +44,7 @@ export function MobileRuleCard({
           <button
             onClick={() => onToggleEnabled(rule)}
             disabled={toggling}
-            className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 transition-colors ${
+            className={`px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0 transition-colors ${
               rule.enabled
                 ? "bg-green-100 text-green-700 hover:bg-green-200"
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -80,7 +80,7 @@ export function MobileRuleCard({
 
       {/* 回复预览 */}
       <div
-        className={`px-3 pb-2 text-sm leading-tight truncate ${
+        className={`px-3 pb-3 text-sm leading-tight truncate ${
           disabled ? "text-gray-400" : "text-gray-600"
         }`}
       >

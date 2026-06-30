@@ -95,7 +95,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <div className="flex-shrink-0 flex items-center gap-1.5 lg:gap-2">
               <button
                 onClick={() => router.push('/dashboard/accounts')}
-                className="flex items-center gap-1 lg:gap-1.5 px-2 lg:px-3 py-1 text-xs lg:text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="flex items-center gap-1 lg:gap-1.5 px-3 lg:px-3 py-1 text-xs lg:text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
@@ -107,7 +107,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-1.5 lg:gap-2 px-1.5 lg:px-2 py-1 lg:py-1 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-1.5 lg:gap-2 px-1.5 lg:px-3 py-1 lg:py-1 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-xs font-medium text-white shadow-sm">
                     {userInitial}

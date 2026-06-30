@@ -377,9 +377,9 @@ export function PublishInstanceList({
       {/* 列表 */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="text-center py-8 text-gray-400">加载中...</div>
+          <div className="text-center py-6 text-gray-400">加载中...</div>
         ) : items.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">暂无发布素材</div>
+          <div className="text-center py-6 text-gray-400">暂无发布素材</div>
         ) : (
           items.map(item => (
             <PublishInstanceRow

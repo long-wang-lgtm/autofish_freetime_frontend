@@ -294,12 +294,12 @@ export default function AdminPage() {
         {/* 两个趋势图 — 占据剩余空间 */}
         <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* 用户注册趋势 */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">用户注册趋势（近30天）</h3>
             <div ref={trendRef} className="w-full" style={{ height: 260 }} />
           </div>
           {/* 账号注册趋势 */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">店铺注册趋势（近30天）</h3>
             <div ref={accountTrendRef} className="w-full" style={{ height: 260 }} />
           </div>
@@ -423,7 +423,7 @@ function UserTable({
                 <Td>{u.email || '—'}</Td>
                 <Td>
                   <span className={
-                    'inline-block px-2 py-0.5 text-xs rounded-full ' +
+                    'inline-block px-1.5 py-0.5 text-xs rounded-full ' +
                     isAdminRole(u.role
                       ? 'bg-amber-100 text-amber-700'
                       : 'bg-gray-100 text-gray-600')
@@ -500,7 +500,7 @@ function AccountTable({
                   <Td className="text-gray-500 font-mono text-xs">{a.uid}</Td>
                   <Td>{a.user?.username || '—'}</Td>
                   <Td>
-                    <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${st.cls}`}>
+                    <span className={`inline-block px-1.5 py-0.5 text-xs rounded-full ${st.cls}`}>
                       {st.text}
                     </span>
                   </Td>

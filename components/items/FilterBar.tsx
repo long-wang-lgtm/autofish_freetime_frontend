@@ -191,7 +191,7 @@ function FilterBarMobile({
           onChange={(e) =>
             onSearchChange((prev) => ({ ...prev, uid: e.target.value }))
           }
-          className="flex-1 min-w-0 px-2.5 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 truncate"
+          className="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 truncate"
         >
           <option value="">全部账号</option>
           {accounts.map((acc) => (
@@ -206,7 +206,7 @@ function FilterBarMobile({
           onChange={(e) =>
             onStatusChange(e.target.value ? Number(e.target.value) : undefined)
           }
-          className="w-20 px-2.5 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 flex-shrink-0"
+          className="w-20 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 flex-shrink-0"
         >
           <option value="">全部</option>
           <option value="0">在售</option>
@@ -216,7 +216,7 @@ function FilterBarMobile({
 
         <button
           onClick={() => setExpanded(!expanded)}
-          className={`relative flex-shrink-0 p-2 rounded-lg border transition-colors ${
+          className={`relative flex-shrink-0 p-3 rounded-lg border transition-colors ${
             expanded || hiddenFilterCount > 0
               ? "bg-blue-50 border-blue-200 text-blue-600"
               : "bg-gray-50 border-gray-200 text-gray-500"
@@ -234,7 +234,7 @@ function FilterBarMobile({
           onClick={onRefresh}
           disabled={!selectedUid || isRefreshing}
           title={!selectedUid ? "请先选择账号" : "从闲鱼刷新商品列表"}
-          className={`flex-shrink-0 p-2 rounded-lg border transition-colors ${
+          className={`flex-shrink-0 p-3 rounded-lg border transition-colors ${
             !selectedUid || isRefreshing
               ? "bg-gray-50 border-gray-200 text-gray-400"
               : "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
@@ -249,7 +249,7 @@ function FilterBarMobile({
       </div>
 
       {/* 统计条 + 排序 */}
-      <div className="flex items-center gap-3 px-3 pb-2 text-xs text-gray-500">
+      <div className="flex items-center gap-3 px-3 pb-3 text-xs text-gray-500">
         <span>
           共 <span className="font-semibold text-gray-900">{stats.total}</span> 件
         </span>
@@ -270,7 +270,7 @@ function FilterBarMobile({
 
       {/* 排序滑动栏 */}
       <div
-        className="flex items-center gap-1.5 px-3 pb-2 overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden"
+        className="flex items-center gap-1.5 px-3 pb-3 overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden"
         style={{ scrollbarWidth: "none" } as React.CSSProperties}
       >
         {ITEM_SORT_FIELDS.map((f) => (
@@ -299,7 +299,7 @@ function FilterBarMobile({
                     onSearchChange((prev) => ({ ...prev, title: e.target.value }))
                   }
                   placeholder="搜索标题..."
-                  className="w-full pl-2.5 pr-6 py-2 text-sm border border-gray-200 rounded-lg focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full pl-3 pr-6 py-2 text-sm border border-gray-200 rounded-lg focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
                 />
                 {searchInput.title && (
                   <button
@@ -322,7 +322,7 @@ function FilterBarMobile({
                   onSearchChange((prev) => ({ ...prev, gid: e.target.value }))
                 }
                 placeholder="输入ID"
-                className="w-full px-2.5 py-2 text-sm border border-gray-200 rounded-lg focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
             </div>
           </div>
@@ -361,7 +361,7 @@ function SortChip({
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full transition-colors ${
+      className={`shrink-0 inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full transition-colors ${
         isActive
           ? "bg-blue-50 text-blue-700 font-medium"
           : "bg-gray-100 text-gray-500"

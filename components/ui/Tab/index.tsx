@@ -42,7 +42,7 @@ const SIZE_STYLES = {
   },
   'portrait-mobile': {
     outer: 'gap-1 overflow-x-auto hide-scrollbar',
-    button: 'px-2 py-1 text-sm whitespace-nowrap',
+    button: 'px-3 py-1 text-sm whitespace-nowrap',
   },
 } as const
 

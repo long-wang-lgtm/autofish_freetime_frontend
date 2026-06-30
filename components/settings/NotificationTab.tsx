@@ -97,7 +97,7 @@ export default function NotificationTab({
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className={isMobile ? 'p-3' : 'p-6'}>
           {notificationLoading ? (
-            <div className="text-center py-8">
+            <div className="text-center py-6">
               <p className="text-gray-500">加载中...</p>
             </div>
           ) : (
@@ -162,7 +162,7 @@ export default function NotificationTab({
             </button>
           }
         >
-          <div className="p-5 space-y-5">
+          <div className="p-4 space-y-5">
             {/* webhook 输入 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">飞书 Webhook 地址</label>

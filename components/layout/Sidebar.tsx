@@ -221,7 +221,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose
       onMobileClose={onMobileClose}
       headerExpanded={<span className="text-base font-semibold">闲逸通</span>}
     >
-      <ul className="space-y-1 px-2">
+      <ul className="space-y-1 px-3">
         {navItems.map((item) => renderNavItem(item))}
       </ul>
     </SidebarBase>

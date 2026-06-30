@@ -53,7 +53,7 @@ export function MobileProductCard({
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden active:scale-[0.98] transition-transform">
       {/* === 标题行 + 快捷开关 === */}
-      <div className="flex items-start justify-between px-4 pt-3 pb-2 gap-2">
+      <div className="flex items-start justify-between px-4 pt-3 pb-3 gap-2">
         <button
           onClick={onEdit}
           className="text-left text-sm font-medium text-gray-900 line-clamp-2 hover:text-blue-600 transition-colors flex-1 min-w-0"
@@ -103,7 +103,7 @@ export function MobileProductCard({
       </div>
 
       {/* === 信息栏（账号 → GID → 状态 → 价格 → 时间） === */}
-      <div className="px-4 pb-2 flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
+      <div className="px-4 pb-3 flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
         <span className="truncate max-w-[80px]">{item.account.name}</span>
         <span className="text-gray-300">|</span>
         <span className="font-mono text-gray-500 break-all">{item.gid}</span>

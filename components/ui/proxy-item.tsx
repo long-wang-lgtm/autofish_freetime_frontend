@@ -74,7 +74,7 @@ export function ProxyItem({ proxy, variant, actionLabel, actionLoading, onAction
         <button
           onClick={onAction}
           disabled={actionLoading}
-          className={`ml-3 px-2.5 py-1 text-xs rounded disabled:opacity-50 shrink-0 ${
+          className={`ml-3 px-3 py-1 text-xs rounded disabled:opacity-50 shrink-0 ${
             isBound
               ? "text-red-600 bg-white border border-red-200 hover:bg-red-50"
               : "bg-blue-600 text-white hover:bg-blue-700"

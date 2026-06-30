@@ -55,7 +55,7 @@ export function NewKeywordModal({ onClose, onAdd }: NewKeywordModalProps) {
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-3">
             <button
               type="button"
               onClick={onClose}

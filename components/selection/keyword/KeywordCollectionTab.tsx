@@ -73,8 +73,8 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
     <div className="grid grid-cols-12 gap-3">
       {/* 左侧：关键词列表 */}
       <div className="col-span-2 space-y-3">
-        <div className="bg-white rounded-xl p-3.5 shadow-sm border border-gray-200">
-          <div className="pb-2 border-b border-gray-100">
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+          <div className="pb-3 border-b border-gray-100">
             <h3 className="font-semibold text-gray-900">关键词列表</h3>
             <p className="text-xs text-gray-400 mt-0.5">管理搜索关键词</p>
           </div>
@@ -100,7 +100,7 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
                 <button
                   key={kw.id}
                   onClick={() => onSelectKeyword(kw.id != null ? String(kw.id) : null)}
-                  className={`w-full text-left p-2 rounded-lg text-xs transition-all ${
+                  className={`w-full text-left p-3 rounded-lg text-xs transition-all ${
                     selectedKeywordId === String(kw.id)
                       ? 'bg-blue-50 border border-blue-100'
                       : 'hover:bg-gray-50'
@@ -144,7 +144,7 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
       <div className="col-span-10 space-y-3">
         <div className="grid grid-cols-12 gap-3">
           {/* 时间轴 */}
-          <div className="col-span-2 bg-white rounded-xl border border-gray-200 p-2">
+          <div className="col-span-2 bg-white rounded-xl border border-gray-200 p-3">
             <VerticalTimeline
               dates={dates}
               dataCounts={dailyCounts}
@@ -160,7 +160,7 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
             <h3 className="font-semibold text-gray-900 mb-3">采集商品</h3>
             <div className="max-h-[calc(100vh-380px)] overflow-y-auto custom-scrollbar">
               {products.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">选择关键词查看采集结果</p>
+                <p className="text-sm text-gray-400 text-center py-6">选择关键词查看采集结果</p>
               ) : (
                 <div className="space-y-0.5">
                   {products.map(p => (

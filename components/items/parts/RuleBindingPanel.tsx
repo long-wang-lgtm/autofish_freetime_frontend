@@ -51,13 +51,13 @@ export default function RuleBindingPanel({
         icon="🔗"
         badge={selectedItemIds.length}
       >
-        <div className="p-2 space-y-2">
+        <div className="p-3 space-y-2">
           <input
             type="text"
             value={itemSearch}
             onChange={(e) => setItemSearch(e.target.value)}
             placeholder="搜索商品..."
-            className="w-full px-2.5 py-1 border border-gray-300 rounded-md text-xs"
+            className="w-full px-3 py-1 border border-gray-300 rounded-md text-xs"
           />
           <div className="max-h-36 overflow-y-auto">
             {items.length > 0 ? (
@@ -70,7 +70,7 @@ export default function RuleBindingPanel({
                         key={item.gid}
                         type="button"
                         onClick={() => onToggleItem(item.gid)}
-                        className={`px-2 py-1 text-xs rounded transition-colors ${
+                        className={`px-3 py-1 text-xs rounded transition-colors ${
                           selected
                             ? "bg-blue-100 text-blue-700 border border-blue-300"
                             : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
@@ -102,13 +102,13 @@ export default function RuleBindingPanel({
         icon="📁"
         badge={selectedGroupIds.length}
       >
-        <div className="p-2 space-y-2">
+        <div className="p-3 space-y-2">
           <input
             type="text"
             value={groupSearch}
             onChange={(e) => setGroupSearch(e.target.value)}
             placeholder="搜索商品组..."
-            className="w-full px-2.5 py-1 border border-gray-300 rounded-md text-xs"
+            className="w-full px-3 py-1 border border-gray-300 rounded-md text-xs"
           />
           <div className="max-h-36 overflow-y-auto">
             {groups.length > 0 ? (
@@ -121,7 +121,7 @@ export default function RuleBindingPanel({
                         key={group.groupId}
                         type="button"
                         onClick={() => onToggleGroup(group.groupId)}
-                        className={`px-2 py-1 text-xs rounded transition-colors ${
+                        className={`px-3 py-1 text-xs rounded transition-colors ${
                           selected
                             ? "bg-purple-100 text-purple-700 border border-purple-300"
                             : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"

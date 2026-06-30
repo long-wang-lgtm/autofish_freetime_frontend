@@ -159,7 +159,7 @@ export function ItemsTab({
             </div>
 
             {/* === 移动端卡片列表 === */}
-            <div className="flex-1 overflow-auto md:hidden px-1 pb-2 space-y-2.5" style={{ minHeight: "200px" }}>
+            <div className="flex-1 overflow-auto md:hidden px-1 pb-3 space-y-2.5" style={{ minHeight: "200px" }}>
               {data.map((item) => (
                 <MobileProductCard
                   key={item.gid}

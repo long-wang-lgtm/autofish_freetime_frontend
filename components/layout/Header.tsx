@@ -57,7 +57,7 @@ export default function Header({ children, onMenuClick }: HeaderProps) {
 
   return (
     <header className="h-9 lg:h-14 max-lg:[@media(max-height:500px)]:h-10 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
-      <div className="h-full px-3 lg:px-6 max-lg:[@media(max-height:500px)]:px-2 flex items-center justify-between">
+      <div className="h-full px-3 lg:px-6 max-lg:[@media(max-height:500px)]:px-3 flex items-center justify-between">
         {/* 移动端汉堡菜单 — 贴左边缘，高度跟随 header */}
         {onMenuClick && (
           <button
@@ -82,7 +82,7 @@ export default function Header({ children, onMenuClick }: HeaderProps) {
         </div>
 
         {/* 中间：可扩展区域 */}
-        <div className="flex-1 flex items-center justify-center px-2 lg:px-4 max-lg:[@media(max-height:500px)]:px-1.5">
+        <div className="flex-1 flex items-center justify-center px-3 lg:px-4 max-lg:[@media(max-height:500px)]:px-1.5">
           {children}
         </div>
 
@@ -104,7 +104,7 @@ export default function Header({ children, onMenuClick }: HeaderProps) {
         <div className="flex-shrink-0 relative" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-1.5 lg:gap-2 max-lg:[@media(max-height:500px)]:gap-1 px-1.5 py-1 lg:px-2 lg:py-1 max-lg:[@media(max-height:500px)]:px-1 max-lg:[@media(max-height:500px)]:py-0.5 rounded-lg hover:bg-gray-100 transition-colors max-lg:min-h-11 max-lg:[@media(max-height:500px)]:min-h-10"
+            className="flex items-center gap-1.5 lg:gap-2 max-lg:[@media(max-height:500px)]:gap-1 px-1.5 py-1 lg:px-3 lg:py-1 max-lg:[@media(max-height:500px)]:px-1 max-lg:[@media(max-height:500px)]:py-0.5 rounded-lg hover:bg-gray-100 transition-colors max-lg:min-h-11 max-lg:[@media(max-height:500px)]:min-h-10"
           >
             {/* 头像 */}
             <div className="w-6 h-6 lg:w-7 lg:h-7 max-lg:[@media(max-height:500px)]:w-5 max-lg:[@media(max-height:500px)]:h-5 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-xs max-lg:[@media(max-height:500px)]:text-xs font-medium text-white shadow-sm">
@@ -131,7 +131,7 @@ export default function Header({ children, onMenuClick }: HeaderProps) {
           {dropdownOpen && (
             <div className="absolute right-0 top-full mt-1 lg:mt-1.5 w-40 lg:w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 animate-in fade-in zoom-in-95 origin-top-right duration-150">
               {/* 用户信息区 */}
-              <div className="px-2.5 lg:px-3 py-2 lg:py-2 border-b border-gray-100">
+              <div className="px-3 lg:px-3 py-2 lg:py-2 border-b border-gray-100">
                 <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
                 <p className="text-xs text-gray-400 mt-0.5">
                   {isAdminRole(user?.role) ? '管理员' : '用户'}
@@ -141,7 +141,7 @@ export default function Header({ children, onMenuClick }: HeaderProps) {
               {/* 设置 */}
               <button
                 onClick={handleSettings}
-                className="w-full flex items-center gap-2 lg:gap-2.5 px-2.5 lg:px-3 py-1 lg:py-2 text-xs lg:text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors max-lg:min-h-[44px]"
+                className="w-full flex items-center gap-2 lg:gap-2.5 px-3 lg:px-3 py-1 lg:py-2 text-xs lg:text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors max-lg:min-h-[44px]"
               >
                 <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -154,7 +154,7 @@ export default function Header({ children, onMenuClick }: HeaderProps) {
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="w-full flex items-center gap-2 lg:gap-2.5 px-2.5 lg:px-3 py-1 lg:py-2 text-xs lg:text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 max-lg:min-h-[44px]"
+                className="w-full flex items-center gap-2 lg:gap-2.5 px-3 lg:px-3 py-1 lg:py-2 text-xs lg:text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 max-lg:min-h-[44px]"
               >
                 <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

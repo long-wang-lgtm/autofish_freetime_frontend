@@ -84,7 +84,7 @@ export function SidebarBase({
 
         {/* 底部 */}
         {footer && (
-          <div className="border-t border-gray-700 p-2 lg:p-3">{footer}</div>
+          <div className="border-t border-gray-700 p-3 lg:p-3">{footer}</div>
         )}
       </aside>
     </>
