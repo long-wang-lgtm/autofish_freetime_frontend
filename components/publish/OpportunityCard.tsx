@@ -34,10 +34,10 @@ export function OpportunityCard({ opportunity, isSelected, onClick, onDelete }: 
         <div className="flex-1 min-w-0">
           <div className="font-medium text-gray-900 truncate">{opportunity.name}</div>
           <div className="flex gap-1.5 mt-1.5 flex-wrap">
-            <span className={`text-xs px-1.5 py-0.5 rounded ${sourceBadge.color}`}>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${sourceBadge.color}`}>
               {sourceBadge.label}
             </span>
-            <span className={`text-xs px-1.5 py-0.5 rounded ${statusBadge.color}`}>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${statusBadge.color}`}>
               {statusBadge.label}
             </span>
           </div>

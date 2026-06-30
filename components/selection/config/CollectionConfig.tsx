@@ -12,7 +12,7 @@ export function CollectionConfig() {
             {['1次', '2次', '3次'].map((opt) => (
               <button
                 key={opt}
-                className="flex-1 px-3 py-2 text-sm rounded-md transition-colors bg-white shadow-sm text-blue-600 font-medium"
+                className="flex-1 px-3 py-2 text-sm rounded-lg transition-colors bg-white shadow-sm text-blue-600 font-medium"
               >
                 {opt}
               </button>
@@ -45,7 +45,7 @@ export function CollectionConfig() {
             {['30天', '60天', '90天'].map((opt) => (
               <button
                 key={opt}
-                className="flex-1 px-3 py-2 text-sm rounded-md transition-colors bg-white shadow-sm text-blue-600 font-medium"
+                className="flex-1 px-3 py-2 text-sm rounded-lg transition-colors bg-white shadow-sm text-blue-600 font-medium"
               >
                 {opt}
               </button>

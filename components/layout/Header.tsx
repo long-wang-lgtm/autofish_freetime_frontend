@@ -73,7 +73,7 @@ export function Header({ children, onMenuClick }: HeaderProps) {
 
         {/* 左侧：品牌标识 — 仅 PC 端 */}
         <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
-          <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
@@ -172,13 +172,13 @@ export function Header({ children, onMenuClick }: HeaderProps) {
             className="lg:hidden flex-shrink-0 ml-2"
             title="管理员面板"
           >
-            <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center">
               <span className="text-xs font-semibold text-white">逸</span>
             </div>
           </button>
         ) : (
           <div className="lg:hidden flex-shrink-0 ml-2">
-            <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center">
               <span className="text-xs font-semibold text-white">逸</span>
             </div>
           </div>

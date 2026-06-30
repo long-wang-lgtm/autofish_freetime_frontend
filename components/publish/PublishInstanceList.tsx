@@ -360,7 +360,7 @@ export function PublishInstanceList({
             type="checkbox"
             checked={selectedIds.size === items.length && items.length > 0}
             onChange={toggleSelectAll}
-            className="rounded"
+            className="rounded-lg"
           />
         </div>
         <div className="w-[280px] flex-shrink-0">封面</div>

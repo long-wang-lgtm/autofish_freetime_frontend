@@ -246,7 +246,7 @@ export function AIConfigTab({ isMobile }: AIConfigTabProps) {
                   <span className="text-sm font-semibold text-gray-900 leading-tight truncate flex-1 min-w-0">
                     {config.name}
                   </span>
-                  <span className={`px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0 ${
+                  <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
                     config.config_type === 'text' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
                   }`}>
                     {CONFIG_TYPE_LABELS[config.config_type]}
@@ -299,13 +299,13 @@ export function AIConfigTab({ isMobile }: AIConfigTabProps) {
                     <>
                       <button
                         onClick={() => openDrawer(config)}
-                        className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
+                        className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg"
                       >
                         编辑
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(config.id)}
-                        className="px-3 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                        className="px-3 py-1 text-xs text-red-600 hover:bg-red-50 rounded-lg"
                       >
                         删除
                       </button>

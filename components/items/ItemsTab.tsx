@@ -202,7 +202,7 @@ export function ItemsTab({
             <button
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
-              className={`text-sm px-3 py-1 rounded-md ${
+              className={`text-sm px-3 py-1 rounded-lg ${
                 page <= 1
                   ? "text-gray-300 cursor-not-allowed"
                   : "text-blue-600 hover:bg-blue-50 cursor-pointer"
@@ -216,7 +216,7 @@ export function ItemsTab({
             <button
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages}
-              className={`text-sm px-3 py-1 rounded-md ${
+              className={`text-sm px-3 py-1 rounded-lg ${
                 page >= totalPages
                   ? "text-gray-300 cursor-not-allowed"
                   : "text-blue-600 hover:bg-blue-50 cursor-pointer"

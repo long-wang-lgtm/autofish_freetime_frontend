@@ -28,7 +28,7 @@ export function Pagination({
       <button
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
-        className="px-3 py-1 text-sm rounded-md border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+        className="px-3 py-1 text-sm rounded-lg border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
       >
         上一页
       </button>
@@ -42,7 +42,7 @@ export function Pagination({
             key={p}
             onClick={() => onChange(p as number)}
             className={
-              'px-3 py-1 text-sm rounded-md border ' +
+              'px-3 py-1 text-sm rounded-lg border ' +
               (p === page
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'border-gray-200 hover:bg-gray-50')
@@ -55,7 +55,7 @@ export function Pagination({
       <button
         onClick={() => onChange(page + 1)}
         disabled={page >= totalPages}
-        className="px-3 py-1 text-sm rounded-md border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+        className="px-3 py-1 text-sm rounded-lg border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
       >
         下一页
       </button>

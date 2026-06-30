@@ -57,7 +57,7 @@ export function RuleBindingPanel({
             value={itemSearch}
             onChange={(e) => setItemSearch(e.target.value)}
             placeholder="搜索商品..."
-            className="w-full px-3 py-1 border border-gray-300 rounded-md text-xs"
+            className="w-full px-3 py-1 border border-gray-300 rounded-lg text-xs"
           />
           <div className="max-h-36 overflow-y-auto">
             {items.length > 0 ? (
@@ -70,7 +70,7 @@ export function RuleBindingPanel({
                         key={item.gid}
                         type="button"
                         onClick={() => onToggleItem(item.gid)}
-                        className={`px-3 py-1 text-xs rounded transition-colors ${
+                        className={`px-3 py-1 text-xs rounded-full transition-colors ${
                           selected
                             ? "bg-blue-100 text-blue-700 border border-blue-300"
                             : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
@@ -108,7 +108,7 @@ export function RuleBindingPanel({
             value={groupSearch}
             onChange={(e) => setGroupSearch(e.target.value)}
             placeholder="搜索商品组..."
-            className="w-full px-3 py-1 border border-gray-300 rounded-md text-xs"
+            className="w-full px-3 py-1 border border-gray-300 rounded-lg text-xs"
           />
           <div className="max-h-36 overflow-y-auto">
             {groups.length > 0 ? (
@@ -121,7 +121,7 @@ export function RuleBindingPanel({
                         key={group.groupId}
                         type="button"
                         onClick={() => onToggleGroup(group.groupId)}
-                        className={`px-3 py-1 text-xs rounded transition-colors ${
+                        className={`px-3 py-1 text-xs rounded-full transition-colors ${
                           selected
                             ? "bg-purple-100 text-purple-700 border border-purple-300"
                             : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"

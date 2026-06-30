@@ -44,7 +44,7 @@ export function QrCodeDisplay({
 
         {/* 失败/过期蒙版：刷新图标 + 消息 */}
         {overlayMsg && (
-          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-sm text-center rounded">
+          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-sm text-center rounded-lg">
             {canRetry && qrImage && (
               <svg
                 className="w-6 h-6 mb-1"
@@ -68,7 +68,7 @@ export function QrCodeDisplay({
         {!overlayMsg &&
           (scanStatus === "confirmed" || scanStatus === "success") &&
           qrImage && (
-            <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-sm rounded">
+            <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-sm rounded-lg">
               <LoadingSpinner size="sm" />
               <span className="mt-2">
                 {scanStatus === "success" ? "登录成功" : "登录中..."}

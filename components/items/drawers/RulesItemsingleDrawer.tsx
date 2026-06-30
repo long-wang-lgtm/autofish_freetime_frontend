@@ -121,7 +121,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
         </div>
         <button
           onClick={handleCreateNew}
-          className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+          className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
         >
           + 创建新规则
         </button>
@@ -142,7 +142,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span
-                      className={`px-1.5 py-0.5 text-xs rounded ${
+                      className={`px-1.5 py-0.5 text-xs rounded-full ${
                         rule.enabled
                           ? "bg-green-100 text-green-700"
                           : "bg-gray-100 text-gray-500"
@@ -164,14 +164,14 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
                 <div className="flex items-center gap-2 ml-4">
                   <button
                     onClick={() => handleEditRule(rule)}
-                    className="px-3 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                    className="px-3 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   >
                     编辑
                   </button>
                   <button
                     onClick={() => handleUnlinkRule(rule)}
                     disabled={loading}
-                    className="px-3 py-1 text-xs text-orange-600 hover:bg-orange-50 rounded-md transition-colors"
+                    className="px-3 py-1 text-xs text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
                   >
                     解除绑定
                   </button>

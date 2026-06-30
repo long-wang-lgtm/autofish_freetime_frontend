@@ -44,7 +44,7 @@ export function ErrorBanner({ message, variant, onRetry, onDismiss }: ErrorBanne
         {onDismiss && (
           <button
             onClick={onDismiss}
-            className="flex-shrink-0 p-1 rounded hover:bg-red-100 transition-colors"
+            className="flex-shrink-0 p-1 rounded-lg hover:bg-red-100 transition-colors"
             aria-label="关闭错误提示"
           >
             <svg className="w-4 h-4 text-gray-500 hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">

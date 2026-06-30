@@ -135,7 +135,7 @@ export function ProductFocusCard({
           )}
 
           {product.priority !== null && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
               ⚡{product.priority}
             </span>
           )}

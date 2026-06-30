@@ -70,12 +70,12 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
                 key={i}
                 src={img.url}
                 alt={`商品图${i + 1}`}
-                className="w-[56px] h-[56px] object-cover rounded-md border border-gray-100 hover:ring-2 hover:ring-blue-300 hover:scale-105 transition-all cursor-pointer"
+                className="w-[56px] h-[56px] object-cover rounded-lg border border-gray-100 hover:ring-2 hover:ring-blue-300 hover:scale-105 transition-all cursor-pointer"
               />
             ))}
           </div>
         ) : (
-          <div className="w-full h-[88px] bg-gray-50 rounded-md border border-dashed border-gray-200 flex items-center justify-center">
+          <div className="w-full h-[88px] bg-gray-50 rounded-lg border border-dashed border-gray-200 flex items-center justify-center">
             <span className="text-3xl text-gray-300">📷</span>
           </div>
         )}
@@ -88,13 +88,13 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
           <input
             value={form.name}
             onChange={e => updateField('name', e.target.value)}
-            className="flex-1 min-w-0 font-semibold text-sm text-gray-900 bg-transparent border border-transparent hover:border-gray-200 focus:border-blue-400 rounded px-1.5 py-0.5 focus:outline-none focus:bg-white"
+            className="flex-1 min-w-0 font-semibold text-sm text-gray-900 bg-transparent border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-lg px-1.5 py-0.5 focus:outline-none focus:bg-white"
             placeholder="商机名称"
           />
-          <span className={`px-1.5 py-0.5 rounded border text-sm flex-shrink-0 ${statusBadge.color}`}>
+          <span className={`px-1.5 py-0.5 rounded-full border text-sm flex-shrink-0 ${statusBadge.color}`}>
             {statusBadge.label}
           </span>
-          <span className={`px-1.5 py-0.5 rounded border text-sm flex-shrink-0 ${sourceBadge.color}`}>
+          <span className={`px-1.5 py-0.5 rounded-full border text-sm flex-shrink-0 ${sourceBadge.color}`}>
             {sourceBadge.label}
           </span>
           <span className="text-gray-400 flex-shrink-0 tabular-nums">{opportunity.item_count} 素材</span>
@@ -103,7 +103,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
         {/* 固定行：价格 + 商品组 */}
         <div className="flex items-center gap-4 mt-2 flex-shrink-0">
           <span className="text-gray-400 flex-shrink-0 text-sm uppercase tracking-wide">价格</span>
-          <div className="flex items-center bg-gray-50 rounded-md px-1.5 py-0.5 hover:bg-white hover:shadow-sm focus-within:bg-white focus-within:shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition-all">
+          <div className="flex items-center bg-gray-50 rounded-lg px-1.5 py-0.5 hover:bg-white hover:shadow-sm focus-within:bg-white focus-within:shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition-all">
             <span className="text-gray-400 text-sm">¥</span>
             <input
               type="number"
@@ -117,7 +117,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
           <input
             value={form.item_group_id}
             onChange={e => updateField('item_group_id', e.target.value)}
-            className="flex-1 min-w-0 bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-1.5 py-0.5 focus:outline-none text-gray-600 font-mono text-sm transition-all"
+            className="flex-1 min-w-0 bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-lg px-1.5 py-0.5 focus:outline-none text-gray-600 font-mono text-sm transition-all"
             placeholder="—"
           />
         </div>
@@ -128,13 +128,13 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
           <input
             value={form.tags}
             onChange={e => updateField('tags', e.target.value)}
-            className="flex-1 min-w-0 bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-1.5 py-0.5 focus:outline-none text-gray-600 transition-all"
+            className="flex-1 min-w-0 bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-lg px-1.5 py-0.5 focus:outline-none text-gray-600 transition-all"
             placeholder="逗号分隔"
           />
           {form.tags && (
             <div className="flex gap-1 flex-shrink-0">
               {form.tags.split(/[,，]/).filter(Boolean).map((tag, i) => (
-                <span key={i} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs border border-gray-200/50">
+                <span key={i} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs border border-gray-200/50">
                   {tag.trim()}
                 </span>
               ))}
@@ -162,7 +162,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
             <textarea
               value={form.source_description}
               onChange={e => updateField('source_description', e.target.value)}
-              className="w-full h-full bg-gray-50 hover:bg-white focus:bg-white border border-gray-100 hover:border-gray-200 focus:border-blue-400 rounded-md px-3 py-1 focus:outline-none text-gray-600 resize-none text-sm leading-relaxed transition-all"
+              className="w-full h-full bg-gray-50 hover:bg-white focus:bg-white border border-gray-100 hover:border-gray-200 focus:border-blue-400 rounded-lg px-3 py-1 focus:outline-none text-gray-600 resize-none text-sm leading-relaxed transition-all"
               placeholder="输入或粘贴来源描述..."
             />
           </div>

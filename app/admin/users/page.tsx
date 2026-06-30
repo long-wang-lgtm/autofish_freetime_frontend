@@ -296,7 +296,7 @@ export default function AdminUsersPage() {
                   onClick={() => openPanel(user)}
                   className="w-full text-left"
                 >
-                  <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-medium bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors">
+                  <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 transition-colors">
                     {user.proxyCount ?? 0}
                   </span>
                 </button>

@@ -60,7 +60,7 @@ export function MiniTrendChart({ hourlyData, slope, dailyAvg, cv, color }: MiniT
 
   return (
     <div
-      className="relative w-[90px] h-[32px] rounded overflow-hidden"
+      className="relative w-[90px] h-[32px] rounded-lg overflow-hidden"
       title={`日均 ${fmtDaily(dailyAvg)} · CV ${fmtCV(cv)}`}
     >
       {/* Layer 1: background gradient */}

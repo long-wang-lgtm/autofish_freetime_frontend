@@ -108,7 +108,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
                   value={product.priority}
                   onChange={(e) => handlePriorityChange(product.id, Number(e.target.value))}
                   onBlur={() => setEditingPriority(false)}
-                  className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer"
+                  className="text-xs px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer"
                   autoFocus
                 >
                   {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
@@ -118,7 +118,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
               ) : (
                 <button
                   onClick={() => setEditingPriority(true)}
-                  className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 cursor-text hover:bg-amber-100 transition-colors"
+                  className="text-xs px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 cursor-text hover:bg-amber-100 transition-colors"
                 >
                   ⚡优先级 {product.priority}
                 </button>
@@ -129,7 +129,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
             {product.monitorStatus !== 4 && (
               <button
                 onClick={() => handleStored(product.id)}
-                className="text-xs px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
+                className="text-xs px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
               >
                 + 入库
               </button>

@@ -57,13 +57,13 @@ export function ProxyItem({ proxy, variant, actionLabel, actionLoading, onAction
         </div>
         {/* 第二行：账号 + 类型 + 来源 */}
         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-          <span className={`text-xs px-1 py-px rounded font-medium ${
+          <span className={`text-xs px-1 py-px rounded-full-full font-medium ${
             proxy.direction ? "text-blue-600 bg-blue-50" : "text-purple-600 bg-purple-50"
           }`}>
             {proxy.direction ? "直连" : "代理"}
           </span>
           {sourceKey && (
-            <span className="text-xs text-gray-400 bg-gray-100 px-1 py-px rounded">
+            <span className="text-xs text-gray-400 bg-gray-100 px-1 py-px rounded-full">
               {SOURCE_LABELS[sourceKey] || sourceKey}
             </span>
           )}
@@ -74,7 +74,7 @@ export function ProxyItem({ proxy, variant, actionLabel, actionLoading, onAction
         <button
           onClick={onAction}
           disabled={actionLoading}
-          className={`ml-3 px-3 py-1 text-xs rounded disabled:opacity-50 shrink-0 ${
+          className={`ml-3 px-3 py-1 text-xs rounded-lg disabled:opacity-50 shrink-0 ${
             isBound
               ? "text-red-600 bg-white border border-red-200 hover:bg-red-50"
               : "bg-blue-600 text-white hover:bg-blue-700"

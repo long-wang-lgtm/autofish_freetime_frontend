@@ -103,13 +103,21 @@
 
 ## 十、圆角
 
-| 等级 | Token | 适用场景 |
-|------|-------|----------|
-| 面板级 | `rounded-xl` | 卡片、面板、模态框、弹出菜单 |
-| 控件级 | `rounded-lg` | 按钮、输入框、选择框、下拉项 |
-| 胶囊级 | `rounded-full` | Badge、Tag、Pill、开关 |
+圆角值应与元素尺寸成正比——大面板用小圆角看不出弧度，微型元素用大圆角会变形。
 
-**铁律**：禁止使用 `rounded-md`。
+| 等级 | Token | 实际值 | 适用场景 |
+|------|-------|--------|----------|
+| 无圆角 | `rounded-none` | 0px | 输入框组的中间段、拼接面板的接缝处 |
+| 微型 | `rounded-sm` | 2px | 高度 < 8px 的元素（表格内数据条、色条指示器） |
+| 控件级 | `rounded-lg` | 8px | 按钮、输入框、选择框、下拉项 |
+| 面板级 | `rounded-xl` | 12px | 卡片、面板、弹出菜单、中等模态框 |
+| 大面板 | `rounded-2xl` | 16px | ≥600px 宽的大型模态框、图片灯箱 |
+| 胶囊级 | `rounded-full` | 9999px | Badge、Tag、Pill、开关 |
+
+**铁律**：
+- 禁止使用 `rounded-md`（6px 夹在 rounded-sm 和 rounded-lg 之间，无独立存在价值）
+- 控件级及以上元素禁止使用 `rounded-sm`（2px 在小控件上近乎直角，无视觉意义）
+- 输入框组拼接时，中间元素必须显式设置 `rounded-none`，不得依赖 `rounded-lg` 被覆盖
 
 ## 十一、阴影
 
@@ -139,7 +147,10 @@
 - 数值列不使用 `tabular-nums`
 - 使用 `p-2`、`p-2.5`、`p-3.5`、`p-5` 等非标准内边距
 - 输入框与同级别按钮高度不一致
-- 使用 `rounded-md`
+- 使用 `rounded-md`（6px 无独立存在价值，控作用 `rounded-lg`，微元素用 `rounded-sm`）
+- 高度 < 8px 的元素使用 `rounded-lg`（圆角 > 元素高度，导致变形，应用 `rounded-sm`）
+- ≥600px 宽的大面板使用 `rounded-xl`（弧度不够明显，应用 `rounded-2xl`）
+- 输入框组拼接时中间元素不设 `rounded-none`（依赖样式覆盖顺序不可靠）
 - 卡片只使用 `shadow-sm` 无 `border`
 - Tab 页面顶级容器用 `space-y-5`（应用 `gap-5`）
 - 非 Tab 页面顶级容器用 `space-y-4`（应用 `space-y-5`）

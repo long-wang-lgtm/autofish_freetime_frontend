@@ -196,7 +196,7 @@ export function ReviewTemplateSheet({ open, onClose }: ReviewTemplateSheetProps)
                   <div
                     key={tpl.id || i}
                     onClick={() => selectTemplate(tpl)}
-                    className={`flex items-center px-3 py-2 rounded-md cursor-pointer transition-colors text-sm ${
+                    className={`flex items-center px-3 py-2 rounded-lg cursor-pointer transition-colors text-sm ${
                       isSelected
                         ? "bg-blue-50 border border-blue-200"
                         : "bg-gray-50 border border-gray-100 hover:bg-gray-100"

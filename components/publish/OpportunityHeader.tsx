@@ -105,14 +105,14 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
             onKeyDown={e => {
               if (e.key === 'Enter') setEditingName(false)
             }}
-            className="font-semibold text-sm text-gray-900 bg-white border border-blue-400 rounded px-1.5 py-0.5 focus:outline-none flex-shrink-0 w-auto max-w-[360px]"
+            className="font-semibold text-sm text-gray-900 bg-white border border-blue-400 rounded-lg px-1.5 py-0.5 focus:outline-none flex-shrink-0 w-auto max-w-[360px]"
             placeholder="商机名称"
             autoFocus
           />
         ) : (
           <span
             onClick={() => setEditingName(true)}
-            className="font-semibold text-sm text-gray-900 cursor-pointer hover:bg-gray-100 rounded px-1.5 py-0.5 truncate transition-colors flex-shrink-0 max-w-[240px]"
+            className="font-semibold text-sm text-gray-900 cursor-pointer hover:bg-gray-100 rounded-lg px-1.5 py-0.5 truncate transition-colors flex-shrink-0 max-w-[240px]"
             title="点击编辑名称"
           >
             {form.name || <span className="text-gray-300">商机名称</span>}
@@ -120,10 +120,10 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
         )}
 
         {/* 徽章 + 元信息 — 自然跟随名称，不推到最右 */}
-        <span className={`px-1.5 py-0.5 rounded border text-sm flex-shrink-0 ${statusBadge.color}`}>
+        <span className={`px-1.5 py-0.5 rounded-full border text-sm flex-shrink-0 ${statusBadge.color}`}>
           {statusBadge.label}
         </span>
-        <span className={`px-1.5 py-0.5 rounded border text-sm flex-shrink-0 ${sourceBadge.color}`}>
+        <span className={`px-1.5 py-0.5 rounded-full border text-sm flex-shrink-0 ${sourceBadge.color}`}>
           {sourceBadge.label}
         </span>
         <span className="text-xs text-gray-400 flex-shrink-0 tabular-nums">{opportunity.item_count} 素材</span>
@@ -144,12 +144,12 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
                     key={i}
                     src={img.url}
                     alt={`商品图${i + 1}`}
-                    className="w-[62px] h-[62px] object-cover rounded-md border border-gray-100 hover:ring-2 hover:ring-blue-300 hover:scale-105 transition-all cursor-pointer"
+                    className="w-[62px] h-[62px] object-cover rounded-lg border border-gray-100 hover:ring-2 hover:ring-blue-300 hover:scale-105 transition-all cursor-pointer"
                   />
                 ))}
               </div>
             ) : (
-              <div className="w-full h-[100px] bg-gray-50 rounded-md border border-dashed border-gray-200 flex items-center justify-center">
+              <div className="w-full h-[100px] bg-gray-50 rounded-lg border border-dashed border-gray-200 flex items-center justify-center">
                 <span className="text-3xl text-gray-300">📷</span>
               </div>
             )}
@@ -157,7 +157,7 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
             {/* 价格 */}
             <div className="flex flex-col gap-0.5">
               <span className="text-xs text-gray-400 uppercase tracking-wide">价格</span>
-              <div className="flex items-center bg-gray-50 rounded-md px-3 py-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
+              <div className="flex items-center bg-gray-50 rounded-lg px-3 py-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
                 <span className="text-gray-400 text-sm">¥</span>
                 <input
                   type="number"
@@ -175,7 +175,7 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
               <input
                 value={form.item_group_id}
                 onChange={e => updateField('item_group_id', e.target.value)}
-                className="w-full bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-3 py-1 focus:outline-none text-gray-600 font-mono text-sm transition-all"
+                className="w-full bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-lg px-3 py-1 focus:outline-none text-gray-600 font-mono text-sm transition-all"
                 placeholder="—"
               />
             </div>
@@ -187,7 +187,7 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
             <textarea
               value={form.source_description}
               onChange={e => updateField('source_description', e.target.value)}
-              className="flex-1 w-full bg-gray-50 hover:bg-white focus:bg-white border border-gray-100 hover:border-gray-200 focus:border-blue-400 rounded-md px-3 py-2 focus:outline-none text-gray-700 resize-none text-sm leading-relaxed transition-all min-h-[140px]"
+              className="flex-1 w-full bg-gray-50 hover:bg-white focus:bg-white border border-gray-100 hover:border-gray-200 focus:border-blue-400 rounded-lg px-3 py-2 focus:outline-none text-gray-700 resize-none text-sm leading-relaxed transition-all min-h-[140px]"
               placeholder="输入或粘贴来源描述（作为 AI 改写的核心参考）..."
             />
             {/* 保存状态 */}

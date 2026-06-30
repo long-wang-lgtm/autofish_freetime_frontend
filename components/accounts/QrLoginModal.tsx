@@ -96,7 +96,7 @@ export function QrLoginModal({
         <div className="p-4 border-t flex justify-end">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+            className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
           >
             取消
           </button>

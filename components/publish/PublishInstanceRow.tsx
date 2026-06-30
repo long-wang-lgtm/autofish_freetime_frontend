@@ -92,7 +92,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
           type="checkbox"
           checked={isChecked}
           onChange={() => onToggleSelect(item.id)}
-          className="rounded"
+          className="rounded-lg"
         />
       </div>
 
@@ -126,7 +126,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
                 src={imageDisplayUrl(img)}
                 alt=""
                 draggable={false}
-                className="w-14 h-14 object-cover rounded border border-gray-200 pointer-events-none"
+                className="w-14 h-14 object-cover rounded-lg border border-gray-200 pointer-events-none"
               />
               <button
                 onClick={e => {
@@ -144,7 +144,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
         {/* + 号上传入口（末尾） */}
         {(item.images || []).length < 8 ? (
           <label className={
-            'w-14 h-14 flex-shrink-0 flex items-center justify-center rounded border border-dashed cursor-pointer ' +
+            'w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-lg border border-dashed cursor-pointer ' +
             (isUploading
               ? 'border-blue-300 bg-blue-50 text-blue-400'
               : 'border-gray-300 text-gray-400 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-500')
@@ -231,7 +231,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
               }
             }
           }}
-          className="w-full p-1 border border-blue-400 rounded text-xs bg-white"
+          className="w-full p-1 border border-blue-400 rounded-lg text-xs bg-white"
           step="0.01"
         />
       </div>
@@ -252,7 +252,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
             e.stopPropagation()
             ensureFormInit()
           }}
-          className="w-full p-1 border border-blue-400 rounded text-xs bg-white cursor-pointer"
+          className="w-full p-1 border border-blue-400 rounded-lg text-xs bg-white cursor-pointer"
         >
           <option value="">未选择</option>
           {accounts.map(acc => (
@@ -276,7 +276,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
             e.stopPropagation()
             ensureFormInit()
           }}
-          className="w-full p-1 border border-blue-400 rounded text-xs bg-white cursor-pointer"
+          className="w-full p-1 border border-blue-400 rounded-lg text-xs bg-white cursor-pointer"
         >
           <option value="">未选择</option>
           {item.category && !channelCategories[item.id]?.some(c => c.channelCateName === item.category) && (

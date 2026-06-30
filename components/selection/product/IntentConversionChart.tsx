@@ -130,13 +130,13 @@ export function IntentConversionChart({ hourlyTrend: ht }: IntentConversionChart
         <span className="text-xs text-gray-700">买卖意愿图</span>
         <span className="flex gap-3 text-xs text-gray-700 flex-wrap mt-0.5">
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-0.5 bg-blue-600 inline-block rounded" />询单率
+            <span className="w-2 h-0.5 bg-blue-600 inline-block rounded-sm" />询单率
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-0.5 bg-violet-600 inline-block rounded" />收藏率
+            <span className="w-2 h-0.5 bg-violet-600 inline-block rounded-sm" />收藏率
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-0.5 bg-teal-600 inline-block rounded" />询藏比
+            <span className="w-2 h-0.5 bg-teal-600 inline-block rounded-sm" />询藏比
           </span>
         </span>
       </div>

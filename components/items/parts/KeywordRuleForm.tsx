@@ -162,11 +162,11 @@ export function KeywordRuleForm({
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-blue-700">匹配规则</span>
                 {/* 回复类型 pill 切换 */}
-                <div className="flex gap-0.5 bg-blue-100 rounded p-0.5">
+                <div className="flex gap-0.5 bg-blue-100 rounded-lg p-0.5">
                   <button
                     type="button"
                     onClick={() => setValue("reply_type", "custom", { shouldDirty: true })}
-                    className={`px-1.5 py-0.5 text-sm rounded transition-colors ${
+                    className={`px-1.5 py-0.5 text-sm rounded-lg transition-colors ${
                       replyType === "custom"
                         ? "bg-white text-blue-700 font-medium shadow-sm"
                         : "text-blue-500 hover:text-blue-700"
@@ -177,7 +177,7 @@ export function KeywordRuleForm({
                   <button
                     type="button"
                     onClick={() => setValue("reply_type", "predefined", { shouldDirty: true })}
-                    className={`px-1.5 py-0.5 text-sm rounded transition-colors ${
+                    className={`px-1.5 py-0.5 text-sm rounded-lg transition-colors ${
                       replyType === "predefined"
                         ? "bg-white text-blue-700 font-medium shadow-sm"
                         : "text-blue-500 hover:text-blue-700"
@@ -193,7 +193,7 @@ export function KeywordRuleForm({
                 <input
                   type="number"
                   {...register("priority", { valueAsNumber: true })}
-                  className="w-[42px] px-1.5 py-0.5 border border-gray-300 rounded text-xs text-center"
+                  className="w-[42px] px-1.5 py-0.5 border border-gray-300 rounded-lg text-xs text-center"
                 />
               </div>
             </div>
@@ -202,7 +202,7 @@ export function KeywordRuleForm({
             {replyType === "predefined" ? (
               <select
                 {...register("keyword")}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
               >
                 {PREDEFINED_KEYWORDS.map((kw) => (
                   <option key={kw.value} value={kw.value}>
@@ -216,7 +216,7 @@ export function KeywordRuleForm({
                   <label className="block text-sm text-gray-500 mb-1">关键词</label>
                   <input
                     {...register("keyword")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                     placeholder="例如: 多少钱 / 价格"
                   />
                 </div>
@@ -224,7 +224,7 @@ export function KeywordRuleForm({
                   <label className="block text-sm text-gray-500 mb-1">匹配方式</label>
                   <select
                     {...register("match_type")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                   >
                     <option value="exact">精确匹配</option>
                     <option value="fuzzy">模糊匹配</option>
@@ -306,7 +306,7 @@ export function KeywordRuleForm({
             type="button"
             onClick={handleDestructive}
             disabled={destructiveLoading || loading}
-            className="px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 rounded-md transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
           >
             {destructiveLoading ? "处理中..." : onDestructiveAction.label}
           </button>
@@ -314,14 +314,14 @@ export function KeywordRuleForm({
         <button
           type="button"
           onClick={handleCancel}
-          className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
         >
           取消
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50 flex items-center gap-2"
+          className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
         >
           {loading && <LoadingSpinner size="sm" />}
           {isEdit ? "保存" : "创建"}

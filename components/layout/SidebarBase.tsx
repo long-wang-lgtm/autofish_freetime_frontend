@@ -56,7 +56,7 @@ export function SidebarBase({
           )}
           <button
             onClick={onToggle}
-            className="p-1.5 rounded-md hover:bg-gray-700 transition-colors flex-shrink-0"
+            className="p-1.5 rounded-lg hover:bg-gray-700 transition-colors flex-shrink-0"
             aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
           >
             <svg

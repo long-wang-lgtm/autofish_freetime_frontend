@@ -314,7 +314,7 @@ export default function AdminPage() {
         <button
           onClick={() => { setTab('users'); setUserPage(1) }}
           className={
-            'px-4 py-1 text-sm font-medium rounded-md transition-colors ' +
+            'px-4 py-1 text-sm font-medium rounded-lg transition-colors ' +
             (tab === 'users'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-700')
@@ -325,7 +325,7 @@ export default function AdminPage() {
         <button
           onClick={() => { setTab('accounts'); setAccountPage(1) }}
           className={
-            'px-4 py-1 text-sm font-medium rounded-md transition-colors ' +
+            'px-4 py-1 text-sm font-medium rounded-lg transition-colors ' +
             (tab === 'accounts'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-700')

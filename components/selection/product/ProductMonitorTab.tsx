@@ -268,7 +268,7 @@ export function ProductMonitorTab() {
                     }}
                     onBlur={() => setEditingPriority(null)}
                     onClick={(e) => e.stopPropagation()}
-                    className="text-xs px-1 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer"
+                    className="text-xs px-1 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer"
                     autoFocus
                   >
                     {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
@@ -278,7 +278,7 @@ export function ProductMonitorTab() {
                 ) : (
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditingPriority(p.id) }}
-                    className="text-xs px-1 py-0.5 rounded bg-amber-50 text-amber-700 cursor-text hover:bg-amber-100 transition-colors"
+                    className="text-xs px-1 py-0.5 rounded-full bg-amber-50 text-amber-700 cursor-text hover:bg-amber-100 transition-colors"
                     title="点击编辑优先级"
                   >
                     ⚡{p.priority}
@@ -290,7 +290,7 @@ export function ProductMonitorTab() {
               {p.monitorStatus !== 4 && (
                 <button
                   onClick={(e) => { e.stopPropagation(); handleStored(p.id) }}
-                  className="text-xs px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
+                  className="text-xs px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
                   title="添加入库(商机库)"
                 >
                   +入库
@@ -422,14 +422,14 @@ export function ProductMonitorTab() {
               return (
                 <span
                   key={cat}
-                  className={`inline-flex items-center px-1 py-0.5 rounded text-[11px] font-medium leading-none ${d.bg} ${d.text}`}
+                  className={`inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium leading-none ${d.bg} ${d.text}`}
                 >
                   {d.label}
                 </span>
               )
             })}
             {overflow > 0 && (
-              <span className="text-[11px] text-gray-400 leading-none">+{overflow}</span>
+              <span className="text-xs text-gray-400 leading-none">+{overflow}</span>
             )}
           </div>
         )
@@ -537,7 +537,7 @@ export function ProductMonitorTab() {
                             transition-all duration-150
                             ${isIdentity ? 'justify-start sticky left-0 z-20 -ml-5 pl-5' : 'justify-center'}
                             ${isActive
-                              ? 'text-blue-700 bg-blue-50/60 rounded-md -mx-0.5 px-0.5'
+                              ? 'text-blue-700 bg-blue-50/60 rounded-lg -mx-0.5 px-0.5'
                               : isIdentity
                                 ? 'bg-gray-50 hover:text-gray-700'
                                 : 'hover:text-gray-700'
@@ -577,7 +577,7 @@ export function ProductMonitorTab() {
                       <div
                         key={p.id}
                         onClick={() => setSelectedProductId(prev => prev === p.id ? null : p.id)}
-                        className={`group grid px-4 py-[12px] items-center transition-all duration-200 cursor-pointer gap-x-2 ${
+                        className={`group grid px-4 py-3 items-center transition-all duration-200 cursor-pointer gap-x-2 ${
                           isSelected
                             ? 'bg-blue-50/60 hover:bg-blue-50/70'
                             : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent'
@@ -608,7 +608,7 @@ export function ProductMonitorTab() {
                         <div className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleRemove(p.id) }}
-                            className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                             title="删除"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

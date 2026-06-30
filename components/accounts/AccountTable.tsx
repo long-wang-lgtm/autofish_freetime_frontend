@@ -85,7 +85,7 @@ function ConfigModal({
             value={localValue}
             onChange={(e) => setLocalValue(e.target.value)}
             rows={15}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-y"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y"
             placeholder={fieldPlaceholders[field]}
           />
         </div>
@@ -93,13 +93,13 @@ function ConfigModal({
         <div className="flex justify-end gap-2 px-4 pb-4 border-t pt-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+            className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
           >
             取消
           </button>
           <button
             onClick={() => { onSave(localValue) }}
-            className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+            className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
           >
             保存
           </button>
@@ -276,7 +276,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
         <div className="col-span-1 flex items-center justify-center">
           <button
             onClick={() => handleToggle("auto_free")}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors ${
               account.auto_free ? "text-amber-500 bg-amber-50" : "text-gray-300 bg-gray-100"
             }`}
             title={account.auto_free ? "自动免拼：开" : "自动免拼：关"}
@@ -289,7 +289,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
         <div className="col-span-1 flex items-center justify-center">
           <button
             onClick={() => handleToggle("auto_delivery")}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors ${
               account.auto_delivery ? "text-green-500 bg-green-50" : "text-gray-300 bg-gray-100"
             }`}
             title={account.auto_delivery ? "自动发货：开" : "自动发货：关"}
@@ -302,7 +302,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
         <div className="col-span-1 flex items-center justify-center">
           <button
             onClick={() => handleToggle("auto_reply")}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors ${
               account.auto_reply ? "text-purple-500 bg-purple-50" : "text-gray-300 bg-gray-100"
             }`}
             title={account.auto_reply ? "自动回复：开" : "自动回复：关"}
@@ -315,7 +315,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
         <div className="col-span-1 flex items-center justify-center">
           <button
             onClick={() => handleToggle("ai_auto_reply")}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors ${
               account.ai_auto_reply ? "text-cyan-500 bg-cyan-50" : "text-gray-300 bg-gray-100"
             }`}
             title={account.ai_auto_reply ? "AI回复：开" : "AI回复：关"}
@@ -328,7 +328,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
         <div className="col-span-1 flex items-center justify-center">
           <button
             onClick={() => handleToggle("auto_positive_review")}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors ${
               account.auto_positive_review ? "text-pink-500 bg-pink-50" : "text-gray-300 bg-gray-100"
             }`}
             title={account.auto_positive_review ? "自动评价：开" : "自动评价：关"}
@@ -341,7 +341,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
         <div className="col-span-1 flex items-center justify-center">
           <button
             onClick={() => handleToggle("auto_notify")}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors ${
               account.auto_notify ? "text-amber-500 bg-amber-50" : "text-gray-300 bg-gray-100"
             }`}
             title={account.auto_notify ? "自动通知：开" : "自动通知：关"}
@@ -382,7 +382,7 @@ export function AccountRow({ account, index, onRelogin }: AccountRowProps) {
           <button
             onClick={() => onRelogin(account.uid)}
             disabled={loading === "relogin"}
-            className="p-1.5 rounded transition-colors text-gray-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+            className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50"
             title="重新登录"
           >
             {loading === "relogin" ? <LoadingSpinner size="sm" /> : <QrCode className="w-4 h-4" />}

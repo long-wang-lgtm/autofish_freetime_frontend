@@ -55,28 +55,28 @@ function ProxyCreatePanel({ open, onClose, onSuccess }: { open: boolean; onClose
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">代理IP地址 *</label>
-          <input type="text" value={form.server} onChange={e => setForm({ ...form, server: e.target.value })} placeholder="如: 127.0.0.1:8080" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+          <input type="text" value={form.server} onChange={e => setForm({ ...form, server: e.target.value })} placeholder="如: 127.0.0.1:8080" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">账号</label>
-            <input type="text" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} placeholder="代理账号" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+            <input type="text" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} placeholder="代理账号" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">密钥</label>
-            <input type="text" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="代理密钥" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+            <input type="text" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="代理密钥" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">来源</label>
-            <select value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <select value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
               {Object.entries(SOURCE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
-            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
               {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
@@ -84,7 +84,7 @@ function ProxyCreatePanel({ open, onClose, onSuccess }: { open: boolean; onClose
         <p className="text-xs text-gray-400">新增代理默认为代理模式（非直连），创建后不可更改。</p>
         <div className="flex justify-end gap-3 pt-4">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">取消</button>
-          <button type="submit" disabled={loading} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">{loading ? <LoadingSpinner size="sm" /> : "创建"}</button>
+          <button type="submit" disabled={loading} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? <LoadingSpinner size="sm" /> : "创建"}</button>
         </div>
       </form>
     </SlidePanel>
@@ -135,33 +135,33 @@ function ProxyEditPanel({ open, onClose, proxy, onSuccess }: { open: boolean; on
       <form onSubmit={handleSave} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">代理IP地址 *</label>
-          <input type="text" value={form.server} onChange={e => setForm({ ...form, server: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+          <input type="text" value={form.server} onChange={e => setForm({ ...form, server: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">账号</label>
-            <input type="text" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+            <input type="text" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">密钥</label>
-            <input type="text" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+            <input type="text" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">来源</label>
-          <select value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          <select value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
             {Object.entries(SOURCE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </div>
         <div className="text-xs text-gray-400">类型（{proxy.direction ? "直连" : "代理"}）不可修改。</div>
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <button type="button" onClick={handleDelete} disabled={deleting} className="flex items-center gap-1 px-3 py-2 text-sm text-red-600 bg-white border border-red-200 rounded hover:bg-red-50 disabled:opacity-50">
+          <button type="button" onClick={handleDelete} disabled={deleting} className="flex items-center gap-1 px-3 py-2 text-sm text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50">
             {deleting ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}删除代理
           </button>
           <div className="flex gap-2">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">取消</button>
-            <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">{saving ? <LoadingSpinner size="sm" /> : "保存"}</button>
+            <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? <LoadingSpinner size="sm" /> : "保存"}</button>
           </div>
         </div>
       </form>
@@ -203,7 +203,7 @@ function ProxyBindingsPanel({ open, onClose, proxyId }: { open: boolean; onClose
                 <span className={`px-1.5 py-0.5 text-xs font-medium rounded-full ${ACCOUNT_STATUS_COLORS[a.status ?? 0] || "text-gray-500 bg-gray-100"}`}>
                   {ACCOUNT_STATUS_LABELS[a.status ?? 0] || "未知"}
                 </span>
-                {a.isPro ? <span className="text-xs text-amber-600 bg-amber-50 px-1 py-0.5 rounded font-medium">Pro</span> : null}
+                {a.isPro ? <span className="text-xs text-amber-600 bg-amber-50 px-1 py-0.5 rounded-full font-medium">Pro</span> : null}
               </div>
             </div>
           ))}
@@ -279,12 +279,12 @@ export default function AdminProxyPage() {
       <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="搜索代理IP、账号、用户..." className="w-full pl-9 pr-8 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="搜索代理IP、账号、用户..." className="w-full pl-9 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
           {searchText && <button onClick={() => setSearchText("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>}
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">状态:</label>
-          <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }} className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }} className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">全部</option>
             {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
@@ -376,7 +376,7 @@ export default function AdminProxyPage() {
                 {/* 店铺 — 只显示数量，点击查看全部 */}
                 <div className="col-span-1 min-w-0">
                   <button onClick={(e) => { e.stopPropagation(); setBindingsProxyId(proxy.id); setShowBindings(true); }} className="w-full block py-0.5 text-left">
-                    <span className="inline-flex items-center min-w-[1.25rem] h-5 px-1.5 text-xs font-medium bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors">
+                    <span className="inline-flex items-center min-w-[1.25rem] h-5 px-1.5 text-xs font-medium bg-purple-50 text-purple-700 rounded-full hover:bg-purple-100 transition-colors">
                       {proxy.accountCount ?? 0}
                     </span>
                   </button>

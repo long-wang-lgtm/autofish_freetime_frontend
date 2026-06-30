@@ -81,7 +81,7 @@ export function RuleTable({
               <tr key={rule.rule_id} className={rule.enabled ? "" : "bg-gray-50"}>
                 <td className="px-4 py-3">
                   <span
-                    className={`px-3 py-1 text-xs rounded whitespace-nowrap ${
+                    className={`px-3 py-1 text-xs rounded-full whitespace-nowrap ${
                       rule.enabled
                         ? "bg-green-100 text-green-700"
                         : "bg-gray-100 text-gray-500"
@@ -141,7 +141,7 @@ export function RuleTable({
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(rule)}
-                      className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                      className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                     >
                       编辑
                     </button>
@@ -149,7 +149,7 @@ export function RuleTable({
                     <button
                       onClick={() => onToggleEnabled(rule)}
                       disabled={toggling === rule.rule_id}
-                      className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      className={`px-3 py-1 text-sm rounded-lg transition-colors ${
                         rule.enabled
                           ? "bg-orange-100 hover:bg-orange-200 text-orange-700"
                           : "bg-green-100 hover:bg-green-200 text-green-700"
@@ -167,7 +167,7 @@ export function RuleTable({
                     <button
                       onClick={() => onDelete(rule)}
                       disabled={deleting === rule.rule_id}
-                      className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                      className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                     >
                       {deleting === rule.rule_id ? (
                         <LoadingSpinner size="sm" />
@@ -191,7 +191,7 @@ export function RuleTable({
                             {rule.linked_item_list.map((item) => (
                               <span
                                 key={item.item_id}
-                                className="px-3 py-1 text-xs bg-white border border-gray-200 rounded"
+                                className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-lg"
                               >
                                 {item.title} (¥{item.price})
                               </span>
@@ -206,7 +206,7 @@ export function RuleTable({
                             {rule.linked_group_list.map((group) => (
                               <span
                                 key={group.group_id}
-                                className="px-3 py-1 text-xs bg-white border border-gray-200 rounded"
+                                className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-lg"
                               >
                                 {group.group_name}
                               </span>

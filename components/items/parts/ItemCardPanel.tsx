@@ -50,7 +50,7 @@ export function ItemCardPanel({ onInsert }: ItemCardPanelProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="搜索商品..."
-          className="w-full px-3 py-1 border border-gray-300 rounded-md text-xs"
+          className="w-full px-3 py-1 border border-gray-300 rounded-lg text-xs"
         />
         <div className="max-h-44 overflow-y-auto space-y-1">
           {isLoading ? (

@@ -22,7 +22,7 @@ export function ReportSubTabs({ activeSubTab, onSubTabChange }: ReportSubTabsPro
           <button
             key={tab.name}
             onClick={() => onSubTabChange(tab.name)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               activeSubTab === tab.name
                 ? 'bg-blue-50 text-blue-600'
                 : 'text-gray-400 hover:text-gray-600'

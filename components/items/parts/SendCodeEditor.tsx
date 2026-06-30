@@ -82,7 +82,7 @@ export function SendCodeEditor({
           onChange={(e) => setEditValue(e.target.value.replace(/\D/g, ""))}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
-          className="w-full text-center text-xs px-1 py-0.5 border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full text-center text-xs px-1 py-0.5 border border-blue-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
         />
       )
     }
@@ -99,7 +99,7 @@ export function SendCodeEditor({
           onChange={(e) => setEditValue(e.target.value.replace(/\D/g, ""))}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
-          className="w-16 text-center text-xs px-1.5 py-1 border border-blue-400 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-16 text-center text-xs px-1.5 py-1 border border-blue-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
         />
       </div>
     )

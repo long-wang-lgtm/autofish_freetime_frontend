@@ -24,7 +24,7 @@ export function ImageLightbox({ src, alt = '封面图', onClose }: ImageLightbox
         <img
           src={src}
           alt={alt}
-          className="max-w-full max-h-[80vh] object-contain rounded"
+          className="max-w-full max-h-[80vh] object-contain rounded-lg"
           onClick={e => e.stopPropagation()}
         />
         <button

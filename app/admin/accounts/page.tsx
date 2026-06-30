@@ -31,7 +31,7 @@ function ReadonlyToggle({
 }) {
   return (
     <div
-      className={`p-1.5 rounded ${enabled ? colorClass : "text-gray-300 bg-gray-100"}`}
+      className={`p-1.5 rounded-lg ${enabled ? colorClass : "text-gray-300 bg-gray-100"}`}
       title={`${label}：${enabled ? "开" : "关"}`}
     >
       <Icon className="w-4 h-4" />
@@ -166,13 +166,13 @@ function ProxySelectPanel({
                         <button
                           onClick={() => doBind(p.id!)}
                           disabled={bindingId === p.id}
-                          className="px-3 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+                          className="px-3 py-1 text-xs bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
                         >
                           {bindingId === p.id ? <LoadingSpinner size="sm" /> : "确认绑定"}
                         </button>
                         <button
                           onClick={() => setConfirmingId(null)}
-                          className="px-3 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                          className="px-3 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                         >
                           取消
                         </button>
@@ -420,7 +420,7 @@ export default function AdminAccountsPage() {
                   <button
                     onClick={() => handleToggleIm(uid)}
                     disabled={isToggling || !uid}
-                    className={`p-1.5 rounded transition-colors ${
+                    className={`p-1.5 rounded-lg transition-colors ${
                       isToggling
                         ? "text-gray-400 bg-gray-100 cursor-wait"
                         : imRunning
@@ -492,7 +492,7 @@ export default function AdminAccountsPage() {
                 {/* 自动通知（只读） */}
                 <div className="col-span-1 flex items-center justify-center">
                   <div
-                    className={`p-1.5 rounded ${
+                    className={`p-1.5 rounded-lg ${
                       account.auto_notify ? "text-amber-500 bg-amber-50" : "text-gray-300 bg-gray-100"
                     }`}
                     title={`自动通知：${account.auto_notify ? "开" : "关"}`}

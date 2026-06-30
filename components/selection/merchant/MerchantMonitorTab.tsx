@@ -88,7 +88,7 @@ export function MerchantMonitorTab() {
                     <td className="py-2 font-mono text-xs">{m.uid}</td>
                     <td className="py-2">{m.name || '-'}</td>
                     <td className="py-2 text-right">
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                         m.monitorStatus === 1 ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'
                       }`}>
                         {m.priority ?? '-'}

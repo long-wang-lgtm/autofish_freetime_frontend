@@ -103,13 +103,13 @@ export function TrafficActionChart({ hourlyTrend: ht }: TrafficActionChartProps)
         <span className="text-xs text-gray-700">流量转化匹配图</span>
         <span className="flex gap-3 text-xs text-gray-700 flex-wrap mt-0.5">
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-0.5 bg-amber-600 inline-block rounded" />浏览流量（左轴）
+            <span className="w-2 h-0.5 bg-amber-600 inline-block rounded-sm" />浏览流量（左轴）
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-0.5 bg-blue-600 inline-block rounded" />想要需求（右轴）
+            <span className="w-2 h-0.5 bg-blue-600 inline-block rounded-sm" />想要需求（右轴）
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-0.5 bg-violet-600 inline-block rounded" />收藏数（右轴）
+            <span className="w-2 h-0.5 bg-violet-600 inline-block rounded-sm" />收藏数（右轴）
           </span>
         </span>
       </div>

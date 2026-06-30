@@ -22,7 +22,7 @@ export function IconToggle({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
+      className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
         disabled
           ? "text-gray-300 bg-gray-50 cursor-not-allowed"
           : active

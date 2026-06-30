@@ -119,7 +119,7 @@ export function VerticalTimeline({
                   onClick={handleClick}
                   className={`flex items-center w-full text-left pr-3 py-1 gap-2 transition-all duration-150 ${
                     isSelected
-                      ? 'bg-blue-50 shadow-sm ring-1 ring-blue-100 rounded'  // 添加边框光环
+                      ? 'bg-blue-50 shadow-sm ring-1 ring-blue-100 rounded-lg'  // 添加边框光环
                       : 'hover:bg-gray-50'
                   }`}
                 >

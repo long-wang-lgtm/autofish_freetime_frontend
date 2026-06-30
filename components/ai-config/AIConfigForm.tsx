@@ -162,7 +162,7 @@ export function AIConfigForm({ initialData, onSubmit, isLoading }: AIConfigFormP
           id="isDefault"
           checked={isDefault}
           onChange={(e) => setIsDefault(e.target.checked)}
-          className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+          className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded-sm"
         />
         <label htmlFor="isDefault" className="text-sm text-gray-700 cursor-pointer">
           设为该用途的默认模型

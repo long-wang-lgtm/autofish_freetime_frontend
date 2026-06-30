@@ -126,7 +126,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
           <label className="block text-sm font-medium text-gray-700 mb-1">商品标题</label>
           <input
             {...register("title")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
             placeholder="商品标题"
           />
         </div>
@@ -134,7 +134,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
           <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
           <input
             {...register("remark")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
             placeholder="可选备注信息"
           />
         </div>
@@ -159,7 +159,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
               type="checkbox"
               {...register("auto_reply")}
               id="auto_reply_drawer"
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
             />
             <label htmlFor="auto_reply_drawer" className="text-sm text-gray-700">
               启用自动回复
@@ -170,7 +170,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
               type="checkbox"
               {...register("auto_ai_reply")}
               id="auto_ai_reply_drawer"
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
             />
             <label htmlFor="auto_ai_reply_drawer" className="text-sm text-gray-700">
               使用AI自动回复
@@ -181,7 +181,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
               type="checkbox"
               {...register("auto_delivery")}
               id="auto_delivery_drawer"
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
             />
             <label htmlFor="auto_delivery_drawer" className="text-sm text-gray-700">
               启用自动发货
@@ -256,7 +256,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
               <label className="block text-sm font-medium text-gray-700 mb-1">发货方式</label>
               <select
                 {...register("deliveryType")}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="无卡">无卡</option>
               </select>
@@ -301,7 +301,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
       <button
         type="button"
         onClick={onClose}
-        className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+        className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
       >
         取消
       </button>
@@ -309,7 +309,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
         type="button"
         onClick={handleSubmit(onSubmit)}
         disabled={loading}
-        className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50 flex items-center gap-2"
+        className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
       >
         {loading && <LoadingSpinner size="sm" />}
         保存

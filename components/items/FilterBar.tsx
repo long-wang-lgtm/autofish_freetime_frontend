@@ -61,7 +61,7 @@ function FilterBarDesktop({
             onChange={(e) =>
               onSearchChange((prev) => ({ ...prev, uid: e.target.value }))
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
           >
             <option value="">全部账号</option>
             {accounts.map((acc) => (
@@ -80,7 +80,7 @@ function FilterBarDesktop({
             onChange={(e) =>
               onSearchChange((prev) => ({ ...prev, gid: e.target.value }))
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             placeholder="输入商品ID"
           />
         </div>
@@ -93,7 +93,7 @@ function FilterBarDesktop({
             onChange={(e) =>
               onSearchChange((prev) => ({ ...prev, title: e.target.value }))
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             placeholder="输入商品标题"
           />
         </div>
@@ -105,7 +105,7 @@ function FilterBarDesktop({
             onChange={(e) =>
               onStatusChange(e.target.value ? Number(e.target.value) : undefined)
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
           >
             <option value="">全部</option>
             <option value="0">在售</option>
@@ -119,7 +119,7 @@ function FilterBarDesktop({
           onClick={onRefresh}
           disabled={!selectedUid || isRefreshing}
           title={!selectedUid ? "请先选择账号" : "从闲鱼刷新商品列表"}
-          className={`px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2 transition-colors ${
+          className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors ${
             !selectedUid || isRefreshing
               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700 text-white"
@@ -136,7 +136,7 @@ function FilterBarDesktop({
         <button
           type="button"
           onClick={onClear}
-          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md"
+          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg"
         >
           清空筛选
         </button>

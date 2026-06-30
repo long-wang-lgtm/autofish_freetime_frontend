@@ -35,7 +35,7 @@ function ConfigModal({
         <div className="flex justify-end p-3">
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -54,7 +54,7 @@ function ConfigModal({
             value={localValue}
             onChange={(e) => setLocalValue(e.target.value)}
             rows={8}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-y"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y"
             placeholder={field === "full_ai_reply_system_prompt"
               ? "定义全局身份与语言风格..."
               : "默认回复内容..."
@@ -66,13 +66,13 @@ function ConfigModal({
         <div className="flex justify-end gap-2 px-4 pb-4 pt-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+            className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
           >
             取消
           </button>
           <button
             onClick={() => onSave(localValue)}
-            className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+            className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
           >
             确认
           </button>
@@ -145,7 +145,7 @@ export function AccountCard({ account, onRelogin }: AccountCardProps) {
           <button
             onClick={handleStatusToggle}
             disabled={loading === "status"}
-            className={`px-1.5 py-0.5 rounded text-xs font-medium ${statusColors[account.status]} ${
+            className={`px-1.5 py-0.5 rounded-lg text-xs font-medium ${statusColors[account.status]} ${
               account.status === 3 ? "cursor-not-allowed" : "cursor-pointer"
             }`}
             title={account.status === 3 ? "异常状态无法自行切换" : "点击切换状态"}
@@ -210,7 +210,7 @@ export function AccountCard({ account, onRelogin }: AccountCardProps) {
               }
               setConfigField("full_default_reply_content")
             }}
-            className={`p-1.5 rounded transition-colors ${account.full_default_reply_content ? "text-blue-500 bg-blue-50" : "text-gray-300"}`}
+            className={`p-1.5 rounded-lg transition-colors ${account.full_default_reply_content ? "text-blue-500 bg-blue-50" : "text-gray-300"}`}
             title={account.auto_reply ? "默认回复" : "自动回复未开启，默认回复不会生效"}
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -219,7 +219,7 @@ export function AccountCard({ account, onRelogin }: AccountCardProps) {
           {/* 配置按钮 */}
           <button
             onClick={() => setConfigField("full_ai_reply_system_prompt")}
-            className={`p-1.5 rounded transition-colors ${account.full_ai_reply_system_prompt ? "text-blue-500 bg-blue-50" : "text-gray-300"}`}
+            className={`p-1.5 rounded-lg transition-colors ${account.full_ai_reply_system_prompt ? "text-blue-500 bg-blue-50" : "text-gray-300"}`}
             title="AI提示词"
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -230,7 +230,7 @@ export function AccountCard({ account, onRelogin }: AccountCardProps) {
           <button
             onClick={() => onRelogin(account.uid)}
             disabled={loading === "relogin"}
-            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50 ml-auto"
+            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg disabled:opacity-50 ml-auto"
             title="重新登录"
           >
             {loading === "relogin" ? <LoadingSpinner size="sm" /> : <QrCode className="w-4 h-4" />}
@@ -279,7 +279,7 @@ function ToggleIcon({
   return (
     <button
       onClick={onClick}
-      className={`p-1.5 rounded transition-colors ${colorMap[color]}`}
+      className={`p-1.5 rounded-lg transition-colors ${colorMap[color]}`}
       title={title}
     >
       {icon}
