@@ -59,7 +59,7 @@ function ConfigModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         <div className="p-4 border-b">
           <div className="flex items-start justify-between mb-3">
             <h3 className="font-semibold text-gray-900">{fieldLabels[field]}</h3>

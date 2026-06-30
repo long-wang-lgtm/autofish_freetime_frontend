@@ -105,7 +105,7 @@ export function ItemsTab({
           </div>
         )}
         {!isLoading && !error && data && data.length === 0 && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center m-4">
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center m-4">
             <h3 className="text-lg font-medium text-gray-900 mb-1">暂无商品</h3>
             <p className="text-sm text-gray-500">没有找到符合条件的商品</p>
           </div>

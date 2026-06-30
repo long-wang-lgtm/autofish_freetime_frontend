@@ -68,7 +68,7 @@ export function VerticalTimeline({
     <div className="h-full">
       <div className="relative h-full pl-2">
         {/* 多选状态指示器 - 常驻显示 */}
-        <div className="mb-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="mb-3 p-2 bg-gray-50 rounded-xl border border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>

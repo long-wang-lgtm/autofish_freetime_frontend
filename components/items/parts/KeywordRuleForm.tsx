@@ -157,7 +157,7 @@ export function KeywordRuleForm({
         {/* 左列 */}
         <div className="flex-1 min-w-0 space-y-3">
           {/* 🔑 匹配规则卡片 */}
-          <div className="bg-blue-50/50 border border-blue-200 rounded-lg p-3">
+          <div className="bg-blue-50/50 border border-blue-200 rounded-xl p-3">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-blue-700">匹配规则</span>
@@ -236,7 +236,7 @@ export function KeywordRuleForm({
           </div>
 
           {/* 💬 回复内容卡片 */}
-          <div className="bg-purple-50/50 border border-purple-200 rounded-lg p-3">
+          <div className="bg-purple-50/50 border border-purple-200 rounded-xl p-3">
             <label className="block text-xs font-semibold text-purple-700 mb-2">
               回复内容 <span className="text-red-500">*</span>
             </label>
@@ -265,7 +265,7 @@ export function KeywordRuleForm({
 
           {/* 关联商品信息 / 警告 */}
           {linkedItem && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-2.5">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-2.5">
               <div className="text-xs text-green-700">
                 <span className="font-medium">关联商品：</span>
                 {linkedItem.title || "无标题"}
@@ -274,7 +274,7 @@ export function KeywordRuleForm({
             </div>
           )}
           {bindingWarning && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5">
               <div className="text-xs text-amber-700">{bindingWarning}</div>
             </div>
           )}

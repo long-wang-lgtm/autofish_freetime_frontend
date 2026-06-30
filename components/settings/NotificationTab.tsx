@@ -184,7 +184,7 @@ export default function NotificationTab({
             {/* 复制 JSON 按钮 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">消息 JSON 模板</label>
-              <pre className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs text-gray-600 overflow-x-auto mb-3">{`{
+              <pre className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-600 overflow-x-auto mb-3">{`{
     "level": "",
     "title": "",
     "session": "",
@@ -216,7 +216,7 @@ export default function NotificationTab({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">消息 JSON 模板</label>
-                <pre className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs text-gray-600 overflow-x-auto mb-3">{`{
+                <pre className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-600 overflow-x-auto mb-3">{`{
     "level": "",
     "title": "",
     "session": "",

@@ -124,7 +124,7 @@ export function RulesTab({
         <>
           <div className="grid grid-cols-5 gap-3 p-4 border-b border-gray-100">
             {DESKTOP_STAT_CARDS.map(({ key, label, color, bg }) => (
-              <div key={key} className={`${bg} border border-gray-200 rounded-lg p-3`}>
+              <div key={key} className={`${bg} border border-gray-200 rounded-xl p-3`}>
                 <div className={`text-2xl font-semibold ${color}`}>{rulesStats[key]}</div>
                 <div className="text-xs text-gray-500">{label}</div>
               </div>

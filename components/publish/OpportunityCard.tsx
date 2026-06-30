@@ -23,7 +23,7 @@ export function OpportunityCard({ opportunity, isSelected, onClick, onDelete }: 
     <div
       onClick={onClick}
       className={`
-        p-3 rounded-lg border cursor-pointer transition-all
+        p-3 rounded-xl border cursor-pointer transition-all
         ${isSelected
           ? 'border-blue-400 bg-blue-50 shadow-sm'
           : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'

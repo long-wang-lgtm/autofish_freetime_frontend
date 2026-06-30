@@ -136,7 +136,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
           {linkedRulesData.rules.map((rule) => (
             <div
               key={rule.rule_id}
-              className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors"
+              className="border border-gray-200 rounded-xl p-3 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

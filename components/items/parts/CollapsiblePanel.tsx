@@ -30,7 +30,7 @@ export function CollapsiblePanel({
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
       {/* 标题栏 — 点击切换展开/收起 */}
       <button
         type="button"
