@@ -1,206 +1,293 @@
-# PC/移动端布局铁律
+# 布局设计规范
 
-> 参考实现：`frontend/app/dashboard/settings/page.tsx`（Tab 内外分层）、`frontend/app/dashboard/publish/page.tsx`（左右分栏+ResizableDivider）
+本文档定义页面布局的设计原则和开发约束。文档面向未来开发，不描述当前代码实现。
 
-## 一、PC 端布局铁律
+---
 
-### 1. 页面顶级容器统一
+## 一、设计原则
 
-所有 Tab 页面使用 `flex flex-col gap-5 h-full`，非 Tab 页面使用 `space-y-5`。
+### 原则 1：以内容任务定布局
 
-| 页面类型 | 顶级容器 | 示例 |
-|----------|----------|------|
-| Tab 页面（items / selection / publish） | `flex flex-col gap-5 h-full` | `frontend/app/dashboard/selection/page.tsx` |
-| 非 Tab 单页（settings / accounts） | `space-y-5` | `frontend/app/dashboard/settings/page.tsx` |
+不同页面的用户任务和信息密度不同，不应为视觉一致性强迫不同页面使用同一种布局模式。
 
-**正确示例**（selection/page.tsx）：
-```tsx
-<div className="flex flex-col gap-5 h-full">
-  <TabBar ... />
-  {activeTab === 'product' && <ProductMonitorTab />}
-</div>
+当内容任务与交互约定冲突时，**内容任务优先**。例如：某页面因数据密度极高需要定制空状态布局，可以突破统一的空状态模板——但需在代码中注释说明理由。
+
+### 原则 2：长优于宽
+
+移动端优先垂直滚动，避免水平滚动。桌面端宽数据表格在移动端必须降级——降级策略根据数据特征选择，不依赖横向滚动作为主要交互方式。
+
+### 原则 3：固定元素决策树
+
+一个元素是否固定在屏幕上，取决于一个判断：**用户在任何滚动深度是否都可能需要操作它？**
+
+- 是 → 固定（如 Tab 切换、筛选栏、刷新按钮）
+- 否 → 随内容滚动
+
+本项目的所有页面均为操作型工具页面，Header 始终常驻，不随滚动隐藏。
+
+### 原则 4：交互约定跨页面一致
+
+微观交互模式在所有页面中保持一致。以下为全局约定，除非有明确理由（见原则 1），不得偏离：
+
+- 视图切换：横向滚动胶囊条，选中态浅底深字
+- 状态指示：绿色 = 正常/启用，红色 = 异常/危险，灰色 = 禁用/未激活
+- 导航跳转：行右侧箭头表示点击进入子页面
+- 即时开关：Switch 组件点击后立即生效，无需二次确认
+- 危险操作：红色按钮，操作前弹出确认对话框
+- 空状态：图标 + 标题 + 描述 + 可选操作按钮
+- 加载状态：统一的加载指示器 + 固定高度容器（避免加载完成时的布局跳动）
+
+### 原则 5：横屏回退到桌面布局
+
+移动端设备处于横屏状态时（设备宽度 > 设备高度，如 812×375），视口拥有充足的横向空间。此时应回退到 PC 端布局，而非继续使用移动端的纵向堆叠结构。
+
+**判断标准**：当 `useIsMobile` 返回 true 但设备方向为 landscape 时，按 PC 端布局渲染。
+
+**铁律**：
+- 横屏状态下不展示 BottomSheet、汉堡菜单、FAB 等移动端专属控件
+- 横屏状态下的数据表格用桌面端多列布局，不做移动端卡片降级
+- `useIsMobile` 需扩展支持 orientation 参数：`useIsMobile({ respectOrientation: true })`，横屏时返回 false
+
+---
+
+## 二、PC 端布局规则
+
+### 页面结构
+
+所有页面采用统一的垂直三层结构（后两层为可选）：
+
+```
+第一层：Tab 栏（可选）
+第二层：筛选 / 工具栏（可选）
+第三层：内容区
 ```
 
-**反例**（items/page.tsx 当前写法）：
-```tsx
-<div className="flex flex-col min-h-0 h-full space-y-5">
-  {/* space-y-5 与 gap-5 不一致 */}
-</div>
+页面顶级容器使用 `gap-5`（20px）作为层间间距。当某层缺失时，余下层自动上移，不留空白。
+
+### Tab 栏
+
+Tab 栏位于内容卡片外部。Tab 标签文本为 `text-sm font-semibold`，激活态使用品牌色下划线和文字。Tab 栏标签本身充当内容区标题，下方不重复放置 `<h2>` 等标题元素。
+
+### 筛选 / 工具栏
+
+筛选栏和工具栏位于 Tab 栏下方、内容区上方，不放于内容卡片内部。内边距使用标准档（16px），与内容区的间距由页面顶级容器的 `gap-5` 提供。
+
+### 内容区
+
+内容区统一使用白色背景、灰色细边框（`gray-200`）、大圆角（`rounded-xl`）、浅阴影。内容区内部的分割线仅使用 `gray-100`。
+
+### 卡片内边距
+
+所有卡片和区块仅使用以下三档内边距：
+
+| 档位 | 值 | 使用场景 |
+|------|-----|----------|
+| 宽松 | 24px | 页面级主容器 |
+| 标准 | 16px | 区域卡片、筛选栏、工具栏 |
+| 紧凑 | 12px | 信息密度要求高的小区块 |
+
+禁止使用 8px、10px、14px、20px 等非标准值。
+
+### 间距
+
+元素间距不使用负 margin。如需减小间距，调整上方元素的 margin-bottom 或容器的 gap 值。
+
+### 表格列宽
+
+CSS Grid 表格的列宽使用显式的 `fr` 比例，根据每列内容的实际宽度需求分配。禁止 `repeat(N, 1fr)` 等宽列——不同列（如商品标题 vs 开关按钮）需要截然不同的空间。
+
+### 左右分栏
+
+左右分栏的页面支持拖拽调整分栏比例，宽度偏好持久化到本地存储。默认比例：列表侧 20%-35%，详情侧 65%-80%，按内容特征在此范围内选择。
+
+### 公共组件
+
+以下元素不得在页面中内联重复定义，必须提取为公共组件：
+- 分页控件
+- 空状态占位
+- 错误提示横幅
+- 加载状态指示
+
+---
+
+## 三、移动端布局规则
+
+### 通用结构
+
+移动端所有页面使用以下通用结构：
+
+```
+┌──────────────────────┐
+│  Header（固定 44dp）   │  左侧：汉堡菜单（触发侧边栏）
+│                      │  中间：页面名称
+│                      │  右侧：用户头像 / 品牌logo
+├──────────────────────┤
+│  Tab 栏 / 筛选栏      │  按页面类型决定，固定在 Header 下方
+├──────────────────────┤
+│  内容区（独立滚动）    │
+│                      │
+├──────────────────────┤
+│  底部操作栏（可选）    │  必须适配设备安全区
+└──────────────────────┘
 ```
 
-### 2. Header 区域统一位置
+Header 在所有页面中常驻固定。侧边栏从屏幕左侧滑入，汉堡菜单按钮位于 Header 左侧。
 
-TabBar + 筛选栏 + 排序栏统一放在页面顶级容器内、内容卡片外部。不允许在内容卡片内部嵌套过滤控件。
+### 三种移动端布局模式
 
-**正确**（selection/page.tsx）：TabBar 和设置按钮在页面顶级 flex row 中，内容卡片在下方。
+#### 模式 A：固定 Tab + 内容区
 
-**反例**：FilterBar 放到了 ItemsTab 内容卡片内部（`frontend/components/items/ItemsTab.tsx` 第 78 行），导致卡片圆角与内部控件视觉冲突。
+Header 下方固定一级 Tab 栏（48dp）。Tab 切换不同视图，内容区各自独立滚动。
 
-### 3. 禁止负 margin hack
+适用：需要通过顶层导航切换不同业务视图的页面。Tab 数量 2-4 个。
 
-严禁使用 `-mt-3`、`-ml-2` 等负 margin 来微调间距。如需减小间距，应调整上方元素的 margin-bottom 或容器 gap。
+#### 模式 B：固定筛选 + 内容区
 
-**反例**（items/page.tsx 第 49 行）：
-```tsx
-<p className="text-sm text-gray-500 -mt-3 hidden md:block">
-```
-应改为：将描述文字放入 TabBar 下方 gap 内，或使用 `mt-1` 正间距。
+Header 下方固定一层或多层筛选/操作栏，内容列表在下方独立滚动。筛选栏包含搜索、下拉筛选、排序胶囊、操作按钮等。
 
-### 4. 内容卡片统一外壳
+适用：需要在任何滚动位置都能快速筛选、搜索或切换排序的数据列表页。
 
-所有内容卡片使用统一的容器样式：
+筛选栏层数：最多三层。从 Header 向下依次为：一级 Tab（如有）→ 筛选栏 → 排序栏。移动端排序使用横向滚动的胶囊条。
 
-```tsx
-<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-```
+#### 模式 C：Push/Pop 导航栈
 
-不允许混用 `rounded-lg`（ItemsTab 第 78 行）或 `rounded-md`。
+列表页全屏展示，点击列表项 Push 进入详情/工作区全屏页面。工作区顶部为面包屑导航（返回箭头 + 当前项名称），支持从屏幕边缘滑动返回。
 
-### 5. 卡片内边距三档
+适用：Master-Detail 型页面——列表与详情/工作区是上下游流程关系，而非对等视图。
 
-| 档位 | 用法 | 示例位置 |
-|------|------|----------|
-| `p-6` | 页面级大卡片 | 设置页主卡片 |
-| `p-4` | 区域级中卡片 | FilterBar、工具栏 |
-| `p-3` | 紧凑级小卡片/表格行 | 表头行、筛选行 |
+### 模式组合
 
-禁止使用 `p-2`、`p-3.5`、`p-5`、`px-4 py-2`、`px-5 py-4` 等非标准值。
+模式 A 和模式 B 可以叠加：当页面既有顶层 Tab 切换又需要筛选/排序时，采用「Header → 固定 Tab 栏 → 固定筛选栏 → 固定排序栏 → 内容区」的结构。Tab 栏始终在筛选栏上方。
 
-### 6. 表格列宽：fr 显式比例，禁止 repeat(N, 1fr)
+模式 C 独立使用，不与 A/B 叠加。
 
-CSS Grid 表格列宽必须使用明确的 `fr` 比例，根据内容特征分配不同宽度。
+### 数据表格的移动端降级
 
-**正确**（ProductMonitorTab 第 81 行）：
-```tsx
-const GRID_COLS = '3fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 2fr 2fr 2fr 40px'
-```
+桌面端的多列表格在移动端必须降级，禁止仅靠横向滚动。根据数据特征选择降级策略：
 
-**反例**（ItemsTab 第 121 行）：
-```tsx
-style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}
-```
-13 列等宽导致"商品信息"列（col-span-2）与其他单列内容宽度比例失衡。
+| 策略 | 适用场景 | 做法 |
+|------|----------|------|
+| 卡片替换 | 每行数据可独立理解，不需要跨行对比 | 每条记录渲染为一张卡片，关键字段突出显示 |
+| 渐进式展开 | 行数据有明显的主次信息层级 | 卡片默认只展示主要字段，次要字段折叠在「展开」按钮后 |
+| 焦点卡片 | 字段极多（>10 列），不适合一次性展示 | 一次展示一条记录的完整信息，左右滑动切换记录 |
+| 精简列 | 列数少（≤5 列），用户确实需要列对比 | 冻结首列，其余列横向滚动，加滚动指示阴影 |
 
-### 7. 左右分栏必须支持拖拽
+移动端卡片展示的字段应覆盖桌面端表格的关键业务字段——即用户完成该页面核心任务所必需查看的字段。不应仅因为「移动端空间有限」而遗漏关键信息。
 
-所有左右分栏的页面必须使用 `ResizableDivider`（`frontend/components/publish/ResizableDivider.tsx`）支持拖拽调整宽度，并将宽度持久化到 localStorage。
+### 触摸与手势
 
-**参考实现**（publish/page.tsx）：商机库与发布工作区的左右分栏。
+所有可交互元素的触摸区域不小于 44×44dp。表格行内的小型控件在移动端需要增大或用替代交互方式（如长按菜单）。
 
-### 8. 分页组件收敛为公共组件
+侧边栏支持从左侧滑入、点击遮罩关闭。Push/Pop 导航支持从屏幕边缘右滑返回。
 
-分页组件不应在多个页面中重复定义。当前 admin 4 个页面（`admin/page.tsx`、`admin/users/page.tsx`、`admin/accounts/page.tsx`、`admin/proxy/page.tsx`）各自定义了相同的 `Pagination` 函数。
+### 安全区
 
-应提取为 `components/ui/pagination.tsx`，统一复用。
+所有固定在屏幕底部的元素（底部操作栏、BottomSheet）底边距预留设备安全区高度。
 
-### 9. 分割线只用 border-gray-100
+---
 
-卡片内部的 section 分割线统一使用 `border-gray-100`，不用 `border-gray-200` 或更重。
+## 四、视口缩放策略
 
-## 二、移动端布局铁律
+### 问题描述
 
-### 1. 所有数据表格必须有移动端卡片视图
+当前项目所有尺寸使用 Tailwind 固定像素值（`h-10` = 40px, `text-sm` = 14px, `p-4` = 16px）。这些值在中等及以上屏幕（≥ 375px 宽）表现良好，但在极端小屏（320px 宽的老旧设备）和横屏状态下存在问题：
 
-桌面端的 `<table>` / CSS Grid 表格在移动端必须有对应的卡片视图，不可仅靠横向滚动。
+- **小屏纵向**：固定像素值的间距和字号占比过大，一屏可展示的信息量严重不足
+- **横屏**：固定像素值的纵向元素（Header 44px + Tab 48px + 筛选栏）叠加后，可滚动内容区高度被挤压到不足 200px
+- **容器溢出**：部分组件的固定最小宽度（如搜索框 `min-w-[200px]`）在小屏上溢出
 
-**正确**（ItemsTab）：桌面端 `<ItemRow>` + 移动端 `<MobileProductCard>`（`frontend/components/items/views/MobileProductCard.tsx`）。
+### 缩放方案（Phase 3+ 实施）
 
-**反例**（ProductMonitorTab 第 489 行）：`min-w-[1400px]` 硬编码最小宽度，移动端完全不可用，无卡片降级方案。
-
-### 2. 移动端检测统一使用 useIsMobile()
-
-项目存在 3 种移动端检测实现：
-- `useIsMobile()` — `frontend/hooks/useIsMobile.ts`（CSS matchMedia，正确方式）
-- `useMediaQuery()` — `frontend/hooks/useMediaQuery.ts`（通用版，保留给特殊断点）
-- `window.innerWidth` — `frontend/app/dashboard/accounts/page.tsx` 第 27 行（**反模式**，有 hydration 不匹配风险）
-
-**铁律**：所有页面/组件的移动端判断统一使用 `useIsMobile()`。横屏手机宽度 ≥ 768px 自动走 PC 布局，不单独维护第 3 套横屏移动端布局。`useMediaQuery` 仅用于非移动端检测场景（如 `prefers-color-scheme`）。禁止直接读取 `window.innerWidth`。
-
-### 3. 触摸目标最小 44x44px
-
-所有可点击元素（按钮、链接、开关、菜单项）的最小触摸区域为 44x44px。Header.tsx 已正确实现（`max-lg:min-h-11`），其他组件应遵循。
-
-**反例**：ProductMonitorTab 中的状态 badge（`px-1.5 py-0.5 text-[9px]`）触摸区域远小于 44px。
-
-### 4. 弹窗/抽屉统一使用 Sheet/BottomSheet
-
-移动端所有弹窗和抽屉使用 `Sheet` 组件（`frontend/components/ui/Sheet.tsx`），该组件自动根据 `useIsMobile()` 切换为底部弹出（BottomSheet）。
-
-**参考**：`frontend/components/selection/product/ProductDiagnosticDrawer.tsx` 同时导入了 `Sheet` 和 `BottomSheet`。
-
-### 5. 侧边栏从左侧滑出，汉堡菜单在 Header 内
-
-**当前问题**（`frontend/components/layout/Sidebar.tsx`）：
-- 移动端侧边栏从**右侧**滑入（第 296 行：`fixed top-0 right-0`）
-- 用右下角 FAB 浮动按钮触发（第 332 行）
-- FAB 支持拖拽（不必要的复杂度）
-
-**应改为**：
-- 侧边栏从**左侧**滑入（`fixed top-0 left-0`）
-- 汉堡菜单按钮移入 Header 左侧
-- 删除 FAB 拖拽逻辑
-
-### 6. 底部固定元素必须加 safe-area-inset-bottom
-
-所有固定在页面底部的元素（底部导航栏、BottomSheet、操作栏）必须添加：
+保持 PC 端设计 Token 值不变。对小屏设备（< 375px 宽），通过 CSS 层面的等比缩放实现适配：
 
 ```css
-padding-bottom: env(safe-area-inset-bottom, 0px);
+/* 方案：基于视口宽度的等比缩放 */
+html {
+  /* 375px 为基准宽度，小于此值时等比缩小 */
+  --scale-ratio: clamp(0.85, calc(100vw / 375), 1);
+}
+
+/* 应用到全局——缩小所有间距和字号 */
+@media (max-width: 374px) {
+  body {
+    font-size: calc(1rem * var(--scale-ratio));
+    /* Tailwind 的 spacing/sizing 通过 CSS 变量间接缩放 */
+  }
+}
 ```
 
-### 7. 五页面移动端布局模式
+或者使用更简单的方案——viewport-based 最小字号：
 
-根据各页面内容特征，移动端采用不同布局模式（不强制统一为卡片）：
-
-| 页面 | 移动端模式 | 说明 |
-|------|-----------|------|
-| 账号管理 | 紧凑监控卡 | 高密度开关状态，参考 `AccountCard` |
-| 商品管理 | 自适应卡 + 渐进展开 | `MobileProductCard` 方向正确，继续完善 |
-| 商品发布 | Push/Pop 导航栈 | 替代当前的 `MobileTabView` 底部 Tab（`frontend/components/publish/MobileTabView.tsx`），改用顶部返回+推入导航 |
-| 选品监控 | 焦点卡片 + KPI 面板 + 横屏兜底 | 一行一个商品的焦点卡片，顶部 KPI 摘要，横屏时显示简化表格 |
-| 设置页 | iOS 风格分组卡片 | 参考 `settings/page.tsx`，各配置项分组卡片 |
-
-### 8. 移动端不使用自定义底部 Tab
-
-`frontend/components/publish/MobileTabView.tsx` 在移动端使用自定义底部 Tab 切换"商机库/创作发布"，与桌面端顶部的 `TabBar` 不一致。应改为 Push/Pop 导航（从商机列表点入 -> 推入创作发布页）。
-
-## 反模式
-
-- 页面顶级容器不用 `flex flex-col gap-5 h-full` 而用 `space-y-5` / `space-y-4`
-- 使用 `-mt-3`、`-ml-2` 等负 margin 微调间距
-- 内容卡片混用 `rounded-lg` / `rounded-md`
-- 表格列宽用 `repeat(N, 1fr)` 等宽列
-- 分页组件在多个页面中内联重复定义
-- 移动端检测直接读取 `window.innerWidth`
-- 触摸目标小于 44x44px
-- 数据表格移动端无卡片视图，仅靠横向滚动
-- 侧边栏从右侧滑出（应为左侧）
-- 使用 FAB 浮动按钮触发侧边栏（应移入 Header）
-- 底部固定元素未加 `safe-area-inset-bottom`
-
-## 验证命令
-
-```bash
-# 查找页面顶级容器不规范的用法
-rg 'space-y-4' app/dashboard/ --type tsx
-
-# 查找负 margin hack
-rg -- '-mt-' --type tsx
-rg -- '-ml-' --type tsx
-
-# 查找 rounded-md 使用（应为 rounded-lg 或 rounded-xl）
-rg 'rounded-md' --type tsx
-
-# 查找 等宽 repeat(N, 1fr) 表格列
-rg 'repeat\(.*1fr' --type tsx
-
-# 查找直接读取 window.innerWidth（应用 useIsMobile）
-rg 'window\.innerWidth' --type tsx
+```css
+html {
+  font-size: clamp(14px, 3.75vw, 16px);
+}
 ```
-- 移动端使用自定义底部 Tab 替代桌面端顶部 TabBar
 
-## 另见
+由于 Tailwind 使用 `rem` 单位，调整根字号即可等比缩放整个 UI。
 
-- [间距/圆角/阴影 Token](frontend-spacing.md) — 本规范引用的间距值和圆角标准
-- [组件设计规范](frontend-components.md) — 分页组件、表格组件的提取标准
-- [路由一览表](../docs/ROUTES.md) — 页面路由与布局的对应关系
+### 实施范围
+
+| 频段 | 宽度 | 缩放 | 影响 |
+|------|------|------|------|
+| PC 端 | ≥ 768px | 1:1（不变） | 无 |
+| 移动端标准 | 375px – 767px | 1:1（不变） | 当前设计的基准视口 |
+| 移动端小屏 | < 375px | 等比缩放至 0.85 | 输入框、按钮、间距、字号同步缩小 |
+| 移动端横屏 | 高度 < 500px | 回退 PC 布局（原则 5）+ 纵向紧凑模式 | 压缩 Header/Tab 高度，减少固定层 |
+
+### 实施难度评估
+
+| 改造项 | 难度 | 说明 |
+|--------|------|------|
+| 横屏回退 PC 布局 | **低** | 仅修改 `useIsMobile` 增加 orientation 判断，所有页面的 PC/移动端分支自动生效 |
+| 根字号等比缩放 | **中** | 修改 `globals.css` 的 `html { font-size }` 为 `clamp()`，需逐页检查 rem 依赖是否正确。大部分 Tailwind 类自动适配，但硬编码 px 值（如 inline style）需逐一修正 |
+| 横屏纵向紧凑 | **中** | Header 和 Tab 栏高度在横屏时需减半（44px → 32px, 48px → 36px），需修改对应组件的响应式 class |
+| 容器最小宽度清理 | **低** | 搜索框、筛选栏等有 `min-w-[Npx]` 的组件，改为 `min-w-0` 在小屏下允许收缩 |
+
+**总工作量估算**：2-3 天（含全页面回归测试）。
+
+### 铁律
+
+- 缩放仅改变尺寸，不改变布局结构 — 移动端的卡片/堆叠布局在小屏上仍然使用，只是元素等比缩小
+- 横屏时布局回退到 PC 端，但不回退字号 — PC 端 16px 基准字号在横屏手机上仍然合适
+- 触摸目标必须保持 ≥ 44px — 缩放后如果按钮高度 < 44px，需用 padding 扩展点击区域
+- 不依赖 CSS `transform: scale()` — 会导致模糊和布局偏移，使用 rem 缩放而非 transform
+
+---
+
+## 五、反模式
+
+以下做法在项目中禁止：
+
+**结构层面：**
+- 页面顶级间距使用非标准值
+- 使用负 margin 微调元素间距
+- 筛选栏放在内容卡片内部而非页面顶层
+- Tab 下方重复放置标题文字
+
+**视觉层面：**
+- 内容区混用不同圆角值
+- 卡片内边距使用三档之外的任意值
+- 分割线使用 gray-200 或更深的灰色
+- 表格列宽等宽分配
+
+**移动端层面：**
+- 数据表格仅靠横向滚动，不提供降级方案
+- 触摸目标小于 44×44dp
+- 侧边栏从右侧滑出
+- 用底部 Tab 切换上下游流程关系的页面（应用 Push/Pop 导航）
+- 底部固定元素未适配安全区
+
+---
+
+## 六、附录：当前项目模式使用
+
+本项目五个 dashboard 页面当前采用的移动端布局模式：
+
+| 页面 | PC 端 | 移动端模式 |
+|------|-------|-----------|
+| 账号管理 | 数据表格 | 模式 B（紧凑卡 + 固定操作栏） |
+| 商品管理 | Tab + 筛选 + 表格 | 模式 A+B 叠加（固定 Tab + 固定筛选排序 + 渐进式卡片） |
+| 商品发布 | 左右可拖拽分栏 | 模式 C（Push/Pop 导航栈） |
+| 选品监控 | 三 Tab 各自不同布局 | 模式 A（固定 Tab，各 Tab 内独立降级） |
+| 设置 | Tab + 分组卡片 | 模式 A（固定 Tab + 分组卡片列表） |

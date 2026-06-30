@@ -27,7 +27,7 @@
 | 发布模块 | 商机、素材、图片上传 |
 | 设置模块 | AI 配置、通知渠道等 |
 
-新建 API 时应归入已有模块或创建新模块，而非在现有文件中追加不相关的接口。公共工具函数应收敛到统一位置，供各模块复用。**`lib/utils/api.ts` 的 `fetchApi` 是项目中唯一的 HTTP 请求入口，所有 API 模块通过可选参数（`params`/`skipAuth`/`baseUrl`/`credentials_`）定制行为，禁止在模块中自行封装 fetch。**
+新建 API 时应归入已有模块或创建新模块，而非在现有文件中追加不相关的接口。公共工具函数应收敛到统一位置，供各模块复用。`lib/utils/api.ts` 的 `fetchApi` 是项目中唯一的 HTTP 请求入口，所有 API 模块通过可选参数（`params`/`skipAuth`/`baseUrl`/`credentials_`）定制行为，禁止在模块中自行封装 fetch。
 
 ## 类型定义规范
 

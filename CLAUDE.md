@@ -5,6 +5,7 @@
 ## 核心约束
 
 - 严禁使用动态路由
+- 做任何事情前，要牢记从“第一性原理”出发
 - 所有 API 请求的基础地址统一从环境变量读取，后接 `/api` 路径前缀
 
 ## 路径约定
@@ -54,15 +55,13 @@
 | `@.claude/rules/frontend-api.md` | API 接口设计规范 | 新建/修改 API 模块、定义 API 类型、添加 fetch 封装 |
 | `@.claude/rules/frontend-layout.md` | PC/移动端布局铁律 | 新建页面、修改页面布局、处理响应式适配 |
 | `@.claude/rules/frontend-colors.md` | 色彩语义体系 | 使用颜色（按钮/状态/文字/分割线）、修改主题色 |
-| `@.claude/rules/frontend-typography.md` | 字号/字重/行高规范 | 定义文字样式、Badge/Tag/Pill、表格文字 |
-| `@.claude/rules/frontend-spacing.md` | 间距/圆角/阴影 Token | 设置内边距/圆角/阴影、输入框/按钮尺寸 |
+| `@.claude/rules/frontend-design-tokens.md` | 字号/间距/圆角/阴影 Token | 设置文字样式/内边距/圆角/阴影、Badge/Tag/Pill、表格文字 |
 | `@.claude/rules/frontend-charts.md` | 图表配色+交互规范 | 新建/修改 ECharts 图表、tooltip、legend、dataZoom |
 | `@.claude/rules/frontend-format.md` | 数字/日期/价格格式化规范 | 格式化价格/百分比/数字/日期、ECharts 轴标签 |
 | `@.claude/rules/frontend-components.md` | 组件设计规范 | 新建/拆分组件、定义 Props、选择导出方式 |
 | `@.claude/rules/frontend-state.md` | 状态管理规范 | 使用 Zustand/React Query、拆分自定义 hook |
 | `@.claude/rules/frontend-error.md` | 错误处理规范 | 处理 API 错误、网络断开、ErrorBoundary、toast 通知 |
 | `@.claude/rules/frontend-form.md` | 表单处理规范 | 使用 react-hook-form + zod、表单校验、提交状态 |
-| `@.claude/rules/frontend-security.md` | 安全检查清单 | 处理 Token/密码/上传、安全响应头、依赖审计 |
 | `@.claude/rules/frontend-accessibility.md` | 无障碍最低要求 | 添加 aria-* 属性、键盘导航、焦点管理 |
 | `@.claude/rules/frontend-performance.md` | 性能检查清单 | 优化渲染/加载/打包、虚拟滚动、代码分割 |
 | `@.claude/docs/COMPONENTS.md` | 组件索引 | 查找已有组件、避免重复造轮子 |
@@ -70,6 +69,11 @@
 | `@.claude/docs/DATA_DICTIONARY.md` | 数据字典 | 理解业务术语（d7/DTO/snapshot/SSE）、缩写含义 |
 | `@.claude/docs/KNOWN_ISSUES.md` | 已知问题清单 | 了解技术债、选择修复目标 |
 | `@components/ui/` | UI 组件库 | 使用 TabBar/Sheet/LoadingSpinner 等通用组件 |
+| `@.claude/docs/FORM_PATTERNS.md` | 表单项目特定模式 | 实现 Switch 开关、422 错误映射、文件上传校验 |
+| `@.claude/docs/CHART_PATTERNS.md` | 图表项目特定模式 | 实现 ECharts 图表、tooltip 同步、click 下钻 |
+| `@.claude/docs/ERROR_PATTERNS.md` | 错误处理项目特定模式 | 实现 ErrorBoundary、401 拦截 |
+| `@.claude/docs/STATE_PATTERNS.md` | 状态管理项目特定模式 | 实现乐观更新、SSE 单例、虚拟滚动 |
+| `@.claude/docs/AUDIT_LOG.md` | 规范审计日志 | 了解各规范域的结构性违规和修复进度 |
 
 ## 如何新建页面
 
