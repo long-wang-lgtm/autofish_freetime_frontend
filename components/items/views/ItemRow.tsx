@@ -44,12 +44,12 @@ export function ItemRow({
         <div className="col-span-2 min-w-0">
           <button
             onClick={onEdit}
-            className="text-left hover:text-blue-600 hover:underline truncate block w-full"
+            className="text-left hover:text-blue-600 hover:underline truncate block w-full text-sm text-gray-800 leading-snug"
             title={item.title || "无标题"}
           >
             {item.title || "无标题"}
           </button>
-          <div className="flex items-center gap-1 mt-0.5 text-gray-400 truncate text-sm">
+          <div className="flex items-center gap-1 mt-0.5 text-gray-400 truncate text-xs">
             <span title={item.gid} className="min-w-[85px]">{item.gid}</span>
             <span className="text-gray-300">|</span>
             <span title={item.account.uid} className="truncate">{item.account.name}</span>
@@ -62,7 +62,7 @@ export function ItemRow({
         </div>
 
         {/* 发布时间 */}
-        <div className="col-span-1 text-center text-sm text-gray-500">
+        <div className="col-span-1 text-center text-xs text-gray-500">
           {formatPublishTime(item.publishTime)}
         </div>
 
