@@ -57,23 +57,23 @@
 
 ## 高（功能 / 体验缺陷）
 
-### #6 ProductMonitorTab 移动端完全不可用
+### #6 ProductMonitorTab 移动端完全不可用 ✅ 已修复 (Phase 3, 2026-06-30)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 高 |
-| **问题** | 商品监控表格设置了 `min-width: 1400px`，移动端屏幕完全无法正常显示，无卡片视图降级 |
-| **涉及文件** | `components/selection/product/ProductMonitorTab.tsx`（623 行） |
-| **建议修复** | 移动端提供卡片视图，或简化列数（只显示核心 3-4 列），参考 AccountCard/AccountRow 模式 |
+| **严重度** | —（已修复） |
+| **问题** | ~~商品监控表格设置了 `min-width: 1400px`，移动端屏幕完全无法正常显示，无卡片视图降级~~ |
+| **修复** | 创建 `ProductFocusCard` 组件（移动端焦点卡片），一次展示一条完整记录，左右箭头导航（44px 触控目标），页码指示器，CSS scroll-snap 滑动支持。通过 `useIsMobile()` 条件渲染切换桌面表格/移动卡片 |
+| **涉及文件** | `components/selection/product/ProductFocusCard.tsx`（新建，298 行）, `components/selection/product/ProductMonitorTab.tsx`
 
-### #7 账号页无 Tab 栏，与其他 4 个 dashboard 页面不统一
+### #7 账号页无 Tab 栏 ✅ 已修复 (Phase 3, 2026-06-30)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 高 |
-| **问题** | 其他 4 个 dashboard 页面（items/publish/selection/settings）都使用 `TabBar variant="overline"`，但 accounts 页面直接渲染内容，破坏了视觉一致性 |
-| **涉及文件** | `app/dashboard/accounts/page.tsx` — 无 TabBar |
-| **建议修复** | 为账号页添加 TabBar（如"账号列表"单 tab），或在设计上明确该页面不适合 tab 结构的原因 |
+| **严重度** | —（已修复） |
+| **问题** | ~~其他 4 个 dashboard 页面（items/publish/selection/settings）都使用 `TabBar variant="overline"`，但 accounts 页面直接渲染内容~~ |
+| **修复** | accounts 页已有 `TabBar variant="overline"`（单 tab "账号管理"），容器 `flex flex-col gap-5 h-full`，Tab 数组结构预留后续扩展（"评价模板"等） |
+| **涉及文件** | `app/dashboard/accounts/page.tsx`
 
 ### #8 ECharts tooltip 颜色与折线颜色错配
 
@@ -84,23 +84,23 @@
 | **涉及文件** | 选品模块中 ECharts 配置 |
 | **建议修复** | 按 chart-color-redesign 规范统一折线颜色和 tooltip 颜色 |
 
-### #9 桌面端商品管理页缺少统计总览
+### #9 桌面端商品管理页缺少统计总览 ✅ 已修复 (Phase 3, 2026-06-30)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 高 |
-| **问题** | 移动端商品管理页有统计卡片（在售/仓库/售出数量等），桌面端同等页面缺少这些统计信息 |
-| **涉及文件** | `components/items/ItemsTab.tsx` |
-| **建议修复** | 桌面端 ItemsTab 顶部增加统计概览行，与移动端保持一致 |
+| **严重度** | —（已修复） |
+| **问题** | ~~移动端商品管理页有统计卡片（在售/仓库/售出数量等），桌面端同等页面缺少这些统计信息~~ |
+| **修复** | 桌面端 ItemsTab 顶部增加统计概览行，4 个卡片横排（在售数量/仓库数量/售出数量/自动发货配置数），`rounded-xl border border-gray-200 shadow-sm p-4`。数据源复用 `useItemsData` hook 的 `stats` 对象 |
+| **涉及文件** | `components/items/ItemsTab.tsx`, `hooks/useItemsData.ts`, `components/items/FilterBar.tsx`
 
-### #10 选品页异常检测结果在列表层不可见
+### #10 选品页异常检测结果在列表层不可见 ✅ 已修复 (Phase 3, 2026-06-30)
 
 | 属性 | 值 |
 |------|-----|
-| **严重度** | 高 |
-| **问题** | 商品监控页的异常检测结果（升温信号、价格异常等）被锁在详情抽屉中，用户在列表视图无法看到异常标记 |
-| **涉及文件** | `components/selection/product/ProductMonitorTab.tsx` |
-| **建议修复** | 在列表行中添加异常徽章或颜色标记，或提供异常筛选开关 |
+| **严重度** | —（已修复） |
+| **问题** | ~~商品监控页的异常检测结果（升温信号、价格异常等）被锁在详情抽屉中，用户在列表视图无法看到异常标记~~ |
+| **修复** | 表格新增"异常"列，显示徽章（升温信号 amber/价格异常 red/库存异常），每行最多 2 个 + "+N" 溢出。筛选栏添加异常过滤开关（胶囊 pill），默认关闭。`columnDefs.ts` 扩展 `ColumnDef` 接口支持 `unsortable` 属性 |
+| **涉及文件** | `components/selection/product/ProductMonitorTab.tsx`, `components/selection/product/columnDefs.ts`, `components/selection/product/constants.ts`
 
 ### #11 发布页 4 步流水线进度展示不直观
 

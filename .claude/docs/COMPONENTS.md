@@ -25,6 +25,12 @@
 | `useChart` | `ui/echart/useChart.ts` | ECharts 实例生命周期管理 hook | `options`, `theme?` |
 | `ImStatusChart` | `ui/echart/ImStatusChart.tsx` | IM 状态实时折线图（消费 SSE 数据） | `snapshots` |
 | `AccountPieChart` | `ui/echart/AccountPieChart.tsx` | 账号分布环形饼图 | `data` |
+| `EmptyState` | `ui/EmptyState.tsx` | 统一空状态展示，替代所有内联空状态 | `icon?`, `title`, `description?`, `action?`, `size?` |
+| `ErrorBanner` | `ui/ErrorBanner.tsx` | 统一错误提示横幅，banner/inline 变体 | `message`, `variant`, `onRetry?`, `onDismiss?` |
+| `ConfirmDialog` | `ui/ConfirmDialog.tsx` | 统一确认弹窗，替代 window.confirm | `open`, `onOpenChange`, `title`, `description`, `onConfirm`, `variant?` |
+| `StatusBadge` | `ui/StatusBadge.tsx` | 统一状态标签，配置驱动色映射 | `status`, `config`, `size?` |
+| `ErrorBoundary` | `ui/error-boundary.tsx` | React 渲染异常捕获（Class Component） | `children` |
+| `Pagination` | `ui/pagination.tsx` | 统一分页控件 | `current`, `total`, `pageSize`, `onChange` |
 
 ## 认证组件 (`components/auth/`)
 
@@ -97,7 +103,8 @@
 ### 商品监控 (`selection/product/`)
 | 组件 | 文件 | 用途 |
 |------|------|------|
-| `ProductMonitorTab` | `selection/product/ProductMonitorTab.tsx` | 商品监控主 Tab（623行，需拆分） |
+| `ProductMonitorTab` | `selection/product/ProductMonitorTab.tsx` | 商品监控主 Tab（桌面表格+移动焦点卡片切换） |
+| `ProductFocusCard` | `selection/product/ProductFocusCard.tsx` | 移动端焦点卡片，单条商品全字段展示，左右滑动切换 |
 | `ProductDiagnosticDrawer` | `selection/product/ProductDiagnosticDrawer.tsx` | 商品诊断抽屉（含异常检测+图表） |
 | `MiniTrendChart` | `selection/product/MiniTrendChart.tsx` | 迷你趋势图（SVG 90x32px） |
 | `TrendChart` | `selection/product/TrendChart.tsx` | 趋势图表（ECharts） |

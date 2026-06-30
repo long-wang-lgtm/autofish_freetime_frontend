@@ -122,12 +122,38 @@
 - ✅ 创建 lib/utils/format.ts 统一 8 个格式化函数
 - ✅ 创建 components/selection/product/constants.ts 统一 STATUS_MAP（修复 key 3→4 bug）
 
-### Phase 3: 统一设计
-**完成标准**：页面顶级容器统一、圆角统一为 rounded-xl、92 处任意值字号已替换、accounts 页有 Tab 栏
-- 执行 PC/移动端布局铁律 → 详见 KNOWN_ISSUES #6-#7, #9-#10
-- 创建统一组件（EmptyState, ErrorBanner, SearchToolbar 等）
-- ProductMonitorTab 移动端焦点卡片视图
-- accounts 页面加 Tab 栏
+### Phase 3: 统一设计 ✅ 已完成 (2026-06-30)
+**完成标准**：页面顶级容器统一、圆角统一为 rounded-xl、任意值字号已清零、accounts 页有 Tab 栏、4 个地基共享组件已创建
+
+**Step 1 — 地基组件**：
+- ✅ 创建 `EmptyState` — 统一空状态展示，sm/md 尺寸，替代 22+ 处内联实现
+- ✅ 创建 `ErrorBanner` — 统一错误提示，banner/inline 变体，替代 8+ 处内联实现
+- ✅ 创建 `ConfirmDialog` — 统一确认弹窗，异步替代 window.confirm，焦点管理+loading
+- ✅ 创建 `StatusBadge` — 统一状态标签，配置驱动色映射（green/red/amber/gray），替代 10+ 处内联实现
+
+**Step 2 — 结构统一**：
+- ✅ 页面顶级容器：3 页已合规（flex flex-col gap-5 h-full / space-y-5）
+- ✅ 圆角统一：16 处卡片容器 rounded-lg→rounded-xl
+- ✅ 分割线：card-internal 已全部使用 border-gray-100
+
+**Step 3 — Token 批量替换**（51 文件）：
+- ✅ 非标准 padding 标准化：p-2→p-3、py-2.5→py-2、p-5→p-4、py-8→py-6 等
+- ✅ font-bold→font-semibold：已验证清零
+- ✅ text-[Npx]→标准字号 Token：已验证清零
+- ✅ 硬编码颜色验证：0 Tailwind 任意色值，toaster.tsx 加规范注释
+
+**Step 4 — 导出规范**（25 文件）：
+- ✅ 14 个组件文件 default export→命名导出（export function）
+- ✅ 15 处 import 同步更新
+
+**Step 5 — 内容修复**：
+- ✅ #7 accounts 页 TabBar 合规验证（已有 overline TabBar + 可扩展结构）
+- ✅ #9 桌面端商品管理统计概览（4 卡片：在售/仓库/售出/自动发货）
+- ✅ #10 选品列表层异常标记（异常徽章列 + 筛选开关）
+- ✅ #6 ProductMonitorTab 移动端焦点卡片（ProductFocusCard 组件，44px 触控目标，scroll-snap）
+
+**规范文档修复**：
+- ✅ frontend-design-tokens.md：信息 Badge 蓝→灰、按钮删除 py-2.5 特例、反模式加 p-2.5
 
 ### Phase 4: 性能优化
 **完成标准**：8 个 ECharts 文件按需导入、关键列表组件有 React.memo、非首屏组件有 next/dynamic
