@@ -66,14 +66,9 @@ export interface ItemUpdate {
 
 /** 后端 SORTABLE_FIELDS 映射 */
 export const ITEM_SORT_FIELDS = [
-  { key: "gid",          label: "商品ID" },
   { key: "title",        label: "标题" },
   { key: "price",        label: "价格" },
-  { key: "lookCount",    label: "浏览" },
-  { key: "wantCount",    label: "想要" },
-  { key: "collectCount", label: "收藏" },
   { key: "publishTime",  label: "发布时间" },
-  { key: "deliveryType", label: "发货方式" },
 ] as const
 
 // ——— 搜索芯片 ———

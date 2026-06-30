@@ -81,6 +81,15 @@ function ItemsPageContent() {
             handleToggle(item, field as "auto_reply" | "auto_delivery" | "auto_ai_reply" | "auto_restock")
           }
           updateMutation={updateMutation}
+          orderBy={filterState.orderBy}
+          asc={filterState.asc}
+          onSortChange={(field) => onFilterChange((prev) => {
+            if (prev.orderBy === field) {
+              if (prev.asc === false) return { ...prev, asc: true, page: 1 }
+              return { ...prev, orderBy: null, asc: false, page: 1 }
+            }
+            return { ...prev, orderBy: field, asc: false, page: 1 }
+          })}
         />
       )}
 

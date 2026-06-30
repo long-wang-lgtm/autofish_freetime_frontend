@@ -27,6 +27,9 @@ interface ItemsTabProps {
   onRetry: () => void
   onToggle: (item: Item, field: string) => void
   updateMutation: { mutate: (args: { gid: string; data: Record<string, unknown> }) => void }
+  orderBy: string | null
+  asc: boolean
+  onSortChange: (field: string) => void
 }
 
 export function ItemsTab({
@@ -43,6 +46,9 @@ export function ItemsTab({
   onRetry,
   onToggle,
   updateMutation,
+  orderBy,
+  asc,
+  onSortChange,
 }: ItemsTabProps) {
   // — 抽屉状态（内部管理）—
   const [editingItem, setEditingItem] = useState<Item | null>(null)
@@ -88,27 +94,21 @@ export function ItemsTab({
           <div ref={listRef} className="flex-1 overflow-auto hidden md:block min-h-[200px]">
             {/* 表头 */}
             <div
-              className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-100 text-xs font-medium text-gray-600"
+              className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-100 text-xs font-medium"
               style={{ gridTemplateColumns: ITEMS_GRID_COLS }}
             >
-              <div className="col-span-2">
-                <span>商品信息</span>
-              </div>
-              <div className="col-span-1 text-right">
-                <span>价格</span>
-              </div>
-              <div className="col-span-1 text-center">
-                <span>发布时间</span>
-              </div>
-              <div className="col-span-1 text-center">AI回复</div>
-              <div className="col-span-1 text-center">自动发货</div>
-              <div className="col-span-1 text-center">付款后发货</div>
-              <div className="col-span-1 text-center">收货后赠送</div>
-              <div className="col-span-1 text-center">评价后赠送</div>
-              <div className="col-span-1 text-center">关键词回复</div>
-              <div className="col-span-1 text-center">AI提示词</div>
-              <div className="col-span-1 text-center">自动上架</div>
-              <div className="col-span-1 text-center">指令码</div>
+              <SortHeader className="col-span-2" field="title" label="商品信息" orderBy={orderBy} asc={asc} onClick={onSortChange} />
+              <SortHeader className="col-span-1 text-right" field="price" label="价格" orderBy={orderBy} asc={asc} onClick={onSortChange} />
+              <SortHeader className="col-span-1 text-center" field="publishTime" label="发布时间" orderBy={orderBy} asc={asc} onClick={onSortChange} />
+              <div className="col-span-1 text-center text-gray-600">AI回复</div>
+              <div className="col-span-1 text-center text-gray-600">自动发货</div>
+              <div className="col-span-1 text-center text-gray-600">付款后发货</div>
+              <div className="col-span-1 text-center text-gray-600">收货后赠送</div>
+              <div className="col-span-1 text-center text-gray-600">评价后赠送</div>
+              <div className="col-span-1 text-center text-gray-600">关键词回复</div>
+              <div className="col-span-1 text-center text-gray-600">AI提示词</div>
+              <div className="col-span-1 text-center text-gray-600">自动上架</div>
+              <div className="col-span-1 text-center text-gray-600">指令码</div>
             </div>
 
             {/* 内容区域 */}
@@ -189,5 +189,38 @@ export function ItemsTab({
         />
       )}
     </div>
+  )
+}
+
+/** 可排序表头单元格 */
+function SortHeader({
+  className,
+  field,
+  label,
+  orderBy,
+  asc,
+  onClick,
+}: {
+  className: string
+  field: string
+  label: string
+  orderBy: string | null
+  asc: boolean
+  onClick: (field: string) => void
+}) {
+  const isActive = orderBy === field
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(field)}
+      className={`${className} inline-flex items-center justify-center gap-0.5 hover:text-blue-600 transition-colors ${
+        isActive ? 'text-blue-600' : 'text-gray-600'
+      }`}
+    >
+      <span>{label}</span>
+      <span className="text-xs leading-none">
+        {isActive ? (asc ? '↑' : '↓') : '↕'}
+      </span>
+    </button>
   )
 }
