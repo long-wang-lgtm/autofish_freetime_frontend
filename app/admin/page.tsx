@@ -296,12 +296,12 @@ export default function AdminPage() {
           {/* 用户注册趋势 */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">用户注册趋势（近30天）</h3>
-            <div ref={trendRef} className="w-full" style={{ height: 260 }} />
+            <div ref={trendRef} className="w-full h-64" />
           </div>
           {/* 账号注册趋势 */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">店铺注册趋势（近30天）</h3>
-            <div ref={accountTrendRef} className="w-full" style={{ height: 260 }} />
+            <div ref={accountTrendRef} className="w-full h-64" />
           </div>
         </div>
       </div>

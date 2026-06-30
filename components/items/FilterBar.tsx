@@ -54,7 +54,7 @@ function FilterBarDesktop({
     <div className="p-4 border-b border-gray-100">
       <div className="flex items-end gap-3 flex-wrap">
         {/* 账号下拉框 */}
-        <div className="flex-1 min-w-[150px]">
+        <div className="flex-1 min-w-0">
           <label className="block text-xs text-gray-500 mb-1">账号</label>
           <select
             value={searchInput.uid}
@@ -72,7 +72,7 @@ function FilterBarDesktop({
           </select>
         </div>
         {/* 商品ID */}
-        <div className="flex-1 min-w-[150px]">
+        <div className="flex-1 min-w-0">
           <label className="block text-xs text-gray-500 mb-1">商品ID</label>
           <input
             type="text"
@@ -85,7 +85,7 @@ function FilterBarDesktop({
           />
         </div>
         {/* 商品标题 */}
-        <div className="flex-1 min-w-[150px]">
+        <div className="flex-1 min-w-0">
           <label className="block text-xs text-gray-500 mb-1">商品标题</label>
           <input
             type="text"

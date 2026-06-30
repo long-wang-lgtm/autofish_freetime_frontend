@@ -134,7 +134,7 @@ export function ItemsTab({
         {!isLoading && !error && data && data.length > 0 && (
           <>
             {/* === 桌面端表格 === */}
-            <div ref={listRef} className="flex-1 overflow-auto hidden md:block" style={{ minHeight: "200px" }}>
+            <div ref={listRef} className="flex-1 overflow-auto hidden md:block min-h-[200px]">
               {/* 表头 */}
               <div
                 className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-100 text-xs font-medium text-gray-600"
@@ -179,7 +179,7 @@ export function ItemsTab({
             </div>
 
             {/* === 移动端卡片列表 === */}
-            <div className="flex-1 overflow-auto md:hidden px-1 pb-3 space-y-2.5" style={{ minHeight: "200px" }}>
+            <div className="flex-1 overflow-auto md:hidden px-1 pb-3 space-y-2.5 min-h-[200px]">
               {data.map((item) => (
                 <MobileProductCard
                   key={item.gid}

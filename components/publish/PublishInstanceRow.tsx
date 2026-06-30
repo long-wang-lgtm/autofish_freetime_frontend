@@ -175,30 +175,14 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
 
       {/* 改写内容 — 只读，点击行在抽屉编辑 */}
       <div className="flex-1 min-w-[160px] flex items-center">
-        <div
-          className="w-full text-gray-700 leading-tight"
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
+        <div className="w-full text-gray-700 leading-tight line-clamp-3">
           {item.description || <span className="text-gray-300">（空）</span>}
         </div>
       </div>
 
       {/* 封面规划 — 只读，点击行在抽屉编辑 */}
       <div className="flex-1 min-w-[200px] flex items-center">
-        <div
-          className="w-full text-gray-400 leading-tight"
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
+        <div className="w-full text-gray-400 leading-tight line-clamp-3">
           {item.cover_plan_prompt || <span className="text-gray-300">（空）</span>}
         </div>
       </div>

@@ -111,7 +111,7 @@ export function AccountPieChart({
   return (
     <div className={cardClass}>
       <h3 className="text-sm font-semibold text-gray-700 mb-3">店铺归属分布</h3>
-      <div ref={chartRef} className="w-full min-h-[200px]" style={{ aspectRatio: '1 / 1' }} />
+      <div ref={chartRef} className="w-full min-h-[200px] aspect-square" />
     </div>
   )
 }
