@@ -24,7 +24,7 @@ export function Pagination({
   }
 
   return (
-    <div className="flex items-center justify-center gap-1 mt-4">
+    <div className="flex items-center justify-end gap-1 px-4 py-3 border-t border-gray-100">
       <button
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
