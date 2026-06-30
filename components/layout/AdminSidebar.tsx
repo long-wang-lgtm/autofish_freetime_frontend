@@ -56,7 +56,7 @@ interface AdminSidebarProps {
   onMobileClose: () => void
 }
 
-export default function AdminSidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: AdminSidebarProps) {
+export function AdminSidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: AdminSidebarProps) {
   const pathname = usePathname()
 
   const isActive = (path: string) => {

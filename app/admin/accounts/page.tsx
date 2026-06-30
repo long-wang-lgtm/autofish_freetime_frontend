@@ -9,8 +9,8 @@ import {
   Bot, Truck, Zap, Star, Sparkles, Bell, BellOff, Play, Square, Link2,
 } from "lucide-react"
 import { ProxyItem } from "@/components/ui/proxy-item"
-import ImStatusChart from "@/components/ui/echart/ImStatusChart"
-import AccountPieChart from "@/components/ui/echart/AccountPieChart"
+import { ImStatusChart } from "@/components/ui/echart/ImStatusChart"
+import { AccountPieChart } from "@/components/ui/echart/AccountPieChart"
 import type { AccountByUserItem } from "@/lib/api/admin"
 
 const PAGE_SIZE = 20

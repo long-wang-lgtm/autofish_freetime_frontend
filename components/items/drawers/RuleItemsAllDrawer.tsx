@@ -18,7 +18,7 @@ import { useToast } from "@/components/ui/toaster"
 import { Sheet, BottomSheet } from "@/components/ui/Sheet"
 import { useIsMobile } from "@/hooks/useIsMobile"
 import { KeywordRuleForm, type RuleFormData } from "../parts/KeywordRuleForm"
-import RuleBindingPanel from "../parts/RuleBindingPanel"
+import { RuleBindingPanel } from "../parts/RuleBindingPanel"
 
 interface RuleDrawerProps {
   rule?: KeywordRule
@@ -27,7 +27,7 @@ interface RuleDrawerProps {
   onSuccess: () => void
 }
 
-export default function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawerProps) {
+export function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawerProps) {
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
   const { addToast } = useToast()

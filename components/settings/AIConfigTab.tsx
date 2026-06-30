@@ -34,7 +34,7 @@ interface AIConfigTabProps {
   isMobile: boolean
 }
 
-export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
+export function AIConfigTab({ isMobile }: AIConfigTabProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
 

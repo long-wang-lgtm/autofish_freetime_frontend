@@ -13,7 +13,7 @@ interface HeaderProps {
   onMenuClick?: () => void
 }
 
-export default function Header({ children, onMenuClick }: HeaderProps) {
+export function Header({ children, onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth()
   const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)

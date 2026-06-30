@@ -83,7 +83,7 @@ function buildChartFrame(snapshots: ImStatusSnapshot[]): ChartFrame | null {
 }
 
 // ===== 组件 =====
-export default function ImStatusChart({
+export function ImStatusChart({
   className,
 }: {
   className?: string

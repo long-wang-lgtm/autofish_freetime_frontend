@@ -17,7 +17,7 @@ interface ItemsTabProps {
   accountsData: AccountName[] | undefined
   searchInput: { uid: string; title: string; gid: string }
   filters: { status?: number; uid?: string }
-  stats: { total: number; onSale: number; offSale: number; sold: number }
+  stats: { total: number; onSale: number; offSale: number; sold: number; deliveryConfigured: number }
   orderBy: string | null
   asc: boolean
   page: number
@@ -76,6 +76,26 @@ export function ItemsTab({
 
   return (
     <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        {/* 桌面端统计概览 */}
+        <div className="hidden md:grid grid-cols-4 gap-4 p-4 border-b border-gray-100">
+          <div className="rounded-xl border border-gray-200 shadow-sm p-4">
+            <p className="text-xs text-gray-500">在售数量</p>
+            <p className="text-lg font-semibold text-gray-900 tabular-nums">{stats.onSale}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 shadow-sm p-4">
+            <p className="text-xs text-gray-500">仓库数量</p>
+            <p className="text-lg font-semibold text-gray-900 tabular-nums">{stats.offSale}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 shadow-sm p-4">
+            <p className="text-xs text-gray-500">售出数量</p>
+            <p className="text-lg font-semibold text-gray-900 tabular-nums">{stats.sold}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 shadow-sm p-4">
+            <p className="text-xs text-gray-500">自动发货</p>
+            <p className="text-lg font-semibold text-gray-900 tabular-nums">{stats.deliveryConfigured}</p>
+          </div>
+        </div>
+
         {/* 筛选栏 — 桌面端与移动端统一位置 */}
         <FilterBar
           accounts={accountsData || []}

@@ -80,7 +80,7 @@ function isChildOfPath(pathname: string, parentPath: string): boolean {
   return pathname === parentPath || pathname.startsWith(parentPath + '/')
 }
 
-export default function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: SidebarProps) {
+export function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: SidebarProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const pathname = usePathname()
 

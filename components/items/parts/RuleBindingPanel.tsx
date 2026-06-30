@@ -14,7 +14,7 @@ export interface RuleBindingPanelProps {
   onToggleGroup: (id: string) => void
 }
 
-export default function RuleBindingPanel({
+export function RuleBindingPanel({
   items,
   groups,
   selectedItemIds,

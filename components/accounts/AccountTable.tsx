@@ -6,7 +6,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useToast } from "@/components/ui/toaster"
 import { Bot, Truck, QrCode, Zap, Star, Sparkles, Bell, BellOff, AlertCircle } from "lucide-react"
-import ReviewTemplateSheet from "@/components/accounts/ReviewTemplateSheet"
+import { ReviewTemplateSheet } from "@/components/accounts/ReviewTemplateSheet"
 
 type ConfigField = "full_ai_reply_system_prompt" | "full_default_reply_content"
 

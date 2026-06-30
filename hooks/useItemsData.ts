@@ -62,6 +62,7 @@ export function useItemsData({ filters, page, pageSize, orderBy, asc }: UseItems
     onSale: statsData?.status[0] || 0,
     offSale: statsData?.status[-2] || 0,
     sold: statsData?.status[1] || 0,
+    deliveryConfigured: Math.max(0, totalItems - (statsData?.deliveryEmpty || 0)),
   }), [statsData, totalItems])
 
   return {

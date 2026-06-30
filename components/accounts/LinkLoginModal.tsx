@@ -18,7 +18,7 @@ async function deleteLinkLogin(token: string): Promise<void> {
   await fetchApi(`/api/login/link/${encodeURIComponent(token)}`, { method: 'DELETE' })
 }
 
-export default function LinkLoginModal({ open, onClose, onSuccess }: LinkLoginModalProps) {
+export function LinkLoginModal({ open, onClose, onSuccess }: LinkLoginModalProps) {
   const [link, setLink] = useState<string | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)

@@ -35,7 +35,7 @@ interface AIConfigFormProps {
   isLoading?: boolean
 }
 
-export default function AIConfigForm({ initialData, onSubmit, isLoading }: AIConfigFormProps) {
+export function AIConfigForm({ initialData, onSubmit, isLoading }: AIConfigFormProps) {
   const router = useRouter()
   const [name, setName] = useState(initialData?.name || '')
   const [provider, setProvider] = useState<Provider>(initialData?.provider || 'deepseek')

@@ -2,8 +2,8 @@
 
 import { useState, Suspense } from 'react'
 import { NotificationConfig } from '@/lib/api/notification'
-import NotificationTab from '@/components/settings/NotificationTab'
-import AIConfigTab from '@/components/settings/AIConfigTab'
+import { NotificationTab } from '@/components/settings/NotificationTab'
+import { AIConfigTab } from '@/components/settings/AIConfigTab'
 import { TabBar } from '@/components/ui/Tab'
 import { useTabRouting } from '@/hooks/useTabRouting'
 import { useIsMobile } from '@/hooks/useIsMobile'

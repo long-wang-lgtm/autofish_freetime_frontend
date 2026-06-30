@@ -12,7 +12,7 @@ interface QrLoginModalProps {
   uid?: string
 }
 
-export default function QrLoginModal({
+export function QrLoginModal({
   open,
   onClose,
   onSuccess,

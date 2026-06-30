@@ -39,7 +39,7 @@ function formatDate(isoString: string): string {
   })
 }
 
-export default function LinkManagement({ open, onClose }: LinkManagementProps) {
+export function LinkManagement({ open, onClose }: LinkManagementProps) {
   const queryClient = useQueryClient()
   const { addToast } = useToast()
   const [copiedToken, setCopiedToken] = useState<string | null>(null)

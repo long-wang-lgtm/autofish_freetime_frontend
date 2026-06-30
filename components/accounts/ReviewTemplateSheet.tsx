@@ -28,7 +28,7 @@ const DEFAULT_TEMPLATE: ReviewTemplate = {
   review_type: "seller",
 }
 
-export default function ReviewTemplateSheet({ open, onClose }: ReviewTemplateSheetProps) {
+export function ReviewTemplateSheet({ open, onClose }: ReviewTemplateSheetProps) {
   const queryClient = useQueryClient()
   const { addToast } = useToast()
 

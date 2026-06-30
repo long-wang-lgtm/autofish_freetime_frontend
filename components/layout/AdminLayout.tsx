@@ -6,7 +6,7 @@ import { redirect, useRouter } from 'next/navigation'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { toast } from 'sonner'
-import AdminSidebar from '@/components/layout/AdminSidebar'
+import { AdminSidebar } from '@/components/layout/AdminSidebar'
 import { isAdminRole } from '@/lib/constants/admin'
 
 interface AdminLayoutProps {

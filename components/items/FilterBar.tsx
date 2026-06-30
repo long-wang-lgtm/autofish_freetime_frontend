@@ -19,7 +19,7 @@ interface FilterBarProps {
   onClear: () => void
   isRefreshing: boolean
   selectedUid?: string
-  stats: { total: number; onSale: number; offSale: number; sold: number }
+  stats: { total: number; onSale: number; offSale: number; sold: number; deliveryConfigured: number }
   orderBy: string | null
   asc: boolean
   onSortChange: (fieldKey: string) => void

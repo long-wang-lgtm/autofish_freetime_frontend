@@ -13,7 +13,7 @@ const USER_PALETTE = [
 const OTHER_COLOR = '#cccccc'
 
 // ===== 组件 =====
-export default function AccountPieChart({
+export function AccountPieChart({
   data,
   loading = false,
   className,

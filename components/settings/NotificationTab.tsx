@@ -24,7 +24,7 @@ interface NotificationTabProps {
   closeDrawer: () => void
 }
 
-export default function NotificationTab({
+export function NotificationTab({
   isMobile,
   editingConfig,
   setEditingConfig,
