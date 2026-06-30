@@ -50,7 +50,7 @@ export default function AccountsPage() {
         <div className="relative">
           <button
             onClick={() => setAddMenuOpen(!addMenuOpen)}
-            className="group flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+            className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -72,13 +72,13 @@ export default function AccountsPage() {
                 className="fixed inset-0 z-10"
                 onClick={() => setAddMenuOpen(false)}
               />
-              <div className="absolute left-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-20 animate-in fade-in slide-in-from-top-1 duration-200">
+              <div className="absolute left-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 animate-in fade-in slide-in-from-top-1 duration-200">
                 <button
                   onClick={() => {
                     setShowQrModal(true)
                     setAddMenuOpen(false)
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700 transition-colors rounded-lg mx-1"
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700 transition-colors rounded-lg mx-1"
                 >
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +95,7 @@ export default function AccountsPage() {
                     setShowLinkModal(true)
                     setAddMenuOpen(false)
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-fuchsia-50 hover:text-purple-700 transition-colors rounded-lg mx-1"
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-fuchsia-50 hover:text-purple-700 transition-colors rounded-lg mx-1"
                 >
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +115,7 @@ export default function AccountsPage() {
         {/* 链接管理按钮 */}
         <button
           onClick={() => setShowLinkManage(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -138,7 +138,7 @@ export default function AccountsPage() {
       )}
 
       {!isLoading && !error && data?.length === 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
           <svg
             className="w-12 h-12 mx-auto text-gray-400 mb-4"
             fill="none"
@@ -158,7 +158,7 @@ export default function AccountsPage() {
           </p>
           <button
             onClick={() => setAddMenuOpen(true)}
-            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
           >
             添加账号
           </button>

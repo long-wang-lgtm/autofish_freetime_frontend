@@ -5,7 +5,7 @@ import { Bell, Clock, BarChart2 } from 'lucide-react'
 export function ReportControlBar() {
   return (
     <div className="flex items-center gap-5 bg-white rounded-xl p-4">
-      <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all">
+      <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all">
         <Bell className="w-4 h-4" />
         生成报告
       </button>

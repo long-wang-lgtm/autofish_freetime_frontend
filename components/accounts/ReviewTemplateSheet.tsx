@@ -285,7 +285,7 @@ export default function ReviewTemplateSheet({ open, onClose }: ReviewTemplateShe
                 value={content}
                 onChange={(e) => handleContentChange(e.target.value)}
                 rows={8}
-                className="flex-1 w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm resize-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-300"
+                className="flex-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-300"
                 placeholder="输入评价模板内容，支持 {买家昵称} 等变量..."
               />
 

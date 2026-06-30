@@ -37,7 +37,7 @@ export function HeatmapCalendar({ dataCounts, activeDate, onDateSelect }: Heatma
               <span className={`font-medium ${count > 0 ? 'text-white' : 'text-gray-400'}`}>
                 {date.slice(5)}
               </span>
-              <span className={`text-[10px] ${count > 0 ? 'text-white/80' : 'text-gray-400'}`}>
+              <span className={`text-xs ${count > 0 ? 'text-white/80' : 'text-gray-400'}`}>
                 {count}
               </span>
             </button>

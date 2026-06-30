@@ -57,7 +57,7 @@ export default function RuleBindingPanel({
             value={itemSearch}
             onChange={(e) => setItemSearch(e.target.value)}
             placeholder="搜索商品..."
-            className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs"
+            className="w-full px-2.5 py-1 border border-gray-300 rounded-md text-xs"
           />
           <div className="max-h-36 overflow-y-auto">
             {items.length > 0 ? (
@@ -108,7 +108,7 @@ export default function RuleBindingPanel({
             value={groupSearch}
             onChange={(e) => setGroupSearch(e.target.value)}
             placeholder="搜索商品组..."
-            className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs"
+            className="w-full px-2.5 py-1 border border-gray-300 rounded-md text-xs"
           />
           <div className="max-h-36 overflow-y-auto">
             {groups.length > 0 ? (

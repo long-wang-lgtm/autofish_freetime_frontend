@@ -97,22 +97,22 @@ export function RulesTab({
     <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
       {/* 统计信息 + 操作（移动端合并为一行，节约横屏垂直空间） */}
       {isMobile ? (
-        <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-gray-100">
+        <div className="flex items-center gap-1.5 px-2 py-1 border-b border-gray-100">
           <div className="flex gap-1.5 overflow-x-auto flex-shrink min-w-0">
             {MOBILE_STAT_PILLS.map(({ key, label, color }) => (
               <div
                 key={key}
                 className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2.5 py-1 flex-shrink-0"
               >
-                <span className={`text-xs font-bold ${color}`}>{rulesStats[key]}</span>
-                <span className="text-[10px] text-gray-500">{label}</span>
+                <span className={`text-xs font-semibold ${color}`}>{rulesStats[key]}</span>
+                <span className="text-xs text-gray-500">{label}</span>
               </div>
             ))}
           </div>
           <div className="flex-1 min-w-[4px]" />
           <button
             onClick={() => setShowCreateForm(true)}
-            className="flex-shrink-0 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-medium rounded transition-colors flex items-center gap-1"
+            className="flex-shrink-0 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors flex items-center gap-1"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -125,7 +125,7 @@ export function RulesTab({
           <div className="grid grid-cols-5 gap-3 p-4 border-b border-gray-100">
             {DESKTOP_STAT_CARDS.map(({ key, label, color, bg }) => (
               <div key={key} className={`${bg} border border-gray-200 rounded-lg p-3`}>
-                <div className={`text-2xl font-bold ${color}`}>{rulesStats[key]}</div>
+                <div className={`text-2xl font-semibold ${color}`}>{rulesStats[key]}</div>
                 <div className="text-xs text-gray-500">{label}</div>
               </div>
             ))}
@@ -154,7 +154,7 @@ export function RulesTab({
         </div>
       )}
       {!keywordsLoading && !keywordsError && rulesStats.total === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
           </svg>

@@ -93,7 +93,7 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
           className="text-gray-400 hover:text-gray-600 transition-colors select-none flex-shrink-0 leading-none"
           title={expanded ? '折叠' : '展开'}
         >
-          <span className="text-[9px]">{expanded ? '▼' : '▶'}</span>
+          <span className="text-xs">{expanded ? '▼' : '▶'}</span>
         </button>
 
         {/* 名称 — 点击编辑 */}
@@ -120,10 +120,10 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
         )}
 
         {/* 徽章 + 元信息 — 自然跟随名称，不推到最右 */}
-        <span className={`px-1.5 py-0.5 rounded border text-[11px] flex-shrink-0 ${statusBadge.color}`}>
+        <span className={`px-1.5 py-0.5 rounded border text-sm flex-shrink-0 ${statusBadge.color}`}>
           {statusBadge.label}
         </span>
-        <span className={`px-1.5 py-0.5 rounded border text-[11px] flex-shrink-0 ${sourceBadge.color}`}>
+        <span className={`px-1.5 py-0.5 rounded border text-sm flex-shrink-0 ${sourceBadge.color}`}>
           {sourceBadge.label}
         </span>
         <span className="text-xs text-gray-400 flex-shrink-0 tabular-nums">{opportunity.item_count} 素材</span>
@@ -156,9 +156,9 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
 
             {/* 价格 */}
             <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] text-gray-400 uppercase tracking-wide">价格</span>
-              <div className="flex items-center bg-gray-50 rounded-md px-2 py-1.5 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
-                <span className="text-gray-400 text-[11px]">¥</span>
+              <span className="text-xs text-gray-400 uppercase tracking-wide">价格</span>
+              <div className="flex items-center bg-gray-50 rounded-md px-2 py-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
+                <span className="text-gray-400 text-sm">¥</span>
                 <input
                   type="number"
                   value={form.price}
@@ -171,11 +171,11 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
 
             {/* 商品组 */}
             <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] text-gray-400 uppercase tracking-wide">商品组</span>
+              <span className="text-xs text-gray-400 uppercase tracking-wide">商品组</span>
               <input
                 value={form.item_group_id}
                 onChange={e => updateField('item_group_id', e.target.value)}
-                className="w-full bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-2 py-1.5 focus:outline-none text-gray-600 font-mono text-[11px] transition-all"
+                className="w-full bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-2 py-1 focus:outline-none text-gray-600 font-mono text-sm transition-all"
                 placeholder="—"
               />
             </div>
@@ -183,7 +183,7 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
 
           {/* 右栏：来源描述 — 主角，给足高度 */}
           <div className="flex-1 min-w-0 pt-3 flex flex-col min-h-0">
-            <span className="text-[10px] text-gray-400 uppercase tracking-wide flex-shrink-0 mb-1">描述</span>
+            <span className="text-xs text-gray-400 uppercase tracking-wide flex-shrink-0 mb-1">描述</span>
             <textarea
               value={form.source_description}
               onChange={e => updateField('source_description', e.target.value)}
@@ -192,7 +192,7 @@ export function OpportunityHeader({ opportunity, accounts, onRefreshOpportunitie
             />
             {/* 保存状态 */}
             <div className="flex justify-end mt-1.5 flex-shrink-0">
-              <span className={`text-[10px] transition-colors duration-300 ${
+              <span className={`text-xs transition-colors duration-300 ${
                 saveStatus === 'idle' ? 'text-transparent' :
                 saveStatus === 'saving' ? 'text-blue-400' :
                 saveStatus === 'saved' ? 'text-emerald-400' : 'text-red-400'

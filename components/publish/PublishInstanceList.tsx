@@ -354,7 +354,7 @@ export function PublishInstanceList({
   return (
     <div className="flex flex-col h-full">
       {/* 表头 */}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border-b text-xs font-medium text-gray-500 min-w-[900px]">
+      <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 border-b text-xs font-medium text-gray-500 min-w-[900px]">
         <div className="w-[18px] flex-shrink-0">
           <input
             type="checkbox"

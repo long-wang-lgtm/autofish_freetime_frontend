@@ -43,7 +43,7 @@ export function CollapsiblePanel({
         </span>
         <span className="flex items-center gap-2 flex-shrink-0 ml-2">
           {!expanded && badge != null && badge > 0 && (
-            <span className="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded-full leading-none">
+            <span className="bg-gray-100 text-gray-500 text-xs px-1.5 py-0.5 rounded-full leading-none">
               {badge}
             </span>
           )}

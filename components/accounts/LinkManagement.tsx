@@ -104,7 +104,7 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
         {/* 头部 */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">链接管理</h2>
+            <h2 className="text-lg font-semibold text-gray-900">链接管理</h2>
             <p className="text-xs text-gray-400 mt-0.5">
               管理分享的登录链接，他人可通过链接扫码登录闲鱼账号
             </p>
@@ -126,7 +126,7 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
             <button
               onClick={handleCreate}
               disabled={createMutation.isPending}
-              className="w-full flex items-center justify-center gap-2.5 px-5 py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 disabled:from-purple-400 disabled:to-fuchsia-400 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 disabled:from-purple-400 disabled:to-fuchsia-400 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:cursor-not-allowed"
             >
               {createMutation.isPending ? (
                 <LoadingSpinner size="sm" />
@@ -152,11 +152,11 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
                       type="text"
                       readOnly
                       value={buildLinkUrl(creatingToken)}
-                      className="flex-1 px-3 py-2.5 bg-white/80 rounded-lg text-sm text-gray-800 border border-purple-100 focus:outline-none font-mono truncate"
+                      className="flex-1 px-3 py-2 bg-white/80 rounded-lg text-sm text-gray-800 border border-purple-100 focus:outline-none font-mono truncate"
                     />
                     <button
                       onClick={() => handleCopy(creatingToken)}
-                      className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white text-sm font-medium rounded-lg transition-colors shrink-0"
+                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white text-sm font-medium rounded-lg transition-colors shrink-0"
                     >
                       {copiedToken === creatingToken ? "已复制" : "复制"}
                     </button>
@@ -239,14 +239,14 @@ export default function LinkManagement({ open, onClose }: LinkManagementProps) {
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           onClick={() => handleCopy(item.token)}
-                          className="px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                          className="px-3 py-2 text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
                         >
                           {copiedToken === item.token ? "已复制" : "复制"}
                         </button>
                         <button
                           onClick={() => handleDelete(item.token)}
                           disabled={deleteMutation.isPending}
-                          className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
+                          className="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
                         >
                           {deleteMutation.isPending ? <LoadingSpinner size="sm" /> : "删除"}
                         </button>

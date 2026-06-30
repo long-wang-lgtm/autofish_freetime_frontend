@@ -85,7 +85,7 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange, 
   return (
     <div className="editor-panel flex flex-col h-full overflow-hidden">
       {/* 标题栏 */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 border-b flex-shrink-0">
         <span className="text-sm font-medium text-gray-700 truncate">
           {item.title || '素材编辑'}
         </span>
@@ -118,7 +118,7 @@ export function EditorPanel({ item, accounts, onSaveStatusChange, onItemChange, 
               <span className="text-2xl text-gray-300">📷</span>
             </div>
           )}
-          <button className="flex-shrink-0 text-[11px] text-gray-400 hover:text-blue-500 transition-colors ml-1 whitespace-nowrap">
+          <button className="flex-shrink-0 text-sm text-gray-400 hover:text-blue-500 transition-colors ml-1 whitespace-nowrap">
             重新生成
           </button>
         </div>

@@ -44,7 +44,7 @@ export function MobileRuleCard({
           <button
             onClick={() => onToggleEnabled(rule)}
             disabled={toggling}
-            className={`px-2 py-0.5 rounded text-[10px] font-medium flex-shrink-0 transition-colors ${
+            className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 transition-colors ${
               rule.enabled
                 ? "bg-green-100 text-green-700 hover:bg-green-200"
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -61,7 +61,7 @@ export function MobileRuleCard({
           </span>
         </div>
         <span
-          className={`text-sm font-bold flex-shrink-0 ${
+          className={`text-sm font-semibold flex-shrink-0 ${
             disabled ? "text-gray-400" : "text-gray-700"
           }`}
         >
@@ -70,7 +70,7 @@ export function MobileRuleCard({
       </div>
 
       {/* 信息行：匹配方式 · 回复类型 */}
-      <div className="px-3 pb-1 flex items-center gap-1.5 text-[10px] text-gray-400 flex-wrap">
+      <div className="px-3 pb-1 flex items-center gap-1.5 text-xs text-gray-400 flex-wrap">
         <span className="bg-gray-100 text-gray-500 px-1.5 py-px rounded">
           {matchTypeLabels[rule.match_type] || rule.match_type}
         </span>
@@ -80,7 +80,7 @@ export function MobileRuleCard({
 
       {/* 回复预览 */}
       <div
-        className={`px-3 pb-2 text-[11px] leading-tight truncate ${
+        className={`px-3 pb-2 text-sm leading-tight truncate ${
           disabled ? "text-gray-400" : "text-gray-600"
         }`}
       >
@@ -91,28 +91,28 @@ export function MobileRuleCard({
       <div className="flex items-center gap-1.5 px-3 py-2 border-t border-gray-100">
         {/* 关联标签 */}
         {rule.linked_items > 0 && (
-          <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-px rounded">
+          <span className="text-xs bg-blue-50 text-blue-600 px-1.5 py-px rounded">
             📦{rule.linked_items}商品
           </span>
         )}
         {rule.linked_groups > 0 && (
-          <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-px rounded">
+          <span className="text-xs bg-purple-50 text-purple-600 px-1.5 py-px rounded">
             📁{rule.linked_groups}组
           </span>
         )}
         {rule.linked_items === 0 && rule.linked_groups === 0 && (
-          <span className="text-[10px] text-gray-400">无关联</span>
+          <span className="text-xs text-gray-400">无关联</span>
         )}
         <span className="flex-1" />
         <button
           onClick={() => onEdit(rule)}
-          className="px-3 py-1 text-[11px] bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
         >
           编辑
         </button>
         <button
           onClick={() => onDelete(rule)}
-          className="px-3 py-1 text-[11px] text-red-600 hover:bg-red-50 rounded-md transition-colors"
+          className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
         >
           删除
         </button>

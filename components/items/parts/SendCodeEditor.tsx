@@ -125,7 +125,7 @@ export function SendCodeEditor({
     <button
       onClick={startEdit}
       title="指令码 — 仅买家时生效"
-      className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+      className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
     >
       <span className={actualHasValue ? "text-gray-600" : "text-gray-400"}>⌨️ 指令码</span>
       <span className="flex items-center gap-1">

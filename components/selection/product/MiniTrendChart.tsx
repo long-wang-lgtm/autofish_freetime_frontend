@@ -82,7 +82,7 @@ export function MiniTrendChart({ hourlyData, slope, dailyAvg, cv, color }: MiniT
         </svg>
       )}
       {/* Layer 3: indicator text */}
-      <div className="relative z-[1] flex justify-around items-center h-full text-[9px]">
+      <div className="relative z-[1] flex justify-around items-center h-full text-xs">
         <span className="text-gray-500 tabular-nums">日{fmtDaily(dailyAvg)}</span>
         <span className="tabular-nums" style={{ color: arrowColor, fontWeight: 600 }}>{slopeInfo.arrow}</span>
         <span className="text-gray-500 tabular-nums">CV{fmtCV(cv)}</span>

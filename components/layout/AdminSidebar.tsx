@@ -92,7 +92,7 @@ export default function AdminSidebar({ collapsed, mobileOpen, onToggle, onMobile
       footer={
         <Link
           href="/dashboard/accounts"
-          className={`flex items-center gap-3 px-3 py-2 lg:py-2.5 rounded-lg transition-colors text-gray-400 hover:bg-gray-700 hover:text-white ${
+          className={`flex items-center gap-3 px-3 py-2 lg:py-2 rounded-lg transition-colors text-gray-400 hover:bg-gray-700 hover:text-white ${
             collapsed ? 'justify-center' : ''
           }`}
           title="返回用户区"
@@ -110,7 +110,7 @@ export default function AdminSidebar({ collapsed, mobileOpen, onToggle, onMobile
             <Link
               href={item.path}
               onClick={handleNavClick}
-              className={`flex items-center gap-3 px-3 py-2 lg:py-2.5 rounded-lg transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2 lg:py-2 rounded-lg transition-colors ${
                 isActive(item.path)
                   ? 'bg-amber-500/20 text-amber-400'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'

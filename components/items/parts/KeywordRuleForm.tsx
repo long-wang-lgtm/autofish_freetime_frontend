@@ -166,7 +166,7 @@ export function KeywordRuleForm({
                   <button
                     type="button"
                     onClick={() => setValue("reply_type", "custom", { shouldDirty: true })}
-                    className={`px-2 py-0.5 text-[11px] rounded transition-colors ${
+                    className={`px-2 py-0.5 text-sm rounded transition-colors ${
                       replyType === "custom"
                         ? "bg-white text-blue-700 font-medium shadow-sm"
                         : "text-blue-500 hover:text-blue-700"
@@ -177,7 +177,7 @@ export function KeywordRuleForm({
                   <button
                     type="button"
                     onClick={() => setValue("reply_type", "predefined", { shouldDirty: true })}
-                    className={`px-2 py-0.5 text-[11px] rounded transition-colors ${
+                    className={`px-2 py-0.5 text-sm rounded transition-colors ${
                       replyType === "predefined"
                         ? "bg-white text-blue-700 font-medium shadow-sm"
                         : "text-blue-500 hover:text-blue-700"
@@ -189,7 +189,7 @@ export function KeywordRuleForm({
               </div>
               {/* 优先级 */}
               <div className="flex items-center gap-1.5">
-                <label className="text-[11px] text-gray-400">优先级</label>
+                <label className="text-sm text-gray-400">优先级</label>
                 <input
                   type="number"
                   {...register("priority", { valueAsNumber: true })}
@@ -213,7 +213,7 @@ export function KeywordRuleForm({
             ) : (
               <div className="flex gap-3">
                 <div className="flex-[5]">
-                  <label className="block text-[11px] text-gray-500 mb-1">关键词</label>
+                  <label className="block text-sm text-gray-500 mb-1">关键词</label>
                   <input
                     {...register("keyword")}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
@@ -221,7 +221,7 @@ export function KeywordRuleForm({
                   />
                 </div>
                 <div className="flex-[2]">
-                  <label className="block text-[11px] text-gray-500 mb-1">匹配方式</label>
+                  <label className="block text-sm text-gray-500 mb-1">匹配方式</label>
                   <select
                     {...register("match_type")}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
@@ -257,7 +257,7 @@ export function KeywordRuleForm({
               {errors.reply_content && (
                 <p className="mt-1 text-xs text-red-500">{errors.reply_content.message}</p>
               )}
-              <p className="mt-1 text-[11px] text-gray-400">
+              <p className="mt-1 text-sm text-gray-400">
                 占位符格式：{"{占位符名称}"}，商品卡片格式：[ITEM:商品ID]
               </p>
             </div>

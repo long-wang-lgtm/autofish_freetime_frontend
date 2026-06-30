@@ -314,7 +314,7 @@ export default function AdminPage() {
         <button
           onClick={() => { setTab('users'); setUserPage(1) }}
           className={
-            'px-4 py-1.5 text-sm font-medium rounded-md transition-colors ' +
+            'px-4 py-1 text-sm font-medium rounded-md transition-colors ' +
             (tab === 'users'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-700')
@@ -325,7 +325,7 @@ export default function AdminPage() {
         <button
           onClick={() => { setTab('accounts'); setAccountPage(1) }}
           className={
-            'px-4 py-1.5 text-sm font-medium rounded-md transition-colors ' +
+            'px-4 py-1 text-sm font-medium rounded-md transition-colors ' +
             (tab === 'accounts'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-700')
@@ -378,7 +378,7 @@ function StatCard({
       </div>
       <div className="min-w-0">
         <p className="text-xs text-gray-500 truncate">{label}</p>
-        <p className={`text-xl font-bold tabular-nums ${highlight ? 'text-emerald-600' : 'text-gray-900'}`}>
+        <p className={`text-xl font-semibold tabular-nums ${highlight ? 'text-emerald-600' : 'text-gray-900'}`}>
           {value ?? '—'}
         </p>
       </div>

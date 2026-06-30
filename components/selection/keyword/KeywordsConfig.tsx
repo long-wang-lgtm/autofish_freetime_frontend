@@ -30,7 +30,7 @@ export function KeywordsConfig() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addKeyword(input)}
           placeholder="输入关键词后按回车添加"
-          className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all"
+          className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all"
         />
       </div>
 
@@ -39,7 +39,7 @@ export function KeywordsConfig() {
         {keywords.map((kw) => (
           <span
             key={kw}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm"
+            className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-sm"
           >
             {kw}
             <button

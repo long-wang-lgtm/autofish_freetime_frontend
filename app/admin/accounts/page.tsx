@@ -286,7 +286,7 @@ export default function AdminAccountsPage() {
       {/* 标题区 */}
       {/* <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">账号管理</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">账号管理</h1>
           <p className="text-sm text-gray-500 mt-1">
             查看所有账号配置，控制 IM 服务启停
           </p>
@@ -329,7 +329,7 @@ export default function AdminAccountsPage() {
 
       {/* 空状态 */}
       {!loading && !error && accounts && accounts.length === 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
           <svg
             className="w-12 h-12 mx-auto text-gray-400 mb-4"
             fill="none"

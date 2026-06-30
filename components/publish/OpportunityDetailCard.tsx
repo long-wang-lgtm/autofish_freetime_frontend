@@ -59,7 +59,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
   const images = opportunity.images
 
   return (
-    <div className="flex gap-4 px-4 py-2.5 h-full overflow-hidden">
+    <div className="flex gap-4 px-4 py-2 h-full overflow-hidden">
       {/* 左：图片栏 */}
       <div className="flex-shrink-0 w-[120px]">
         {images.length > 0 ? (
@@ -91,10 +91,10 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
             className="flex-1 min-w-0 font-semibold text-sm text-gray-900 bg-transparent border border-transparent hover:border-gray-200 focus:border-blue-400 rounded px-1.5 py-0.5 focus:outline-none focus:bg-white"
             placeholder="商机名称"
           />
-          <span className={`px-1.5 py-0.5 rounded border text-[11px] flex-shrink-0 ${statusBadge.color}`}>
+          <span className={`px-1.5 py-0.5 rounded border text-sm flex-shrink-0 ${statusBadge.color}`}>
             {statusBadge.label}
           </span>
-          <span className={`px-1.5 py-0.5 rounded border text-[11px] flex-shrink-0 ${sourceBadge.color}`}>
+          <span className={`px-1.5 py-0.5 rounded border text-sm flex-shrink-0 ${sourceBadge.color}`}>
             {sourceBadge.label}
           </span>
           <span className="text-gray-400 flex-shrink-0 tabular-nums">{opportunity.item_count} 素材</span>
@@ -102,9 +102,9 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
 
         {/* 固定行：价格 + 商品组 */}
         <div className="flex items-center gap-4 mt-2 flex-shrink-0">
-          <span className="text-gray-400 flex-shrink-0 text-[11px] uppercase tracking-wide">价格</span>
+          <span className="text-gray-400 flex-shrink-0 text-sm uppercase tracking-wide">价格</span>
           <div className="flex items-center bg-gray-50 rounded-md px-2 py-0.5 hover:bg-white hover:shadow-sm focus-within:bg-white focus-within:shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition-all">
-            <span className="text-gray-400 text-[11px]">¥</span>
+            <span className="text-gray-400 text-sm">¥</span>
             <input
               type="number"
               value={form.price}
@@ -113,18 +113,18 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
               step="0.01"
             />
           </div>
-          <span className="text-gray-400 flex-shrink-0 text-[11px] uppercase tracking-wide ml-2">商品组</span>
+          <span className="text-gray-400 flex-shrink-0 text-sm uppercase tracking-wide ml-2">商品组</span>
           <input
             value={form.item_group_id}
             onChange={e => updateField('item_group_id', e.target.value)}
-            className="flex-1 min-w-0 bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-2 py-0.5 focus:outline-none text-gray-600 font-mono text-[11px] transition-all"
+            className="flex-1 min-w-0 bg-gray-50 hover:bg-white focus:bg-white border border-transparent hover:border-gray-200 focus:border-blue-400 rounded-md px-2 py-0.5 focus:outline-none text-gray-600 font-mono text-sm transition-all"
             placeholder="—"
           />
         </div>
 
         {/* 固定行：标签 */}
         <div className="flex items-center gap-2 mt-2 flex-shrink-0">
-          <span className="text-gray-400 flex-shrink-0 text-[11px] uppercase tracking-wide">标签</span>
+          <span className="text-gray-400 flex-shrink-0 text-sm uppercase tracking-wide">标签</span>
           <input
             value={form.tags}
             onChange={e => updateField('tags', e.target.value)}
@@ -134,7 +134,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
           {form.tags && (
             <div className="flex gap-1 flex-shrink-0">
               {form.tags.split(/[,，]/).filter(Boolean).map((tag, i) => (
-                <span key={i} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] border border-gray-200/50">
+                <span key={i} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs border border-gray-200/50">
                   {tag.trim()}
                 </span>
               ))}
@@ -145,9 +145,9 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
         {/* 展开/折叠按钮 — 在左侧 */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1.5 mt-2 text-[11px] text-gray-400 hover:text-gray-600 transition-colors select-none group flex-shrink-0"
+          className="flex items-center gap-1.5 mt-2 text-sm text-gray-400 hover:text-gray-600 transition-colors select-none group flex-shrink-0"
         >
-          <span className="text-[9px] transition-transform duration-200 group-hover:translate-x-0.5">
+          <span className="text-xs transition-transform duration-200 group-hover:translate-x-0.5">
             {expanded ? '▼' : '▶'}
           </span>
           <span className="tracking-wide">来源描述</span>
@@ -162,7 +162,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
             <textarea
               value={form.source_description}
               onChange={e => updateField('source_description', e.target.value)}
-              className="w-full h-full bg-gray-50 hover:bg-white focus:bg-white border border-gray-100 hover:border-gray-200 focus:border-blue-400 rounded-md px-2 py-1.5 focus:outline-none text-gray-600 resize-none text-[11px] leading-relaxed transition-all"
+              className="w-full h-full bg-gray-50 hover:bg-white focus:bg-white border border-gray-100 hover:border-gray-200 focus:border-blue-400 rounded-md px-2 py-1 focus:outline-none text-gray-600 resize-none text-sm leading-relaxed transition-all"
               placeholder="输入或粘贴来源描述..."
             />
           </div>
@@ -170,7 +170,7 @@ export function OpportunityDetailCard({ opportunity, accounts, onRefreshOpportun
 
         {/* 保存状态 */}
         <div className="flex justify-end mt-1 flex-shrink-0">
-          <span className={`text-[10px] transition-colors duration-300 ${
+          <span className={`text-xs transition-colors duration-300 ${
             saveStatus === 'idle' ? 'text-transparent' :
             saveStatus === 'saving' ? 'text-blue-400' :
             saveStatus === 'saved' ? 'text-emerald-400' : 'text-red-400'

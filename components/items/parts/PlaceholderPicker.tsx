@@ -26,7 +26,7 @@ export function PlaceholderPicker({ onInsert, draggable = false }: PlaceholderPi
                 : undefined
             }
             onClick={() => onInsert(p.value)}
-            className={`px-2.5 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-200 whitespace-nowrap transition-all ${
+            className={`px-2.5 py-2 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-200 whitespace-nowrap transition-all ${
               draggable ? "cursor-grab" : "active:scale-95"
             }`}
             title={p.value}

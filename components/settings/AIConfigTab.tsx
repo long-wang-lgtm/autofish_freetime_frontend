@@ -194,7 +194,7 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
               key={tab}
               onClick={() => setActiveSubTab(tab)}
               className={`font-medium rounded-lg transition-all ${
-                isMobile ? 'px-2.5 py-1.5 text-[11px]' : 'px-5 py-2.5 text-sm'
+                isMobile ? 'px-2.5 py-1 text-sm' : 'px-4 py-2 text-sm'
               } ${
                 activeSubTab === tab
                   ? 'bg-blue-100 text-blue-700'
@@ -209,7 +209,7 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
             onClick={() => openDrawer()}
             title="每个ai模型调用方法不一致，添加模型后若不可用，请联系作者！后续添加模型连接测试功能"
             className={`bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center flex-shrink-0 ${
-              isMobile ? 'px-2.5 py-1.5 text-[11px] gap-1' : 'px-4 py-2 gap-2'
+              isMobile ? 'px-2.5 py-1 text-sm gap-1' : 'px-4 py-2 gap-2'
             }`}
           >
             <svg className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,11 +221,11 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
 
         {/* 数据区 */}
         {isLoading ? (
-          <div className="p-8 text-center">
+          <div className="p-6 text-center">
             <p className="text-gray-500">加载中...</p>
           </div>
         ) : filteredConfigs.length === 0 ? (
-          <div className="p-8 text-center">
+          <div className="p-6 text-center">
             <div className="text-6xl mb-4">🤖</div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">暂无 AI 模型</h3>
             <p className="text-sm text-gray-500 mb-4">点击上方按钮添加您的第一个 AI 模型</p>
@@ -246,20 +246,20 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
                   <span className="text-sm font-semibold text-gray-900 leading-tight truncate flex-1 min-w-0">
                     {config.name}
                   </span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ${
                     config.config_type === 'text' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
                   }`}>
                     {CONFIG_TYPE_LABELS[config.config_type]}
                   </span>
                 </div>
                 {/* 信息行 */}
-                <div className="px-3 pb-1 flex items-center gap-1.5 text-[10px] text-gray-500">
+                <div className="px-3 pb-1 flex items-center gap-1.5 text-xs text-gray-500">
                   <span>{PROVIDER_LABELS[config.provider] || config.provider}</span>
                   <span className="text-gray-300">·</span>
                   <span className="font-mono">{config.model}</span>
                 </div>
                 {/* 默认状态 */}
-                <div className="px-3 pb-2 text-[10px]">
+                <div className="px-3 pb-2 text-xs">
                   {config.is_active ? (
                     <span className="text-green-600">✓ 默认模型</span>
                   ) : (
@@ -275,7 +275,7 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
                 <div className="flex items-center justify-end gap-1 px-3 py-2 border-t border-gray-100">
                   <button
                     onClick={() => handleCopy(config)}
-                    className="px-2 py-1 text-[10px] text-gray-500 hover:text-blue-600"
+                    className="px-2 py-1 text-xs text-gray-500 hover:text-blue-600"
                   >
                     复制
                   </button>
@@ -284,13 +284,13 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
                       <button
                         onClick={() => handleDelete(config.id)}
                         disabled={deleteMutation.isPending}
-                        className="px-2 py-1 text-[10px] text-red-600"
+                        className="px-2 py-1 text-xs text-red-600"
                       >
                         {deleteMutation.isPending ? '...' : '确认'}
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(null)}
-                        className="px-2 py-1 text-[10px] text-gray-400"
+                        className="px-2 py-1 text-xs text-gray-400"
                       >
                         取消
                       </button>
@@ -299,13 +299,13 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
                     <>
                       <button
                         onClick={() => openDrawer(config)}
-                        className="px-3 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 rounded"
+                        className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
                       >
                         编辑
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(config.id)}
-                        className="px-3 py-1 text-[10px] text-red-600 hover:bg-red-50 rounded"
+                        className="px-3 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
                       >
                         删除
                       </button>
@@ -413,14 +413,14 @@ export default function AIConfigTab({ isMobile }: AIConfigTabProps) {
               <button
                 onClick={handleSubmit}
                 disabled={saveMutation.isPending}
-                className="flex-1 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
+                className="flex-1 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
               >
                 {saveMutation.isPending ? '保存中...' : '保存'}
               </button>
               <button
                 type="button"
                 onClick={closeDrawer}
-                className="flex-1 px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                className="flex-1 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
               >
                 取消
               </button>

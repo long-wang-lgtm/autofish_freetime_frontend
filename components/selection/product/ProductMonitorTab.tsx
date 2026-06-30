@@ -165,11 +165,11 @@ export function ProductMonitorTab() {
           <div className="min-w-0 py-0.5 pr-2">
             {/* 第1行：描述 */}
             {p.description ? (
-              <div className="text-[13px] text-gray-800 leading-snug line-clamp-2">
+              <div className="text-sm text-gray-800 leading-snug line-clamp-2">
                 {p.description}
               </div>
             ) : (
-              <div className="text-[13px] text-gray-400 leading-snug italic">无描述</div>
+              <div className="text-sm text-gray-400 leading-snug italic">无描述</div>
             )}
 
             {/* 第2行：GID链接 + 状态badge + 优先级pill + 入库按钮 */}
@@ -180,7 +180,7 @@ export function ProductMonitorTab() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="text-[9px] text-gray-500 font-mono border-b border-dotted border-gray-300 hover:text-gray-700 transition-colors"
+                className="text-xs text-gray-500 font-mono border-b border-dotted border-gray-300 hover:text-gray-700 transition-colors"
                 title="在闲鱼打开"
               >
                 {p.id} ↗
@@ -190,19 +190,19 @@ export function ProductMonitorTab() {
               {s && isInteractive ? (
                 <button
                   onClick={(e) => { e.stopPropagation(); p.monitorStatus === 1 ? handleCancel(p.id) : handleActivate(p.id) }}
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${s.bg} ${s.text} hover:opacity-80 transition-opacity cursor-pointer`}
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text} hover:opacity-80 transition-opacity cursor-pointer`}
                   title={p.monitorStatus === 1 ? '点击暂停监控' : '点击启用监控'}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                   {s.label}
                 </button>
               ) : s ? (
-                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${s.bg} ${s.text}`}>
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                   {s.label}
                 </span>
               ) : (
-                <span className="text-[9px] text-gray-400">-</span>
+                <span className="text-xs text-gray-400">-</span>
               )}
 
               {/* 优先级 pill（null 时隐藏） */}
@@ -216,7 +216,7 @@ export function ProductMonitorTab() {
                     }}
                     onBlur={() => setEditingPriority(null)}
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[9px] px-1 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer"
+                    className="text-xs px-1 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer"
                     autoFocus
                   >
                     {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
@@ -226,7 +226,7 @@ export function ProductMonitorTab() {
                 ) : (
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditingPriority(p.id) }}
-                    className="text-[9px] px-1 py-0.5 rounded bg-amber-50 text-amber-700 cursor-text hover:bg-amber-100 transition-colors"
+                    className="text-xs px-1 py-0.5 rounded bg-amber-50 text-amber-700 cursor-text hover:bg-amber-100 transition-colors"
                     title="点击编辑优先级"
                   >
                     ⚡{p.priority}
@@ -238,7 +238,7 @@ export function ProductMonitorTab() {
               {p.monitorStatus !== 4 && (
                 <button
                   onClick={(e) => { e.stopPropagation(); handleStored(p.id) }}
-                  className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
+                  className="text-xs px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
                   title="添加入库(商机库)"
                 >
                   +入库
@@ -257,11 +257,11 @@ export function ProductMonitorTab() {
           <span className="relative block w-full text-center">
             <span className="absolute left-0 top-0 bottom-0 rounded-sm bg-gradient-to-r from-amber-200/50 to-amber-100/20" style={{ width: pct }} />
             <span className="relative flex flex-col items-center">
-              <span className="text-[13px] font-semibold text-gray-900 tabular-nums">{fmtPrice(p.price)}</span>
-              {pt === 'up' && <span className="text-[9px] font-semibold text-green-600">(↑提价)</span>}
-              {pt === 'down' && <span className="text-[9px] font-semibold text-red-600">(↓降价)</span>}
-              {pt === 'flat' && <span className="text-[9px] text-gray-400">(→平稳)</span>}
-              {pt == null && <span className="text-[9px] text-gray-400">(-)</span>}
+              <span className="text-sm font-semibold text-gray-900 tabular-nums">{fmtPrice(p.price)}</span>
+              {pt === 'up' && <span className="text-xs font-semibold text-green-600">(↑提价)</span>}
+              {pt === 'down' && <span className="text-xs font-semibold text-red-600">(↓降价)</span>}
+              {pt === 'flat' && <span className="text-xs text-gray-400">(→平稳)</span>}
+              {pt == null && <span className="text-xs text-gray-400">(-)</span>}
             </span>
           </span>
         )
@@ -376,7 +376,7 @@ export function ProductMonitorTab() {
   return (
     <div className="space-y-3">
       {/* ── 工具栏 ── */}
-      <div className="bg-white rounded-xl border border-gray-200 px-5 py-4">
+      <div className="bg-white rounded-xl border border-gray-200 px-4 py-4">
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -385,7 +385,7 @@ export function ProductMonitorTab() {
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
               placeholder="搜索描述、标题、关键词..."
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-shadow"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-shadow"
             />
           </div>
           <div className="ml-auto text-sm text-gray-500">
@@ -416,7 +416,7 @@ export function ProductMonitorTab() {
               <div className="min-w-[1400px]">
                 {/* ── 表头 ── */}
                 <div
-                  className="grid px-5 pt-2.5 pb-2 text-[11px] font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10 gap-x-2"
+                  className="grid px-4 pt-2 pb-2 text-sm font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10 gap-x-2"
                   style={{ gridTemplateColumns: GRID_COLS }}
                 >
                   {COLUMNS.map(col => {
@@ -449,7 +449,7 @@ export function ProductMonitorTab() {
 
                 {/* ── 分组色条（表头下方）── */}
                 <div
-                  className="grid px-5 pb-1 border-b border-gray-100 sticky top-[34px] z-10 bg-white gap-x-2"
+                  className="grid px-4 pb-1 border-b border-gray-100 sticky top-[34px] z-10 bg-white gap-x-2"
                   style={{ gridTemplateColumns: GRID_COLS }}
                 >
                   {COLUMNS.map(col => {
@@ -473,7 +473,7 @@ export function ProductMonitorTab() {
                     <div
                       key={p.id}
                       onClick={() => setSelectedProductId(prev => prev === p.id ? null : p.id)}
-                      className={`group grid px-5 py-[12px] items-center transition-all duration-200 cursor-pointer gap-x-2 ${
+                      className={`group grid px-4 py-[12px] items-center transition-all duration-200 cursor-pointer gap-x-2 ${
                         isSelected
                           ? 'bg-blue-50/60 hover:bg-blue-50/70'
                           : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent'
@@ -529,13 +529,13 @@ export function ProductMonitorTab() {
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <button
           onClick={() => setAiReportOpen(prev => !prev)}
-          className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50/50 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50/50 transition-colors"
         >
           <h3 className="font-semibold text-gray-900 text-sm">AI 商品分析报告</h3>
           <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${aiReportOpen ? 'rotate-90' : ''}`} />
         </button>
         {aiReportOpen && (
-          <div className="px-5 pb-4 border-t border-gray-100">
+          <div className="px-4 pb-4 border-t border-gray-100">
             <p className="text-sm text-gray-500 text-center py-4">
               基于监控商品的 AI 潜力分析报告将展示在这里
             </p>

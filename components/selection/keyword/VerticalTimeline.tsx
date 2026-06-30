@@ -73,7 +73,7 @@ export function VerticalTimeline({
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
               <span className="text-xs font-medium text-gray-700">
-                已选 <span className="font-bold text-blue-600">{selectedCount}</span> 个日期
+                已选 <span className="font-semibold text-blue-600">{selectedCount}</span> 个日期
               </span>
             </div>
             {selectedCount > 0 && (
@@ -117,7 +117,7 @@ export function VerticalTimeline({
                 <button
                   key={date}
                   onClick={handleClick}
-                  className={`flex items-center w-full text-left pr-2 py-1.5 gap-2 transition-all duration-150 ${
+                  className={`flex items-center w-full text-left pr-2 py-1 gap-2 transition-all duration-150 ${
                     isSelected
                       ? 'bg-blue-50 shadow-sm ring-1 ring-blue-100 rounded'  // 添加边框光环
                       : 'hover:bg-gray-50'
@@ -154,7 +154,7 @@ export function VerticalTimeline({
                       </div>
                     </div>
                     {/* 完整日期 */}
-                    <div className="text-[10px] text-gray-400 truncate mt-0.5">
+                    <div className="text-xs text-gray-400 truncate mt-0.5">
                       {date}
                     </div>
                   </div>

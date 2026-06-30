@@ -52,12 +52,12 @@ export function MerchantMonitorTab() {
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
               placeholder="搜索商家..."
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg"
           >
             <Plus className="w-4 h-4" />
             添加商家
@@ -85,17 +85,17 @@ export function MerchantMonitorTab() {
               <tbody>
                 {filtered.map(m => (
                   <tr key={m.uid} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="py-2.5 font-mono text-xs">{m.uid}</td>
-                    <td className="py-2.5">{m.name || '-'}</td>
-                    <td className="py-2.5 text-right">
+                    <td className="py-2 font-mono text-xs">{m.uid}</td>
+                    <td className="py-2">{m.name || '-'}</td>
+                    <td className="py-2 text-right">
                       <span className={`text-xs px-1.5 py-0.5 rounded ${
                         m.monitorStatus === 1 ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'
                       }`}>
                         {m.priority ?? '-'}
                       </span>
                     </td>
-                    <td className="py-2.5 text-gray-400">{m.last_fetch_at?.split('T')[0] || '-'}</td>
-                    <td className="py-2.5 text-right">
+                    <td className="py-2 text-gray-400">{m.last_fetch_at?.split('T')[0] || '-'}</td>
+                    <td className="py-2 text-right">
                       <button
                         onClick={() => handleRemoveMerchant(m.uid)}
                         className="text-gray-400 hover:text-red-500"
@@ -124,7 +124,7 @@ export function MerchantMonitorTab() {
                   value={newUid}
                   onChange={e => setNewUid(e.target.value)}
                   placeholder="输入闲鱼商家UID"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
               </div>
               <div>
@@ -134,7 +134,7 @@ export function MerchantMonitorTab() {
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
                   placeholder="便于识别的名称"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-2">

@@ -137,7 +137,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           </div>
 
           {/* 第2行：GID · 商家 · 上架日期(天数) · 价格(动向) · 采集 */}
-          <div className="flex items-center gap-3 text-[11px] text-gray-500 flex-wrap">
+          <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
             <a
               href={`https://www.goofish.com/item?id=${product.id}`}
               target="_blank"
@@ -184,7 +184,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           {product.keywords.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {product.keywords.map(kw => (
-                <span key={kw} className="text-[11px] text-gray-700 bg-gray-100 rounded-full px-2 py-0.5">
+                <span key={kw} className="text-sm text-gray-700 bg-gray-100 rounded-full px-2 py-0.5">
                   {kw}
                 </span>
               ))}
@@ -199,7 +199,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
           <span className="text-xs text-gray-700">触发信号</span>
           {acceleration != null && acceleration > 0.3 ? (
             <>
-              <span className="text-sm font-bold text-red-500">🔥 升温 +{(acceleration * 100).toFixed(0)}%</span>
+              <span className="text-sm font-semibold text-red-500">🔥 升温 +{(acceleration * 100).toFixed(0)}%</span>
               <span className="text-xs text-gray-700">
                 D1 询单率 {(wm?.d1?.inquiry_rate != null ? (wm!.d1!.inquiry_rate * 100).toFixed(1) : '-')}%
                 vs D7 {(wm?.d7?.inquiry_rate != null ? (wm!.d7!.inquiry_rate * 100).toFixed(1) : '-')}%
@@ -207,7 +207,7 @@ export function ProductDiagnosticDrawer({ product, onClose }: ProductDiagnosticD
             </>
           ) : acceleration != null && acceleration < -0.3 ? (
             <>
-              <span className="text-sm font-bold text-blue-500">❄️ 降温 {(acceleration * -100).toFixed(0)}%</span>
+              <span className="text-sm font-semibold text-blue-500">❄️ 降温 {(acceleration * -100).toFixed(0)}%</span>
               <span className="text-xs text-gray-700">
                 D1 询单率 {(wm?.d1?.inquiry_rate != null ? (wm!.d1!.inquiry_rate * 100).toFixed(1) : '-')}%
                 vs D7 {(wm?.d7?.inquiry_rate != null ? (wm!.d7!.inquiry_rate * 100).toFixed(1) : '-')}%

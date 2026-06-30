@@ -61,7 +61,7 @@ export function OpportunityLibrary({
         <div className="flex gap-2">
           <button
             onClick={() => setShowNewModal(true)}
-            className="flex-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex-1 px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             + 新建
           </button>

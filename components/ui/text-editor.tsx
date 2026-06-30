@@ -22,7 +22,7 @@ const DEFAULT_ROWS: Record<Device, number> = {
 }
 
 const DEVICE_PADDING: Record<Device, string> = {
-  pc: "px-3 py-2.5",
+  pc: "px-3 py-2",
   "mobile-landscape": "px-3 py-2",
   "mobile-portrait": "px-2.5 py-2",
 }

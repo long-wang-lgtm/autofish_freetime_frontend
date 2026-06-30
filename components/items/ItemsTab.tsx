@@ -105,7 +105,7 @@ export function ItemsTab({
           </div>
         )}
         {!isLoading && !error && data && data.length === 0 && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center m-4">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center m-4">
             <h3 className="text-lg font-medium text-gray-900 mb-1">暂无商品</h3>
             <p className="text-sm text-gray-500">没有找到符合条件的商品</p>
           </div>
@@ -182,7 +182,7 @@ export function ItemsTab({
             <button
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
-              className={`text-sm px-3 py-1.5 rounded-md ${
+              className={`text-sm px-3 py-1 rounded-md ${
                 page <= 1
                   ? "text-gray-300 cursor-not-allowed"
                   : "text-blue-600 hover:bg-blue-50 cursor-pointer"
@@ -196,7 +196,7 @@ export function ItemsTab({
             <button
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages}
-              className={`text-sm px-3 py-1.5 rounded-md ${
+              className={`text-sm px-3 py-1 rounded-md ${
                 page >= totalPages
                   ? "text-gray-300 cursor-not-allowed"
                   : "text-blue-600 hover:bg-blue-50 cursor-pointer"

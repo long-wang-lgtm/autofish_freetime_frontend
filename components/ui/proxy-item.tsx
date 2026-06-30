@@ -50,20 +50,20 @@ export function ProxyItem({ proxy, variant, actionLabel, actionLoading, onAction
             {proxy.server}
           </span>
           {statusKey && (
-            <span className={`shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded-full ${STATUS_COLORS[statusKey] || "text-gray-500 bg-gray-100"}`}>
+            <span className={`shrink-0 px-1.5 py-0.5 text-xs font-medium rounded-full ${STATUS_COLORS[statusKey] || "text-gray-500 bg-gray-100"}`}>
               {STATUS_LABELS[statusKey] || statusKey}
             </span>
           )}
         </div>
         {/* 第二行：账号 + 类型 + 来源 */}
         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-          <span className={`text-[10px] px-1 py-px rounded font-medium ${
+          <span className={`text-xs px-1 py-px rounded font-medium ${
             proxy.direction ? "text-blue-600 bg-blue-50" : "text-purple-600 bg-purple-50"
           }`}>
             {proxy.direction ? "直连" : "代理"}
           </span>
           {sourceKey && (
-            <span className="text-[10px] text-gray-400 bg-gray-100 px-1 py-px rounded">
+            <span className="text-xs text-gray-400 bg-gray-100 px-1 py-px rounded">
               {SOURCE_LABELS[sourceKey] || sourceKey}
             </span>
           )}

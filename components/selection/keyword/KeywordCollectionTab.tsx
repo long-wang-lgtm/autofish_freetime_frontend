@@ -74,7 +74,7 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
       {/* 左侧：关键词列表 */}
       <div className="col-span-2 space-y-3">
         <div className="bg-white rounded-xl p-3.5 shadow-sm border border-gray-200">
-          <div className="pb-2.5 border-b border-gray-100">
+          <div className="pb-2 border-b border-gray-100">
             <h3 className="font-semibold text-gray-900">关键词列表</h3>
             <p className="text-xs text-gray-400 mt-0.5">管理搜索关键词</p>
           </div>
@@ -86,7 +86,7 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
               placeholder="搜索关键词"
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100"
+              className="w-full pl-8 pr-3 py-1 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100"
             />
           </div>
 
@@ -133,7 +133,7 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
         <button
           onClick={handleTrigger}
           disabled={triggering || keywords.length === 0}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50"
         >
           <Play className="w-3.5 h-3.5" />
           {triggering ? '采集中...' : '触发采集'}
@@ -166,7 +166,7 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
                   {products.map(p => (
                     <div
                       key={p.id}
-                      className="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-4 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       {/* 商品信息 */}
                       <div className="flex-1 min-w-0">

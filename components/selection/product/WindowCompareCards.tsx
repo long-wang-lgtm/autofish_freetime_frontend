@@ -112,19 +112,19 @@ export function WindowCompareCards({
         <table className="w-full text-xs">
           <thead>
             <tr className="text-gray-700 border-b border-gray-100">
-              <th className="text-left py-1.5 px-1 font-medium"></th>
-              <th className="text-center py-1.5 px-2 font-medium">
+              <th className="text-left py-1 px-1 font-medium"></th>
+              <th className="text-center py-1 px-2 font-medium">
                 D7 ({fetchCountLabel(d7.fetch_count)})
               </th>
-              <th className="text-center py-1.5 px-2 font-medium">
+              <th className="text-center py-1 px-2 font-medium">
                 D3 ({fetchCountLabel(d3.fetch_count)})
               </th>
-              <th className="text-center py-1.5 px-1 text-gray-600">vs D7</th>
-              <th className="text-center py-1.5 px-2 font-medium">
+              <th className="text-center py-1 px-1 text-gray-600">vs D7</th>
+              <th className="text-center py-1 px-2 font-medium">
                 D1 ({fetchCountLabel(d1.fetch_count)})
               </th>
-              <th className="text-center py-1.5 px-1 text-gray-600">vs D3</th>
-              <th className="text-center py-1.5 px-2 font-semibold text-gray-900">D7→D1 总Δ</th>
+              <th className="text-center py-1 px-1 text-gray-600">vs D3</th>
+              <th className="text-center py-1 px-2 font-semibold text-gray-900">D7→D1 总Δ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">

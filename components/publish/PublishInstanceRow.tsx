@@ -133,7 +133,7 @@ export const PublishInstanceRow = memo(function PublishInstanceRow({
                   e.stopPropagation()
                   onImageDelete(item.id, idx)
                 }}
-                className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center leading-none text-[9px]"
+                className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center leading-none text-xs"
               >
                 ✕
               </button>

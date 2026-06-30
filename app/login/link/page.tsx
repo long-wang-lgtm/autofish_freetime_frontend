@@ -52,8 +52,8 @@ export default function LinkLoginPage() {
   if (!token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
-          <h1 className="text-xl font-bold text-gray-900 mb-2">无效链接</h1>
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center">
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">无效链接</h1>
           <p className="text-sm text-gray-500">缺少 token 参数，请检查链接是否完整</p>
         </div>
       </div>
@@ -64,10 +64,10 @@ export default function LinkLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         <div className="p-6 text-center border-b bg-gradient-to-r from-purple-50 to-fuchsia-50">
-          <h1 className="text-xl font-bold text-gray-900">扫码登录</h1>
+          <h1 className="text-xl font-semibold text-gray-900">扫码登录</h1>
           <p className="text-sm text-gray-500 mt-1">请扫描下方二维码登录闲鱼</p>
         </div>
-        <div className="p-8 flex flex-col items-center">
+        <div className="p-6 flex flex-col items-center">
           <QrCodeDisplay
             qrImage={qrImage}
             scanStatus={scanStatus}

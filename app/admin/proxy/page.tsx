@@ -198,12 +198,12 @@ function ProxyBindingsPanel({ open, onClose, proxyId }: { open: boolean; onClose
           {accounts.map(a => (
             <div key={a.uid} className="p-3 border rounded-lg bg-white hover:shadow-sm transition-shadow">
               <div className="font-medium text-sm text-gray-900 truncate" title={a.name ?? ""}>{a.name || "未命名"}</div>
-              <div className="text-[10px] text-gray-400 font-mono mt-0.5 truncate">{a.uid}</div>
+              <div className="text-xs text-gray-400 font-mono mt-0.5 truncate">{a.uid}</div>
               <div className="flex items-center gap-2 mt-2">
-                <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded-full ${ACCOUNT_STATUS_COLORS[a.status ?? 0] || "text-gray-500 bg-gray-100"}`}>
+                <span className={`px-1.5 py-0.5 text-xs font-medium rounded-full ${ACCOUNT_STATUS_COLORS[a.status ?? 0] || "text-gray-500 bg-gray-100"}`}>
                   {ACCOUNT_STATUS_LABELS[a.status ?? 0] || "未知"}
                 </span>
-                {a.isPro ? <span className="text-[10px] text-amber-600 bg-amber-50 px-1 py-0.5 rounded font-medium">Pro</span> : null}
+                {a.isPro ? <span className="text-xs text-amber-600 bg-amber-50 px-1 py-0.5 rounded font-medium">Pro</span> : null}
               </div>
             </div>
           ))}
@@ -268,7 +268,7 @@ export default function AdminProxyPage() {
     <div className="space-y-4">
       {/* 标题 */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2"><Shield className="w-5 h-5 text-blue-600" /><h1 className="text-xl font-bold text-gray-900">代理设置</h1></div>
+        <div className="flex items-center gap-2"><Shield className="w-5 h-5 text-blue-600" /><h1 className="text-xl font-semibold text-gray-900">代理设置</h1></div>
         <div className="flex items-center gap-2">
           <button onClick={() => fetchProxies(page)} disabled={loading} className="flex items-center gap-1 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"><RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />刷新</button>
           <button onClick={() => setShowCreate(true)} className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"><Plus className="w-4 h-4" />添加代理</button>
@@ -295,7 +295,7 @@ export default function AdminProxyPage() {
       {loading && <div className="flex items-center justify-center py-12"><LoadingSpinner size="lg" /></div>}
       {error && !loading && <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">加载失败: {error}</div>}
       {!loading && !error && proxies.length === 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center"><Shield className="w-12 h-12 mx-auto text-gray-400 mb-4" /><h3 className="text-lg font-medium text-gray-900 mb-1">暂无代理</h3><p className="text-sm text-gray-500">点击上方按钮添加第一个代理</p></div>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center"><Shield className="w-12 h-12 mx-auto text-gray-400 mb-4" /><h3 className="text-lg font-medium text-gray-900 mb-1">暂无代理</h3><p className="text-sm text-gray-500">点击上方按钮添加第一个代理</p></div>
       )}
 
       {/* 表格 — 无操作列，状态点击切换，店铺只展示数量 */}
@@ -327,7 +327,7 @@ export default function AdminProxyPage() {
 
                 {/* 类型 */}
                 <div className="col-span-1">
-                  <span className={`inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full ${proxy.direction ? "text-blue-600 bg-blue-50" : "text-purple-600 bg-purple-50"}`}>
+                  <span className={`inline-block px-1.5 py-0.5 text-xs font-medium rounded-full ${proxy.direction ? "text-blue-600 bg-blue-50" : "text-purple-600 bg-purple-50"}`}>
                     {proxy.direction ? "直连" : "代理"}
                   </span>
                 </div>

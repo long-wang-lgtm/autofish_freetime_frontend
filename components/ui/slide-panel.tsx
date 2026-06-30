@@ -44,7 +44,7 @@ export function SlidePanel({ open, onClose, title, subtitle, width = "w-96", chi
         } flex flex-col`}
       >
         {/* 标题栏 */}
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <div className="px-4 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <div className="min-w-0">
             <h3 className="text-lg font-semibold truncate">{title}</h3>
             {subtitle && <p className="text-xs text-gray-500 mt-0.5 truncate">{subtitle}</p>}

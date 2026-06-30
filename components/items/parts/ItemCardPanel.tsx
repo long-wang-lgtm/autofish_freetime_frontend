@@ -50,7 +50,7 @@ export function ItemCardPanel({ onInsert }: ItemCardPanelProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="搜索商品..."
-          className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs"
+          className="w-full px-2.5 py-1 border border-gray-300 rounded-md text-xs"
         />
         <div className="max-h-44 overflow-y-auto space-y-1">
           {isLoading ? (
@@ -66,7 +66,7 @@ export function ItemCardPanel({ onInsert }: ItemCardPanelProps) {
                 <div className="font-medium text-gray-900 truncate text-xs">
                   {item.title || "无标题"}
                 </div>
-                <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-500">
+                <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
                   <span>ID: {item.gid.slice(0, 10)}...</span>
                   <span>¥{item.price}</span>
                 </div>

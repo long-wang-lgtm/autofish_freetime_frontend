@@ -41,7 +41,7 @@ export function DateListSidebar({ dates, dataCounts, activeDate, onDateSelect }:
             <button
               key={date}
               onClick={() => onDateSelect(date)}
-              className={`w-full px-3 py-2.5 text-left rounded-lg transition-all ${
+              className={`w-full px-3 py-2 text-left rounded-lg transition-all ${
                 isActive ? 'bg-blue-50' : 'hover:bg-gray-50'
               }`}
             >

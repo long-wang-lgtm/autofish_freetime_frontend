@@ -103,12 +103,12 @@ export function MobileProductCard({
       </div>
 
       {/* === 信息栏（账号 → GID → 状态 → 价格 → 时间） === */}
-      <div className="px-4 pb-2.5 flex items-center gap-1.5 text-[11px] text-gray-400 flex-wrap">
+      <div className="px-4 pb-2 flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
         <span className="truncate max-w-[80px]">{item.account.name}</span>
         <span className="text-gray-300">|</span>
         <span className="font-mono text-gray-500 break-all">{item.gid}</span>
         <span className="text-gray-300">|</span>
-        <span className={`px-1.5 py-px rounded-full text-[10px] font-medium flex-shrink-0 ${status.color}`}>
+        <span className={`px-1.5 py-px rounded-full text-xs font-medium flex-shrink-0 ${status.color}`}>
           {status.text}
         </span>
         <span className="text-gray-300">|</span>
@@ -127,7 +127,7 @@ export function MobileProductCard({
             <button
               key={cfg.key}
               onClick={onKeywordClick}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
             >
               <span className="text-gray-600">{cfg.icon} {cfg.label}</span>
               <span className="flex items-center gap-1">
@@ -186,7 +186,7 @@ export function MobileProductCard({
                   <button
                     key={cfg.key}
                     onClick={onKeywordClick}
-                    className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
                   >
                     <span className="text-gray-400">{cfg.icon} {cfg.label}</span>
                     <span className="flex items-center gap-1">
@@ -239,7 +239,7 @@ function ConfigRow({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+      className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
     >
       <span className={hasValue ? "text-gray-600" : "text-gray-400"}>
         {icon} {label}

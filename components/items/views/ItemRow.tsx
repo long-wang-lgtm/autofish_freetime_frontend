@@ -46,7 +46,7 @@ export function ItemRow({
           >
             {item.title || "无标题"}
           </button>
-          <div className="flex items-center gap-1 mt-0.5 text-gray-400 truncate text-[11px]">
+          <div className="flex items-center gap-1 mt-0.5 text-gray-400 truncate text-sm">
             <span title={item.gid} className="min-w-[85px]">{item.gid}</span>
             <span className="text-gray-300">|</span>
             <span title={item.account.uid} className="truncate">{item.account.name}</span>
@@ -59,12 +59,12 @@ export function ItemRow({
         </div>
 
         {/* 发布时间 */}
-        <div className="col-span-1 text-center text-[11px] text-gray-500">
+        <div className="col-span-1 text-center text-sm text-gray-500">
           {formatPublishTime(item.publishTime)}
         </div>
 
         {/* 浏览/想要/收藏 */}
-        {/* <div className="col-span-1 text-center text-[11px] leading-tight">
+        {/* <div className="col-span-1 text-center text-sm leading-tight">
           <div>{item.lookCount} / <span className="text-red-400">{item.wantCount}</span> / {item.collectCount}</div>
           <div className="text-gray-400">
             {item.collectCount > 0 ? (item.wantCount / item.collectCount).toFixed(1) : "-"}

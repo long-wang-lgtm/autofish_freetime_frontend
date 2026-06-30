@@ -108,7 +108,7 @@ export default function NotificationTab({
                 <div className={`${isMobile ? 'text-xl' : 'text-3xl'} flex-shrink-0`}>🔔</div>
                 <div className="min-w-0 flex-1">
                   <div className={`font-medium text-gray-900 ${isMobile ? 'text-xs' : ''}`}>飞书通知</div>
-                  <div className={`text-gray-500 truncate ${isMobile ? 'text-[10px] max-w-[140px]' : 'text-sm max-w-md'}`}>
+                  <div className={`text-gray-500 truncate ${isMobile ? 'text-xs max-w-[140px]' : 'text-sm max-w-md'}`}>
                     {config?.webhook || '未配置'}
                   </div>
                 </div>
@@ -135,7 +135,7 @@ export default function NotificationTab({
                 <button
                   onClick={() => openDrawer(config)}
                   className={`bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium ${
-                    isMobile ? 'px-3 py-1.5 text-[10px]' : 'px-4 py-2 text-sm'
+                    isMobile ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-sm'
                   }`}
                 >
                   配置
@@ -156,7 +156,7 @@ export default function NotificationTab({
             <button
               onClick={handleSave}
               disabled={notificationMutation.isPending || !webhookInput.trim()}
-              className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {notificationMutation.isPending ? '保存中...' : '保存'}
             </button>
@@ -166,7 +166,7 @@ export default function NotificationTab({
             {/* webhook 输入 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">飞书 Webhook 地址</label>
-              <input type="text" value={webhookInput} onChange={(e) => setWebhookInput(e.target.value)} placeholder="请输入飞书机器人 Webhook 地址" className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+              <input type="text" value={webhookInput} onChange={(e) => setWebhookInput(e.target.value)} placeholder="请输入飞书机器人 Webhook 地址" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
             </div>
             {/* is_active 开关 */}
             <div className="flex items-center justify-between">
@@ -191,7 +191,7 @@ export default function NotificationTab({
     "order": "",
     "content": ""
 }`}</pre>
-              <button onClick={copyJsonMessage} className="w-full px-4 py-2.5 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">
+              <button onClick={copyJsonMessage} className="w-full px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">
                 复制 JSON 消息
               </button>
             </div>
@@ -203,7 +203,7 @@ export default function NotificationTab({
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">飞书 Webhook 地址</label>
-                <input type="text" value={webhookInput} onChange={(e) => setWebhookInput(e.target.value)} placeholder="请输入飞书机器人 Webhook 地址" className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm" />
+                <input type="text" value={webhookInput} onChange={(e) => setWebhookInput(e.target.value)} placeholder="请输入飞书机器人 Webhook 地址" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm" />
               </div>
               <div className="flex items-center justify-between">
                 <div>
@@ -223,11 +223,11 @@ export default function NotificationTab({
     "order": "",
     "content": ""
 }`}</pre>
-                <button onClick={copyJsonMessage} className="w-full px-4 py-2.5 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">复制 JSON 消息</button>
+                <button onClick={copyJsonMessage} className="w-full px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">复制 JSON 消息</button>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-100 flex-shrink-0">
-              <button onClick={handleSave} disabled={notificationMutation.isPending || !webhookInput.trim()} className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium">
+              <button onClick={handleSave} disabled={notificationMutation.isPending || !webhookInput.trim()} className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium">
                 {notificationMutation.isPending ? '保存中...' : '保存'}
               </button>
             </div>

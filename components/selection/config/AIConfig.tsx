@@ -42,7 +42,7 @@ export function AIConfig() {
             <input
               type="number"
               defaultValue={20}
-              className="w-16 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+              className="w-16 px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
             />
             <span className="text-sm text-gray-400">件/天 以上自动分析</span>
           </div>
@@ -54,7 +54,7 @@ export function AIConfig() {
           <input
             type="time"
             defaultValue="08:00"
-            className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+            className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
           />
           <span className="text-sm text-gray-400">每天自动分析一次</span>
         </div>
