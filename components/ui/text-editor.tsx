@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, forwardRef } from "react"
 import { useIsMobile } from "@/hooks/useIsMobile"
 
 type Device = "pc" | "mobile-landscape" | "mobile-portrait"
@@ -36,13 +36,13 @@ function resolveRows(
   return defaults[device]
 }
 
-export function TextEditor({
+export const TextEditor = forwardRef<HTMLTextAreaElement, TextEditorProps>(function TextEditor({
   rows,
   device: deviceProp,
   className,
   maxHeight,
   ...rest
-}: TextEditorProps) {
+}, ref) {
   const isMobile = useIsMobile()
   const [isPortrait, setIsPortrait] = useState(true)
 
@@ -68,10 +68,11 @@ export function TextEditor({
 
   return (
     <textarea
+      ref={ref}
       rows={resolvedRows}
       style={maxHeight ? { maxHeight } : undefined}
       className={`w-full text-sm border border-gray-300 rounded-lg focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 ${padding} ${className ?? ""}`}
       {...rest}
     />
   )
-}
+})
