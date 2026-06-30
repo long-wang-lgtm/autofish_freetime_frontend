@@ -14,15 +14,17 @@ export const GROUP_STYLE: Record<ColumnGroup, { bar: string }> = {
 }
 
 export interface ColumnDef {
-  key: ProductSortKey
+  key: ProductSortKey | 'anomalies'
   label: string
   group: ColumnGroup
   groupStart: boolean
   dataBar?: boolean
+  /** 非排序列（如异常标记列），点击表头不触发排序 */
+  unsortable?: boolean
 }
 
 /** 表格 Grid 列模板，表头 / 分组色条 / 数据行共用 */
-export const GRID_COLS = '3fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 2fr 2fr 2fr 40px'
+export const GRID_COLS = '3fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 2fr 2fr 2fr 90px 40px'
 
 export const COLUMNS: ColumnDef[] = [
   // ── 📦 商品标识 (identity) ──
@@ -43,4 +45,6 @@ export const COLUMNS: ColumnDef[] = [
   { key: 'wantTrend' as ProductSortKey,       label: '想要趋势',  group: 'trend',      groupStart: true },
   { key: 'lookTrend' as ProductSortKey,       label: '浏览趋势',  group: 'trend',      groupStart: false },
   { key: 'collectTrend' as ProductSortKey,    label: '收藏趋势',  group: 'trend',      groupStart: false },
+  // ── 🚨 异常标记 ──
+  { key: 'anomalies',       label: '异常',     group: 'core',       groupStart: false, unsortable: true },
 ]

@@ -12,13 +12,24 @@ import {
   dtoToProductItem,
   getProductSortValue,
   type ProductSortKey,
+  type ProductItem,
 } from '@/lib/api/selection'
-import { ChevronUp, ChevronDown, Search, Trash2, ChevronRight } from 'lucide-react'
+import { ChevronUp, ChevronDown, Search, Trash2, ChevronRight, Filter } from 'lucide-react'
 import { MiniTrendChart } from '@/components/selection/product/MiniTrendChart'
 import { ProductDiagnosticDrawer } from '@/components/selection/product/ProductDiagnosticDrawer'
-import { STATUS_MAP } from '@/components/selection/product/constants'
+import { ProductFocusCard } from '@/components/selection/product/ProductFocusCard'
+import {
+  STATUS_MAP,
+  ANOMALY_CATEGORY_MAP,
+  ANOMALY_DISPLAY,
+  type AnomalyDisplayCategory,
+} from '@/components/selection/product/constants'
 import { COLUMNS, GRID_COLS, GROUP_STYLE, type ColumnDef } from '@/components/selection/product/columnDefs'
+import { detectAnomalies } from '@/components/selection/product/hourlyTrendUtils'
 import { fmtPrice, fmtPercent, fmtGrowth, fmtAcceleration } from '@/lib/utils/format'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 // ===== 格式化工具（仅本文件使用） =====
 
@@ -36,6 +47,30 @@ function getBarPct(val: number, max: number): string {
   return max > 0 && val > 0 ? `${Math.max(3, Math.round((val / max) * 100))}%` : '0%'
 }
 
+/** 从 ProductItem 提取归类后的异常类别列表（去重，按展示优先级排序） */
+function getAnomalyCategories(product: ProductItem): AnomalyDisplayCategory[] {
+  const alerts = detectAnomalies(product.windowsMetrics, product.hourlyTrend)
+
+  // 额外检测 acceleration 升温信号（detectAnomalies 不包含此逻辑）
+  if (product.acceleration != null && product.acceleration > 0.3) {
+    alerts.push({
+      type: 'acceleration_heat',
+      severity: 'red',
+      message: `升温信号 +${(product.acceleration * 100).toFixed(0)}%`,
+    })
+  }
+
+  const categories = new Set<AnomalyDisplayCategory>()
+  for (const a of alerts) {
+    const cat = ANOMALY_CATEGORY_MAP[a.type]
+    if (cat) categories.add(cat)
+  }
+
+  // 按严重度排序：heat > price > inventory
+  const order: AnomalyDisplayCategory[] = ['heat', 'price', 'inventory']
+  return order.filter(c => categories.has(c))
+}
+
 // ===== 组件 =====
 
 export function ProductMonitorTab() {
@@ -45,6 +80,8 @@ export function ProductMonitorTab() {
   const [editingPriority, setEditingPriority] = useState<string | null>(null)
   const [aiReportOpen, setAiReportOpen] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
+  const [anomalyFilterOn, setAnomalyFilterOn] = useState(false)
+  const isMobile = useIsMobile()
   const queryClient = useQueryClient()
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -122,6 +159,15 @@ export function ProductMonitorTab() {
     [items, logMap]
   )
 
+  // 预计算每个商品的异常类别（供列表列和筛选使用）
+  const anomalyMap = useMemo(() => {
+    const map = new Map<string, AnomalyDisplayCategory[]>()
+    for (const p of products) {
+      map.set(p.id, getAnomalyCategories(p))
+    }
+    return map
+  }, [products])
+
   const filtered = useMemo(() => {
     let result = products
     if (searchText) {
@@ -134,6 +180,12 @@ export function ProductMonitorTab() {
           p.keywords.some(k => k.toLowerCase().includes(q))
       )
     }
+    if (anomalyFilterOn) {
+      result = result.filter(p => {
+        const cats = anomalyMap.get(p.id)
+        return cats && cats.length > 0
+      })
+    }
     return [...result].sort((a, b) => {
       const va = getProductSortValue(a, sortKey)
       const vb = getProductSortValue(b, sortKey)
@@ -144,7 +196,7 @@ export function ProductMonitorTab() {
       const nb = typeof vb === 'number' ? vb : 0
       return sortDir === 'asc' ? na - nb : nb - na
     })
-  }, [products, searchText, sortKey, sortDir])
+  }, [products, searchText, sortKey, sortDir, anomalyFilterOn, anomalyMap])
 
   // 数据条最大值
   const dataBarMax = useMemo(() => ({
@@ -357,10 +409,36 @@ export function ProductMonitorTab() {
         )
       }
 
+      // ── 异常标记 ──
+      case 'anomalies': {
+        const cats = anomalyMap.get(p.id) ?? []
+        if (cats.length === 0) return <span className="text-xs text-gray-400">-</span>
+        const visible = cats.slice(0, 2)
+        const overflow = cats.length - 2
+        return (
+          <div className="flex flex-col items-center gap-0.5">
+            {visible.map(cat => {
+              const d = ANOMALY_DISPLAY[cat]
+              return (
+                <span
+                  key={cat}
+                  className={`inline-flex items-center px-1 py-0.5 rounded text-[11px] font-medium leading-none ${d.bg} ${d.text}`}
+                >
+                  {d.label}
+                </span>
+              )
+            })}
+            {overflow > 0 && (
+              <span className="text-[11px] text-gray-400 leading-none">+{overflow}</span>
+            )}
+          </div>
+        )
+      }
+
       default:
         return null
     }
-  }, [dataBarMax, editingPriority, handleActivate, handleCancel, handleStored, handlePriorityChange])
+  }, [dataBarMax, editingPriority, handleActivate, handleCancel, handleStored, handlePriorityChange, anomalyMap])
 
   // ===== 排序图标 =====
 
@@ -388,142 +466,169 @@ export function ProductMonitorTab() {
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-shadow"
             />
           </div>
+          {/* 异常筛选 */}
+          <button
+            onClick={() => setAnomalyFilterOn(prev => !prev)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              anomalyFilterOn
+                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:text-gray-700'
+            }`}
+            aria-label="仅显示有异常的商品"
+          >
+            <Filter className="w-3 h-3" />
+            异常
+          </button>
           <div className="ml-auto text-sm text-gray-500">
             监控中 <span className="font-semibold text-gray-700">{items.length}</span> 件
           </div>
         </div>
       </div>
 
-      {/* ── 数据表格 ── */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="max-h-[calc(100vh-280px)] overflow-auto custom-scrollbar">
-          {isLoading ? (
-            <p className="text-center py-12 text-gray-400">加载中...</p>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-4xl mb-3">📦</div>
-              <p className="text-gray-500 text-sm">
-                {searchText ? '无匹配商品，试试其他关键词' : '暂无监控商品'}
-              </p>
-              {!searchText && (
-                <p className="text-gray-400 text-xs mt-1.5">
-                  请在「关键词采集」中添加关键词并触发采集
-                </p>
-              )}
-            </div>
-          ) : (
-            <div>
-              <div className="min-w-[1400px]">
-                {/* ── 表头 ── */}
-                <div
-                  className="grid px-4 pt-3 pb-3 text-sm font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10 gap-x-2"
-                  style={{ gridTemplateColumns: GRID_COLS }}
-                >
-                  {COLUMNS.map(col => {
-                    const isActive = sortKey === col.key
-                    const isGroupStart = col.groupStart && col.group !== 'identity'
-                    const isIdentity = col.group === 'identity'
-                    return (
-                      <button
-                        key={col.key}
-                        onClick={() => handleSort(col.key as ProductSortKey)}
-                        className={`
-                          group flex items-center gap-1
-                          transition-all duration-150
-                          ${isIdentity ? 'justify-start sticky left-0 z-20 -ml-5 pl-5' : 'justify-center'}
-                          ${isActive
-                            ? 'text-blue-700 bg-blue-50/60 rounded-md -mx-0.5 px-0.5'
-                            : isIdentity
-                              ? 'bg-gray-50 hover:text-gray-700'
-                              : 'hover:text-gray-700'
-                          }
-                        `}
-                      >
-                        {!isIdentity && <SortIcon colKey={col.key as ProductSortKey} />}
-                        <span>{col.label}</span>
-                        {isIdentity && <SortIcon colKey={col.key as ProductSortKey} />}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* ── 分组色条（表头下方）── */}
-                <div
-                  className="grid px-4 pb-1 border-b border-gray-100 sticky top-[34px] z-10 bg-white gap-x-2"
-                  style={{ gridTemplateColumns: GRID_COLS }}
-                >
-                  {COLUMNS.map(col => {
-                    const isGroupStart = col.groupStart && col.group !== 'identity'
-                    const isIdentity = col.group === 'identity'
-                    return (
-                      <div key={`bar-${col.key}`} className={isIdentity ? 'sticky left-0 z-20 bg-white -ml-5 pl-5' : ''}>
-                        {col.group !== 'identity' && (
-                          <div className={`h-[3px] rounded-t-sm ${GROUP_STYLE[col.group].bar}`} />
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* ── 数据行 ── */}
-                <div className="divide-y divide-gray-50">
-                  {filtered.map(p => {
-                    const isSelected = selectedProductId === p.id
-                    return (
-                    <div
-                      key={p.id}
-                      onClick={() => setSelectedProductId(prev => prev === p.id ? null : p.id)}
-                      className={`group grid px-4 py-[12px] items-center transition-all duration-200 cursor-pointer gap-x-2 ${
-                        isSelected
-                          ? 'bg-blue-50/60 hover:bg-blue-50/70'
-                          : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent'
-                      }${p.monitorStatus != null && p.monitorStatus !== 1 ? ' opacity-60' : ''}`}
-                      style={{ gridTemplateColumns: GRID_COLS }}
-                    >
-                      {COLUMNS.map(col => {
-                        const isIdentity = col.group === 'identity'
-                        return (
-                          <div
-                            key={col.key}
-                            className={
-                              isIdentity
-                                ? `text-left sticky left-0 z-10 -ml-5 pl-5 ${
-                                    isSelected
-                                      ? 'bg-blue-100 group-hover:bg-blue-200'
-                                      : 'bg-white group-hover:bg-blue-50'
-                                  }`
-                                : 'text-center flex items-center justify-center'
-                            }
-                          >
-                            {renderCell(p, col)}
-                          </div>
-                        )
-                      })}
-
-                      {/* 行操作 */}
-                      <div className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleRemove(p.id) }}
-                          className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="删除"
+      {/* ── 数据表格 / 移动端焦点卡片 ── */}
+      {isMobile ? (
+        /* 移动端：焦点卡片视图（一次展示一条完整记录） */
+        <ProductFocusCard
+          products={filtered}
+          isLoading={isLoading}
+          anomalyMap={anomalyMap}
+          onSelectProduct={setSelectedProductId}
+          selectedProductId={selectedProductId}
+        />
+      ) : (
+        /* 桌面端：完整数据表格 */
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="max-h-[calc(100vh-280px)] overflow-auto custom-scrollbar">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <LoadingSpinner size="md" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <EmptyState
+                title={searchText ? '无匹配商品' : '暂无监控商品'}
+                description={searchText ? '试试其他关键词' : '请在「关键词采集」中添加关键词并触发采集'}
+                size="sm"
+              />
+            ) : (
+              <div>
+                <div className="min-w-[1400px]">
+                  {/* ── 表头 ── */}
+                  <div
+                    className="grid px-4 pt-3 pb-3 text-sm font-medium text-gray-500 bg-gray-50 select-none sticky top-0 z-10 gap-x-2"
+                    style={{ gridTemplateColumns: GRID_COLS }}
+                  >
+                    {COLUMNS.map(col => {
+                      const isActive = sortKey === col.key
+                      const isIdentity = col.group === 'identity'
+                      const isUnsortable = col.unsortable === true
+                      return isUnsortable ? (
+                        <div
+                          key={col.key}
+                          className="flex items-center justify-center text-gray-500"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>{col.label}</span>
+                        </div>
+                      ) : (
+                        <button
+                          key={col.key}
+                          onClick={() => handleSort(col.key as ProductSortKey)}
+                          className={`
+                            group flex items-center gap-1
+                            transition-all duration-150
+                            ${isIdentity ? 'justify-start sticky left-0 z-20 -ml-5 pl-5' : 'justify-center'}
+                            ${isActive
+                              ? 'text-blue-700 bg-blue-50/60 rounded-md -mx-0.5 px-0.5'
+                              : isIdentity
+                                ? 'bg-gray-50 hover:text-gray-700'
+                                : 'hover:text-gray-700'
+                            }
+                          `}
+                        >
+                          {!isIdentity && <SortIcon colKey={col.key as ProductSortKey} />}
+                          <span>{col.label}</span>
+                          {isIdentity && <SortIcon colKey={col.key as ProductSortKey} />}
                         </button>
-                      </div>
-                    </div>
-                  ); })}
+                      )
+                    })}
+                  </div>
 
-                  {/* 滚动哨兵：可见时自动加载下一页 */}
-                  <div ref={sentinelRef} className="h-px" />
-                  {isFetchingNextPage && (
-                    <div className="text-center py-3 text-xs text-gray-400">加载更多...</div>
-                  )}
+                  {/* ── 分组色条（表头下方）── */}
+                  <div
+                    className="grid px-4 pb-1 border-b border-gray-100 sticky top-[34px] z-10 bg-white gap-x-2"
+                    style={{ gridTemplateColumns: GRID_COLS }}
+                  >
+                    {COLUMNS.map(col => {
+                      const isIdentity = col.group === 'identity'
+                      return (
+                        <div key={`bar-${col.key}`} className={isIdentity ? 'sticky left-0 z-20 bg-white -ml-5 pl-5' : ''}>
+                          {col.group !== 'identity' && (
+                            <div className={`h-[3px] rounded-t-sm ${GROUP_STYLE[col.group].bar}`} />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* ── 数据行 ── */}
+                  <div className="divide-y divide-gray-50">
+                    {filtered.map(p => {
+                      const isSelected = selectedProductId === p.id
+                      return (
+                      <div
+                        key={p.id}
+                        onClick={() => setSelectedProductId(prev => prev === p.id ? null : p.id)}
+                        className={`group grid px-4 py-[12px] items-center transition-all duration-200 cursor-pointer gap-x-2 ${
+                          isSelected
+                            ? 'bg-blue-50/60 hover:bg-blue-50/70'
+                            : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent'
+                        }${p.monitorStatus != null && p.monitorStatus !== 1 ? ' opacity-60' : ''}`}
+                        style={{ gridTemplateColumns: GRID_COLS }}
+                      >
+                        {COLUMNS.map(col => {
+                          const isIdentity = col.group === 'identity'
+                          return (
+                            <div
+                              key={col.key}
+                              className={
+                                isIdentity
+                                  ? `text-left sticky left-0 z-10 -ml-5 pl-5 ${
+                                      isSelected
+                                        ? 'bg-blue-100 group-hover:bg-blue-200'
+                                        : 'bg-white group-hover:bg-blue-50'
+                                    }`
+                                  : 'text-center flex items-center justify-center'
+                              }
+                            >
+                              {renderCell(p, col)}
+                            </div>
+                          )
+                        })}
+
+                        {/* 行操作 */}
+                        <div className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRemove(p.id) }}
+                            className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            title="删除"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ); })}
+
+                    {/* 滚动哨兵：可见时自动加载下一页 */}
+                    <div ref={sentinelRef} className="h-px" />
+                    {isFetchingNextPage && (
+                      <div className="text-center py-3 text-xs text-gray-400">加载更多...</div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── AI 分析报告（折叠）── */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
