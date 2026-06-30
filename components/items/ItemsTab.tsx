@@ -94,11 +94,11 @@ export function ItemsTab({
           <div ref={listRef} className="flex-1 overflow-auto hidden md:block min-h-[200px]">
             {/* 表头 */}
             <div
-              className="sticky top-0 z-10 grid gap-2 px-4 py-3 bg-gray-100 border-b border-gray-100 text-xs font-medium"
+              className="sticky top-0 z-10 grid gap-2 px-0 py-2 bg-gray-100 border-b border-gray-100 text-sm font-medium"
               style={{ gridTemplateColumns: ITEMS_GRID_COLS }}
             >
               <SortHeader className="col-span-2" field="title" label="商品信息" orderBy={orderBy} asc={asc} onClick={onSortChange} />
-              <SortHeader className="col-span-1 text-right" field="price" label="价格" orderBy={orderBy} asc={asc} onClick={onSortChange} />
+              <SortHeader className="col-span-1" field="price" label="价格" orderBy={orderBy} asc={asc} onClick={onSortChange} />
               <SortHeader className="col-span-1 text-center" field="publishTime" label="发布时间" orderBy={orderBy} asc={asc} onClick={onSortChange} />
               <div className="col-span-1 text-center text-gray-600">AI回复</div>
               <div className="col-span-1 text-center text-gray-600">自动发货</div>

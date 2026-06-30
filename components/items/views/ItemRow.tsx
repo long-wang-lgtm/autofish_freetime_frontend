@@ -57,7 +57,7 @@ export function ItemRow({
         </div>
 
         {/* 价格 */}
-        <div className="col-span-1 text-right">
+        <div className="col-span-1 text-center">
           <span className="text-orange-600 font-semibold">¥{item.price}</span>
         </div>
 

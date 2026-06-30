@@ -33,16 +33,16 @@ function useTabSize() {
 /** 各尺寸档位的样式：outer = 外层容器，button = 单个 tab 按钮 */
 const SIZE_STYLES = {
   pc: {
-    outer: 'gap-0',
-    button: 'pl-1 pr-3 py-1 text-base',
+    outer: 'gap-3',
+    button: 'px-1 py-1 text-base',
   },
   'landscape-mobile': {
-    outer: 'gap-1 overflow-x-auto hide-scrollbar',
+    outer: 'gap-2 overflow-x-auto hide-scrollbar',
     button: 'px-1 py-1 text-xs whitespace-nowrap',
   },
   'portrait-mobile': {
-    outer: 'gap-1 overflow-x-auto hide-scrollbar',
-    button: 'px-1 py-1 text-sm whitespace-nowrap',
+    outer: 'gap-2 overflow-x-auto hide-scrollbar',
+    button: 'px-1 py-1 text-xs whitespace-nowrap',
   },
 } as const
 
