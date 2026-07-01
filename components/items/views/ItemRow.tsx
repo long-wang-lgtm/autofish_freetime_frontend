@@ -43,7 +43,7 @@ export function ItemRow({
         {/* 商品信息 */}
         <div className="col-span-2 min-w-0">
           <button
-            onClick={onEdit}
+            // onClick={onEdit}
             className="text-left hover:text-blue-600 hover:underline truncate block w-full text-sm text-gray-800 leading-snug"
             title={item.title || "无标题"}
           >
