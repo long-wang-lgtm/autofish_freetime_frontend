@@ -37,7 +37,7 @@ function ItemsPageContent() {
       {/* Tab 栏 */}
       <TabBar
         tabs={[
-          { key: "items", label: "商品管理" },
+          { key: "items", label: "配置管理" },
           { key: "rules", label: "回复规则" },
         ]}
         activeTab={activeTab}

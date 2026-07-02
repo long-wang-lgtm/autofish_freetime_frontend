@@ -108,7 +108,8 @@ export function ItemsTab({
               <div className="col-span-1 text-center text-gray-600">关键词回复</div>
               <div className="col-span-1 text-center text-gray-600">AI提示词</div>
               <div className="col-span-1 text-center text-gray-600">自动上架</div>
-              <div className="col-span-1 text-center text-gray-600">指令码</div>
+              {/* <div className="col-span-1 text-center text-gray-600">指令码</div> */}
+              <SortHeader className="col-span-1 text-center" field="sendCode" label="指令码" orderBy={orderBy} asc={asc} onClick={onSortChange} />
             </div>
 
             {/* 内容区域 */}
