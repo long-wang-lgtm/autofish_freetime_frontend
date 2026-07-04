@@ -31,6 +31,8 @@
 | `StatusBadge` | `ui/StatusBadge.tsx` | 统一状态标签，配置驱动色映射 | `status`, `config`, `size?` |
 | `ErrorBoundary` | `ui/error-boundary.tsx` | React 渲染异常捕获（Class Component） | `children` |
 | `Pagination` | `ui/pagination.tsx` | 统一分页控件 | `current`, `total`, `pageSize`, `onChange` |
+| `SearchToolbar` | `ui/SearchToolbar.tsx` | 筛选栏统一布局壳，children 自由组合 | `children`, `className?` |
+| `DataTable` | `ui/DataTable.tsx` | 列驱动 CSS Grid 表格，封装四态+排序+斑马纹+sticky表头 | `columns`, `data`, `gridTemplateColumns`, `stickyHeader?`, `orderBy?`, `asc?` |
 
 ## 认证组件 (`components/auth/`)
 
@@ -56,7 +58,7 @@
 ### 顶层
 | 组件 | 文件 | 用途 |
 |------|------|------|
-| `ItemsTab` | `items/ItemsTab.tsx` | 商品管理 Tab 内容（表格/卡片切换，含统计概览+表头排序） |
+| `ItemsTab` | `items/ItemsTab.tsx` | 商品管理 Tab 内容（DataTable 驱动桌面表格，移动端卡片切换，含统计概览+表头排序） |
 | `RulesTab` | `items/RulesTab.tsx` | 回复规则 Tab 内容（含统计卡片） |
 | `ItemsFilterBar` | `items/ItemsFilterBar.tsx` | 筛选栏入口（桌面/移动端自适应分发） |
 
