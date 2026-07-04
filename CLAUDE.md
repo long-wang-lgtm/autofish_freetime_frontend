@@ -62,7 +62,6 @@
 | `@.claude/rules/frontend-state.md` | 状态管理规范 | 使用 Zustand/React Query、拆分自定义 hook |
 | `@.claude/rules/frontend-error.md` | 错误处理规范 | 处理 API 错误、网络断开、ErrorBoundary、toast 通知 |
 | `@.claude/rules/frontend-form.md` | 表单处理规范 | 使用 react-hook-form + zod、表单校验、提交状态 |
-| `@.claude/rules/frontend-accessibility.md` | 无障碍最低要求 | 添加 aria-* 属性、键盘导航、焦点管理 |
 | `@.claude/rules/frontend-performance.md` | 性能检查清单 | 优化渲染/加载/打包、虚拟滚动、代码分割 |
 | `@.claude/docs/COMPONENTS.md` | 组件索引 | 查找已有组件、避免重复造轮子 |
 | `@.claude/docs/ROUTES.md` | 路由一览表 | 了解路由结构、添加新路由 |

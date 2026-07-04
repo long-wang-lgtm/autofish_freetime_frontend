@@ -45,7 +45,7 @@
 
 | URL | 页面名称 | 布局 | 关键组件 | API 模块 | Tab 参数 |
 |-----|----------|------|----------|----------|----------|
-| `/dashboard/accounts` | 账号管理 | DashboardLayout | `AccountRow`, `AccountCard`, `QrLoginModal`, `LinkLoginModal`, `LinkManagement` | `accounts.ts` | 无（单页） |
+| `/dashboard/accounts` | 账号管理 | DashboardLayout | `AccountRow`, `AccountCard`, `QrLoginModal`, `LinkLoginModal`, `LinkManagement`, `TabBar` | `accounts.ts` | `?tab=accounts`（预留扩展） |
 | `/dashboard/items` | 商品管理 + 回复规则 | DashboardLayout | `ItemsTab`, `RulesTab`, `useItemsPage` hook | `items.ts`, `keywords.ts` | `?tab=items`, `?tab=rules` |
 | `/dashboard/publish` | 商品发布 | DashboardLayout | `OpportunityLibrary`, `PublishWorkspace`, `EditorDrawer`, `ResizableDivider`, `MobileTabView` | `opportunities.ts`, `publish-items.ts`, `accounts.ts` | 无（单页，单 Tab） |
 | `/dashboard/selection` | 选品监控 | DashboardLayout | `KeywordCollectionTab`, `ProductMonitorTab`, `MerchantMonitorTab`, `SettingsDrawer` | `selection.ts` | `?tab=keyword`, `?tab=product`, `?tab=merchant` |
@@ -57,7 +57,7 @@
 
 #### 账号页特殊说明
 
-`/dashboard/accounts` 是唯一不使用 Tab 的 dashboard 页面，直接渲染账号表格/卡片。移动端使用 `window.innerWidth < 768` 自行检测（非 `useIsMobile` hook），桌面端表格、移动端卡片。
+`/dashboard/accounts` 使用 `TabBar variant="overline"`（当前单 Tab "账号管理"，预留后续扩展如"评价模板"）。桌面端表格、移动端卡片，统一使用 `useIsMobile()` 检测。
 
 ---
 
@@ -65,12 +65,12 @@
 
 | URL | 页面名称 | 布局 | 关键组件 | API 模块 | Tab 参数 |
 |-----|----------|------|----------|----------|----------|
-| `/admin` | 管理仪表盘 | AdminLayout | `StatCard`, `ImStatusChart`, `AccountPieChart`, `Pagination`（内联定义） | `admin/index.ts` → `dashboard.ts`, `users.ts`, `accounts.ts` | 内联 Tab：`users` / `accounts`（非 URL query） |
-| `/admin/accounts` | 管理员-账号管理 | AdminLayout | `Pagination`（内联定义）, `SlidePanel`, `ProxyItem`, `ImStatusChart`, `AccountPieChart` | `admin/index.ts` → `accounts.ts` | 无 |
-| `/admin/users` | 管理员-用户管理 | AdminLayout | `Pagination`（内联定义）, `SlidePanel`, `ProxyItem` | `admin/index.ts` → `users.ts` | 无 |
-| `/admin/proxy` | 管理员-代理管理 | AdminLayout | `Pagination`（内联定义）, `SlidePanel` | `admin/index.ts` → `proxy.ts` | 无 |
+| `/admin` | 管理仪表盘 | AdminLayout | `StatCard`, `ImStatusChart`, `AccountPieChart`, `Pagination` | `admin/index.ts` → `dashboard.ts`, `users.ts`, `accounts.ts` | 内联 Tab：`users` / `accounts`（非 URL query） |
+| `/admin/accounts` | 管理员-账号管理 | AdminLayout | `Pagination`, `SlidePanel`, `ProxyItem`, `ImStatusChart`, `AccountPieChart` | `admin/index.ts` → `accounts.ts` | 无 |
+| `/admin/users` | 管理员-用户管理 | AdminLayout | `Pagination`, `SlidePanel`, `ProxyItem` | `admin/index.ts` → `users.ts` | 无 |
+| `/admin/proxy` | 管理员-代理管理 | AdminLayout | `Pagination`, `SlidePanel` | `admin/index.ts` → `proxy.ts` | 无 |
 
-> 管理区 3 个子页面（accounts/users/proxy）各自内联定义了一个 `Pagination` 组件，代码重复。
+> 管理区所有页面统一使用共享 `Pagination` 组件（`components/ui/pagination.tsx`）。
 
 ---
 

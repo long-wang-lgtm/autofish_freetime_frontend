@@ -8,19 +8,17 @@
 
 项目中同一概念只能有**一个**实现。以下业务概念已约定统一组件：
 
-| 组件 | 用途 |
-|------|------|
-| `EmptyState` | 空数据占位 |
-| `ErrorBanner` | 错误提示横幅 |
-| `LoadingState` | 加载中占位（统一使用 `LoadingSpinner`） |
-| `ConfirmDialog` | 二次确认弹窗（替代 `window.confirm`） |
-| `Pagination` | 分页控件 |
-| `StatusBadge` | 状态标签，通过配置表映射颜色 |
-| `PriorityPill` | 筛选 pill，`variant: 'nav' | 'action'` |
-| `SearchToolbar` | 搜索栏（搜索框 + 筛选 + 操作按钮） |
-| `DataTable` | 通用数据表格封装 |
-| `ConfigModal` | 账号配置弹窗 |
-| `AIConfigFormFields` | AI 配置表单字段 |
+| 组件 | 用途 | 状态 |
+|------|------|------|
+| `EmptyState` | 空数据占位 | ✅ |
+| `ErrorBanner` | 错误提示横幅 | ✅ |
+| `LoadingState` | 加载中占位（统一使用 `LoadingSpinner`） | ✅ |
+| `ConfirmDialog` | 二次确认弹窗（替代 `window.confirm`） | ✅ |
+| `Pagination` | 分页控件 | ✅ |
+| `StatusBadge` | 状态标签，通过配置表映射颜色 | ✅ |
+| `AIConfigFormFields` | AI 配置表单字段 | ✅ |
+| `SearchToolbar` | 搜索栏（搜索框 + 筛选 + 操作按钮） | 🔴 计划中 |
+| `DataTable` | 通用数据表格封装 | 🔴 计划中 |
 
 新建页面时必须从已有统一组件中选择，不得为同一交互模式再写新组件。
 

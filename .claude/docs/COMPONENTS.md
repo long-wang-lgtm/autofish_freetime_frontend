@@ -56,9 +56,9 @@
 ### 顶层
 | 组件 | 文件 | 用途 |
 |------|------|------|
-| `ItemsTab` | `items/ItemsTab.tsx` | 商品管理 Tab 内容（表格/卡片切换） |
+| `ItemsTab` | `items/ItemsTab.tsx` | 商品管理 Tab 内容（表格/卡片切换，含统计概览+表头排序） |
 | `RulesTab` | `items/RulesTab.tsx` | 回复规则 Tab 内容（含统计卡片） |
-| `FilterBar` | `items/FilterBar.tsx` | 筛选栏（含 FilterBarDesktop + FilterBarMobile） |
+| `ItemsFilterBar` | `items/ItemsFilterBar.tsx` | 筛选栏入口（桌面/移动端自适应分发） |
 
 ### 视图 (`items/views/`)
 | 组件 | 文件 | 用途 |
@@ -85,6 +85,9 @@
 | `ItemCardPanel` | `items/parts/ItemCardPanel.tsx` | 商品卡片面板 |
 | `RuleBindingPanel` | `items/parts/RuleBindingPanel.tsx` | 规则绑定面板（关联商品/商品组） |
 | `KeywordRuleForm` | `items/parts/KeywordRuleForm.tsx` | 关键词规则表单 |
+| `SearchChip` | `items/parts/SearchChip.tsx` | 搜索条件芯片（可编辑/可删除） |
+| `ItemsFilterBarDesktop` | `items/parts/ItemsFilterBarDesktop.tsx` | 桌面端筛选栏（一行三区：刷新/筛选芯片/清空） |
+| `ItemsFilterBarMobile` | `items/parts/ItemsFilterBarMobile.tsx` | 移动端筛选栏（搜索+排序+筛选） |
 | `RuleTable` | `items/rules/RuleTable.tsx` | 规则表格 |
 
 ## 选品监控组件 (`components/selection/`)
@@ -145,7 +148,8 @@
 | `OpportunityCard` | `publish/OpportunityCard.tsx` | 商机卡片 |
 | `OpportunityHeader` | `publish/OpportunityHeader.tsx` | 商机头部（含展开详情） |
 | `OpportunityDetailCard` | `publish/OpportunityDetailCard.tsx` | 商机详情卡片 |
-| `PublishInstanceList` | `publish/PublishInstanceList.tsx` | 发布素材列表（694行，需拆分） |
+| `PublishInstanceList` | `publish/PublishInstanceList.tsx` | 发布素材列表（435行，已提取 PublishInstanceRow） |
+| `PublishInstanceRow` | `publish/PublishInstanceRow.tsx` | 发布素材行组件（React.memo） |
 | `EditorPanel` | `publish/EditorPanel.tsx` | 编辑器面板 |
 | `EditorDrawer` | `publish/EditorDrawer.tsx` | 编辑器抽屉 |
 | `CreationProgressBar` | `publish/CreationProgressBar.tsx` | 创作进度条（4步流水线） |
@@ -159,7 +163,7 @@
 
 | 组件 | 文件 | 用途 |
 |------|------|------|
-| `AIConfigTab` | `settings/AIConfigTab.tsx` | AI 配置 Tab（554行，表单重复） |
+| `AIConfigTab` | `settings/AIConfigTab.tsx` | AI 配置 Tab（493行，已提取 AIConfigFormFields） |
 | `NotificationTab` | `settings/NotificationTab.tsx` | 通知渠道 Tab |
 
 ## AI 配置 (`components/ai-config/`)
@@ -180,7 +184,10 @@
 | `useQrLogin` | `hooks/useQrLogin.ts` | 二维码登录完整生命周期 | `{ qrData, scanStatus, start, cancel, reset }` |
 | `useImStatusSnapshots` | `hooks/useImStatusSnapshots.ts` | IM 状态 SSE 订阅（单例） | `ImStatusSnapshot[]` |
 | `useKeywords` | `hooks/useKeywords.ts` | 关键词规则 + 统计 | `{ rules, stats, isLoading }` |
-| `useItemsPage` | `hooks/useItemsPage.ts` | 商品页数据编排（30+ 属性出口） | 筛选/排序/分页/CRUD 全套状态 |
+| `useItemsPage` | `hooks/useItemsPage.ts` | 商品页数据编排（组合层，79行） | `useItemsFilters` + `useItemsData` + `useItemMutations` |
+| `useItemsFilters` | `hooks/useItemsFilters.ts` | 商品筛选状态管理 | 筛选/排序/分页 状态 |
+| `useItemsData` | `hooks/useItemsData.ts` | 商品数据获取（React Query） | 商品列表 + 统计 |
+| `useItemMutations` | `hooks/useItemMutations.ts` | 商品变更操作 | 增删改 mutation |
 
 ## Stores (`stores/`)
 
@@ -190,18 +197,18 @@
 
 ## 需要新建的统一组件
 
-以下组件在当前项目中以 3-5 种不同形式存在，需要在重构中统一：
+以下组件在当前项目中已有部分覆盖，但仍有未统一使用的场景：
 
 | 组件 | 当前状态 | 建议 Props |
 |------|---------|-----------|
-| `EmptyState` | 5 种实现（emoji/SVG/纯文字/有CTA/无CTA） | `icon`, `title`, `description?`, `action?` |
-| `ErrorBanner` | 3 种（有的带 m-4、有的不带） | `message`, `onRetry?` |
-| `ConfirmDialog` | 用 window.confirm 替代 | `title`, `message`, `onConfirm`, `onCancel` |
-| `Pagination` | admin 3 个页面各定义一次 | `current`, `total`, `onChange` |
-| `StatusBadge` | STATUS_MAP 重复定义 2 次 | `status`, `size?` |
-| `PriorityPill` | 2 处独立实现 | `priority`, `onChange?` |
-| `SearchToolbar` | 5 种筛选栏实现 | `variant: 'simple' \| 'full'`, `fields` |
-| `DataTable` | 多个表格各自实现 sticky header | `columns`, `data`, `stickyHeader?` |
+| `EmptyState` | ✅ 已统一（`components/ui/EmptyState.tsx`） | `icon?`, `title`, `description?`, `action?`, `size?` |
+| `ErrorBanner` | ✅ 已统一（`components/ui/ErrorBanner.tsx`） | `message`, `variant`, `onRetry?`, `onDismiss?` |
+| `ConfirmDialog` | ✅ 已统一（`components/ui/ConfirmDialog.tsx`） | `open`, `onOpenChange`, `title`, `description`, `onConfirm`, `variant?` |
+| `Pagination` | ✅ 已统一（`components/ui/pagination.tsx`） | `current`, `total`, `pageSize`, `onChange` |
+| `StatusBadge` | ✅ 已统一（`components/ui/StatusBadge.tsx`） | `status`, `config`, `size?` |
+| `PriorityPill` | 🔴 待统一（2 处独立实现） | `priority`, `onChange?` |
+| `SearchToolbar` | 🔴 待统一（5 种筛选栏实现） | `variant: 'simple' \| 'full'`, `fields` |
+| `DataTable` | 🔴 待统一（多个表格各自实现 sticky header） | `columns`, `data`, `stickyHeader?` |
 
 ## 文件命名约定
 
