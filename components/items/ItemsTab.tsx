@@ -1,17 +1,22 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { Bot, Truck, Upload } from "lucide-react"
 import type { Item } from "@/lib/api/items"
 import type { ConfigField } from "@/components/items/config"
-import { ItemRow, ITEMS_GRID_COLS } from "@/components/items/views/ItemRow"
+import { formatPublishTime } from "@/components/items/config"
+import { ITEMS_GRID_COLS } from "@/components/items/views/ItemRow"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
 import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
 import { KeywordDrawer } from "@/components/items/drawers/RulesItemsingleDrawer"
 import { ConfigDrawer } from "@/components/items/drawers/ConfigDrawer"
+import { IconToggle } from "@/components/items/parts/IconToggle"
+import { SendCodeEditor } from "@/components/items/parts/SendCodeEditor"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { Pagination } from "@/components/ui/pagination"
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable"
 
 interface ItemsTabProps {
   isMobile: boolean
@@ -61,6 +66,225 @@ export function ItemsTab({
     listRef.current?.scrollTo({ top: 0, behavior: "smooth" })
   }, [page])
 
+  // — 排序适配：DataTable 内部封装三态逻辑，传出 field | null —
+  // — null = 取消排序，此时传当前 orderBy 给父组件，父组件已有三态逻辑处理取消 —
+  const handleSortChange = (field: string | null) => {
+    if (field === null) {
+      if (orderBy) onSortChange(orderBy)
+    } else {
+      onSortChange(field)
+    }
+  }
+
+  // — 桌面端列定义 —
+  const columns: DataTableColumn<Item>[] = [
+    {
+      key: 'title',
+      header: '商品信息',
+      sortable: true,
+      className: 'col-span-2 min-w-0',
+      render: (item) => (
+        <div className="min-w-0">
+          <span
+            className="text-left block w-full text-sm text-gray-800 dark:text-gray-200 leading-snug truncate"
+            title={item.title || '无标题'}
+          >
+            {item.title || '无标题'}
+          </span>
+          <div className="flex items-center gap-1 mt-0.5 text-gray-400 truncate text-xs">
+            <span title={item.gid} className="min-w-[85px]">{item.gid}</span>
+            <span className="text-gray-300">|</span>
+            <span title={item.account.uid} className="truncate">{item.account.name}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'price',
+      header: '价格',
+      sortable: true,
+      align: 'center',
+      render: (item) => (
+        <span className="text-orange-600 font-semibold">¥{item.price}</span>
+      ),
+    },
+    {
+      key: 'publishTime',
+      header: '发布时间',
+      sortable: true,
+      align: 'center',
+      render: (item) => (
+        <span className="text-xs text-gray-500">{formatPublishTime(item.publishTime)}</span>
+      ),
+    },
+    {
+      key: 'auto_ai_reply',
+      header: 'AI回复',
+      align: 'center',
+      render: (item) => (
+        <IconToggle
+          active={item.auto_ai_reply}
+          activeClass="text-purple-500 bg-purple-50"
+          title={item.auto_ai_reply ? 'AI回复：开' : 'AI回复：关'}
+          onClick={() => onToggle(item, 'auto_ai_reply')}
+        >
+          <Bot className="w-4 h-4" />
+        </IconToggle>
+      ),
+    },
+    {
+      key: 'auto_delivery',
+      header: '自动发货',
+      align: 'center',
+      render: (item) => (
+        <IconToggle
+          active={item.auto_delivery}
+          activeClass="text-green-500 bg-green-50"
+          title={item.auto_delivery ? '自动发货：开' : '自动发货：关'}
+          onClick={() => onToggle(item, 'auto_delivery')}
+        >
+          <Truck className="w-4 h-4" />
+        </IconToggle>
+      ),
+    },
+    {
+      key: 'deliveryContent',
+      header: '付款后发货',
+      align: 'center',
+      render: (item) => {
+        const value = item.deliveryContent || ''
+        const hasValue = value.trim().length > 0
+        return (
+          <button
+            onClick={() => setMobileConfig({ item, field: 'deliveryContent' })}
+            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
+            title={value || '点击配置'}
+          >
+            {hasValue ? '已配置' : '未配置'}
+          </button>
+        )
+      },
+    },
+    {
+      key: 'receiptAfter',
+      header: '收货后赠送',
+      align: 'center',
+      render: (item) => {
+        const value = item.receiptAfter || ''
+        const hasValue = value.trim().length > 0
+        return (
+          <button
+            onClick={() => setMobileConfig({ item, field: 'receiptAfter' })}
+            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
+            title={value || '点击配置'}
+          >
+            {hasValue ? '已配置' : '未配置'}
+          </button>
+        )
+      },
+    },
+    {
+      key: 'positiveReviewAfter',
+      header: '评价后赠送',
+      align: 'center',
+      render: (item) => {
+        const value = item.positiveReviewAfter || ''
+        const hasValue = value.trim().length > 0
+        return (
+          <button
+            onClick={() => setMobileConfig({ item, field: 'positiveReviewAfter' })}
+            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
+            title={value || '点击配置'}
+          >
+            {hasValue ? '已配置' : '未配置'}
+          </button>
+        )
+      },
+    },
+    {
+      key: 'keywordCount',
+      header: '关键词回复',
+      align: 'center',
+      render: (item) => {
+        const count = itemKeywordCounts[item.gid] || 0
+        return (
+          <button
+            onClick={() => setKeywordItem(item)}
+            className={`text-xs font-medium ${
+              count > 0
+                ? 'text-blue-600 hover:text-blue-800'
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            {count > 0 ? `${count}条规则` : '未配置'}
+          </button>
+        )
+      },
+    },
+    {
+      key: 'aiReplyItemPrompt',
+      header: 'AI提示词',
+      align: 'center',
+      render: (item) => {
+        const value = item.ai_reply_item_prompt || ''
+        const hasValue = value.trim().length > 0
+        return (
+          <button
+            onClick={() => setMobileConfig({ item, field: 'ai_reply_item_prompt' })}
+            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
+            title={value || '点击配置'}
+          >
+            {hasValue ? '已配置' : '未配置'}
+          </button>
+        )
+      },
+    },
+    {
+      key: 'auto_restock',
+      header: '自动上架',
+      align: 'center',
+      render: (item) => {
+        const disabled = item.account.isPro && !item.auto_restock
+        return (
+          <IconToggle
+            active={item.auto_restock}
+            activeClass="text-teal-500 bg-teal-50"
+            disabled={disabled}
+            title={
+              disabled
+                ? 'Pro 账号不支持自动上架'
+                : item.auto_restock
+                  ? '自动上架：开'
+                  : '自动上架：关'
+            }
+            onClick={() => {
+              if (disabled) return
+              onToggle(item, 'auto_restock')
+            }}
+          >
+            <Upload className="w-4 h-4" />
+          </IconToggle>
+        )
+      },
+    },
+    {
+      key: 'sendCode',
+      header: '指令码',
+      sortable: true,
+      align: 'center',
+      render: (item) => (
+        <SendCodeEditor
+          gid={item.gid}
+          sendCode={item.sendCode}
+          variant="cell"
+          onUpdateField={(gid, _field, value) =>
+            updateMutation.mutate({ gid, data: { sendCode: value } })
+          }
+        />
+      ),
+    },
+  ]
+
   return (
     <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
       {/* 加载状态 */}
@@ -92,41 +316,16 @@ export function ItemsTab({
         <>
           {/* === 桌面端表格 === */}
           <div ref={listRef} className="flex-1 overflow-auto hidden md:block min-h-[200px]">
-            {/* 表头 */}
-            <div
-              className="sticky top-0 z-10 grid gap-2 px-0 py-2 bg-gray-100 border-b border-gray-100 text-sm font-medium"
-              style={{ gridTemplateColumns: ITEMS_GRID_COLS }}
-            >
-              <SortHeader className="col-span-2" field="title" label="商品信息" orderBy={orderBy} asc={asc} onClick={onSortChange} />
-              <SortHeader className="col-span-1" field="price" label="价格" orderBy={orderBy} asc={asc} onClick={onSortChange} />
-              <SortHeader className="col-span-1 text-center" field="publishTime" label="发布时间" orderBy={orderBy} asc={asc} onClick={onSortChange} />
-              <div className="col-span-1 text-center text-gray-600">AI回复</div>
-              <div className="col-span-1 text-center text-gray-600">自动发货</div>
-              <div className="col-span-1 text-center text-gray-600">付款后发货</div>
-              <div className="col-span-1 text-center text-gray-600">收货后赠送</div>
-              <div className="col-span-1 text-center text-gray-600">评价后赠送</div>
-              <div className="col-span-1 text-center text-gray-600">关键词回复</div>
-              <div className="col-span-1 text-center text-gray-600">AI提示词</div>
-              <div className="col-span-1 text-center text-gray-600">自动上架</div>
-              {/* <div className="col-span-1 text-center text-gray-600">指令码</div> */}
-              <SortHeader className="col-span-1 text-center" field="sendCode" label="指令码" orderBy={orderBy} asc={asc} onClick={onSortChange} />
-            </div>
-
-            {/* 内容区域 */}
-            {data.map((item, index) => (
-              <ItemRow
-                key={item.gid}
-                item={item}
-                isEven={index % 2 === 0}
-                onToggle={onToggle}
-                onEdit={() => setEditingItem(item)}
-                onKeywordClick={() => setKeywordItem(item)}
-                keywordCount={itemKeywordCounts[item.gid] || 0}
-                onUpdateField={(gid, field, value) =>
-                  updateMutation.mutate({ gid, data: { [field]: value } })
-                }
-              />
-            ))}
+            <DataTable
+              columns={columns}
+              data={data}
+              keyExtractor={(item) => item.gid}
+              gridTemplateColumns={ITEMS_GRID_COLS}
+              stickyHeader
+              orderBy={orderBy}
+              asc={asc}
+              onSortChange={handleSortChange}
+            />
           </div>
 
           {/* === 移动端卡片列表 === */}
@@ -190,38 +389,5 @@ export function ItemsTab({
         />
       )}
     </div>
-  )
-}
-
-/** 可排序表头单元格 */
-function SortHeader({
-  className,
-  field,
-  label,
-  orderBy,
-  asc,
-  onClick,
-}: {
-  className: string
-  field: string
-  label: string
-  orderBy: string | null
-  asc: boolean
-  onClick: (field: string) => void
-}) {
-  const isActive = orderBy === field
-  return (
-    <button
-      type="button"
-      onClick={() => onClick(field)}
-      className={`${className} inline-flex items-center justify-center gap-0.5 hover:text-blue-600 transition-colors ${
-        isActive ? 'text-blue-600' : 'text-gray-600'
-      }`}
-    >
-      <span>{label}</span>
-      <span className="text-xs leading-none">
-        {isActive ? (asc ? '↑' : '↓') : '↕'}
-      </span>
-    </button>
   )
 }
