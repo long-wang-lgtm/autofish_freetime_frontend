@@ -84,7 +84,7 @@ export function ItemsTab({
       sortable: true,
       className: 'col-span-2 min-w-0',
       render: (item) => (
-        <div className="min-w-0">
+        <>
           <span
             className="text-left block w-full text-sm text-gray-800 dark:text-gray-200 leading-snug truncate"
             title={item.title || '无标题'}
@@ -96,7 +96,7 @@ export function ItemsTab({
             <span className="text-gray-300">|</span>
             <span title={item.account.uid} className="truncate">{item.account.name}</span>
           </div>
-        </div>
+        </>
       ),
     },
     {
@@ -157,7 +157,9 @@ export function ItemsTab({
         return (
           <button
             onClick={() => setMobileConfig({ item, field: 'deliveryContent' })}
-            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
+            className={`w-full h-full min-h-[2.5rem] max-h-[2.5rem] text-xs px-1 flex items-center justify-center hover:underline ${
+              hasValue ? 'text-blue-600' : 'text-gray-400'
+            }`}
             title={value || '点击配置'}
           >
             {hasValue ? '已配置' : '未配置'}
@@ -175,7 +177,9 @@ export function ItemsTab({
         return (
           <button
             onClick={() => setMobileConfig({ item, field: 'receiptAfter' })}
-            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
+            className={`w-full h-full min-h-[2.5rem] max-h-[2.5rem] text-xs px-1 flex items-center justify-center hover:underline ${
+              hasValue ? 'text-blue-600' : 'text-gray-400'
+            }`}
             title={value || '点击配置'}
           >
             {hasValue ? '已配置' : '未配置'}
@@ -193,7 +197,9 @@ export function ItemsTab({
         return (
           <button
             onClick={() => setMobileConfig({ item, field: 'positiveReviewAfter' })}
-            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
+            className={`w-full h-full min-h-[2.5rem] max-h-[2.5rem] text-xs px-1 flex items-center justify-center hover:underline ${
+              hasValue ? 'text-blue-600' : 'text-gray-400'
+            }`}
             title={value || '点击配置'}
           >
             {hasValue ? '已配置' : '未配置'}
@@ -231,7 +237,9 @@ export function ItemsTab({
         return (
           <button
             onClick={() => setMobileConfig({ item, field: 'ai_reply_item_prompt' })}
-            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
+            className={`w-full h-full min-h-[2.5rem] max-h-[2.5rem] text-xs px-1 flex items-center justify-center hover:underline ${
+              hasValue ? 'text-blue-600' : 'text-gray-400'
+            }`}
             title={value || '点击配置'}
           >
             {hasValue ? '已配置' : '未配置'}
