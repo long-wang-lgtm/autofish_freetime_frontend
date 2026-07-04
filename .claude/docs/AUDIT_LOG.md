@@ -38,7 +38,7 @@
 | 问题 | 状态 |
 |------|------|
 | `fmtPrice` 三处定义，行为各异（有的带 `maximumFractionDigits: 2`，有的不带） | ✅ Phase 2 已修复 |
-| 价格在 JSX 中直接拼字符串（`ItemRow.tsx` 无千分位） | 🔴 未修复 |
+| 价格在 JSX 中直接拼字符串（`ItemsTab.tsx` 价格列 render 无千分位） | 🔴 未修复 |
 | 无统一日期格式化函数 | 🔴 未修复 |
 | 图表轴标签重复手写 `toLocaleString` | 🔴 未修复 |
 
