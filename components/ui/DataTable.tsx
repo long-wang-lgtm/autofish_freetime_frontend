@@ -165,7 +165,7 @@ export function DataTable<T>({
       {/* 表头 */}
       <div
         className={cn(
-          'grid gap-2 px-0 py-2 bg-gray-100 dark:bg-gray-800',
+          'grid gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800',
           'text-xs font-medium text-gray-500 dark:text-gray-400',
           'border-b border-gray-200 dark:border-gray-700',
           stickyHeader && 'sticky top-0 z-10',
