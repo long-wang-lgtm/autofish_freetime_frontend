@@ -177,8 +177,8 @@ export function DataTable<T>({
             key={col.key}
             className={cn(
               col.className,
-              col.align === 'center' && 'text-center',
-              col.align === 'right' && 'text-right',
+              col.align === 'center' && 'flex items-center justify-center',
+              col.align === 'right' && 'flex items-center justify-end',
             )}
           >
             {col.sortable && onSortChange ? (
@@ -223,8 +223,8 @@ export function DataTable<T>({
                 key={col.key}
                 className={cn(
                   col.className,
-                  col.align === 'center' && 'text-center',
-                  col.align === 'right' && 'text-right',
+                  col.align === 'center' && 'flex items-center justify-center',
+                  col.align === 'right' && 'flex items-center justify-end',
                 )}
               >
                 {col.render(item, index)}
