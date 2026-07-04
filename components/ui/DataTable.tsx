@@ -176,6 +176,7 @@ export function DataTable<T>({
           <div
             key={col.key}
             className={cn(
+              col.className,
               col.align === 'center' && 'text-center',
               col.align === 'right' && 'text-right',
             )}
