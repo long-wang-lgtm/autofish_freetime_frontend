@@ -17,8 +17,8 @@
 | `Pagination` | 分页控件 | ✅ |
 | `StatusBadge` | 状态标签，通过配置表映射颜色 | ✅ |
 | `AIConfigFormFields` | AI 配置表单字段 | ✅ |
-| `SearchToolbar` | 搜索栏（搜索框 + 筛选 + 操作按钮） | 🔴 计划中 |
-| `DataTable` | 通用数据表格封装 | 🔴 计划中 |
+| `SearchToolbar` | 搜索栏（搜索框 + 筛选 + 操作按钮） | ✅ |
+| `DataTable` | 通用数据表格封装 | ✅ |
 
 新建页面时必须从已有统一组件中选择，不得为同一交互模式再写新组件。
 
@@ -110,8 +110,8 @@ components/
 | `ConfirmDialog` | `components/ui/confirm-dialog.tsx` | 统一二次确认弹窗，替代 `window.confirm` |
 | `StatusBadge` | `components/ui/status-badge.tsx` | 统一状态标签，通过配置表映射颜色 |
 | `PriorityPill` | `components/ui/priority-pill.tsx` | 统一筛选 pill 样式 |
-| `SearchToolbar` | `components/ui/search-toolbar.tsx` | 统一搜索栏（搜索框 + 筛选 + 操作按钮） |
-| `DataTable` | `components/ui/data-table.tsx` | 通用数据表格封装 |
+| `SearchToolbar` | `components/ui/SearchToolbar.tsx` | 统一搜索栏（搜索框 + 筛选 + 操作按钮） |
+| `DataTable` | `components/ui/DataTable.tsx` | 通用数据表格封装 |
 
 ## 反模式
 

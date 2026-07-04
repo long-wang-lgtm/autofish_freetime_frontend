@@ -207,8 +207,8 @@
 | `Pagination` | ✅ 已统一（`components/ui/pagination.tsx`） | `current`, `total`, `pageSize`, `onChange` |
 | `StatusBadge` | ✅ 已统一（`components/ui/StatusBadge.tsx`） | `status`, `config`, `size?` |
 | `PriorityPill` | 🔴 待统一（2 处独立实现） | `priority`, `onChange?` |
-| `SearchToolbar` | 🔴 待统一（5 种筛选栏实现） | `variant: 'simple' \| 'full'`, `fields` |
-| `DataTable` | 🔴 待统一（多个表格各自实现 sticky header） | `columns`, `data`, `stickyHeader?` |
+| `SearchToolbar` | ✅ 布局壳 | `children`, `className?` |
+| `DataTable` | ✅ 列驱动表格 | `columns`, `data`, `gridTemplateColumns`, `stickyHeader?`, `orderBy?`, `asc?` |
 
 ## 文件命名约定
 
