@@ -44,8 +44,8 @@ app/admin/billing/page.tsx                    ← 页面入口
 ├── StonePricingTab                            ← 风铃石定价
 │   └── DataTable + EditableCell + 新增行 + 删除
 └── OrderHistoryTab                            ← 订单记录
-    ├── 用户筛选 + 类型切换(会员/风铃石)
-    └── DataTable (只读) + Pagination + 取消按钮(pending)
+    ├── 筛选栏(用户+状态+账号) + 类型切换(会员/风铃石)
+    └── DataTable (只读) + Pagination
 ```
 
 ### 新增/修改的文件
@@ -76,13 +76,13 @@ export interface MembershipPlan {
   created_at: string; updated_at: string;
 }
 export interface FeaturePricing {
-  id: number; feature: string; description: string;
+  id: number; feature: string; name: string;
   stones: number; is_active: boolean;
   created_at: string; updated_at: string;
 }
 export interface StoneSalePricing {
   id: number; price: number; amount: number;  // price=售价(分), amount=风铃石数
-  created_at: string; updated_at: string;      // 注意：schema 未包含 created_at/updated_at，按实际返回为准
+  created_at: string; updated_at: string;
 }
 export interface StoneOrder {
   order_id: string; status: string;
@@ -122,9 +122,8 @@ export async function updateStonePrice(id: number, data: Partial<StoneSalePricin
 export async function deleteStonePrice(id: number): Promise<OperationResponse>
 
 // ---- 订单 ----
-export async function getMembershipOrders(page: number, pageSize: number, userId?: string): Promise<{ items: MembershipOrder[]; total: number }>
-export async function cancelMembershipOrder(orderId: string): Promise<OperationResponse>
-export async function getStoneOrders(): Promise<StoneOrder[]>
+export async function getMembershipOrders(page: number, pageSize: number, userId?: string, status?: string, account?: string): Promise<{ items: MembershipOrder[]; total: number }>
+export async function getStoneOrders(page: number, pageSize: number, userId?: string, status?: string, account?: string): Promise<{ items: StoneOrder[]; total: number }>
 ```
 
 > 所有端点均已由后端实现，无预留端点。
@@ -167,6 +166,19 @@ interface EditableCellProps {
 
 ### Tab 1: 会员方案
 
+**布局层级**：
+
+```
+┌──────────────────────────────────────────────────┐
+│  工具栏                                          │
+│  [+ 新增方案]                                     │
+├──────────────────────────────────────────────────┤
+│  DataTable                                       │
+│  （静态行 + 新增时顶部出现空行：tier <select> +      │
+│   price/max_accounts/daily_bonus EditableCell）   │
+└──────────────────────────────────────────────────┘
+```
+
 **DataTable 列**（grid 列宽按内容分配）：
 
 | 列 | 字段 | 编辑方式 | 说明 |
@@ -176,20 +188,32 @@ interface EditableCellProps {
 | 最大店铺 | max_accounts | EditableCell(number) | |
 | 每日风铃石 | daily_bonus | EditableCell(number) | |
 | 创建时间 | created_at | 只读 | fmtDate |
-| 删除 | — | 🗑 按钮（Free 方案隐藏） | ConfirmDialog 确认 |
 
 **新增**：点击"+ 新增方案"→ 表格顶部出现空行，tier 列为 `<select>`（可选 Basic/Standard/Pro），其余为 EditableCell。
 
-**约束**：tier 唯一（后端校验，前端 toast 提示）；Free 方案不可删除。
+**约束**：tier 唯一（后端校验，前端 toast 提示）。
 
 ### Tab 2: 功能定价
+
+**布局层级**：
+
+```
+┌──────────────────────────────────────────────────┐
+│  工具栏                                          │
+│  [+ 新增功能]                                     │
+├──────────────────────────────────────────────────┤
+│  DataTable                                       │
+│  （每行：feature Select + name/stones EditableCell │
+│   + is_active Switch + created_at + 🗑 按钮）      │
+└──────────────────────────────────────────────────┘
+```
 
 **DataTable 列**：
 
 | 列 | 字段 | 编辑方式 | 说明 |
 |----|------|----------|------|
 | 功能标识 | feature | 不可编辑（创建后锁） | 中文映射：order_change→订单变更, send_message→发送消息, auto_review→自动回复 |
-| 描述 | description | EditableCell(text) | |
+| 名称 | name | EditableCell(text) | |
 | 消耗风铃石 | stones | EditableCell(number) | |
 | 启用 | is_active | Switch（即时切换） | 乐观更新，失败回滚 |
 | 创建时间 | created_at | 只读 | |
@@ -198,6 +222,19 @@ interface EditableCellProps {
 **新增**：feature 列为 `<select>`（可选所有 StoneConsumptionScene 枚举值）。
 
 ### Tab 3: 风铃石定价
+
+**布局层级**：
+
+```
+┌──────────────────────────────────────────────────┐
+│  工具栏                                          │
+│  [+ 新增定价]                                     │
+├──────────────────────────────────────────────────┤
+│  DataTable                                       │
+│  （每行：price/amount EditableCell + created_at    │
+│   + 🗑 按钮 + ConfirmDialog）                     │
+└──────────────────────────────────────────────────┘
+```
 
 **DataTable 列**：
 
@@ -208,11 +245,34 @@ interface EditableCellProps {
 | 创建时间 | created_at | 只读 | |
 | 删除 | — | 🗑 按钮 | ConfirmDialog 确认 |
 
-**端点**：`GET /prices` / `POST /add` / `PUT /prices.update` / `DELETE /prices.delete`。
+**API 函数**：`getStonePrices` / `createStonePrice` / `updateStonePrice` / `deleteStonePrice`。
 
 ### Tab 4: 订单记录
 
-**DataTable 列**（12 列，CSS Grid）：
+**布局层级**：
+
+```
+┌──────────────────────────────────────────────────┐
+│  筛选栏（共享）                                    │
+│  [userId 输入框]  [status 下拉]  [account 输入框]   │
+├──────────────────────────────────────────────────┤
+│  二级 pill 切换                                   │
+│  [会员订单]  [风铃石订单]                           │
+├──────────────────────────────────────────────────┤
+│  DataTable                                       │
+│  （列定义随选中类型切换：会员 11 列 / 风铃石 8 列）   │
+├──────────────────────────────────────────────────┤
+│  Pagination                                      │
+└──────────────────────────────────────────────────┘
+```
+
+**交互规则**：
+- 筛选栏 userId/status/account 两个订单类型共用，切换时保留筛选条件、重置 page=1
+- 二级 pill 激活态 `bg-blue-50 text-blue-700 text-sm font-medium`，符合 frontend-tabs.md "细分不抢眼"原则
+- DataTable 列定义和 `gridTemplateColumns` 随 pill 切换
+- 分页组件共享，切换类型时重置到第 1 页
+
+**会员订单 DataTable 列**（11 列，CSS Grid）：
 
 | 列 | 字段 | 说明 |
 |----|------|------|
@@ -227,17 +287,34 @@ interface EditableCellProps {
 | 到期变更 | old→new_expires_at | 两行展示 |
 | 操作人 | operator_user.username | system→"自动" |
 | 时间 | created_at / paid_at | 两行展示 |
-| 操作 | — | 仅 pending → "取消"按钮 + ConfirmDialog |
 
-**功能**：
-- 用户筛选：input 输入 userId → 防抖 300ms → 重新请求
-- 订单类型切换：会员订单 / 风铃石订单（二级 Tab 切换数据源）
-- 风铃石订单列表列：订单ID / 用户 / 金额 / 风铃石数 / 旧余额→新余额 / 操作人 / 时间（基于 StoneOrderSchema）
-- 分页：Pagination 组件
+**风铃石订单 DataTable 列**（8 列，CSS Grid）：
+
+| 列 | 字段 | 说明 |
+|----|------|------|
+| 订单ID | order_id | 等宽字体，截断（hover 完整） |
+| 用户 | user.username | 嵌套 UserSimpleSchema |
+| 金额 | amount_cents | fmtPrice |
+| 风铃石数 | amount_stones | |
+| 旧余额→新余额 | old_stones → new_stones | 两行展示 |
+| 状态 | status | StatusBadge: paid绿/pending琥珀/cancelled灰/expired灰 |
+| 操作人 | operator_user.username | system→"自动" |
+| 时间 | created_at | fmtDateTime |
 
 ## 七、数据流 & 状态管理
 
-### 状态管理策略
+### Tab 路由
+
+使用 `useTabRouting` hook 管理 Tab 切换，同步到 URL query 参数：
+
+```ts
+const [tab, setTab] = useTabRouting(
+  ['membership', 'features', 'stones', 'orders'],
+  'membership'
+)
+```
+
+### 数据状态管理
 
 沿用现有 admin 页面模式（`useState` + `useCallback` + `useEffect`），保持一致性：
 
