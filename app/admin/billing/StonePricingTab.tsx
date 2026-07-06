@@ -140,7 +140,6 @@ export function StonePricingTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-700">风铃石定价</h3>
         <button
           onClick={() => setAdding(!adding)}
           className="inline-flex items-center gap-1 h-10 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
