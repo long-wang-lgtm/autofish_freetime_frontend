@@ -331,7 +331,25 @@ export function OrderHistoryTab() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-gray-700">订单记录</h3>
+      {/* 二级 pill 切换 */}
+      <div className="flex gap-1">
+        {[
+          { key: 'membership' as const, label: '会员订单' },
+          { key: 'stone' as const, label: '风铃石订单' },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => handleTypeChange(key)}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              orderType === key
+                ? 'bg-blue-50 text-blue-700'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {/* 筛选栏 */}
       <div className="flex items-center gap-3 flex-wrap">
@@ -367,26 +385,6 @@ export function OrderHistoryTab() {
           <Search className="w-4 h-4" />
           搜索
         </button>
-      </div>
-
-      {/* 二级 pill 切换 */}
-      <div className="flex gap-1">
-        {[
-          { key: 'membership' as const, label: '会员订单' },
-          { key: 'stone' as const, label: '风铃石订单' },
-        ].map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => handleTypeChange(key)}
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-              orderType === key
-                ? 'bg-blue-50 text-blue-700'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
       </div>
 
       {/* DataTable */}

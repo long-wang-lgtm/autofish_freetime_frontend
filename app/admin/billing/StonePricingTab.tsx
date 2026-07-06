@@ -14,8 +14,8 @@ export function StonePricingTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
-  const [newPrice, setNewPrice] = useState('')
   const [newAmount, setNewAmount] = useState('')
+  const [newStones, setNewStones] = useState('')
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -53,18 +53,18 @@ export function StonePricingTab() {
   )
 
   const handleAdd = async () => {
-    const price = Number(newPrice)
     const amount = Number(newAmount)
-    if (isNaN(price) || isNaN(amount)) {
+    const stones = Number(newStones)
+    if (isNaN(amount) || isNaN(stones)) {
       toast.error('请填写有效的数字')
       return
     }
     try {
-      await adminApi.createStonePrice({ price, amount })
+      await adminApi.createStonePrice({ amount, stones })
       toast.success('定价已新增')
       setAdding(false)
-      setNewPrice('')
       setNewAmount('')
+      setNewStones('')
       fetch()
     } catch (e) {
       toast.error(`新增失败: ${e}`)
@@ -88,24 +88,24 @@ export function StonePricingTab() {
 
   const columns: DataTableColumn<StoneSalePricing>[] = [
     {
-      key: 'price',
-      header: '售价(分)',
+      key: 'amount',
+      header: '售价(元)',
       render: (item) => (
         <EditableCell
-          value={item.price}
+          value={item.amount / 100}
           type="number"
-          onSave={(v) => handleEdit(item.id, 'price', v)}
+          onSave={(v) => handleEdit(item.id, 'amount', String(Number(v) * 100))}
         />
       ),
     },
     {
-      key: 'amount',
+      key: 'stones',
       header: '风铃石数',
       render: (item) => (
         <EditableCell
-          value={item.amount}
+          value={item.stones}
           type="number"
-          onSave={(v) => handleEdit(item.id, 'amount', v)}
+          onSave={(v) => handleEdit(item.id, 'stones', v)}
         />
       ),
     },
@@ -152,15 +152,15 @@ export function StonePricingTab() {
           <input
             type="number"
             placeholder="售价(分)"
-            value={newPrice}
-            onChange={(e) => setNewPrice(e.target.value)}
+            value={newAmount}
+            onChange={(e) => setNewAmount(e.target.value)}
             className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg w-32"
           />
           <input
             type="number"
             placeholder="风铃石数"
-            value={newAmount}
-            onChange={(e) => setNewAmount(e.target.value)}
+            value={newStones}
+            onChange={(e) => setNewStones(e.target.value)}
             className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg w-32"
           />
           <button

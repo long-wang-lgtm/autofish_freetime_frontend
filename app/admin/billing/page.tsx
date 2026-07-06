@@ -12,8 +12,8 @@ import { OrderHistoryTab } from './OrderHistoryTab'
 
 const TABS = [
   { key: 'membership', label: '会员方案' },
-  { key: 'features', label: '功能定价' },
-  { key: 'stones', label: '风铃石定价' },
+  { key: 'stones', label: '风铃石售价' },
+  { key: 'features', label: '风铃石消费' },
   { key: 'orders', label: '订单记录' },
 ]
 

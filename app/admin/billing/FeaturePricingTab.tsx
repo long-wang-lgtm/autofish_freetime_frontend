@@ -142,7 +142,7 @@ export function FeaturePricingTab() {
   const columns: DataTableColumn<FeaturePricing>[] = [
     {
       key: 'feature',
-      header: '功能标识',
+      header: '消费功能',
       render: (item) => (
         <span className="text-xs font-medium text-gray-600">
           {FEATURE_LABELS[item.feature] ?? item.feature}
@@ -151,7 +151,7 @@ export function FeaturePricingTab() {
     },
     {
       key: 'description',
-      header: '名称',
+      header: '消费场景',
       render: (item) => (
         <EditableCell
           value={item.description || ''}

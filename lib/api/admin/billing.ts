@@ -31,8 +31,8 @@ export interface FeaturePricing {
 
 export interface StoneSalePricing {
   id: number
-  price: number
   amount: number
+  stones: number
   created_at?: string
   updated_at?: string
 }
@@ -151,8 +151,8 @@ export async function getStonePrices(): Promise<StoneSalePricing[]> {
 
 /** 新增风铃石定价 */
 export async function createStonePrice(data: {
-  price: number
   amount: number
+  stones: number
 }): Promise<OperationResponse> {
   return fetchApi<OperationResponse>(`${S}/add`, {
     method: 'POST',
@@ -163,7 +163,7 @@ export async function createStonePrice(data: {
 /** 更新风铃石定价 */
 export async function updateStonePrice(
   id: number,
-  data: { price?: number; amount?: number }
+  data: { amount?: number; stones?: number }
 ): Promise<OperationResponse> {
   return fetchApi<OperationResponse>(`${S}/prices.update`, {
     method: 'PUT',
