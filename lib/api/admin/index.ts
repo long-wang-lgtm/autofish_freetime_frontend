@@ -32,6 +32,14 @@ export type {
   ProxyFormData,
 } from './proxy'
 
+export type {
+  MembershipPlan,
+  FeaturePricing,
+  StoneSalePricing,
+  StoneOrder,
+  MembershipOrder,
+} from './billing'
+
 // ===== API 函数导出 =====
 export {
   getDashboard,
@@ -65,11 +73,28 @@ export {
   closeProxy,
 } from './proxy'
 
+export {
+  getMembershipPlans,
+  createMembershipPlan,
+  updateMembershipPlan,
+  getFeaturePricingList,
+  createFeaturePricing,
+  updateFeaturePricing,
+  deleteFeaturePricing,
+  getStonePrices,
+  createStonePrice,
+  updateStonePrice,
+  deleteStonePrice,
+  getMembershipOrders,
+  getStoneOrders,
+} from './billing'
+
 // ===== 聚合 API 对象 =====
 import * as dashboard from './dashboard'
 import * as accounts from './accounts'
 import * as users from './users'
 import * as proxy from './proxy'
+import * as billing from './billing'
 
 export const adminApi = {
   // Dashboard
@@ -98,4 +123,19 @@ export const adminApi = {
   deleteProxy: proxy.deleteProxy,
   activeProxy: proxy.activeProxy,
   closeProxy: proxy.closeProxy,
+
+  // Billing
+  getMembershipPlans: billing.getMembershipPlans,
+  createMembershipPlan: billing.createMembershipPlan,
+  updateMembershipPlan: billing.updateMembershipPlan,
+  getFeaturePricingList: billing.getFeaturePricingList,
+  createFeaturePricing: billing.createFeaturePricing,
+  updateFeaturePricing: billing.updateFeaturePricing,
+  deleteFeaturePricing: billing.deleteFeaturePricing,
+  getStonePrices: billing.getStonePrices,
+  createStonePrice: billing.createStonePrice,
+  updateStonePrice: billing.updateStonePrice,
+  deleteStonePrice: billing.deleteStonePrice,
+  getMembershipOrders: billing.getMembershipOrders,
+  getStoneOrders: billing.getStoneOrders,
 }
