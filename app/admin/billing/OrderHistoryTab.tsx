@@ -398,8 +398,8 @@ export function OrderHistoryTab() {
         keyExtractor={(item) => item.order_id}
         gridTemplateColumns={
           isMember
-            ? '120px 80px 60px 48px 48px 64px 36px 56px 100px 56px 100px'
-            : '120px 80px 64px 72px 100px 56px 56px 120px'
+            ? '120px 1fr 60px 48px 48px 1fr 36px 56px 1fr 60px 1fr'
+            : '120px 1fr 1fr 72px 100px 56px 60px 120px'
         }
         isLoading={isMember ? memberLoading : stoneLoading}
         error={isMember ? memberError : stoneError}

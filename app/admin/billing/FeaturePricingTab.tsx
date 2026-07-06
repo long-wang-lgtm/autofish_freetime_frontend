@@ -280,7 +280,7 @@ export function FeaturePricingTab() {
         columns={columns}
         data={items}
         keyExtractor={(item) => String(item.id)}
-        gridTemplateColumns="100px 1fr 100px 52px 100px 40px"
+        gridTemplateColumns="1fr 3fr 1fr 52px 100px 40px"
         isLoading={loading}
         error={error}
         errorMessage={error ? `加载失败: ${error}` : undefined}

@@ -214,7 +214,7 @@ export function MembershipPlanTab() {
         columns={columns}
         data={plans}
         keyExtractor={(item) => String(item.id)}
-        gridTemplateColumns="100px 1fr 1fr 1fr 120px"
+        gridTemplateColumns="80px 2fr 2fr 2fr 110px"
         isLoading={loading}
         error={error}
         errorMessage={error ? `加载失败: ${error}` : undefined}
