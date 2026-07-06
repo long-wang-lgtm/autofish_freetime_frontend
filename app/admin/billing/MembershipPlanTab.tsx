@@ -88,6 +88,7 @@ export function MembershipPlanTab() {
     {
       key: 'tier',
       header: '等级',
+      align: 'center',
       render: (item) => {
         const info = TIER_LABELS[item.tier]
         const colorMap: Record<string, string> = {
@@ -108,6 +109,7 @@ export function MembershipPlanTab() {
     {
       key: 'price',
       header: '月费(分)',
+      align: 'center',
       render: (item) => (
         <EditableCell
           value={item.price}
@@ -119,6 +121,7 @@ export function MembershipPlanTab() {
     {
       key: 'max_accounts',
       header: '最大店铺',
+      align: 'center',
       render: (item) => (
         <EditableCell
           value={item.max_accounts}
@@ -130,6 +133,7 @@ export function MembershipPlanTab() {
     {
       key: 'daily_bonus',
       header: '每日风铃石',
+      align: 'center',
       render: (item) => (
         <EditableCell
           value={item.daily_bonus}
@@ -141,6 +145,7 @@ export function MembershipPlanTab() {
     {
       key: 'created_at',
       header: '创建时间',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-500 text-xs">{fmtDate(item.created_at)}</span>
       ),
@@ -214,7 +219,7 @@ export function MembershipPlanTab() {
         columns={columns}
         data={plans}
         keyExtractor={(item) => String(item.id)}
-        gridTemplateColumns="80px 2fr 2fr 2fr 110px"
+        gridTemplateColumns="1fr 2fr 2fr 2fr 1fr"
         isLoading={loading}
         error={error}
         errorMessage={error ? `加载失败: ${error}` : undefined}

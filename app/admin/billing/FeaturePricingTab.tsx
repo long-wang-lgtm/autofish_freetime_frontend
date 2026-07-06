@@ -143,6 +143,7 @@ export function FeaturePricingTab() {
     {
       key: 'feature',
       header: '消费功能',
+      align: 'center',
       render: (item) => (
         <span className="text-xs font-medium text-gray-600">
           {FEATURE_LABELS[item.feature] ?? item.feature}
@@ -152,6 +153,7 @@ export function FeaturePricingTab() {
     {
       key: 'description',
       header: '消费场景',
+      align: 'center',
       render: (item) => (
         <EditableCell
           value={item.description || ''}
@@ -163,6 +165,7 @@ export function FeaturePricingTab() {
     {
       key: 'stones',
       header: '消耗风铃石',
+      align: 'center',
       render: (item) => (
         <EditableCell
           value={item.stones}
@@ -195,6 +198,7 @@ export function FeaturePricingTab() {
     {
       key: 'created_at',
       header: '创建时间',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-500 text-xs">{fmtDate(item.created_at)}</span>
       ),
@@ -280,7 +284,7 @@ export function FeaturePricingTab() {
         columns={columns}
         data={items}
         keyExtractor={(item) => String(item.id)}
-        gridTemplateColumns="1fr 3fr 1fr 52px 100px 40px"
+        gridTemplateColumns="1fr 3fr 1fr 1fr 1fr 1fr"
         isLoading={loading}
         error={error}
         errorMessage={error ? `加载失败: ${error}` : undefined}

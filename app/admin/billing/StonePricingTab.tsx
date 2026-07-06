@@ -90,6 +90,7 @@ export function StonePricingTab() {
     {
       key: 'amount',
       header: '售价(元)',
+      align: 'center',
       render: (item) => (
         <EditableCell
           value={item.amount / 100}
@@ -101,6 +102,7 @@ export function StonePricingTab() {
     {
       key: 'stones',
       header: '风铃石数',
+      align: 'center',
       render: (item) => (
         <EditableCell
           value={item.stones}
@@ -112,6 +114,7 @@ export function StonePricingTab() {
     {
       key: 'created_at',
       header: '创建时间',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-500 text-xs">
           {item.created_at ? fmtDate(item.created_at) : '-'}
@@ -151,7 +154,7 @@ export function StonePricingTab() {
         <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
           <input
             type="number"
-            placeholder="售价(分)"
+            placeholder="售价(元)"
             value={newAmount}
             onChange={(e) => setNewAmount(e.target.value)}
             className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg w-32"
@@ -182,7 +185,7 @@ export function StonePricingTab() {
         columns={columns}
         data={items}
         keyExtractor={(item) => String(item.id)}
-        gridTemplateColumns="1fr 1fr 120px 40px"
+        gridTemplateColumns="2fr 2fr 1fr 1fr"
         isLoading={loading}
         error={error}
         errorMessage={error ? `加载失败: ${error}` : undefined}

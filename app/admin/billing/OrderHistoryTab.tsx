@@ -143,9 +143,10 @@ export function OrderHistoryTab() {
     {
       key: 'order_id',
       header: '订单ID',
+      align: 'center',
       render: (item) => (
         <span
-          className="font-mono text-xs text-gray-600 truncate block max-w-[120px]"
+          className="font-mono text-xs text-gray-600 truncate block max-w-[120px] mx-auto"
           title={item.order_id}
         >
           {item.order_id}
@@ -155,6 +156,7 @@ export function OrderHistoryTab() {
     {
       key: 'user',
       header: '用户',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-700">{item.user?.username ?? '-'}</span>
       ),
@@ -162,6 +164,7 @@ export function OrderHistoryTab() {
     {
       key: 'change_type',
       header: '变更类型',
+      align: 'center',
       render: (item) => (
         <StatusBadge status={item.change_type} config={CHANGE_TYPE_BADGE_CONFIG} />
       ),
@@ -169,6 +172,7 @@ export function OrderHistoryTab() {
     {
       key: 'old_plan',
       header: '旧方案',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-500 text-xs">
           {item.old_plan ? displayTier(item.old_plan.tier) : '-'}
@@ -178,6 +182,7 @@ export function OrderHistoryTab() {
     {
       key: 'new_plan',
       header: '新方案',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-700 text-xs font-medium">
           {item.new_plan ? displayTier(item.new_plan.tier) : '-'}
@@ -187,6 +192,7 @@ export function OrderHistoryTab() {
     {
       key: 'amount_cents',
       header: '金额',
+      align: 'center',
       render: (item) => (
         <span
           className={item.amount_cents === 0 ? 'text-gray-400' : 'text-gray-700'}
@@ -198,6 +204,7 @@ export function OrderHistoryTab() {
     {
       key: 'amount_months',
       header: '月数',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-600">
           {item.amount_months > 0 ? item.amount_months : '—'}
@@ -207,6 +214,7 @@ export function OrderHistoryTab() {
     {
       key: 'status',
       header: '状态',
+      align: 'center',
       render: (item) => (
         <StatusBadge status={item.status} config={ORDER_STATUS_BADGE_CONFIG} />
       ),
@@ -214,6 +222,7 @@ export function OrderHistoryTab() {
     {
       key: 'expires',
       header: '到期变更',
+      align: 'center',
       render: (item) => (
         <div className="text-xs leading-tight">
           <div className="text-gray-400">
@@ -228,6 +237,7 @@ export function OrderHistoryTab() {
     {
       key: 'operator',
       header: '操作人',
+      align: 'center',
       render: (item) => {
         const name = item.operator_user?.username
         return (
@@ -240,6 +250,7 @@ export function OrderHistoryTab() {
     {
       key: 'time',
       header: '时间',
+      align: 'center',
       render: (item) => (
         <div className="text-xs leading-tight">
           <div className="text-gray-600">{fmtDateTime(item.created_at)}</div>
@@ -256,9 +267,10 @@ export function OrderHistoryTab() {
     {
       key: 'order_id',
       header: '订单ID',
+      align: 'center',
       render: (item) => (
         <span
-          className="font-mono text-xs text-gray-600 truncate block max-w-[120px]"
+          className="font-mono text-xs text-gray-600 truncate block max-w-[120px] mx-auto"
           title={item.order_id}
         >
           {item.order_id}
@@ -268,6 +280,7 @@ export function OrderHistoryTab() {
     {
       key: 'user',
       header: '用户',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-700">{item.user?.username ?? '-'}</span>
       ),
@@ -275,6 +288,7 @@ export function OrderHistoryTab() {
     {
       key: 'amount_cents',
       header: '金额',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-700">{fmtPrice(item.amount_cents)}</span>
       ),
@@ -282,6 +296,7 @@ export function OrderHistoryTab() {
     {
       key: 'amount_stones',
       header: '风铃石数',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-700 tabular-nums">{item.amount_stones}</span>
       ),
@@ -289,6 +304,7 @@ export function OrderHistoryTab() {
     {
       key: 'stones_change',
       header: '余额变更',
+      align: 'center',
       render: (item) => (
         <div className="text-xs leading-tight tabular-nums">
           <span className="text-gray-400">{item.old_stones}</span>
@@ -300,6 +316,7 @@ export function OrderHistoryTab() {
     {
       key: 'status',
       header: '状态',
+      align: 'center',
       render: (item) => (
         <StatusBadge status={item.status} config={ORDER_STATUS_BADGE_CONFIG} />
       ),
@@ -307,6 +324,7 @@ export function OrderHistoryTab() {
     {
       key: 'operator',
       header: '操作人',
+      align: 'center',
       render: (item) => {
         const name = item.operator_user?.username
         return (
@@ -319,6 +337,7 @@ export function OrderHistoryTab() {
     {
       key: 'created_at',
       header: '时间',
+      align: 'center',
       render: (item) => (
         <span className="text-gray-500 text-xs">
           {fmtDateTime(item.created_at)}
@@ -398,8 +417,8 @@ export function OrderHistoryTab() {
         keyExtractor={(item) => item.order_id}
         gridTemplateColumns={
           isMember
-            ? '120px 1fr 60px 48px 48px 1fr 36px 56px 1fr 60px 1fr'
-            : '120px 1fr 1fr 72px 100px 56px 60px 120px'
+            ? '2fr 2fr 1fr 1fr 1fr 1fr 1fr 1fr 2fr 1fr 2fr'
+            : '2fr 2fr 1fr 1fr 2fr 1fr 1fr 1fr'
         }
         isLoading={isMember ? memberLoading : stoneLoading}
         error={isMember ? memberError : stoneError}
