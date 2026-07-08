@@ -37,7 +37,7 @@ export default function PublishPage() {
 
   const { data: opportunitiesData, isLoading: opportunitiesLoading } = useQuery({
     queryKey: ['opportunities'],
-    queryFn: () => listOpportunities({ page_size: 100 }),
+    queryFn: () => listOpportunities({ page_size: 20 }),
   })
 
   const { data: accountsData } = useQuery({
