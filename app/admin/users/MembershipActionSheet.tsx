@@ -6,7 +6,10 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { toast } from "sonner"
 import { adminApi, type AdminUserInfo } from "@/lib/api/admin"
 import type { MembershipPlan, StoneSalePricing } from "@/lib/api/admin"
-import { fmtPrice } from "@/lib/utils/format"
+/** 分 → 元显示 */
+function fmtYuan(cents: number): string {
+  return `¥${(cents / 100).toLocaleString("zh-CN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+}
 
 /* ===== 等级 Badge 映射 ===== */
 const TIER_LABELS: Record<number, string> = {
@@ -39,7 +42,7 @@ function calcUpgradeAmount(currentPlan: MembershipPlan, targetPlan: MembershipPl
     1,
   )
   const amount = Math.round(priceDiff * remainingDays / daysInMonth)
-  const detail = `${fmtPrice(priceDiff)} × ${remainingDays}天 ÷ ${daysInMonth}天 ≈ ${fmtPrice(amount)}`
+  const detail = `${fmtYuan(priceDiff)} × ${remainingDays}天 ÷ ${daysInMonth}天 ≈ ${fmtYuan(amount)}`
   return { amount, detail }
 }
 
@@ -49,7 +52,7 @@ function calcRenewAmount(durationMonths: number, unitPrice: number): {
   detail: string
 } {
   const amount = durationMonths * unitPrice
-  const detail = `${durationMonths} × ${fmtPrice(unitPrice)}/月 = ${fmtPrice(amount)}`
+  const detail = `${durationMonths} × ${fmtYuan(unitPrice)}/月 = ${fmtYuan(amount)}`
   return { amount, detail }
 }
 
@@ -95,7 +98,7 @@ function PlanCard({ plan, selected, onClick, disabled }: PlanCardProps) {
           <span className="text-sm font-semibold text-gray-900">{label}</span>
         </div>
         <span className="text-sm font-semibold text-gray-900 tabular-nums">
-          {fmtPrice(plan.price)}<span className="text-xs text-gray-400 font-normal">/月</span>
+          {fmtYuan(plan.price)}<span className="text-xs text-gray-400 font-normal">/月</span>
         </span>
       </div>
       <div className="mt-1 text-xs text-gray-500">
@@ -126,7 +129,7 @@ function StoneCard({ pricing, selected, onClick }: StoneCardProps) {
       className={`p-3 rounded-lg border text-center transition-colors cursor-pointer ${borderCls} ${bgCls}`}
     >
       <div className="text-base font-semibold text-gray-900 tabular-nums">
-        {fmtPrice(pricing.amount)}
+        {fmtYuan(pricing.amount)}
       </div>
       <div className="text-xs text-gray-500 mt-0.5">{pricing.stones} 风铃石</div>
     </button>
