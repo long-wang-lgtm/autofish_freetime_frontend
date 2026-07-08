@@ -43,9 +43,20 @@ app/admin/users/page.tsx
 `lib/api/admin/users.ts` — 后端 UserSchema 已返回以下字段，前端补接收：
 
 ```ts
+/** 会员方案（后端直接返回 MembershipPlanSchema，字段完整直接使用） */
+export interface MembershipPlanSimple {
+  id: number | null
+  tier: number | null
+  max_accounts: number | null
+  price: number | null
+  daily_bonus: number | null
+  created_at: string | null
+  updated_at: string | null
+}
+
 export interface AdminUserInfo {
   // ... 现有字段不变
-  plan: { tier: number } | null          // 当前会员等级
+  plan: MembershipPlanSimple | null      // 当前会员方案（后端直接返回完整方案）
   plan_expires_at: string | null         // 到期时间
   stones: number | null                  // 风铃石充值余额
   stones_bonus: number | null            // 风铃石赠送余额
