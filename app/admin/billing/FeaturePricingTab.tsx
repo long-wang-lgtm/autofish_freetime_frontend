@@ -205,7 +205,7 @@ export function FeaturePricingTab() {
     },
     {
       key: 'delete',
-      header: '',
+      header: '删除',
       align: 'center',
       render: (item) => (
         <button

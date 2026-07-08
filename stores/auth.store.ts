@@ -9,6 +9,18 @@ export interface User {
   email: string | null
   role: 'administrators' | 'user'
   last_login: string
+  plan?: {
+    id: number
+    tier: number
+    max_accounts: number
+    price: number
+    daily_bonus: number
+    created_at: string
+    updated_at: string
+  } | null
+  plan_expires_at?: string | null
+  stones?: number
+  stones_bonus?: number
 }
 
 interface AuthState {
@@ -132,9 +144,13 @@ export const useAuth = create<AuthState>((set, get) => ({
       set({
         user: {
           username: u.username,
-          email: null,
+          email: u.email ?? null,
           role: u.role,
           last_login: u.last_login || '',
+          plan: u.plan ?? null,
+          plan_expires_at: u.plan_expires_at ?? null,
+          stones: u.stones,
+          stones_bonus: u.stones_bonus,
         },
         isAuthenticated: true,
         isLoading: false,

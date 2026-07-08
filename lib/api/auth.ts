@@ -45,12 +45,29 @@ export interface RegisterResponse {
   }
 }
 
+/** 会员方案精简信息（/api/auth/me 内嵌） */
+export interface UserPlanInfo {
+  id: number
+  tier: number
+  max_accounts: number
+  price: number
+  daily_bonus: number
+  created_at: string
+  updated_at: string
+}
+
 /** /api/auth/me 返回的 data 字段 */
 export interface UserInfo {
   username: string
   last_login: string
   is_active: boolean
   role: 'user' | 'administrators'
+  phone?: string
+  email?: string | null
+  plan?: UserPlanInfo | null
+  plan_expires_at?: string | null
+  stones?: number
+  stones_bonus?: number
 }
 
 /** /api/auth/me 完整响应 */

@@ -5,6 +5,15 @@ import { isAdminRole } from '@/lib/constants/admin'
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { fmtNumber, fmtDate } from '@/lib/utils/format'
+import { Flame } from 'lucide-react'
+
+const TIER_LABELS: Record<number, { label: string; color: string }> = {
+  0: { label: 'VIP0', color: 'gray' },
+  1: { label: 'VIP1', color: 'blue' },
+  2: { label: 'VIP2', color: 'amber' },
+  3: { label: 'VIP3', color: 'purple' },
+}
 
 interface HeaderProps {
   /** 可选的中间区域内容，用于放置面包屑、操作按钮等 */
@@ -129,38 +138,69 @@ export function Header({ children, onMenuClick }: HeaderProps) {
 
           {/* 下拉菜单 */}
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-1 lg:mt-1.5 w-40 lg:w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 animate-in fade-in zoom-in-95 origin-top-right duration-150">
-              {/* 用户信息区 */}
-              <div className="px-3 lg:px-3 py-2 lg:py-2 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {isAdminRole(user?.role) ? '管理员' : '用户'}
-                </p>
+            <div className="absolute right-0 top-full mt-1 lg:mt-1.5 w-56 lg:w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 origin-top-right duration-150">
+              {/* 头部：用户名 + 设置按钮 */}
+              <div className="flex items-center justify-between px-4">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-sm font-semibold text-gray-900 truncate">{displayName}</span>
+                </div>
+                <button
+                  onClick={handleSettings}
+                  className="flex-shrink-0 p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  title="设置"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
               </div>
 
-              {/* 设置 */}
-              <button
-                onClick={handleSettings}
-                className="w-full flex items-center gap-2 lg:gap-2 px-3 lg:px-3 py-1 lg:py-2 text-xs lg:text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors max-lg:min-h-[44px]"
-              >
-                <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                设置
-              </button>
+              {/* 会员信息 */}
+              {user?.plan && (
+                <div className="mt-1.5 px-4 text-xs text-gray-500">
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                    TIER_LABELS[user.plan.tier]?.color === 'purple' ? 'bg-purple-50 text-purple-700' :
+                    TIER_LABELS[user.plan.tier]?.color === 'amber' ? 'bg-amber-50 text-amber-700' :
+                    TIER_LABELS[user.plan.tier]?.color === 'blue' ? 'bg-blue-50 text-blue-700' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>
+                    {TIER_LABELS[user.plan.tier]?.label ?? `Tier ${user.plan.tier}`}
+                  </span>
+                  {user.plan_expires_at && (
+                    <span className="ml-2">到期 {fmtDate(user.plan_expires_at)}</span>
+                  )}
+                </div>
+              )}
 
-              {/* 退出登录 */}
-              <button
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="w-full flex items-center gap-2 lg:gap-2 px-3 lg:px-3 py-1 lg:py-2 text-xs lg:text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 max-lg:min-h-[44px]"
-              >
-                <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                {isLoggingOut ? '退出中...' : '退出登录'}
-              </button>
+              {/* 风铃石 */}
+              {user?.stones != null && (
+                <div className="mt-1.5 px-4 flex items-center gap-1.5 text-xs text-gray-500">
+                  <Flame className="w-4 h-4 text-amber-500" />
+                  <span className={`font-semibold text-sm tabular-nums ${user.stones > 0 ? 'text-gray-900' : 'text-gray-400'}`}>
+                    {fmtNumber(user.stones)}
+                  </span>
+                  {user.stones_bonus != null && user.stones_bonus > 0 && (
+                    <span className="tabular-nums text-gray-800">
+                      +{fmtNumber(user.stones_bonus)}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* 分隔线 + 退出登录 */}
+              <div className="mt-2 pt-1 border-t border-gray-100">
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-xs lg:text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 max-lg:min-h-[44px]"
+                >
+                  <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  {isLoggingOut ? '退出中...' : '退出登录'}
+                </button>
+              </div>
             </div>
           )}
         </div>
