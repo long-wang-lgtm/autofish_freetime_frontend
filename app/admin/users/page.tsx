@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { adminApi, type AdminUserInfo, type ProxyLong } from "@/lib/api/admin"
 import { isAdminRole } from '@/lib/constants/admin'
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
@@ -250,6 +250,19 @@ export default function AdminUsersPage() {
     setOpenMenuUserId((prev) => (prev === userId ? null : userId))
   }
 
+  // 点击菜单外部时自动关闭
+  useEffect(() => {
+    if (!openMenuUserId) return
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest("[data-menu-container]")) {
+        setOpenMenuUserId(null)
+      }
+    }
+    document.addEventListener("click", handler)
+    return () => document.removeEventListener("click", handler)
+  }, [openMenuUserId])
+
   return (
     <div className="space-y-4">
       {/* 标题栏 */}
@@ -305,7 +318,7 @@ export default function AdminUsersPage() {
             <div>风铃石</div>
             <div>店铺</div>
             <div>代理</div>
-            <div>操作</div>
+            <div className="text-center">操作</div>
           </div>
 
           {users.map((user, index) => {
@@ -403,7 +416,7 @@ export default function AdminUsersPage() {
                 </div>
 
                 {/* 操作下拉菜单 */}
-                <div className="relative flex justify-center">
+                <div className="relative flex justify-center" data-menu-container>
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
