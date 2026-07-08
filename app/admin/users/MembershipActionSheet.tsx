@@ -355,15 +355,15 @@ export function MembershipActionSheet({ open, onClose, action, user, onSuccess }
             </div>
           )}
 
-          {/* ======== 升级：金额(分) ======== */}
+          {/* ======== 升级：金额(元) ======== */}
           {action === "upgrade" && (
             <div>
-              <label className={labelCls}>金额(分)</label>
+              <label className={labelCls}>金额(元)</label>
               <input
                 type="number"
                 className={inputCls}
-                value={amountCents}
-                onChange={(e) => setAmountCents(Number(e.target.value))}
+                value={amountCents / 100}
+                onChange={(e) => setAmountCents(Math.round(parseFloat(e.target.value || "0") * 100))}
                 min={0}
               />
               {calcDetail && (
@@ -372,22 +372,22 @@ export function MembershipActionSheet({ open, onClose, action, user, onSuccess }
             </div>
           )}
 
-          {/* ======== 降级：金额(分) ======== */}
+          {/* ======== 降级：金额(元) ======== */}
           {action === "downgrade" && (
             <div>
-              <label className={labelCls}>金额(分)</label>
+              <label className={labelCls}>金额(元)</label>
               <input
                 type="number"
                 className={inputCls}
-                value={amountCents}
-                onChange={(e) => setAmountCents(Number(e.target.value))}
+                value={amountCents / 100}
+                onChange={(e) => setAmountCents(Math.round(parseFloat(e.target.value || "0") * 100))}
                 min={0}
               />
               <p className="text-xs text-gray-400 mt-1">选填，默认 0（免费操作）</p>
             </div>
           )}
 
-          {/* ======== 续费：月数 + 金额(分) ======== */}
+          {/* ======== 续费：月数 + 金额(元) ======== */}
           {action === "renew" && (
             <>
               <div>
@@ -402,13 +402,14 @@ export function MembershipActionSheet({ open, onClose, action, user, onSuccess }
                 />
               </div>
               <div>
-                <label className={labelCls}>金额(分)</label>
+                <label className={labelCls}>金额(元)</label>
                 <input
                   type="number"
                   className={inputCls}
-                  value={amountCents}
-                  onChange={(e) => setAmountCents(Number(e.target.value))}
-                  min={1}
+                  value={amountCents / 100}
+                  onChange={(e) => setAmountCents(Math.round(parseFloat(e.target.value || "0") * 100))}
+                  min={0.01}
+                  step={0.01}
                   required
                 />
                 {calcDetail && (
