@@ -25,7 +25,7 @@ export type {
   ImStatusSnapshot,
 } from './dashboard'
 
-export type { AdminUserInfo } from './users'
+export type { AdminUserInfo, MembershipPlanSimple } from './users'
 
 export type {
   ProxySourceItem,
@@ -59,6 +59,10 @@ export {
   getBindableProxies,
   bindUserProxy,
   unbindUserProxy,
+  upgradeMembership,
+  downgradeMembership,
+  renewMembership,
+  rechargeStones,
 } from './users'
 
 export {
@@ -112,6 +116,10 @@ export const adminApi = {
   getBindableProxies: users.getBindableProxies,
   bindUserProxy: users.bindUserProxy,
   unbindUserProxy: users.unbindUserProxy,
+  upgradeMembership: users.upgradeMembership,
+  downgradeMembership: users.downgradeMembership,
+  renewMembership: users.renewMembership,
+  rechargeStones: users.rechargeStones,
 
   // Proxy
   getProxyList: proxy.getProxyList,
