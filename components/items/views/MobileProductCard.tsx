@@ -6,6 +6,7 @@ import { Bot, Truck, Upload, ChevronRight, ChevronDown, ChevronUp } from "lucide
 import { ConfigField, formatPublishTime, statusLabel } from "../config"
 import { IconToggle } from "../parts/IconToggle"
 import { SendCodeEditor } from "../parts/SendCodeEditor"
+import { ShelfActions } from "../parts/ShelfActions"
 
 interface ConfigEntry {
   key: string
@@ -22,6 +23,9 @@ interface MobileProductCardProps {
   onKeywordClick: () => void
   onConfigClick: (field: ConfigField) => void
   onSendCodeChange: (gid: string, value: string) => void
+  onShelve: (item: Item) => void
+  onOffline: (item: Item) => void
+  shelfPending: boolean
 }
 
 export function MobileProductCard({
@@ -32,6 +36,9 @@ export function MobileProductCard({
   onKeywordClick,
   onConfigClick,
   onSendCodeChange,
+  onShelve,
+  onOffline,
+  shelfPending,
 }: MobileProductCardProps) {
   const status = statusLabel(item.status)
   const [expanded, setExpanded] = useState(false)
@@ -115,6 +122,13 @@ export function MobileProductCard({
         <span className="text-orange-600 font-semibold flex-shrink-0">¥{item.price}</span>
         <span className="text-gray-300">|</span>
         <span className="flex-shrink-0">{formatPublishTime(item.publishTime)}</span>
+        <ShelfActions
+          item={item}
+          variant="mobile"
+          pending={shelfPending}
+          onShelve={onShelve}
+          onOffline={onOffline}
+        />
       </div>
 
       {/* 分割线 */}

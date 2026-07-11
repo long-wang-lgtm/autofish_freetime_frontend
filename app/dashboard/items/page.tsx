@@ -25,6 +25,7 @@ function ItemsPageContent() {
     rulesStats,
     itemKeywordCounts,
     updateMutation,
+    shelfMutation,
     handleToggle,
     handleRefresh,
     isMobile,
@@ -81,6 +82,7 @@ function ItemsPageContent() {
             handleToggle(item, field as "auto_reply" | "auto_delivery" | "auto_ai_reply" | "auto_restock")
           }
           updateMutation={updateMutation}
+          shelfMutation={shelfMutation}
           orderBy={filterState.orderBy}
           asc={filterState.asc}
           onSortChange={(field) => onFilterChange((prev) => {

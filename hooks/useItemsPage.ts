@@ -41,6 +41,7 @@ export function useItemsPage() {
   // —— 变更操作 ——
   const {
     updateMutation,
+    shelfMutation,
     handleToggle,
     handleRefresh: refreshFn,
     isRefreshing,
@@ -71,6 +72,7 @@ export function useItemsPage() {
     itemKeywordCounts,
     // 变更操作
     updateMutation,
+    shelfMutation,
     handleToggle,
     handleRefresh,
     // 工具

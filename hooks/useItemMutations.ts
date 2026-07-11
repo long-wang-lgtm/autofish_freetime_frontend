@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { updateItem, refreshItems, type Item } from "@/lib/api/items"
+import { updateItem, refreshItems, shelvesItem, offlineItem, type Item, type ItemListResponse } from "@/lib/api/items"
 import { useToast } from "@/components/ui/toaster"
 
 /**
@@ -24,6 +24,27 @@ export function useItemMutations() {
     },
     onError: (e: Error) => {
       addToast({ title: "更新失败", description: e.message, variant: "error" })
+    },
+  })
+
+  const shelfMutation = useMutation({
+    mutationFn: ({ gid, uid, action }: { gid: string; uid: string; action: "shelves" | "offline" }) =>
+      action === "shelves" ? shelvesItem(gid, uid) : offlineItem(gid, uid),
+    onSuccess: (updated, { action }) => {
+      // 就地 merge 更新所有 ["items", ...] 列表缓存（merge 而非替换，防返回字段不全丢字段）
+      queryClient.setQueriesData<ItemListResponse>({ queryKey: ["items"] }, (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          items: old.items.map((it) => (it.gid === updated.gid ? { ...it, ...updated } : it)),
+        }
+      })
+      // 后台重拉，校正状态筛选结果与统计
+      queryClient.invalidateQueries({ queryKey: ["items"] })
+      addToast({ title: action === "shelves" ? "上架成功" : "下架成功", variant: "success" })
+    },
+    onError: (e: Error) => {
+      addToast({ title: "操作失败", description: e.message, variant: "error" })
     },
   })
 
@@ -63,6 +84,7 @@ export function useItemMutations() {
 
   return {
     updateMutation,
+    shelfMutation,
     handleToggle,
     handleRefresh,
     isRefreshing,

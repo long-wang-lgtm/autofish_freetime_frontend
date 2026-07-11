@@ -213,3 +213,50 @@ export async function getItemStats(uid?: string, status?: number): Promise<ItemS
   const query = params.toString()
   return fetchApi<ItemStats>(`/api/items/stats${query ? `?${query}` : ""}`)
 }
+
+/** 上架商品 — POST /api/items/shelves?gid=&uid=（gid/uid 走 query，返回更新后的商品对象） */
+export async function shelvesItem(gid: string, uid: string): Promise<Item> {
+  const params = new URLSearchParams({ gid, uid })
+  return fetchApi<Item>(`/api/items/shelves?${params.toString()}`, {
+    method: "POST",
+  })
+}
+
+/** 下架商品 — POST /api/items/offline?gid=&uid= */
+export async function offlineItem(gid: string, uid: string): Promise<Item> {
+  const params = new URLSearchParams({ gid, uid })
+  return fetchApi<Item>(`/api/items/offline?${params.toString()}`, {
+    method: "POST",
+  })
+}
+
+/** 上架/下架按钮可用性 */
+export interface ShelfState {
+  canShelve: boolean             // 上架是否可点
+  canOffline: boolean            // 下架是否可点
+  shelveDisabledReason?: string  // 上架禁用时的 tooltip
+  offlineDisabledReason?: string // 下架禁用时的 tooltip
+}
+
+/**
+ * 根据商品状态与账号状态，计算上架/下架按钮可用性。
+ * 优先级：账号未启用 > 商品状态分派 > 未知兜底。
+ * account.status === 1 表示账号已启用（与后端 `!= 1` 判据同源）。
+ * item.status: 0=在售, -2=已下架, 1=已售出。
+ */
+export function getShelfState(item: Item): ShelfState {
+  if (item.account.status !== 1) {
+    const reason = "账号未启用，无法操作"
+    return { canShelve: false, canOffline: false, shelveDisabledReason: reason, offlineDisabledReason: reason }
+  }
+  switch (item.status) {
+    case 0: // 在售
+      return { canShelve: false, canOffline: true, shelveDisabledReason: "商品在售中" }
+    case -2: // 已下架
+      return { canShelve: true, canOffline: false, offlineDisabledReason: "商品已下架" }
+    case 1: // 已售出
+      return { canShelve: true, canOffline: false, offlineDisabledReason: "商品已售出" }
+    default: // 未知状态兜底
+      return { canShelve: false, canOffline: false, shelveDisabledReason: "商品状态未知", offlineDisabledReason: "商品状态未知" }
+  }
+}

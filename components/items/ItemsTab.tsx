@@ -17,6 +17,7 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { Pagination } from "@/components/ui/pagination"
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable"
+import { ShelfActions } from "@/components/items/parts/ShelfActions"
 
 interface ItemsTabProps {
   isMobile: boolean
@@ -32,6 +33,11 @@ interface ItemsTabProps {
   onRetry: () => void
   onToggle: (item: Item, field: string) => void
   updateMutation: { mutate: (args: { gid: string; data: Record<string, unknown> }) => void }
+  shelfMutation: {
+    mutate: (args: { gid: string; uid: string; action: "shelves" | "offline" }) => void
+    isPending: boolean
+    variables?: { gid: string; uid: string; action: "shelves" | "offline" }
+  }
   orderBy: string | null
   asc: boolean
   onSortChange: (field: string) => void
@@ -51,6 +57,7 @@ export function ItemsTab({
   onRetry,
   onToggle,
   updateMutation,
+  shelfMutation,
   orderBy,
   asc,
   onSortChange,
@@ -59,6 +66,10 @@ export function ItemsTab({
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [keywordItem, setKeywordItem] = useState<Item | null>(null)
   const [mobileConfig, setMobileConfig] = useState<{ item: Item; field: ConfigField } | null>(null)
+
+  // — 上架/下架：仅锁定当前正在请求的那一行 —
+  const isShelfPending = (item: Item) =>
+    shelfMutation.isPending && shelfMutation.variables?.gid === item.gid
 
   // — 列表滚动 ref，翻页时滚回顶部 —
   const listRef = useRef<HTMLDivElement>(null)
@@ -91,10 +102,18 @@ export function ItemsTab({
           >
             {item.title || '无标题'}
           </span>
-          <div className="flex items-center gap-1 mt-0.5 text-gray-400 truncate text-xs">
-            <span title={item.gid} className="min-w-[85px]">{item.gid}</span>
+          <div className="flex items-center gap-1.5 mt-0.5 text-gray-400 text-xs">
+            <span title={item.account.uid} className="truncate ">{item.account.name}</span>
             <span className="text-gray-300">|</span>
-            <span title={item.account.uid} className="truncate">{item.account.name}</span>
+            <span title={item.gid} className="min-w-[85px] truncate">{item.gid}</span>
+            <span className="text-gray-300">|</span>
+            <ShelfActions
+              item={item}
+              variant="desktop"
+              pending={isShelfPending(item)}
+              onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
+              onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
+            />
           </div>
         </div>
       ),
@@ -340,6 +359,9 @@ export function ItemsTab({
                 onKeywordClick={() => setKeywordItem(item)}
                 onConfigClick={(field) => setMobileConfig({ item, field })}
                 onSendCodeChange={(gid, value) => updateMutation.mutate({ gid, data: { sendCode: value } })}
+                onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
+                onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
+                shelfPending={isShelfPending(item)}
               />
             ))}
           </div>

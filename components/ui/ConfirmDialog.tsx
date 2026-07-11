@@ -6,7 +6,7 @@ interface ConfirmDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
-  description: string
+  description: React.ReactNode
   confirmLabel?: string
   cancelLabel?: string
   variant?: 'danger' | 'default'
@@ -78,7 +78,7 @@ export function ConfirmDialog({
         className="relative bg-white rounded-xl shadow-lg p-6 max-w-sm w-full mx-4 outline-none"
       >
         <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-        <p className="mt-2 text-sm text-gray-500">{description}</p>
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed">{description}</p>
 
         <div className="mt-6 flex items-center justify-end gap-3">
           <button
