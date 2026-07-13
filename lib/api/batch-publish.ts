@@ -168,30 +168,59 @@ export interface MaterialListResponse {
 // 监控商品 API
 // ============================================================
 
-/** 列出监控商品 — GET /api/selection/monitor/items */
+/** 列出监控商品 — GET /api/selection/monitor.item.list */
 export async function listMonitoredItems(params?: {
   page?: number
   page_size?: number
-  search?: string
+  uid?: string
+  uname?: string
+  gid?: string
+  title?: string
+  itemStatus?: number
   monitorStatus?: number
-  opportunity_id?: number | null
-  orderBy?: string
+  oid?: number | null
+  order_by?: string
   asc?: boolean
 }): Promise<MonitorItemListResponse> {
-  return fetchApi<MonitorItemListResponse>('/monitor/items', {
+  return fetchApi<MonitorItemListResponse>('/monitor.item.list', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     params: params as Record<string, string | number>,
   })
 }
 
-/** 批量绑定商品到商机 — POST /api/selection/monitor.batch.bind */
-export async function batchBindOpportunity(gids: string[], opportunityId: number): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>('/monitor.batch.bind', {
+/** 批量绑定商品到商机 — POST /api/selection/monitor.batch.bind.opportunity */
+export async function batchBindOpportunity(gids: string[], opportunityId: number): Promise<MonitorItemListResponse> {
+  return fetchApi<MonitorItemListResponse>('/monitor.batch.bind.opportunity', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
     body: JSON.stringify({ gids, opportunity_id: opportunityId }),
+  })
+}
+
+/** 单个商品绑定到商机 — POST /api/selection/monitor.bind.opportunity */
+export async function bindOpportunity(gid: string, opportunityId: number): Promise<MonitoredItem> {
+  return fetchApi<MonitoredItem>('/monitor.bind.opportunity', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+    method: 'POST',
+    body: JSON.stringify({ gid, opportunity_id: opportunityId }),
+  })
+}
+
+/** 绑定商品并同时创建商机 — POST /api/selection/monitor.bind.opportunity.create */
+export async function bindOpportunityAndCreate(
+  gid: string,
+  name: string,
+  description: string,
+  ai_context_template: TemplateType,
+): Promise<MonitoredItem> {
+  return fetchApi<MonitoredItem>('/monitor.bind.opportunity.create', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+    method: 'POST',
+    body: JSON.stringify({ gid, name, description, ai_context_template }),
   })
 }
 
@@ -205,13 +234,13 @@ export async function unbindOpportunity(gid: string): Promise<OperationResponse>
   })
 }
 
-/** 删除监控商品 — DELETE /api/selection/monitor/item/delete */
+/** 删除监控商品 — POST /api/selection/monitor.item.delete */
 export async function deleteMonitoredItem(gid: string): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>('/monitor/item/delete', {
+  return fetchApi<OperationResponse>('/monitor.item.delete', {
     baseUrl: BP_BASE,
     credentials_: 'include',
-    method: 'DELETE',
-    params: { gid },
+    method: 'POST',
+    body: JSON.stringify({ gid }),
   })
 }
 
@@ -219,47 +248,50 @@ export async function deleteMonitoredItem(gid: string): Promise<OperationRespons
 // 商机 API
 // ============================================================
 
-/** 列出商机 — GET /api/selection/opportunities */
+/** 列出商机 — GET /api/selection/opportunity.list */
 export async function listOpportunities(params?: {
   page?: number
   page_size?: number
-  search?: string
+  name?: string
+  description?: string
   status?: string
+  ai_context_template?: string
 }): Promise<OpportunityListResponse> {
-  return fetchApi<OpportunityListResponse>('/opportunities', {
+  return fetchApi<OpportunityListResponse>('/opportunity.list', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     params: params as Record<string, string | number>,
   })
 }
 
-/** 创建商机 — POST /api/selection/opportunity/create */
-export async function createOpportunity(input: OpportunityInput): Promise<OpportunityItem> {
-  return fetchApi<OpportunityItem>('/opportunity/create', {
+/** 创建商机 — POST /api/selection/opportunity.create */
+export async function createOpportunity(opp: OpportunityParams): Promise<OpportunityItem> {
+  return fetchApi<OpportunityItem>('/opportunity.create', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify(input),
+    body: JSON.stringify({ opp }),
   })
 }
 
-/** 更新商机 — POST /api/selection/opportunity/update */
-export async function updateOpportunity(id: number, input: Partial<OpportunityInput>): Promise<OpportunityItem> {
-  return fetchApi<OpportunityItem>('/opportunity/update', {
+/** 更新商机 — POST /api/selection/opportunity.update */
+export async function updateOpportunity(oid: number, opp: Partial<OpportunityParams>): Promise<OpportunityItem> {
+  return fetchApi<OpportunityItem>('/opportunity.update', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ id, ...input }),
+    params: { oid } as Record<string, string | number>,
+    body: JSON.stringify({ opp }),
   })
 }
 
-/** 删除商机 — DELETE /api/selection/opportunity/delete */
-export async function deleteOpportunity(id: number): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>('/opportunity/delete', {
+/** 删除商机 — POST /api/selection/opportunity.delete */
+export async function deleteOpportunity(oid: number): Promise<OperationResponse> {
+  return fetchApi<OperationResponse>('/opportunity.delete', {
     baseUrl: BP_BASE,
     credentials_: 'include',
-    method: 'DELETE',
-    params: { id },
+    method: 'POST',
+    params: { oid } as Record<string, string | number>,
   })
 }
 
@@ -267,17 +299,17 @@ export async function deleteOpportunity(id: number): Promise<OperationResponse> 
 // 素材 API
 // ============================================================
 
-/** 列出素材 — GET /api/selection/materials */
+/** 列出素材 — GET /api/selection/material.list */
 export async function listMaterials(params?: {
   page?: number
   page_size?: number
-  search?: string
-  status?: MaterialStatus
-  opportunity_id?: number
-  dateFrom?: string
-  dateTo?: string
+  oid?: number
+  name?: string
+  description?: string
+  category?: string
+  status?: string
 }): Promise<MaterialListResponse> {
-  return fetchApi<MaterialListResponse>('/materials', {
+  return fetchApi<MaterialListResponse>('/material.list', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     params: params as Record<string, string | number>,
@@ -285,12 +317,12 @@ export async function listMaterials(params?: {
 }
 
 /** 批量创建素材 — POST /api/selection/material.create */
-export async function createMaterials(input: MaterialCreateInput): Promise<PublishMaterial[]> {
+export async function createMaterials(params: MaterialCreateParams): Promise<PublishMaterial[]> {
   return fetchApi<PublishMaterial[]>('/material.create', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify(input),
+    body: JSON.stringify(params),
   })
 }
 
@@ -314,19 +346,19 @@ export async function updateMaterialContext(input: MaterialContextInput): Promis
   })
 }
 
-/** 触发 AI 改写 — POST /api/selection/material.rewrite */
-export async function triggerRewrite(materialId: number): Promise<PublishMaterial> {
-  return fetchApi<PublishMaterial>('/material.rewrite', {
+/** 触发 AI 工作 — POST /api/selection/material.rewrite.work */
+export async function triggerWork(materialId: number, stage: RewriteStage): Promise<PublishMaterial> {
+  return fetchApi<PublishMaterial>('/material.rewrite.work', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ id: materialId }),
+    body: JSON.stringify({ id: materialId, work: { stage } }),
   })
 }
 
 /** 获取发布类目 — POST /api/selection/material.channel */
-export async function getChannel(materialId: number): Promise<{ category: string }> {
-  return fetchApi<{ category: string }>('/material.channel', {
+export async function getChannel(materialId: number): Promise<ChannelItemResponse[]> {
+  return fetchApi<ChannelItemResponse[]>('/material.channel', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
@@ -344,21 +376,20 @@ export async function publishMaterial(materialId: number): Promise<PublishMateri
   })
 }
 
-/** 删除素材 — DELETE /api/selection/material/delete */
+/** 删除素材 — POST /api/selection/material.delete */
 export async function deleteMaterial(id: number): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>('/material/delete', {
+  return fetchApi<OperationResponse>('/material.delete', {
     baseUrl: BP_BASE,
     credentials_: 'include',
-    method: 'DELETE',
-    params: { id },
+    method: 'POST',
+    body: JSON.stringify({ id }),
   })
 }
 
-/** 获取 AI 上下文模板 — GET /api/selection/material/context.template */
-export async function getContextTemplate(materialId: number): Promise<MaterialAIContext> {
-  return fetchApi<MaterialAIContext>('/material/context.template', {
+/** 获取 AI 上下文模板 — GET /api/selection/material.context.templateType */
+export async function getContextTemplate(): Promise<OperationResponse> {
+  return fetchApi<OperationResponse>('/material.context.templateType', {
     baseUrl: BP_BASE,
     credentials_: 'include',
-    params: { id: materialId },
   })
 }
