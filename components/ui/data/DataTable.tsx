@@ -2,8 +2,8 @@
 
 import { cn } from '@/lib/utils'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
-import { ErrorBanner } from '@/components/ui/ErrorBanner'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
+import { EmptyState } from '@/components/ui/feedback/EmptyState'
 
 // ---- 类型 ----
 

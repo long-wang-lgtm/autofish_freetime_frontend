@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Sheet, BottomSheet } from '@/components/ui/Sheet'
+import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import {
   listNotificationConfigs,
   createNotificationConfig,

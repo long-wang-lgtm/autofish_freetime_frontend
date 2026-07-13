@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { adminApi, type FeaturePricing } from '@/lib/api/admin'
-import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
-import { EditableCell } from '@/components/ui/EditableCell'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
+import { EditableCell } from '@/components/ui/data/EditableCell'
+import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 import { toast } from 'sonner'
 import { fmtDate } from '@/lib/utils/format'
 import { Plus, Trash2 } from 'lucide-react'

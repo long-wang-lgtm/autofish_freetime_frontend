@@ -6,8 +6,8 @@ import {
   type MembershipOrder,
   type StoneOrder,
 } from '@/lib/api/admin'
-import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
-import { StatusBadge } from '@/components/ui/StatusBadge'
+import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
+import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { fmtPrice, fmtDate, fmtDateTime } from '@/lib/utils/format'
 import { Search } from 'lucide-react'

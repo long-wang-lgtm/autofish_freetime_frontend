@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Sheet, BottomSheet } from '@/components/ui/Sheet'
+import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { AIConfigFormFields } from '@/components/ai-config/form-fields'
 import {
   listAIConfigs,

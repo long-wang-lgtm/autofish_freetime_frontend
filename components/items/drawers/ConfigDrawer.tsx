@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Item } from "@/lib/api/items"
-import { Sheet, BottomSheet } from "@/components/ui/Sheet"
+import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { TextEditor } from '@/components/ui/TextEditor'
 import { useIsMobile } from "@/hooks/useIsMobile"
 import { ConfigField, FIELD_LABELS } from "../config"

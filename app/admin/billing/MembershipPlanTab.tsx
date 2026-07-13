@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { adminApi, type MembershipPlan } from '@/lib/api/admin'
-import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
-import { EditableCell } from '@/components/ui/EditableCell'
+import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
+import { EditableCell } from '@/components/ui/data/EditableCell'
 import { toast } from 'sonner'
 import { fmtDate } from '@/lib/utils/format'
 import { Plus } from 'lucide-react'

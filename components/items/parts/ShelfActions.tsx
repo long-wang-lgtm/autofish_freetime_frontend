@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { getShelfState, type Item } from "@/lib/api/items"
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
+import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 
 interface ShelfActionsProps {
   item: Item

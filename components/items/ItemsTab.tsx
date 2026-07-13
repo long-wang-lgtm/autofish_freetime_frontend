@@ -13,10 +13,10 @@ import { ConfigDrawer } from "@/components/items/drawers/ConfigDrawer"
 import { IconToggle } from "@/components/items/parts/IconToggle"
 import { SendCodeEditor } from "@/components/items/parts/SendCodeEditor"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
-import { ErrorBanner } from "@/components/ui/ErrorBanner"
-import { EmptyState } from "@/components/ui/EmptyState"
+import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
+import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { Pagination } from '@/components/ui/data/Pagination'
-import { DataTable, type DataTableColumn } from "@/components/ui/DataTable"
+import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 import { ShelfActions } from "@/components/items/parts/ShelfActions"
 
 interface ItemsTabProps {

@@ -1,6 +1,6 @@
 'use client'
 
-import { Sheet } from '@/components/ui/Sheet'
+import { Sheet } from '@/components/ui/overlay/Sheet'
 import { AccountsConfig } from '@/components/selection/config/AccountsConfig'
 import { AIConfig } from '@/components/selection/config/AIConfig'
 import { CollectionConfig } from '@/components/selection/config/CollectionConfig'

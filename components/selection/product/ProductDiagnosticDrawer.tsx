@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { Sheet, BottomSheet } from '@/components/ui/Sheet'
+import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import {
   type ProductItem,
   storedMonitorItem,

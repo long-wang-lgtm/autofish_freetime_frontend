@@ -29,7 +29,7 @@ import { detectAnomalies } from '@/components/selection/product/hourlyTrendUtils
 import { fmtPrice, fmtPercent, fmtGrowth, fmtAcceleration } from '@/lib/utils/format'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { EmptyState } from '@/components/ui/feedback/EmptyState'
 
 // ===== 格式化工具（仅本文件使用） =====
 

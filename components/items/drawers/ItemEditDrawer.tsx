@@ -8,7 +8,7 @@ import { Item, ItemUpdate, updateItem } from "@/lib/api/items"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { useToast } from '@/components/ui/Toaster'
 import { useQueryClient } from "@tanstack/react-query"
-import { Sheet, BottomSheet } from "@/components/ui/Sheet"
+import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { TextEditor } from '@/components/ui/TextEditor'
 import { useIsMobile } from "@/hooks/useIsMobile"
 

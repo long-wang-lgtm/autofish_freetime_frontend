@@ -1,6 +1,6 @@
 'use client'
 import { type PublishedItem } from '@/lib/api/publish-items'
-import { Sheet } from '@/components/ui/Sheet'
+import { Sheet } from '@/components/ui/overlay/Sheet'
 import { EditorPanel } from './EditorPanel'
 
 interface EditorDrawerProps {
