@@ -12,27 +12,53 @@
 
 ## 通用 UI 组件 (`components/ui/`)
 
+### overlay/ — 浮层组件
+
 | 组件 | 文件 | 用途 | 关键 Props |
 |------|------|------|-----------|
-| `TabBar` | `ui/Tab/index.tsx` | 核心 Tab 组件，overline 样式，响应式三档 | `tabs`, `activeTab`, `onTabChange` |
-| `Sheet` | `ui/Sheet.tsx` | 抽屉/底部弹出容器，支持手势拖拽关闭 | `open`, `onClose`, `width?`, `children` |
-| `LoadingSpinner` | `ui/loading-spinner.tsx` | 加载动画指示器 | `size?: 'sm' \| 'md' \| 'lg'` |
-| `useToast` / `Toaster` | `ui/toaster.tsx` | Toast 通知系统（封装 sonner） | —（hook 返回 `toast.xxx()` 方法） |
-| `SlidePanel` | `ui/slide-panel.tsx` | 滑出面板，点击外部自动关闭 | `open`, `onClose`, `position`, `children` |
-| `QRCodeDisplay` | `ui/qr-code-display.tsx` | 二维码展示（含 base64 解码、过期遮罩） | `base64Data`, `expired?`, `onRefresh?` |
-| `ProxyItem` | `ui/proxy-item.tsx` | 代理项展示卡片 | `proxy`, `onEdit?`, `onDelete?` |
-| `TextEditor` | `ui/text-editor.tsx` | 文本编辑器（含占位符插入、字数统计） | `value`, `onChange`, `placeholder?`, `maxHeight?` |
-| `useChart` | `ui/echart/useChart.ts` | ECharts 实例生命周期管理 hook | `options`, `theme?` |
-| `ImStatusChart` | `ui/echart/ImStatusChart.tsx` | IM 状态实时折线图（消费 SSE 数据） | `snapshots` |
-| `AccountPieChart` | `ui/echart/AccountPieChart.tsx` | 账号分布环形饼图 | `data` |
-| `EmptyState` | `ui/EmptyState.tsx` | 统一空状态展示，替代所有内联空状态 | `icon?`, `title`, `description?`, `action?`, `size?` |
-| `ErrorBanner` | `ui/ErrorBanner.tsx` | 统一错误提示横幅，banner/inline 变体 | `message`, `variant`, `onRetry?`, `onDismiss?` |
-| `ConfirmDialog` | `ui/ConfirmDialog.tsx` | 统一确认弹窗，替代 window.confirm | `open`, `onOpenChange`, `title`, `description`, `onConfirm`, `variant?` |
-| `StatusBadge` | `ui/StatusBadge.tsx` | 统一状态标签，配置驱动色映射 | `status`, `config`, `size?` |
-| `ErrorBoundary` | `ui/error-boundary.tsx` | React 渲染异常捕获（Class Component） | `children` |
-| `Pagination` | `ui/pagination.tsx` | 统一分页控件 | `current`, `total`, `pageSize`, `onChange` |
-| `SearchToolbar` | `ui/SearchToolbar.tsx` | 筛选栏统一布局壳，children 自由组合 | `children`, `className?` |
-| `DataTable` | `ui/DataTable.tsx` | 列驱动 CSS Grid 表格，封装四态+排序+斑马纹+sticky表头 | `columns`, `data`, `gridTemplateColumns`, `stickyHeader?`, `orderBy?`, `asc?` |
+| `Modal` | `ui/overlay/Modal.tsx` | 居中弹窗外壳，阻断式，遮罩不关闭 | `open`, `onClose`, `title?`, `size?`, `children`, `footer?` |
+| `ConfirmDialog` | `ui/overlay/ConfirmDialog.tsx` | 统一确认弹窗，替代 window.confirm | `open`, `onOpenChange`, `title`, `description`, `onConfirm`, `variant?` |
+| `Sheet` | `ui/overlay/Sheet.tsx` | 抽屉/底部弹出容器，支持手势拖拽关闭 | `open`, `onClose`, `title?`, `subtitle?`, `width?`, `children` |
+
+### feedback/ — 反馈组件
+
+| 组件 | 文件 | 用途 | 关键 Props |
+|------|------|------|-----------|
+| `EmptyState` | `ui/feedback/EmptyState.tsx` | 统一空状态展示，替代所有内联空状态 | `icon?`, `title`, `description?`, `action?`, `size?` |
+| `ErrorBanner` | `ui/feedback/ErrorBanner.tsx` | 统一错误提示横幅，banner/inline 变体 | `message`, `variant`, `onRetry?`, `onDismiss?` |
+| `ErrorBoundary` | `ui/feedback/ErrorBoundary.tsx` | React 渲染异常捕获（Class Component） | `children`, `fallback?` |
+| `LoadingSpinner` | `ui/feedback/LoadingSpinner.tsx` | 加载动画指示器 | `size?: 'sm' \| 'md' \| 'lg'` |
+| `StatusBadge` | `ui/feedback/StatusBadge.tsx` | 统一状态标签，配置驱动色映射 | `status`, `config`, `size?` |
+
+### data/ — 数据展示组件
+
+| 组件 | 文件 | 用途 | 关键 Props |
+|------|------|------|-----------|
+| `DataTable` | `ui/data/DataTable.tsx` | 列驱动 CSS Grid 表格，封装四态+排序+斑马纹+sticky表头 | `columns`, `data`, `gridTemplateColumns`, `stickyHeader?`, `orderBy?`, `asc?` |
+| `EditableCell` | `ui/data/EditableCell.tsx` | 可编辑表格单元格 | `value`, `type?`, `onSave`, `disabled?` |
+| `Pagination` | `ui/data/Pagination.tsx` | 统一分页控件 | `page`, `total`, `pageSize`, `onChange` |
+| `SearchToolbar` | `ui/data/SearchToolbar.tsx` | 筛选栏统一布局壳，children 自由组合 | `children`, `className?` |
+
+### navigation/ — 导航组件
+
+| 组件 | 文件 | 用途 | 关键 Props |
+|------|------|------|-----------|
+| `TabBar` | `ui/navigation/TabBar/index.tsx` | 核心 Tab 组件，overline 样式，响应式三档 | `tabs`, `activeTab`, `onTabChange` |
+
+### chart/ — 图表组件
+
+| 组件 | 文件 | 用途 | 关键 Props |
+|------|------|------|-----------|
+| `useChart` | `ui/chart/useChart.ts` | ECharts 实例生命周期管理 hook | — |
+| `ImStatusChart` | `ui/chart/ImStatusChart.tsx` | IM 状态实时折线图（消费 SSE 数据） | `snapshots` |
+| `AccountPieChart` | `ui/chart/AccountPieChart.tsx` | 账号分布环形饼图 | `data` |
+
+### 独立组件（根级）
+
+| 组件 | 文件 | 用途 | 关键 Props |
+|------|------|------|-----------|
+| `useToast` / `Toaster` | `ui/Toaster.tsx` | Toast 通知系统（封装 sonner） | — |
+| `TextEditor` | `ui/TextEditor.tsx` | 文本编辑器（响应式行数、maxHeight） | `value`, `onChange`, `rows?`, `maxHeight?` |
 
 ## 认证组件 (`components/auth/`)
 
@@ -203,14 +229,18 @@
 
 | 组件 | 当前状态 | 建议 Props |
 |------|---------|-----------|
-| `EmptyState` | ✅ 已统一（`components/ui/EmptyState.tsx`） | `icon?`, `title`, `description?`, `action?`, `size?` |
-| `ErrorBanner` | ✅ 已统一（`components/ui/ErrorBanner.tsx`） | `message`, `variant`, `onRetry?`, `onDismiss?` |
-| `ConfirmDialog` | ✅ 已统一（`components/ui/ConfirmDialog.tsx`） | `open`, `onOpenChange`, `title`, `description`, `onConfirm`, `variant?` |
-| `Pagination` | ✅ 已统一（`components/ui/pagination.tsx`） | `current`, `total`, `pageSize`, `onChange` |
-| `StatusBadge` | ✅ 已统一（`components/ui/StatusBadge.tsx`） | `status`, `config`, `size?` |
+| `Modal` | ✅ 已创建（`ui/overlay/Modal.tsx`），已迁移 4 处业务 Modal | `open`, `onClose`, `title?`, `size?`, `children`, `footer?` |
 | `PriorityPill` | 🔴 待统一（2 处独立实现） | `priority`, `onChange?` |
-| `SearchToolbar` | ✅ 布局壳 | `children`, `className?` |
-| `DataTable` | ✅ 列驱动表格 | `columns`, `data`, `gridTemplateColumns`, `stickyHeader?`, `orderBy?`, `asc?` |
+
+## 待迁移到统一组件
+
+以下内联实现已识别，待后续迁移：
+
+| 位置 | 当前实现 | 应使用 |
+|------|---------|--------|
+| `AccountCard.tsx` | 内联 `fixed inset-0` 配置编辑弹窗 | `Modal` |
+| `AccountTable.tsx` | 内联 `fixed inset-0` 配置编辑弹窗 | `Modal` |
+| `LinkManagement.tsx` | 内联 `fixed inset-0` 链接编辑弹窗 | `Modal` |
 
 ## 文件命名约定
 
