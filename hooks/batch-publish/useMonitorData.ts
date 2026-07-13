@@ -19,10 +19,10 @@ export function useMonitorData({ page, pageSize, search, monitorStatus, bindStat
     queryFn: () => listMonitoredItems({
       page,
       page_size: pageSize,
-      search: search || undefined,
+      title: search || undefined,
       monitorStatus: monitorStatus ? Number(monitorStatus) : undefined,
-      opportunity_id: bindStatus === 'bound' ? 0 : bindStatus === 'unbound' ? null : undefined,
-      orderBy: orderBy ?? undefined,
+      oid: bindStatus === 'bound' ? undefined : bindStatus === 'unbound' ? 0 : undefined,
+      order_by: orderBy ?? undefined,
       asc,
     }),
   })

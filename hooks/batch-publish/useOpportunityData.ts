@@ -16,7 +16,7 @@ export function useOpportunityData({ page, pageSize, search, status }: UseOpport
     queryFn: () => listOpportunities({
       page,
       page_size: pageSize,
-      search: search || undefined,
+      name: search || undefined,
       status: status || undefined,
     }),
   })

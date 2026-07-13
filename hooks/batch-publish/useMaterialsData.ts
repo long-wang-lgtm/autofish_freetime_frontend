@@ -17,9 +17,9 @@ export function useMaterialsData({ page, pageSize, search, status, opportunityId
     queryFn: () => listMaterials({
       page,
       page_size: pageSize,
-      search: search || undefined,
-      status: status as 'published' | 'publish_failed' | undefined,
-      opportunity_id: opportunityId,
+      description: search || undefined,
+      status: status || undefined,
+      oid: opportunityId,
     }),
   })
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createOpportunity, updateOpportunity, deleteOpportunity, type OpportunityInput } from '@/lib/api/batch-publish'
+import { createOpportunity, updateOpportunity, deleteOpportunity, type OpportunityParams } from '@/lib/api/batch-publish'
 import { useToast } from '@/components/ui/Toaster'
 
 export function useOpportunityMutations() {
@@ -9,7 +9,7 @@ export function useOpportunityMutations() {
   const toast = useToast()
 
   const createMutation = useMutation({
-    mutationFn: (input: OpportunityInput) => createOpportunity(input),
+    mutationFn: (opp: OpportunityParams) => createOpportunity(opp),
     onSuccess: () => {
       toast.addToast({ title: '商机创建成功', variant: 'success' })
       queryClient.invalidateQueries({ queryKey: ['batch-publish', 'opportunities'] })
@@ -20,8 +20,8 @@ export function useOpportunityMutations() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, input }: { id: number; input: Partial<OpportunityInput> }) =>
-      updateOpportunity(id, input),
+    mutationFn: ({ oid, opp }: { oid: number; opp: Partial<OpportunityParams> }) =>
+      updateOpportunity(oid, opp),
     onSuccess: () => {
       toast.addToast({ title: '商机已更新', variant: 'success' })
       queryClient.invalidateQueries({ queryKey: ['batch-publish', 'opportunities'] })
@@ -32,7 +32,7 @@ export function useOpportunityMutations() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteOpportunity(id),
+    mutationFn: (oid: number) => deleteOpportunity(oid),
     onSuccess: () => {
       toast.addToast({ title: '商机已删除', variant: 'success' })
       queryClient.invalidateQueries({ queryKey: ['batch-publish', 'opportunities'] })
