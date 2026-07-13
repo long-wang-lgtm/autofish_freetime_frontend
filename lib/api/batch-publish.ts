@@ -53,7 +53,7 @@ export interface MonitoredItem {
   publishTime?: number | null
   keywords?: string[] | null
   itemStatus?: number | null
-  opportunity_id?: number | null
+  opportunity?: OpportunityItem | null
   created_at?: string | null
   updated_at?: string | null
 }
@@ -66,17 +66,19 @@ export interface OpportunityItem {
   price?: number
   status: string
   ai_context_template?: TemplateType
-  monitored_item_count?: number
-  material_count?: number
+  monitoredItemCount?: number
+  materialCount?: number
+  userId?: string | null
   created_at?: string | null
   updated_at?: string | null
 }
 
-/** 商机创建/更新入参 */
-export interface OpportunityInput {
+/** 商机创建/更新入参（不含 id、计数、时间戳） */
+export interface OpportunityParams {
   name: string
   description?: string
   price?: number
+  status?: string
   ai_context_template?: TemplateType
 }
 
@@ -91,22 +93,24 @@ export interface PublishMaterial {
   ai_context?: MaterialAIContext
   to_uid?: string | null
   to_gid?: string | null
-  opportunity_id: number
-  opportunity_name?: string | null
+  opportunity?: OpportunityItem | null
   created_at?: string | null
   updated_at?: string | null
 }
 
 /** 素材图片 */
 export interface MaterialImage {
-  url: string
-  order?: number
+  md5: string
+  filepath?: string | null
+  flare?: string | null
+  url?: string | null
+  size?: number | null
 }
 
 /** 素材创建入参 */
-export interface MaterialCreateInput {
-  opportunity_id: number
-  count?: number
+export interface MaterialCreateParams {
+  num: number
+  opp: OpportunityItem
 }
 
 /** 素材编辑入参 */
@@ -126,6 +130,20 @@ export interface MaterialContextInput {
   items?: string[]
   images?: string[]
   coverprompt?: string
+}
+
+/** AI 工作阶段 */
+export type RewriteStage = 'write' | 'genimageplan' | 'genimage'
+
+/** AI 工作请求 */
+export interface RewriteWorkRequest {
+  stage: RewriteStage
+}
+
+/** 发布类目项 */
+export interface ChannelItemResponse {
+  channelCateName: string
+  channelCateId: string
 }
 
 /** 列表响应 — 监控商品 */
