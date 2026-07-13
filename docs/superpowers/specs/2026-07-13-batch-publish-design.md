@@ -613,6 +613,8 @@ const [viewStack, setViewStack] = useState<MobileView[]>(['opportunity-list'])
 
 ### 5.1 API 模块：`lib/api/batch-publish.ts`
 
+> ⚠️ **2026-07-13 审计发现**：本节描述的前端 API 设计与后端实际路由存在大量不一致，详见 **附录 C**。Phase 5 开始前必须先完成 P0+P1 对齐修复。
+
 统一管理所有 `/api/selection/*` 接口。类型与 API 函数就近定义。
 
 **核心类型**：`MonitoredItem`, `OpportunityItem`, `PublishMaterial`, `MaterialStatus`（6 稳定态联合类型）, `MaterialAIContext`, `TemplateType`, `OperationResponse`, `TrendData`, `TrendTime`, `TrendDays`
@@ -744,8 +746,8 @@ interface MaterialRowProps {
 Phase 0: 骨架 — page.tsx + TabBar + 路由 + Sidebar 导航项 - 已完成
 Phase 1: API 模块 — lib/api/batch-publish.ts（所有类型和函数） - 已完成
 Phase 2: 共享组件 — BatchActionBar + StatusPipeline + constants - 已完成
-Phase 3: 监控 Tab + 商机管理 Tab（可并行）
-Phase 4: 发布记录 Tab（相对独立）
+Phase 3: 监控 Tab + 商机管理 Tab（可并行） - 已完成
+Phase 4: 发布记录 Tab（相对独立） - 已完成
 Phase 5: 创作台（最复杂，依赖 Phase 3 商机列表 + Phase 2 共享组件）
 Phase 6: 移动端降级
 ```
@@ -822,3 +824,175 @@ Phase 6: 移动端降级
 | `components/ui/DataTable.tsx` | 通用表格 |
 | `hooks/useItemsPage.ts` | Hook 三层拆分参考 |
 | `.claude/rules/frontend-*.md` | 各类规范文档 |
+
+---
+
+## 附录 C：前后端 API 对齐审计（2026-07-13）
+
+> **定位**：Phase 0-4 开发完成后发现前后端 API 不一致，此处记录完整差异及对设计/页面/组件的影响。**此问题必须在 Phase 5（创作台）开始前修复。**
+
+### C.1 审计范围
+
+- 后端路由：`backend/free/user/selection.py`（19 个端点）
+- 后端 Schema：`backend/free/schema/selection.py`
+- 后端数据模型：`backend/models/v2/opportunities.py`
+- 前端 API 模块：`frontend/lib/api/batch-publish.ts`（17 个函数）
+- 前端类型定义：同上文件内的所有 interface/type
+
+### C.2 致命级：后端路由 vs 前端路径完全不匹配（9 处 → 404）
+
+| # | 前端路径 | 后端路径 | 修复方向 |
+|---|---------|----------|----------|
+| 1 | `GET /monitor/items` | `GET /monitor.item.list` | 改前端 |
+| 2 | `POST /monitor.batch.bind` | `POST /monitor.batch.bind.opportunity` | 改前端 |
+| 3 | `DELETE /monitor/item/delete` | `POST /monitor.item.delete` | 改前端方法+路径 |
+| 4 | `GET /opportunities` | `GET /opportunity.list` | 改前端 |
+| 5 | `DELETE /opportunity/delete` | `POST /opportunity.delete` | 改前端方法+路径 |
+| 6 | `GET /materials` | `GET /material.list` | 改前端 |
+| 7 | `POST /material.rewrite` | `POST /material.rewrite.work` | 改前端 |
+| 8 | `DELETE /material/delete` | `POST /material.delete` | 改前端方法+路径 |
+| 9 | `GET /material/context.template` | `GET /material.context.templateType` | 改前端 |
+
+### C.3 严重级：请求参数不匹配（7 处 → 参数丢失/错误）
+
+| # | 功能 | 前端传参 | 后端期望 | 影响 |
+|---|------|---------|----------|------|
+| 10 | 监控列表 | `search`（模糊搜索一个字段） | 无 `search`；改用 `uid`、`uname`、`gid`、`title` 分别匹配 | 搜索功能完全不生效 |
+| 11 | 监控列表 | `opportunity_id`、`orderBy` | `oid`、`order_by` | 筛选/排序参数被忽略 |
+| 12 | 更新商机 | body `{ id, ...input }` | query param `oid` + body `opp`（完整 OpportunitySchema） | 404 或静默失败 |
+| 13 | 删除商机 | query param `id` | query param `oid` | 参数名不同 |
+| 14 | 创建素材 | `{ opportunity_id, count }` | `{ num, opp: {完整商机对象} }` | **设计级差异**：后端需要完整的商机嵌套对象 |
+| 15 | AI 改写 | `{ id }` | `{ id, work: { stage: 'write'\|'genimageplan'\|'genimage' } }` | **设计级差异**：三阶段合并为一个接口 |
+| 16 | 获取上下文模板 | `params: { id }`，返回 `MaterialAIContext` | 无 `id` 参数，返回 `OperationResponse { data: string[] }` | 参数多余，返回类型完全不同 |
+
+### C.4 严重级：后端返回数据类型 vs 前端类型定义不匹配（7 处）
+
+> 以下对比基于后端 Schema 的实际字段名和结构。
+
+| # | 实体 | 前端类型字段 | 后端 Schema 实际字段 | 差异说明 |
+|---|------|------------|-------------------|----------|
+| 17 | **MonitoredItem** | `price`, `wantCount`, `lookCount`, `collectCount` | 无这些字段（这些在 `ItemFetchLog` 中） | ORM 模型无此四字段；monitor 列表不会返回价格/想要数/浏览数/收藏数 |
+| 18 | **MonitoredItem** | `trendData?: unknown`（期望 `{ trendTime, trendDays, fetchCount, windows }`） | `trendData: Optional[models.TrendData]` | 结构一致 ✅，但 `publishTime` 后端为 int，前端类型正确 |
+| 19 | **MonitoredItem** | `opportunity_id?: number` | `opportunity?: OpportunitySchema`（嵌套对象） | **设计级差异**：后端返回嵌套商机对象，非纯 ID。前端表格的"绑定商机"列无法从 `opportunity_id` 取值 |
+| 20 | **OpportunityItem** | `monitored_item_count`, `material_count`（snake_case） | `monitoredItemCount`, `materialCount`（camelCase） | 前端字段名与后端不匹配，计数始终为 undefined |
+| 21 | **PublishMaterial** | `opportunity_id: number`, `opportunity_name?: string` | `opportunity?: OpportunitySchema`（嵌套完整商机对象） | **设计级差异**：后端返回嵌套 `{ id, name, ... }`，前端期待扁平字段 |
+| 22 | **PublishMaterial** | `images?: MaterialImage[]`（`{ url, order }`） | `images?: list[dict]`（Pydantic 泛型 list[dict]） | 后端不保证 `MaterialImage` 结构（实际 ORM 模型为 `{ md5, filepath, flare, url, size }`） |
+| 23 | **material.channel 返回值** | `{ category: string }` | `[{ channelCateName, channelCateId }]`（数组） | 返回结构完全不同 |
+
+### C.5 设计级差异：对页面架构的影响
+
+#### C.5.1 MonitoredItem 无 price/wantCount/lookCount/collectCount 字段
+
+**影响页面**：监控 Tab（Phase 3 已完成）
+
+ORM 模型 `ItemMonitored` 不包含 `price`、`wantCount`、`lookCount`、`collectCount` 字段。这些数据在采集日志表 `ItemFetchLog` 中（按时间点存储）。
+
+**后果**：
+- `MonitorTable` 价格列始终显示 "-"
+- `MonitorCard` 价格/指标行使用错误的字段
+- 想要斜率的 `trendData.fetchCount` 置信度逻辑不受影响 ✅
+
+**修复方向**：确认后端 `GET /monitor.item.list` 是否会在查询时 join `ItemFetchLog` 并返回最新一条采集数据的 price。如果不会，需后端新增聚合字段（如 `last_price`、`total_want`），或前端移除价格列。
+
+#### C.5.2 MonitoredItem.opportunity 是嵌套对象而非 ID
+
+**影响页面**：监控 Tab → MonitorTable "绑定商机"列
+
+后端返回 `opportunity: { id, name, ... }`（嵌套 OpportunitySchema），而非 `opportunity_id: number`。
+
+**后果**：
+- `MonitorTable` 的 `item.opportunity_id ? '商机 #N' : '未绑定'` 逻辑完全失效
+- `BindOpportunityModal` 绑定后在表格中看不到商机名称
+
+**修复方向**：前端改为从 `item.opportunity?.name` 取值，`item.opportunity?.id` 判断是否已绑定。
+
+#### C.5.3 PublishMaterial.opportunity 是嵌套对象
+
+**影响页面**：发布记录 Tab → MaterialTable "所属商机"列；创作台 Workbench
+
+后端返回 `opportunity: { id, name, price, status, ... }` 完整商机对象。
+
+**后果**：
+- `MaterialTable` 的 `item.opportunity_name` 始终为 undefined（应为 `item.opportunity?.name`）
+- `item.opportunity_id` 始终为 undefined（应为 `item.opportunity?.id`）
+- 发布记录"所属商机"列的链接完全失效
+
+**修复方向**：`PublishMaterial` 接口改为 `opportunity?: { id: number; name?: string }` 嵌套结构，组件中 `item.opportunity?.name` 取商机名称，`item.opportunity?.id` 取 ID。
+
+#### C.5.4 AI 改写三阶段合并为一个接口 + stage 参数
+
+**影响页面**：创作台 Tab（Phase 5 未开始）
+
+后端 `POST /material.rewrite.work` 通过 `work.stage` 区分三种操作（`write` / `genimageplan` / `genimage`），而非设计规格中的三个独立接口（rewrite / genimageplan / genimage）。
+
+**后果**：
+- 设计规格 §4.3.2 的 AI 按钮状态机表假设 4 个独立 API（改写/封面/生图/发布），需要修改为调用同一接口传入不同 `stage`
+- `lib/api/batch-publish.ts` 中需合并 `triggerRewrite`、`triggerCoverPlan`（不存在）、`triggerGenImage`（不存在）为一个 `triggerWork(materialId, stage)` 函数
+- 按钮状态机逻辑不受影响 ✅（只是底层 API 调用方式变化）
+
+#### C.5.5 material.create 需要完整商机对象
+
+**影响页面**：创作台 Tab → "批量创建素材"按钮（Phase 5）
+
+后端 `POST /material.create` 的请求体为 `{ num: int, opp: OpportunitySchema }`，前端设计为 `{ opportunity_id: number, count: number }`。
+
+**后果**：
+- 前端需在调用 `createMaterials` 时额外传入完整的 `OpportunityItem` 对象
+- 或者后端改为接受 `opportunity_id` + `count`（更干净）
+
+#### C.5.6 Opportunity 计数字段 camelCase vs snake_case
+
+后端 Schema 的 `OpportunitySchema` 使用 `materialCount` / `monitoredItemCount`（camelCase，因为 Pydantic 的 `model_config = orig_model(...)` 可能做了转换）。前端 TypeScript 类型用 `monitored_item_count` / `material_count`（snake_case）。
+
+**后果**：
+- `OpportunityCard` 中 `📦 N 监控商品` / `📝 N 素材` 始终显示 0
+- `OpportunityTab` 列表视图中的计数也受影响
+
+**修复方向**：确认后端实际返回的 JSON 键名（可能是 camelCase 因为 Pydantic by_alias 机制），前端类型对齐。
+
+### C.6 对已完成 Phase 的逐文件影响评估
+
+| Phase | 文件 | 影响等级 | 具体问题 |
+|-------|------|---------|----------|
+| **1** | `lib/api/batch-publish.ts` | 🔴 全面 | 17 个函数中 15 个有问题（路径/参数/返回类型），仅 `unbindOpportunity`、`editMaterial`、`publishMaterial` 路径正确 |
+| **3** | `MonitorTable.tsx` | 🔴 | price 列无数据源、绑定商机列取错字段 |
+| **3** | `MonitorCard.tsx` | 🔴 | price/wantCount/lookCount/collectCount 不存在 |
+| **3** | `MonitorDetailPanel.tsx` | 🟡 | trendData 结构一致，功能不受影响 |
+| **3** | `MonitorFilterBar.tsx` | 🔴 | search 参数后端不支持，筛选不生效 |
+| **3** | `BindOpportunityModal.tsx` | 🔴 | `listOpportunities` 路径错误 → 商机列表加载失败 |
+| **3** | `OpportunityCard.tsx` | 🔴 | `monitored_item_count`/`material_count` 字段名不对，计数始终为 0 |
+| **3** | `OpportunityForm.tsx` | 🟡 | 创建/更新逻辑本身正确，但 `updateOpportunity` 参数格式需对齐 |
+| **3** | `OpportunityTab.tsx` | 🔴 | `deleteOpportunity` 方法+路径错误 |
+| **4** | `MaterialTable.tsx` | 🔴 | `opportunity_name`/`opportunity_id` 来源字段不存在 |
+| **2** | `StatusPipeline.tsx` | 🟢 | 纯 UI，不受影响 |
+| **2** | `BatchActionBar.tsx` | 🟢 | 纯 UI，不受影响 |
+| **2** | `constants.ts` | 🟢 | 纯前端常量，不受影响 |
+| **0** | `page.tsx` | 🟢 | 路由壳，不受影响 |
+
+### C.7 修复优先级建议
+
+| 优先级 | 修复项 | 涉及文件数 | 预估工作量 | 阻塞项 |
+|--------|--------|----------|-----------|--------|
+| **P0** | 路径对齐（9 处） | 1（`batch-publish.ts`） | 30 分钟 | 全部页面 |
+| **P1** | 返回类型对齐（MonitoredItem / OpportunityItem / PublishMaterial） | 7-8（API 类型 + 组件） | 2-3 小时 | 监控 Tab、商机 Tab、发布记录 Tab |
+| **P2** | 参数格式对齐（search → uid/gid/title、oid vs id、camelCase vs snake_case） | 3-4（API + hooks + 组件） | 2-3 小时 | 筛选、排序、分页 |
+| **P3** | 设计级差异（material.create 参数、rewrite.work stage、channel 返回结构） | 3-4（API + 创作台组件） | 1-2 小时（Phase 5 前完成即可） | 创作台 |
+
+**总预估**：P0+P1 约 3 小时可使已有 Phase 3-4 页面具备基本联调能力；P0+P1+P2 约 6 小时可完整联调。P3 在 Phase 5 开始前完成即可。
+
+### C.8 后端未实现的接口
+
+以下前端设计中的接口在后端完全不存在对应路由：
+
+| 前端函数 | 设计用途 | 后端状态 |
+|----------|---------|----------|
+| `getContextTemplate(materialId)` | 获取素材的 AI 上下文模板 | 🔴 无对应路由（`material.context.templateType` 是全局模板列表，不是素材级的） |
+| 封面规划（独立接口） | AI 生成封面规划 | 🔴 已合并入 `material.rewrite.work`（stage=`genimageplan`） |
+| 生图（独立接口） | AI 生成商品图片 | 🔴 已合并入 `material.rewrite.work`（stage=`genimage`） |
+
+### C.9 前端设计了但后端不存在 / 后端有但前端未封装的路由
+
+| 路由 | 方向 | 说明 |
+|------|------|------|
+| `POST /monitor.bind.opportunity` | 后端有，前端无 | 单个商品绑定到商机（前端只封装了批量版本 `batchBindOpportunity`） |
+| `POST /monitor.bind.opportunity.create` | 后端有，前端无 | 绑定商品并同时创建商机（一站式操作，`BindOpportunityModal` 的"创建新商机"Tab 应使用此接口） |
