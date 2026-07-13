@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { adminApi, type AccountFull, type ProxyLong } from "@/lib/api/admin"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
-import { SlidePanel } from "@/components/ui/slide-panel"
+import { Sheet } from "@/components/ui/overlay/Sheet"
 import { toast } from "sonner"
 import {
   Bot, Truck, Zap, Star, Sparkles, Bell, BellOff, Play, Square, Link2,
@@ -115,7 +115,7 @@ function ProxySelectPanel({
   }
 
   return (
-    <SlidePanel open={open} onClose={onClose} title="选择代理" subtitle={accountName}>
+    <Sheet open={open} onClose={onClose} title="选择代理" subtitle={accountName}>
       {loading ? (
         <div className="flex justify-center py-12"><LoadingSpinner /></div>
       ) : (
@@ -194,7 +194,7 @@ function ProxySelectPanel({
           </section>
         </div>
       )}
-    </SlidePanel>
+    </Sheet>
   )
 }
 

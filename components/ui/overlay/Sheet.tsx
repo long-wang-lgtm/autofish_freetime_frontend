@@ -16,13 +16,14 @@ interface SheetProps {
   open: boolean
   onClose: () => void
   title?: string
+  subtitle?: string
   width?: string
   children: ReactNode
   /** 点击遮罩是否关闭，默认 true */
   closeOnBackdrop?: boolean
 }
 
-export function Sheet({ open, onClose, title, width = "500px", closeOnBackdrop = true, children }: SheetProps) {
+export function Sheet({ open, onClose, title, subtitle, width = "500px", closeOnBackdrop = true, children }: SheetProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
@@ -48,7 +49,12 @@ export function Sheet({ open, onClose, title, width = "500px", closeOnBackdrop =
         {/* 标题栏 */}
         {title && (
           <div className="flex items-center justify-between px-4 py-2 border-b flex-shrink-0">
-            <h3 className="text-sm font-semibold text-gray-900 truncate">{title}</h3>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-gray-900 truncate">{title}</h3>
+              {subtitle && (
+                <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{subtitle}</p>
+              )}
+            </div>
             <button
               onClick={onClose}
               className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0 ml-2"

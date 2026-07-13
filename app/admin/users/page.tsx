@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { adminApi, type AdminUserInfo, type ProxyLong } from "@/lib/api/admin"
 import { isAdminRole } from '@/lib/constants/admin'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
-import { SlidePanel } from "@/components/ui/slide-panel"
+import { Sheet } from "@/components/ui/overlay/Sheet"
 import { ProxyItem } from "@/components/ui/proxy-item"
 import { toast } from "sonner"
 import {
@@ -119,7 +119,7 @@ function ProxyManagePanel({
   }
 
   return (
-    <SlidePanel open={open} onClose={onClose} title="代理管理" subtitle={username}>
+    <Sheet open={open} onClose={onClose} title="代理管理" subtitle={username}>
       {loading ? (
         <div className="flex justify-center py-12"><LoadingSpinner /></div>
       ) : (
@@ -182,7 +182,7 @@ function ProxyManagePanel({
           </section>
         </div>
       )}
-    </SlidePanel>
+    </Sheet>
   )
 }
 

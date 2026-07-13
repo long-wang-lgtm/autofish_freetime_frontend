@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { adminApi, type ProxyLong, type AccountName } from "@/lib/api/admin"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
-import { SlidePanel } from "@/components/ui/slide-panel"
+import { Sheet } from "@/components/ui/overlay/Sheet"
 import { toast } from "sonner"
 import { Shield, Plus, Trash2, RefreshCw, Search, X, Store } from "lucide-react"
 
@@ -51,7 +51,7 @@ function ProxyCreatePanel({ open, onClose, onSuccess }: { open: boolean; onClose
   }
 
   return (
-    <SlidePanel open={open} onClose={onClose} title="添加代理">
+    <Sheet open={open} onClose={onClose} title="添加代理">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">代理IP地址 *</label>
@@ -87,7 +87,7 @@ function ProxyCreatePanel({ open, onClose, onSuccess }: { open: boolean; onClose
           <button type="submit" disabled={loading} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? <LoadingSpinner size="sm" /> : "创建"}</button>
         </div>
       </form>
-    </SlidePanel>
+    </Sheet>
   )
 }
 
@@ -131,7 +131,7 @@ function ProxyEditPanel({ open, onClose, proxy, onSuccess }: { open: boolean; on
   if (!proxy) return null
 
   return (
-    <SlidePanel open={open} onClose={onClose} title="编辑代理" subtitle={proxy.server ?? ""}>
+    <Sheet open={open} onClose={onClose} title="编辑代理" subtitle={proxy.server ?? ""}>
       <form onSubmit={handleSave} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">代理IP地址 *</label>
@@ -165,7 +165,7 @@ function ProxyEditPanel({ open, onClose, proxy, onSuccess }: { open: boolean; on
           </div>
         </div>
       </form>
-    </SlidePanel>
+    </Sheet>
   )
 }
 
@@ -185,7 +185,7 @@ function ProxyBindingsPanel({ open, onClose, proxyId }: { open: boolean; onClose
   }, [open, proxyId])
 
   return (
-    <SlidePanel open={open} onClose={onClose} title="绑定店铺" subtitle={accounts.length > 0 ? `共 ${accounts.length} 个店铺` : undefined}>
+    <Sheet open={open} onClose={onClose} title="绑定店铺" subtitle={accounts.length > 0 ? `共 ${accounts.length} 个店铺` : undefined}>
       {loading ? (
         <div className="flex justify-center py-12"><LoadingSpinner /></div>
       ) : accounts.length === 0 ? (
@@ -209,7 +209,7 @@ function ProxyBindingsPanel({ open, onClose, proxyId }: { open: boolean; onClose
           ))}
         </div>
       )}
-    </SlidePanel>
+    </Sheet>
   )
 }
 

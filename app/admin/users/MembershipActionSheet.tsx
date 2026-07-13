@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { SlidePanel } from "@/components/ui/slide-panel"
+import { Sheet } from "@/components/ui/overlay/Sheet"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { toast } from "sonner"
 import { adminApi, type AdminUserInfo } from "@/lib/api/admin"
@@ -292,7 +292,7 @@ export function MembershipActionSheet({ open, onClose, action, user, onSuccess }
     "w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
 
   return (
-    <SlidePanel open={open} onClose={onClose} title={title}>
+    <Sheet open={open} onClose={onClose} title={title}>
       {dataLoading ? (
         <div className="flex justify-center py-12">
           <LoadingSpinner />
@@ -475,6 +475,6 @@ export function MembershipActionSheet({ open, onClose, action, user, onSuccess }
           </button>
         </div>
       )}
-    </SlidePanel>
+    </Sheet>
   )
 }
