@@ -60,8 +60,8 @@ export function OpportunityCard({ item, onEdit, onSelect, onDelete, isDeleting }
         </div>
 
         <div className="flex items-center gap-3 text-xs text-gray-400">
-          <span>📦 {item.monitored_item_count ?? 0} 监控商品</span>
-          <span>📝 {item.material_count ?? 0} 素材</span>
+          <span>📦 {item.monitoredItemCount ?? 0} 监控商品</span>
+          <span>📝 {item.materialCount ?? 0} 素材</span>
         </div>
       </div>
 
@@ -71,7 +71,7 @@ export function OpportunityCard({ item, onEdit, onSelect, onDelete, isDeleting }
         title="删除商机"
         description={
           (item.material_count ?? 0) > 0
-            ? `该商机下有 ${item.material_count} 份素材将被一并删除，确定删除吗？`
+            ? `该商机下有 ${item.materialCount} 份素材将被一并删除，确定删除吗？`
             : `确定要删除商机「${item.name}」吗？`
         }
         confirmLabel="删除"

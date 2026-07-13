@@ -71,10 +71,11 @@ export function MaterialTable({
       header: '所属商机',
       render: (item) => (
         <button
-          onClick={() => onOpportunityClick(item.opportunity_id)}
-          className="text-sm text-blue-600 hover:underline"
+          onClick={() => { if (item.opportunity?.id) onOpportunityClick(item.opportunity.id) }}
+          className="text-sm text-blue-600 hover:underline disabled:text-gray-400 disabled:no-underline"
+          disabled={!item.opportunity?.id}
         >
-          {item.opportunity_name || `商机 #${item.opportunity_id}`}
+          {item.opportunity?.name ?? (item.opportunity?.id ? `商机 #${item.opportunity.id}` : '未知商机')}
         </button>
       ),
     },

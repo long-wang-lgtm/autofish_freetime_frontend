@@ -152,8 +152,8 @@ export function MonitorTable({
       key: 'opportunity',
       header: '绑定商机',
       render: (item) => (
-        <span className={`text-sm ${item.opportunity_id ? 'text-blue-600' : 'text-gray-400'}`}>
-          {item.opportunity_id ? `商机 #${item.opportunity_id}` : '未绑定'}
+        <span className={`text-sm ${item.opportunity?.id ? 'text-blue-600' : 'text-gray-400'}`}>
+          {item.opportunity?.name ?? (item.opportunity?.id ? `商机 #${item.opportunity.id}` : '未绑定')}
         </span>
       ),
     },

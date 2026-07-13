@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/overlay/Modal'
 import { useQuery } from '@tanstack/react-query'
-import { listOpportunities, createOpportunity, type OpportunityInput } from '@/lib/api/batch-publish'
+import { listOpportunities, createOpportunity, type OpportunityParams } from '@/lib/api/batch-publish'
 import { TEMPLATE_TYPE_LABELS } from '@/components/batch-publish/shared/constants'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 
@@ -34,7 +34,7 @@ export function BindOpportunityModal({
 
   const { data, isLoading } = useQuery({
     queryKey: ['batch-publish', 'opportunities', { search, page }],
-    queryFn: () => listOpportunities({ search: search || undefined, page, page_size: 10 }),
+    queryFn: () => listOpportunities({ name: search || undefined, page, page_size: 10 }),
     enabled: open && activeTab === 'existing',
   })
 
@@ -46,7 +46,7 @@ export function BindOpportunityModal({
     setCreateLoading(true)
     setCreateError('')
     try {
-      const input: OpportunityInput = {
+      const input: OpportunityParams = {
         name: newName.trim(),
         description: newDescription || undefined,
         ai_context_template: newTemplate,
@@ -112,7 +112,7 @@ export function BindOpportunityModal({
                 >
                   <p className="font-medium text-gray-800">{opp.name}</p>
                   <p className="text-xs text-gray-400">
-                    {opp.monitored_item_count ?? 0} 商品 · {opp.material_count ?? 0} 素材
+                    {opp.monitoredItemCount ?? 0} 商品 · {opp.materialCount ?? 0} 素材
                   </p>
                 </button>
               ))}

@@ -25,10 +25,11 @@ export function MaterialCard({ item, onOpportunityClick }: MaterialCardProps) {
       </div>
       <div className="flex items-center gap-2 text-xs text-gray-400">
         <button
-          onClick={(e) => { e.stopPropagation(); onOpportunityClick(item.opportunity_id) }}
-          className="text-blue-600 hover:underline"
+          onClick={(e) => { e.stopPropagation(); if (item.opportunity?.id) onOpportunityClick(item.opportunity.id) }}
+          className="text-blue-600 hover:underline disabled:text-gray-400 disabled:no-underline"
+          disabled={!item.opportunity?.id}
         >
-          {item.opportunity_name || `商机 #${item.opportunity_id}`}
+          {item.opportunity?.name ?? (item.opportunity?.id ? `商机 #${item.opportunity.id}` : '未知商机')}
         </button>
         <span>·</span>
         <span>{item.updated_at ? fmtDateTime(item.updated_at) : '-'}</span>

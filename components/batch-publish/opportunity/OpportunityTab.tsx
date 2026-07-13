@@ -124,8 +124,8 @@ export function OpportunityTab() {
                         <p className="text-xs text-gray-400 line-clamp-1">{item.description}</p>
                       )}
                     </div>
-                    <span className="text-sm text-gray-600">📦 {item.monitored_item_count ?? 0}</span>
-                    <span className="text-sm text-gray-600">📝 {item.material_count ?? 0}</span>
+                    <span className="text-sm text-gray-600">📦 {item.monitoredItemCount ?? 0}</span>
+                    <span className="text-sm text-gray-600">📝 {item.materialCount ?? 0}</span>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleEdit(item) }}
                       className="px-2 py-1 text-xs text-gray-500 hover:text-blue-600 rounded"
@@ -156,7 +156,7 @@ export function OpportunityTab() {
                 createMutation.mutate(values, { onSuccess: () => setSheetOpen(false) })
               } else if (editingItem) {
                 updateMutation.mutate(
-                  { id: editingItem.id, input: values },
+                  { oid: editingItem.id, opp: values },
                   { onSuccess: () => setSheetOpen(false) }
                 )
               }

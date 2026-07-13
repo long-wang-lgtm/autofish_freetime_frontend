@@ -57,7 +57,7 @@ export function MonitorCard({ item, isSelected, onToggleSelect, onOpenDetail, se
         {item.itemStatus != null && (
           <StatusBadge status={item.itemStatus} config={ITEM_STATUS_CONFIG} />
         )}
-        <span className={`w-2 h-2 rounded-full ${item.opportunity_id ? 'bg-green-500' : 'bg-gray-300'}`} />
+        <span className={`w-2 h-2 rounded-full ${item.opportunity?.id ? 'bg-green-500' : 'bg-gray-300'}`} />
       </div>
 
       {/* 指标行 */}
