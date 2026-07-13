@@ -986,7 +986,6 @@ ORM 模型 `ItemMonitored` 不包含 `price`、`wantCount`、`lookCount`、`coll
 
 | 前端函数 | 设计用途 | 后端状态 |
 |----------|---------|----------|
-| `getContextTemplate(materialId)` | 获取素材的 AI 上下文模板 | 🔴 无对应路由（`material.context.templateType` 是全局模板列表，不是素材级的） |
 | 封面规划（独立接口） | AI 生成封面规划 | 🔴 已合并入 `material.rewrite.work`（stage=`genimageplan`） |
 | 生图（独立接口） | AI 生成商品图片 | 🔴 已合并入 `material.rewrite.work`（stage=`genimage`） |
 

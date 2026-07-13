@@ -70,7 +70,7 @@ export function OpportunityCard({ item, onEdit, onSelect, onDelete, isDeleting }
         onOpenChange={setShowDelete}
         title="删除商机"
         description={
-          (item.material_count ?? 0) > 0
+          (item.materialCount ?? 0) > 0
             ? `该商机下有 ${item.materialCount} 份素材将被一并删除，确定删除吗？`
             : `确定要删除商机「${item.name}」吗？`
         }
