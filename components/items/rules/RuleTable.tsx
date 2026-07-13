@@ -5,7 +5,7 @@ import {
   KeywordRule,
   getDisplayKeyword,
 } from "@/lib/api/keywords"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 
 interface RuleTableProps {
   rules: KeywordRule[]

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { KeywordRule, PREDEFINED_KEYWORDS } from "@/lib/api/keywords"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { TextEditor } from '@/components/ui/TextEditor'
 import { PlaceholderPicker } from "./PlaceholderPicker"
 import { ItemCardPanel } from "./ItemCardPanel"

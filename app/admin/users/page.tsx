@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { adminApi, type AdminUserInfo, type ProxyLong } from "@/lib/api/admin"
 import { isAdminRole } from '@/lib/constants/admin'
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { SlidePanel } from "@/components/ui/slide-panel"
 import { ProxyItem } from "@/components/ui/proxy-item"
 import { toast } from "sonner"
@@ -17,7 +17,7 @@ import {
   Coins,
   MoreHorizontal,
 } from "lucide-react"
-import { Pagination } from "@/components/ui/pagination"
+import { Pagination } from '@/components/ui/data/Pagination'
 import { fmtDate } from "@/lib/utils/format"
 import { MembershipActionSheet } from "./MembershipActionSheet"
 

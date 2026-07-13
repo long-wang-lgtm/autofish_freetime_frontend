@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { fetchApi } from "@/lib/utils/api"
 
 interface LinkLoginModalProps {

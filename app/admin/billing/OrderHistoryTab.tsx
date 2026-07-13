@@ -8,7 +8,7 @@ import {
 } from '@/lib/api/admin'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Pagination } from '@/components/ui/pagination'
+import { Pagination } from '@/components/ui/data/Pagination'
 import { fmtPrice, fmtDate, fmtDateTime } from '@/lib/utils/format'
 import { Search } from 'lucide-react'
 

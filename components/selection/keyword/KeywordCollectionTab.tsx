@@ -6,7 +6,7 @@ import { listKeywords, addKeyword, removeKeyword, getCategoryProducts, getDailyP
 import { NewKeywordModal } from './NewKeywordModal'
 import { VerticalTimeline } from './VerticalTimeline'
 import { Eye, Heart, Search, Play } from 'lucide-react'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { fmtNumber } from '@/lib/utils/format'
 
 interface KeywordCollectionTabProps {

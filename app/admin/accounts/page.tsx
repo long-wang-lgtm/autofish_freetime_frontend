@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { adminApi, type AccountFull, type ProxyLong } from "@/lib/api/admin"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { SlidePanel } from "@/components/ui/slide-panel"
 import { toast } from "sonner"
 import {
@@ -15,7 +15,7 @@ import type { AccountByUserItem } from "@/lib/api/admin"
 
 const PAGE_SIZE = 20
 
-import { Pagination } from '@/components/ui/pagination'
+import { Pagination } from '@/components/ui/data/Pagination'
 
 // ===== 只读开关图标 =====
 function ReadonlyToggle({

@@ -3,7 +3,7 @@
 import { useAuth } from '@/stores/auth.store'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 
 export default function HomePage() {
   const { isAuthenticated, isLoading } = useAuth()

@@ -28,7 +28,7 @@ import { COLUMNS, GRID_COLS, GROUP_STYLE, type ColumnDef } from '@/components/se
 import { detectAnomalies } from '@/components/selection/product/hourlyTrendUtils'
 import { fmtPrice, fmtPercent, fmtGrowth, fmtAcceleration } from '@/lib/utils/format'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 
 // ===== 格式化工具（仅本文件使用） =====

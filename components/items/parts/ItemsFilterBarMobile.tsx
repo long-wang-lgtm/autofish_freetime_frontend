@@ -10,7 +10,7 @@ import {
   type SearchField,
 } from '@/lib/api/items'
 import { SearchChip } from '@/components/items/parts/SearchChip'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import type { ItemsFilterBarProps } from '@/components/items/parts/ItemsFilterBarDesktop'
 
 const ALL_SEARCH_FIELDS: SearchField[] = [

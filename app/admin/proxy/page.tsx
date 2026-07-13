@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { adminApi, type ProxyLong, type AccountName } from "@/lib/api/admin"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { SlidePanel } from "@/components/ui/slide-panel"
 import { toast } from "sonner"
 import { Shield, Plus, Trash2, RefreshCw, Search, X, Store } from "lucide-react"
@@ -29,7 +29,7 @@ const ACCOUNT_STATUS_COLORS: Record<number, string> = {
   3: "text-red-600 bg-red-50",
 }
 
-import { Pagination } from "@/components/ui/pagination"
+import { Pagination } from '@/components/ui/data/Pagination'
 
 /* ===== 侧边栏 1：添加代理 ===== */
 function ProxyCreatePanel({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess: () => void }) {

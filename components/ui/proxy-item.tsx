@@ -1,7 +1,7 @@
 "use client"
 
 import type { ProxyLong } from "@/lib/api/admin"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 
 const STATUS_LABELS: Record<string, string> = {
   active: "正常", abnormal: "异常", invalid: "失效", expired: "过期", closed: "关闭",

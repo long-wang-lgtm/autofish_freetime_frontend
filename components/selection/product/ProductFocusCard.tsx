@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { ProductItem } from '@/lib/api/selection'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import {
   STATUS_MAP,

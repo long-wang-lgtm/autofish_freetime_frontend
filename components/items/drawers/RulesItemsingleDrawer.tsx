@@ -12,7 +12,7 @@ import {
   getRulesForItem,
 } from "@/lib/api/keywords"
 import type { Item } from "@/lib/api/items"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { useToast } from '@/components/ui/Toaster'
 import { Sheet, BottomSheet } from "@/components/ui/Sheet"
 import { useIsMobile } from "@/hooks/useIsMobile"

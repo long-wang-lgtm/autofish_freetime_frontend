@@ -3,7 +3,7 @@
 import { Suspense } from 'react'
 import { TabBar } from '@/components/ui/Tab'
 import { useTabRouting } from '@/hooks/useTabRouting'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { Coins } from 'lucide-react'
 import { MembershipPlanTab } from './MembershipPlanTab'
 import { FeaturePricingTab } from './FeaturePricingTab'

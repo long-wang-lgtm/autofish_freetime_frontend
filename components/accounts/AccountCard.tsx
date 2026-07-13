@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Account, updateAccount } from "@/lib/api/accounts"
 import { useQueryClient } from "@tanstack/react-query"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { useToast } from '@/components/ui/Toaster'
 import { Bot, Truck, QrCode, Zap, Star, Sparkles, Bell, BellOff, MessageSquare, Sparkle } from "lucide-react"
 

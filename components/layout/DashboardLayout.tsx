@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useAuth } from '@/stores/auth.store'
 import { redirect } from 'next/navigation'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
+import { ErrorBoundary } from '@/components/ui/feedback/ErrorBoundary'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 

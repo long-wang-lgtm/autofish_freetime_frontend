@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect } from 'react'
 import { useAuth } from '@/stores/auth.store'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 
 interface AuthProviderProps {
   children: ReactNode

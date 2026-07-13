@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { listMonitorMerchants, addMonitorMerchant, removeMonitorMerchant } from '@/lib/api/selection'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { Search, Plus, Trash2 } from 'lucide-react'
 
 export function MerchantMonitorTab() {

@@ -7,7 +7,7 @@ import { listAccounts} from "@/lib/api/accounts"
 import { AccountRow } from "@/components/accounts/AccountTable"
 import { AccountCard } from "@/components/accounts/AccountCard"
 import { useIsMobile } from "@/hooks/useIsMobile"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { QrLoginModal } from "@/components/accounts/QrLoginModal"
 import { LinkLoginModal } from "@/components/accounts/LinkLoginModal"
 import { LinkManagement } from "@/components/accounts/LinkManagement"

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { SlidePanel } from "@/components/ui/slide-panel"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { toast } from "sonner"
 import { adminApi, type AdminUserInfo } from "@/lib/api/admin"
 import type { MembershipPlan, StoneSalePricing } from "@/lib/api/admin"

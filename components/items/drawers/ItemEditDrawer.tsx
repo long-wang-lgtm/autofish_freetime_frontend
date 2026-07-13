@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Item, ItemUpdate, updateItem } from "@/lib/api/items"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { useToast } from '@/components/ui/Toaster'
 import { useQueryClient } from "@tanstack/react-query"
 import { Sheet, BottomSheet } from "@/components/ui/Sheet"

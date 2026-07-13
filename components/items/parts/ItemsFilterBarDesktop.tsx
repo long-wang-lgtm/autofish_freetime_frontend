@@ -9,7 +9,7 @@ import {
   type SearchField,
 } from '@/lib/api/items'
 import { SearchChip } from '@/components/items/parts/SearchChip'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 
 export interface ItemsFilterBarProps {
   accounts: AccountName[]

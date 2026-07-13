@@ -6,7 +6,7 @@ import { updateKeywordRule, deleteKeywordRule } from "@/lib/api/keywords"
 import { RuleTable } from "@/components/items/rules/RuleTable"
 import { MobileRuleCard } from "@/components/items/views/MobileRuleCard"
 import { RuleDrawer } from "@/components/items/drawers/RuleItemsAllDrawer"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { useQueryClient } from "@tanstack/react-query"
 import { useToast } from '@/components/ui/Toaster'
 

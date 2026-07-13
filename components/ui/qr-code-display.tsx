@@ -1,6 +1,6 @@
 "use client"
 
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import type { ScanStatus } from "@/types/qr-login"
 
 interface QrCodeDisplayProps {
