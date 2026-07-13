@@ -8,7 +8,7 @@ import { toast } from "sonner"
 import {
   Bot, Truck, Zap, Star, Sparkles, Bell, BellOff, Play, Square, Link2,
 } from "lucide-react"
-import { ProxyItem } from "@/components/ui/proxy-item"
+import { ProxyItem } from "@/components/admin/ProxyItem"
 import { ImStatusChart } from "@/components/ui/chart/ImStatusChart"
 import { AccountPieChart } from "@/components/ui/chart/AccountPieChart"
 import type { AccountByUserItem } from "@/lib/api/admin"

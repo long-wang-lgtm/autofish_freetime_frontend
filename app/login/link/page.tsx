@@ -3,7 +3,7 @@
 import { useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { useQrLogin } from "@/hooks/useQrLogin"
-import { QrCodeDisplay } from "@/components/ui/qr-code-display"
+import { QrCodeDisplay } from "@/components/accounts/QrCodeDisplay"
 import { fetchApi } from "@/lib/utils/api"
 
 export const runtime = "edge"

@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback, useRef } from "react"
 import { useQrLogin } from "@/hooks/useQrLogin"
-import { QrCodeDisplay } from "@/components/ui/qr-code-display"
+import { QrCodeDisplay } from "@/components/accounts/QrCodeDisplay"
 import { startQrLogin, cancelQrLogin } from "@/lib/api/accounts"
 
 interface QrLoginModalProps {

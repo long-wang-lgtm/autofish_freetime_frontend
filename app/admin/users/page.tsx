@@ -5,7 +5,7 @@ import { adminApi, type AdminUserInfo, type ProxyLong } from "@/lib/api/admin"
 import { isAdminRole } from '@/lib/constants/admin'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { Sheet } from "@/components/ui/overlay/Sheet"
-import { ProxyItem } from "@/components/ui/proxy-item"
+import { ProxyItem } from "@/components/admin/ProxyItem"
 import { toast } from "sonner"
 import {
   Users,
