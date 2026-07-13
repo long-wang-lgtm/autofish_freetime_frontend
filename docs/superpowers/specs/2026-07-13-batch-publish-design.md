@@ -71,6 +71,40 @@ ItemMonitored (监控商品) ──N:1──> Opportunity (商机) ──1:N─�
 
 **PublishMaterial（素材）**：`id`(PK), `images`(list[MaterialImage]), `description`, `price`, `category`, `status`(9-stage enum), `ai_context`(JSON: template+images?+items?+coverprompt?), `to_uid`, `to_gid`, `opportunity_id`(FK NOT NULL)
 
+#### 2.2.1 TrendData 类型定义
+
+`ItemMonitored.trendData` 字段存储为 JSON，前端类型定义如下：
+
+```typescript
+/** 趋势数据 — 时序（按采集时间点） */
+interface TrendTime {
+  timestamp: number[]       // Unix 时间戳（秒），按采集时间升序
+  lookCount: number[]       // 累计浏览量
+  wantCount: number[]       // 累计想要数
+  collectCount: number[]    // 累计收藏数
+}
+
+/** 趋势数据 — 日维度 */
+interface TrendDays {
+  date: number[]            // 零点 Unix 时间戳，按日期升序
+  lookIncrement: number[]   // 日浏览增量
+  wantIncrement: number[]   // 日想要增量
+  collectIncrement: number[]// 日收藏增量
+  convertRate: number[]     // 转化率（小数，如 0.085 = 8.5%）
+  hideAvg: number[]         // 询藏比（小数）
+}
+
+/** 趋势数据 */
+interface TrendData {
+  trendTime: TrendTime      // 趋势数据（采集时间点）
+  trendDays: TrendDays      // 趋势数据（按天汇总）
+  fetchCount: number        // 窗口内采集次数——决定指标置信度
+  windows: number           // 实际窗口天数——决定数据时效范围
+}
+```
+
+**置信度规则**：`fetchCount < 6` 时视为低置信度，前端 UI 给予警告样式（italic + amber-600 色），提示运营审慎参考该商品的趋势指标。
+
 ### 2.3 素材状态模型
 
 后端模型定义了 10 个 `MaterialStatus` 枚举值（含 4 个中间态），但由于后端 **同步返回结果**（API 调用期间处于中间态，返回时已是终态），前端实际只处理 **6 个稳定状态**：
@@ -235,45 +269,141 @@ function PageContent() {
 
 ### 4.1 商品监控 Tab
 
-**布局**：SearchToolbar + DataTable + Pagination
+#### 4.1.1 布局结构
 
-**筛选栏**：
+**PC 端**：SearchToolbar + DataTable + Pagination（默认纯表格视图）。点击表格行后，右侧滑出 **趋势图侧边栏**（~420px 宽），覆盖在内容区上方，点击遮罩或关闭按钮收起。侧边栏内显示 3 张 ECharts 趋势图（三等分高度）。
+
+```
+┌───────────────────────────────────────┬────────────────────────┐
+│ SearchToolbar（搜索+监控状态+绑定状态）   │                        │
+├───────────────────────────────────────┤  侧边栏 (420px)         │
+│ DataTable                             │  ┌───────────────────┐ │
+│ ┌───────────────────────────────────┐ │  │ 商品摘要           │ │
+│ │☐│gid│标题│价格│斜率    │日均│转化│  │ │  │ 标题/价格/状态     │ │
+│ │☐│..│... │...│+12.5%  │342│8.5%│  │ │  │ 采集5次·窗口7天   │ │
+│ │ │  │    │   │采集3次  │   │    │  │ │  ├───────────────────┤ │
+│ │ │  │    │   │·窗口7天 │   │    │  │ │  │ 📈 累计趋势       │ │
+│ │☐│..│... │...│-3.2%   │128│2.1%│  │ │  │ 折线图（三等分）   │ │
+│ │ │  │    │   │采集1次  │   │    │  │ │  │ lookCount 琥珀    │ │
+│ │ │  │    │   │·窗口2天 │   │    │  │ │  │ wantCount 蓝      │ │
+│ └───────────────────────────────────┘ │  │ collectCount 紫     │ │
+│ Pagination                           │  ├───────────────────┤ │
+│                                      │  │ 📊 日增量          │ │
+│                                      │  │ 面积折线图 双Y轴   │ │
+│                                      │  │ 左: lookIncrement  │ │
+│                                      │  │ 右: want+collect   │ │
+│                                      │  ├───────────────────┤ │
+│                                      │  │ 📉 转化率&询藏比   │ │
+│                                      │  │ 双Y轴折线          │ │
+│                                      │  │ convertRate 蓝     │ │
+│                                      │  │ hideAvg 紫罗兰     │ │
+│                                      │  └───────────────────┘ │
+└───────────────────────────────────────┴────────────────────────┘
+```
+
+**移动端**：卡片列表降级（dataTable 的 11 列降为关键字段卡片）。点击卡片 → BottomSheet（heightRatio=0.85）弹出，3 张趋势图纵向滚动。长按进入批量选择。
+
+#### 4.1.2 筛选栏
+
 - 搜索框：标题/uid/gid 模糊搜索
 - 监控状态下拉：全部 / 监控中 / 已分析 / 已入库 / 已暂停
 - 绑定状态：全部 / 已绑定 / 未绑定
 
-**默认策略**（硬编码）：排序 wantSlope DESC（增长最快排前）+ 筛选 monitorStatus=1（监控中）+ oid=0（未绑定）——运营核心任务是找"活跃且未绑定"的好商品。
+**默认策略**（硬编码）：排序 wantSlope DESC（增长最快排前）+ 筛选 monitorStatus=1（监控中）+ opportunity_id=0（未绑定）——运营核心任务是找"活跃且未绑定"的好商品。
 
-**表格列**：
+#### 4.1.3 表格列
 
 | 列 | 宽度 | 字段 | 说明 |
 |----|------|------|------|
 | 复选框 | 32px | — | 批量选择 |
 | 商品 gid | 0.8fr | gid | 文本，可复制 |
 | 标题 | 2fr | title | line-clamp-2 |
-| 价格 | 0.7fr | 最新 fetchlog.price | fmtPrice |
-| 想要斜率 | 0.8fr | wantSlope | **主排序键**，fmtGrowth 带正负颜色，font-semibold |
+| 价格 | 0.7fr | price | fmtPrice |
+| 想要斜率 | 0.9fr | wantSlope | **主排序键**，fmtGrowth 带正负颜色，下方副标题"采集N次·窗口M天"（text-xs text-gray-400）。数据窗口信息帮助运营评估指标可信度 |
 | 日均想要 | 0.8fr | wantAvg | fmtNumber |
 | 转化率 | 0.7fr | convertRate | fmtPercent |
 | 商品状态 | 0.7fr | itemStatus | StatusBadge |
 | 监控状态 | 0.7fr | monitorStatus | StatusBadge（0=暂停/灰, 1=监控中/绿, 2=已分析/蓝, 3=已入库/紫） |
 | 绑定商机 | 1fr | opportunity | 商机名称 或 "未绑定"（text-gray-400） |
-| 操作 | 0.6fr | — | 绑定/解绑、删除 |
+| 操作 | 0.6fr | — | 详情(点击→侧边栏)、绑定/解绑、删除 |
+
+GRID_COLS: `32px 0.8fr 2fr 0.7fr 0.9fr 0.8fr 0.7fr 0.7fr 0.7fr 1fr 0.6fr`
+
+wantSlope 列副标题逻辑：读取 `trendData.fetchCount` 和 `trendData.windows`，无 trendData 时显示"无数据"。低采集次数（<6）时副标题用 italic + text-amber-600 警告色，提示运营该指标置信度低。
 
 **排序**：wantSlope / wantAvg / convertRate（三列可排序）
 
-**批量绑定交互流**：
-```
-勾选商品（仅当前页）→ 底部操作栏出现
-  → "绑定到商机" → BindOpportunityModal：
-      ├── Tab "选择已有商机"：搜索框 + 商机列表（单选）+ 分页
-      └── Tab "创建新商机"：表单（名称*、描述、AI模板下拉）
-  → 确认 → API → toast + 刷新
-```
+#### 4.1.4 侧边栏趋势图
+
+侧边栏仅在 PC 端出现（移动端用 BottomSheet）。顶部显示商品摘要（标题 + 价格 + 状态 Badge + 采集窗口元信息），下方 3 张 ECharts 图表三等分剩余高度（每张约 30%）。
+
+数据来源：`MonitoredItem.trendData` 字段（`TrendData` 类型，详见 §2.2 数据模型）。
+
+**图表配色常量**（遵循 frontend-charts.md，图表色与 UI 交互色独立）：
+
+| 常量 | 色值 | 用途 |
+|------|------|------|
+| `TREND_WANT` | `#2563eb`（蓝） | 想要 / 转化率 — 核心转化指标 |
+| `TREND_LOOK` | `#d97706`（琥珀） | 浏览 — 流量指标 |
+| `TREND_COLLECT` | `#7c3aed`（紫罗兰） | 收藏 / 询藏比 — 兴趣指标 |
+
+**图1 — 累计趋势（折线图）**：
+
+- 数据源：`trendData.trendTime`
+- 三条折线：lookCount（琥珀）、wantCount（蓝）、collectCount（紫罗兰）
+- X 轴：timestamp → `MM-DD HH:mm` 格式
+- 单 Y 轴（三个指标量级相近）
+- dataZoom：bottom slider (height: 16, bottom: 8) + inside
+- legend：bottom 12px，ECharts 内置
+- grid: `{ left: 48, right: 16, top: 12, bottom: 48 }`
+- lineStyle.width: 1.5
+
+**图2 — 日增量（面积折线图 / 双Y轴）**：
+
+- 数据源：`trendData.trendDays`
+- 面积折线：`areaStyle` 填充 15% 透明度 + `smooth: true`
+- 左 Y 轴：lookIncrement（蓝色面积）
+- 右 Y 轴：wantIncrement（紫色面积）+ collectIncrement（琥珀面积）
+- 双 Y 轴原因：lookIncrement 量级通常远大于 wantIncrement/collectIncrement，混合单轴会压扁小量级曲线
+- X 轴：date（零点时间戳）→ `MM-DD` 格式
+- 其余配置同图1
+
+**图3 — 转化率 & 询藏比（双Y轴折线）**：
+
+- 数据源：`trendData.trendDays`
+- 左 Y 轴：convertRate（蓝），格式化为百分比
+- 右 Y 轴：hideAvg（紫罗兰），格式化为百分比
+- 双 Y 轴原因：两个指标量级和含义完全不同（转化率 vs 询藏比），需要独立刻度
+- X 轴：同图2
+- 其余配置同图1
+
+**低置信度警告**：当 `trendData.fetchCount < 6` 时，在侧边栏摘要区显示 amber 警告："采集次数较少（N次），数据置信度较低"，提示运营审慎参考趋势。
+
+#### 4.1.5 批量操作
+
+勾选商品（仅当前页）→ 底部 BatchActionBar 出现
+
+- "绑定到商机" → BindOpportunityModal：
+  - Tab "选择已有商机"：搜索框 + 商机列表（单选）+ 分页
+  - Tab "创建新商机"：表单（名称*、描述、AI模板下拉）
+- 确认 → API → toast + 刷新
 
 **解绑**：ConfirmDialog → `POST /monitor.unbind.opportunity`
 
-**移动端**：卡片列表，每张：标题 + 3 核心指标色块（wantSlope/wantAvg/convertRate）+ 绑定状态 dot。长按进入批量选择。
+#### 4.1.6 移动端
+
+卡片列表降级（`useIsMobile` 检测）。每张卡片展示：
+
+- 标题 (text-sm font-medium line-clamp-2)
+- 价格 (fmtPrice) + 商品状态 StatusBadge
+- 三色块指标行：wantSlope（fmtGrowth，正=绿/负=红）+ wantAvg（fmtNumber）+ convertRate（fmtPercent）
+- 采集窗口信息（text-xs text-gray-400）
+- 绑定状态 dot（绿=已绑定，灰=未绑定）
+- 触摸目标 ≥ 44px
+
+点击卡片 → BottomSheet（heightRatio=0.85），纵向滚动显示 3 张趋势图。
+
+长按进入批量选择模式（同 PC 端 BatchActionBar）。
 
 ### 4.2 商机管理 Tab
 
@@ -320,6 +450,8 @@ function PageContent() {
 │                                                                  │
 │ ▸ 韩系ins风（2 份待处理）                                         │
 │   ...                                                            │
+│                                                                  │
+│                      [分页器 1/3]                                 │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -329,9 +461,21 @@ function PageContent() {
 - 每行：素材描述、当前状态、最后编辑时间
 - 点击行 → 自动选中该商机并加载工作区视图（§4.3.1）
 - 排序：有 publish_failed 的商机置顶 → 最近编辑的在前
+- **分页器**：整体分页（所有商机组的素材合并分页），位于容器底部
 
-**数据来源**：`['batch-publish', 'materials', 'all']` 缓存中过滤 `status != 'published'`。
-**不依赖后端改动**——纯前端过滤。
+**数据来源**：直接调用 `GET /api/selection/materials`（`listMaterials` 函数），传入 `status` 参数过滤排除 `published`。后端 `material.list` 接口支持以下查询参数，前端透传：
+
+| 参数 | 类型 | 用途 |
+|------|------|------|
+| `page` | int | 页码（默认 1） |
+| `page_size` | int | 每页条数（10-100） |
+| `oid` | int? | 按商机 ID 筛选 |
+| `name` | string? | 按名称模糊搜索 |
+| `description` | string? | 按描述模糊搜索 |
+| `category` | string? | 按类目筛选 |
+| `status` | string? | 按状态筛选（此处排除 published） |
+
+概览视图传入 `status` 为 `pending,writing_done,genimageplan_done,genimage_done,publish_failed`（排除 published），前端不做二次过滤。
 
 #### 4.3.1 工作区视图（选中商机时）
 
@@ -471,12 +615,24 @@ const [viewStack, setViewStack] = useState<MobileView[]>(['opportunity-list'])
 
 统一管理所有 `/api/selection/*` 接口。类型与 API 函数就近定义。
 
-**核心类型**：`MonitoredItem`, `OpportunityItem`, `PublishMaterial`, `MaterialStatus`（6 稳定态联合类型）, `MaterialAIContext`, `TemplateType`, `OperationResponse`
+**核心类型**：`MonitoredItem`, `OpportunityItem`, `PublishMaterial`, `MaterialStatus`（6 稳定态联合类型）, `MaterialAIContext`, `TemplateType`, `OperationResponse`, `TrendData`, `TrendTime`, `TrendDays`
 
 **API 函数分组**：
 - 监控：`listMonitoredItems`, `bindOpportunity`, `batchBindOpportunity`, `unbindOpportunity`, `deleteMonitoredItem`
 - 商机：`listOpportunities`, `createOpportunity`, `updateOpportunity`, `deleteOpportunity`
 - 素材：`listMaterials`, `createMaterials`, `editMaterial`, `updateMaterialContext`, `triggerRewrite`, `getChannel`, `publishMaterial`, `deleteMaterial`, `getContextTemplate`
+
+**`listMaterials` 接口对齐**：后端 `GET /material.list` 支持以下查询参数，前端 `listMaterials` 函数同步更新参数签名以对齐：
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `page` | int | 页码（默认 1） |
+| `page_size` | int | 每页条数（10-100） |
+| `oid` | int? | 按商机 ID 筛选 |
+| `name` | string? | 按名称模糊搜索 |
+| `description` | string? | 按描述模糊搜索 |
+| `category` | string? | 按类目筛选 |
+| `status` | string? | 按状态筛选 |
 
 **`updateMaterialContext` 契约**（前端定义，待后端实现）：
 
@@ -511,10 +667,12 @@ Response: PublishMaterialSchema       — 更新后的素材完整对象
 ```
 components/batch-publish/
 ├── monitor/
-│   ├── MonitorTab.tsx
-│   ├── MonitorTable.tsx
-│   ├── MonitorCard.tsx            # 移动端
-│   ├── MonitorFilterBar.tsx
+│   ├── MonitorTab.tsx              # 主容器（表格+侧边栏容器）
+│   ├── MonitorTable.tsx            # DataTable + 列定义 + 列内副标题
+│   ├── MonitorDetailPanel.tsx      # 侧边栏面板（摘要+趋势图容器）~420px
+│   ├── MonitorTrendCharts.tsx      # 3 张 ECharts 趋势图组件
+│   ├── MonitorCard.tsx             # 移动端卡片
+│   ├── MonitorFilterBar.tsx        # 筛选栏
 │   └── BindOpportunityModal.tsx
 ├── opportunity/
 │   ├── OpportunityTab.tsx
@@ -583,9 +741,9 @@ interface MaterialRowProps {
 ### 6.1 构建顺序
 
 ```
-Phase 0: 骨架 — page.tsx + TabBar + 路由 + Sidebar 导航项
-Phase 1: API 模块 — lib/api/batch-publish.ts（所有类型和函数）
-Phase 2: 共享组件 — BatchActionBar + StatusPipeline + constants
+Phase 0: 骨架 — page.tsx + TabBar + 路由 + Sidebar 导航项 - 已完成
+Phase 1: API 模块 — lib/api/batch-publish.ts（所有类型和函数） - 已完成
+Phase 2: 共享组件 — BatchActionBar + StatusPipeline + constants - 已完成
 Phase 3: 监控 Tab + 商机管理 Tab（可并行）
 Phase 4: 发布记录 Tab（相对独立）
 Phase 5: 创作台（最复杂，依赖 Phase 3 商机列表 + Phase 2 共享组件）
