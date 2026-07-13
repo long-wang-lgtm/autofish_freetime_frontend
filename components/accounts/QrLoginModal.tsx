@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useRef } from "react"
 import { useQrLogin } from "@/hooks/useQrLogin"
 import { QrCodeDisplay } from "@/components/accounts/QrCodeDisplay"
+import { Modal } from "@/components/ui/overlay"
 import { startQrLogin, cancelQrLogin } from "@/lib/api/accounts"
 
 interface QrLoginModalProps {
@@ -58,42 +59,13 @@ export function QrLoginModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">
-            {uid ? "重新登录" : "添加闲鱼账号"}
-          </h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div className="p-6">
-          <QrCodeDisplay
-            qrImage={qrImage}
-            scanStatus={scanStatus}
-            overlayMsg={overlayMsg}
-            hintMsg={hintMsg}
-            canRetry={canRetry}
-            onRetry={retry}
-          />
-        </div>
-        <div className="p-4 border-t flex justify-end">
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title={uid ? "重新登录" : "添加闲鱼账号"}
+      size="md"
+      footer={
+        <div className="flex justify-end">
           <button
             onClick={handleClose}
             className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
@@ -101,7 +73,16 @@ export function QrLoginModal({
             取消
           </button>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <QrCodeDisplay
+        qrImage={qrImage}
+        scanStatus={scanStatus}
+        overlayMsg={overlayMsg}
+        hintMsg={hintMsg}
+        canRetry={canRetry}
+        onRetry={retry}
+      />
+    </Modal>
   )
 }

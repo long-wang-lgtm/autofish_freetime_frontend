@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { createPublishedItem, triggerRewrite } from '@/lib/api/publish-items'
+import { Modal } from '@/components/ui/overlay'
 
 interface NewPublishedItemModalProps {
   opportunityId: number
@@ -43,41 +44,13 @@ export function NewPublishedItemModal({
   })
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl w-full max-w-sm shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-medium text-gray-900">新增发布素材</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg">✕</button>
-        </div>
-        <div className="p-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">数量</label>
-            <input
-              type="number"
-              value={count}
-              onChange={e => setCount(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              min="1"
-              max="20"
-              autoFocus
-            />
-            <p className="text-xs text-gray-400 mt-0.5">每个发布素材账号留空，后续在编辑区选择</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">价格（可选）</label>
-            <input
-              type="number"
-              value={price}
-              onChange={e => setPrice(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="留空则不设置价格"
-              min="0"
-              step="0.01"
-            />
-          </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
-        </div>
-        <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 rounded-b-xl">
+    <Modal
+      open={true}
+      onClose={onClose}
+      title="新增发布素材"
+      size="sm"
+      footer={
+        <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-100">
             取消
           </button>
@@ -89,7 +62,36 @@ export function NewPublishedItemModal({
             {mutation.isPending ? '创建中...' : '创建'}
           </button>
         </div>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">数量</label>
+          <input
+            type="number"
+            value={count}
+            onChange={e => setCount(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            min="1"
+            max="20"
+            autoFocus
+          />
+          <p className="text-xs text-gray-400 mt-0.5">每个发布素材账号留空，后续在编辑区选择</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">价格（可选）</label>
+          <input
+            type="number"
+            value={price}
+            onChange={e => setPrice(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="留空则不设置价格"
+            min="0"
+            step="0.01"
+          />
+        </div>
+        {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
-    </div>
+    </Modal>
   )
 }
