@@ -828,3 +828,63 @@ Phase 6: 移动端降级
 | `components/ui/DataTable.tsx` | 通用表格 |
 | `hooks/useItemsPage.ts` | Hook 三层拆分参考 |
 | `.claude/rules/frontend-*.md` | 各类规范文档 |
+
+---
+
+## 附录 C：Phase 5 创作台开发前置条件（2026-07-13）
+
+> **定位**：API 对齐后（附录 C 已解决），创作台设计与当前 API 之间仍有 3 项矛盾/缺口。**Phase 5 开始前必须解决。**
+
+### C.1 概览视图 status 多值过滤矛盾 🔴
+
+**设计期望**（§4.3.0）：一次请求获取所有非 `published` 的素材，传 `status=pending,writing_done,genimageplan_done,genimage_done,publish_failed`。
+
+**后端实际**（`selection.py:426-427`）：`query.filter(status = status)` — 精确等值匹配，不支持逗号分隔。
+
+**后果**：传逗号分隔字符串会去数据库里查找 status 精确等于该长字符串的记录 → 永远返回 0 条。
+
+**解决方案**：**前端过滤**。概览视图不传 `status` 参数（拉取全部素材），在组件层 `data.filter(item => item.status !== 'published')` 排除已发布项。每页最多 100 条，前端过滤开销可忽略。
+
+| 角色 | 行动 | 状态 |
+|------|------|------|
+| 前端 | 概览视图去掉 `status` 参数，改用组件层 filter | ⬜ 待实施 |
+
+### C.2 `material.context` 后端未完整实现 🟡
+
+**设计期望**（§4.3.3）：保存 AI 上下文时传 `{ id, contextTemplateType, items, images, coverprompt }`，返回 `PublishMaterial`。
+
+**后端实际**（`selection.py:290-299`）：
+- `items`/`images`/`coverprompt` 标记为 `# 待定参数`，不会被处理
+- 函数体 `return` 返回 `None`（非有效 Response）
+
+**后果**：前端 `updateMaterialContext` 发送完整参数但后端不处理 `items`/`images`/`coverprompt`，且返回 `None` 会导致 fetchApi 解析失败。
+
+**解决方案**：后端补完 `material.context` 逻辑——接收并持久化 `items`/`images`/`coverprompt` 到素材的 `ai_context` JSON 字段，返回更新后的 `PublishMaterialSchema`。前端 `MaterialContextInput` 类型和 `updateMaterialContext` 函数已就绪。
+
+| 角色 | 行动 | 状态 |
+|------|------|------|
+| 后端 | 补完 `POST /material.context` — 接受并持久化 `items`/`images`/`coverprompt`，返回 `PublishMaterialSchema` | ⬜ 待实施 |
+
+### C.3 `getContextTemplate` 签名变化 🟡
+
+**设计期望**（§5.1）：`getContextTemplate(materialId: number): Promise<MaterialAIContext>` — 按素材 ID 获取模板。
+
+**当前实现**：`getContextTemplate(): Promise<OperationResponse>` — 无参数，返回 `{ success, message, data: ["only_opportunity", "with_item"] }`。
+
+后端 `GET /material.context.templateType` 不需要 `materialId`，仅返回全局可用的模板类型列表。
+
+**影响**：调用方不需要传 `materialId`。返回值从 `MaterialAIContext` 变为 `OperationResponse`，需从 `data` 字段取 `string[]`。
+
+**解决方案**：前端调用方适配新的签名——不传参，从 `response.data` 中解析模板列表。如果以后需要按素材获取已保存的模板，从 `material.ai_context?.template` 直接读取即可。
+
+| 角色 | 行动 | 状态 |
+|------|------|------|
+| 前端 | Phase 5 组件中调用 `getContextTemplate()` 不传参，从 `data` 字段取模板列表 | ⬜ 待实施 |
+
+### C.4 前置条件总结
+
+| # | 阻塞级别 | 解决方 | Phase 5 前必须？ |
+|---|---------|--------|-----------------|
+| C.1 | 🔴 功能矛盾 | 前端过滤 | **是** — 否则概览视图空白 |
+| C.2 | 🔴 功能缺口 | 后端补完 | **是** — 否则 AI 上下文配置无法保存 |
+| C.3 | 🟡 签名适配 | 前端适配 | 建议提前，否则调用处需返工 |
