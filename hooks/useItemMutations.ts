@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { updateItem, refreshItems, shelvesItem, offlineItem, type Item, type ItemListResponse } from "@/lib/api/items"
-import { useToast } from "@/components/ui/toaster"
+import { useToast } from '@/components/ui/Toaster'
 
 /**
  * 商品管理页 — 变更操作层

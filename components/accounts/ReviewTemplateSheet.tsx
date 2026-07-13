@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Sheet } from "@/components/ui/Sheet"
-import { useToast } from "@/components/ui/toaster"
+import { useToast } from '@/components/ui/Toaster'
 import {
   listReviewTemplates,
   createReviewTemplate,

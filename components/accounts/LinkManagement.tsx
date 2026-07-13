@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { useToast } from "@/components/ui/toaster"
+import { useToast } from '@/components/ui/Toaster'
 import {
   listLinkTokens,
   createLinkToken,

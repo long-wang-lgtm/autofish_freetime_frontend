@@ -4,7 +4,7 @@ import { useState, useMemo } from "react"
 import { Account, updateAccount, listReviewTemplates, ReviewTemplate } from "@/lib/api/accounts"
 import { useQueryClient, useQuery } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { useToast } from "@/components/ui/toaster"
+import { useToast } from '@/components/ui/Toaster'
 import { Bot, Truck, QrCode, Zap, Star, Sparkles, Bell, BellOff, AlertCircle } from "lucide-react"
 import { ReviewTemplateSheet } from "@/components/accounts/ReviewTemplateSheet"
 

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Account, updateAccount } from "@/lib/api/accounts"
 import { useQueryClient } from "@tanstack/react-query"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { useToast } from "@/components/ui/toaster"
+import { useToast } from '@/components/ui/Toaster'
 import { Bot, Truck, QrCode, Zap, Star, Sparkles, Bell, BellOff, MessageSquare, Sparkle } from "lucide-react"
 
 type ConfigField = "full_ai_reply_system_prompt" | "full_default_reply_content"

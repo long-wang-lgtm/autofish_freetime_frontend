@@ -14,7 +14,7 @@ import {
 } from "@/lib/api/keywords"
 import { listItemGroups } from "@/lib/api/items"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { useToast } from "@/components/ui/toaster"
+import { useToast } from '@/components/ui/Toaster'
 import { Sheet, BottomSheet } from "@/components/ui/Sheet"
 import { useIsMobile } from "@/hooks/useIsMobile"
 import { KeywordRuleForm, type RuleFormData } from "../parts/KeywordRuleForm"

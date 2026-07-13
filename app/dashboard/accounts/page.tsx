@@ -11,7 +11,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { QrLoginModal } from "@/components/accounts/QrLoginModal"
 import { LinkLoginModal } from "@/components/accounts/LinkLoginModal"
 import { LinkManagement } from "@/components/accounts/LinkManagement"
-import { useToast } from "@/components/ui/toaster"
+import { useToast } from '@/components/ui/Toaster'
 import { TabBar } from "@/components/ui/Tab"
 
 export default function AccountsPage() {

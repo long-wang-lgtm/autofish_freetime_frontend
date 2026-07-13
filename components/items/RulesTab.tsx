@@ -8,7 +8,7 @@ import { MobileRuleCard } from "@/components/items/views/MobileRuleCard"
 import { RuleDrawer } from "@/components/items/drawers/RuleItemsAllDrawer"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useQueryClient } from "@tanstack/react-query"
-import { useToast } from "@/components/ui/toaster"
+import { useToast } from '@/components/ui/Toaster'
 
 interface RulesTabProps {
   isMobile: boolean

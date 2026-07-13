@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { KeywordRule, PREDEFINED_KEYWORDS } from "@/lib/api/keywords"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { TextEditor } from "@/components/ui/text-editor"
+import { TextEditor } from '@/components/ui/TextEditor'
 import { PlaceholderPicker } from "./PlaceholderPicker"
 import { ItemCardPanel } from "./ItemCardPanel"
 
