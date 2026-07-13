@@ -2,7 +2,7 @@
 
 import { Suspense } from "react"
 import { useTabRouting } from "@/hooks/useTabRouting"
-import { TabBar } from "@/components/ui/Tab"
+import { TabBar } from '@/components/ui/navigation/TabBar'
 import { ItemsTab } from "@/components/items/ItemsTab"
 import { ItemsFilterBar } from "@/components/items/ItemsFilterBar"
 import { RulesTab } from "@/components/items/RulesTab"

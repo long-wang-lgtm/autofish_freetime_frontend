@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { TabBar } from '@/components/ui/Tab'
+import { TabBar } from '@/components/ui/navigation/TabBar'
 import { KeywordCollectionTab } from '@/components/selection/keyword/KeywordCollectionTab'
 import { ProductMonitorTab } from '@/components/selection/product/ProductMonitorTab'
 import { MerchantMonitorTab } from '@/components/selection/merchant/MerchantMonitorTab'

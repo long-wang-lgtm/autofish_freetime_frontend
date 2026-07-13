@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { TabBar } from '@/components/ui/Tab'
+import { TabBar } from '@/components/ui/navigation/TabBar'
 import { OpportunityLibrary } from '@/components/publish/OpportunityLibrary'
 import { PublishWorkspace } from '@/components/publish/PublishWorkspace'
 import { EditorDrawer } from '@/components/publish/EditorDrawer'

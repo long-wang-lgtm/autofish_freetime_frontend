@@ -12,7 +12,7 @@ import { QrLoginModal } from "@/components/accounts/QrLoginModal"
 import { LinkLoginModal } from "@/components/accounts/LinkLoginModal"
 import { LinkManagement } from "@/components/accounts/LinkManagement"
 import { useToast } from '@/components/ui/Toaster'
-import { TabBar } from "@/components/ui/Tab"
+import { TabBar } from '@/components/ui/navigation/TabBar'
 
 export default function AccountsPage() {
   const queryClient = useQueryClient()

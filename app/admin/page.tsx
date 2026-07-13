@@ -10,9 +10,9 @@ import {
   type AdminUserInfo,
   type AccountFull,
 } from '@/lib/api/admin'
-import { ImStatusChart } from '@/components/ui/echart/ImStatusChart'
-import { AccountPieChart } from '@/components/ui/echart/AccountPieChart'
-import { useChart } from '@/components/ui/echart/useChart'
+import { ImStatusChart } from '@/components/ui/chart/ImStatusChart'
+import { AccountPieChart } from '@/components/ui/chart/AccountPieChart'
+import { useChart } from '@/components/ui/chart/useChart'
 import { Pagination } from '@/components/ui/data/Pagination'
 
 // ===== 常量 =====

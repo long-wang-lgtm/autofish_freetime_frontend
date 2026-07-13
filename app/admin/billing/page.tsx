@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react'
-import { TabBar } from '@/components/ui/Tab'
+import { TabBar } from '@/components/ui/navigation/TabBar'
 import { useTabRouting } from '@/hooks/useTabRouting'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { Coins } from 'lucide-react'
