@@ -9,6 +9,7 @@ import { OpportunityListPanel } from './OpportunityListPanel'
 import { MaterialWorkspace } from './MaterialWorkspace'
 import { MaterialEditSheet } from './MaterialEditSheet'
 import { CreateMaterialModal } from './CreateMaterialModal'
+import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import type { PublishMaterial, OpportunityParams } from '@/lib/api/batch-publish'
 
 const LEFT_PANEL_DEFAULT_WIDTH = 320
@@ -37,11 +38,15 @@ export function WorkbenchTab() {
 
   // Select opportunity → set URL param → right panel switches to workspace
   const handleSelectOid = useCallback((oid: number) => {
+    if (oid === page.selectedOid) {
+      handleBackToOverview()
+      return
+    }
     const params = new URLSearchParams(searchParams.toString())
     params.set('tab', 'workbench')
     params.set('oid', String(oid))
     router.push(`/dashboard/batch-publish?${params.toString()}`, { scroll: false })
-  }, [router, searchParams])
+  }, [router, searchParams, page.selectedOid])
 
   // Back to overview → clear oid param
   const handleBackToOverview = useCallback(() => {
@@ -129,6 +134,7 @@ export function WorkbenchTab() {
       total={page.materialTotal}
       onPageChange={page.setMaterialPage}
       onBackToOverview={handleBackToOverview}
+      materialPage={page.materialPage}
     />
   ) : (
     <PendingOverviewPanel
@@ -138,90 +144,72 @@ export function WorkbenchTab() {
       error={page.overviewError}
       onRetry={page.overviewRefetch}
       page={page.overviewPage}
-      pageSize={50}
+      pageSize={PAGE_SIZE}
       onPageChange={page.setOverviewPage}
       onSelectMaterial={handleSelectFromOverview}
     />
   )
 
-  // ---- Mobile: Push/Pop navigation ----
+  // ---- Mobile: dual-view toggle + Push workspace ----
   if (page.isMobile) {
     return (
       <div className="flex-1 flex flex-col min-h-0">
-        {/* 概览层 */}
-        {page.mobileView === 'overview' && !page.selectedOid && (
+        {/* 无选中商机：双视图切换 */}
+        {!page.selectedOid && (
           <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            {/* 商机快捷切换胶囊条 */}
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 overflow-x-auto flex-shrink-0">
-              <button
-                onClick={() => {}}
-                className={`flex-shrink-0 px-3 h-11 min-w-[60px] inline-flex items-center text-xs font-medium rounded-full transition-colors ${
-                  !page.selectedOid
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-              >
-                全部商机
-              </button>
-              {page.opportunities.slice(0, 6).map((opp) => (
-                <button
-                  key={opp.id}
-                  onClick={() => handleSelectOid(opp.id)}
-                  className="flex-shrink-0 px-3 h-11 min-w-[60px] inline-flex items-center text-xs font-medium rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
-                >
-                  {opp.name.slice(0, 6)}
-                </button>
-              ))}
-              <button
-                onClick={() => page.setMobileView('opportunity-list')}
-                className="flex-shrink-0 px-3 h-11 min-w-[44px] inline-flex items-center text-xs text-gray-400 hover:text-gray-600"
-              >
-                更多 →
-              </button>
-            </div>
-            <PendingOverviewPanel
-              materials={page.overviewMaterials}
-              total={page.overviewTotal}
-              isLoading={page.overviewLoading}
-              error={page.overviewError}
-              onRetry={page.overviewRefetch}
-              page={page.overviewPage}
-              pageSize={50}
-              onPageChange={page.setOverviewPage}
-              onSelectMaterial={handleSelectFromOverview}
-            />
-          </div>
-        )}
-
-        {/* 商机列表（Push from overview pill strip "更多"） */}
-        {page.mobileView === 'opportunity-list' && (
-          <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 flex-shrink-0">
+            {/* 视图切换按钮 */}
+            <div className="flex items-center border-b border-gray-100 flex-shrink-0">
               <button
                 onClick={() => page.setMobileView('overview')}
-                className="flex items-center justify-center w-11 h-11 -ml-1 text-gray-400 hover:text-gray-600"
+                className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                  page.mobileView === 'overview'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                待办概览
               </button>
-              <span className="text-sm font-semibold text-gray-900">选择商机</span>
+              <button
+                onClick={() => page.setMobileView('opportunities')}
+                className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                  page.mobileView === 'opportunities'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                商机列表
+              </button>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              {leftPanel}
+
+            {/* 视图内容 */}
+            <div className="flex-1 overflow-hidden">
+              {page.mobileView === 'overview' ? (
+                <PendingOverviewPanel
+                  materials={page.overviewMaterials}
+                  total={page.overviewTotal}
+                  isLoading={page.overviewLoading}
+                  error={page.overviewError}
+                  onRetry={page.overviewRefetch}
+                  page={page.overviewPage}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={page.setOverviewPage}
+                  onSelectMaterial={handleSelectFromOverview}
+                />
+              ) : (
+                <div className="h-full overflow-y-auto">
+                  {leftPanel}
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* 素材工作区（Push） */}
-        {(page.mobileView === 'workspace' || (!!page.selectedOid && page.mobileView === 'overview')) && (
+        {/* 选中商机：Push 工作区 */}
+        {!!page.selectedOid && (
           <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 flex-shrink-0">
               <button
-                onClick={() => {
-                  handleBackToOverview()
-                  page.setMobileView('overview')
-                }}
+                onClick={handleBackToOverview}
                 className="flex items-center justify-center w-11 h-11 -ml-1 text-gray-400 hover:text-gray-600"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,6 +245,7 @@ export function WorkbenchTab() {
                 total={page.materialTotal}
                 onPageChange={page.setMaterialPage}
                 onBackToOverview={handleBackToOverview}
+                materialPage={page.materialPage}
               />
             </div>
           </div>
