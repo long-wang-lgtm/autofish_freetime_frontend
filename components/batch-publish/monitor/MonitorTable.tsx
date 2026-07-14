@@ -20,13 +20,21 @@ interface MonitorTableProps {
   onToggleSelect: (gid: string) => void
   onToggleAll: () => void
   onOpenDetail: (item: MonitoredItem) => void
+  onBindOpportunity: (gid: string) => void
+  onNavigateOpportunity: (oid: number) => void
   page: number
   total: number
   pageSize: number
   onPageChange: (p: number) => void
 }
 
-const GRID_COLS = '32px 0.8fr 2fr 0.7fr 0.9fr 0.8fr 0.7fr 0.7fr 0.7fr 1fr 0.6fr'
+const GRID_COLS = '32px 2fr 0.7fr 0.8fr 0.8fr 0.7fr 0.6fr 0.6fr 0.8fr'
+
+const ITEM_STATUS_CONFIG: Record<number, { label: string; color: 'green' | 'red' | 'amber' | 'gray' }> = {
+  0: { label: '在售', color: 'green' },
+  1: { label: '下架', color: 'gray' },
+  2: { label: '售出', color: 'amber' },
+}
 
 export function MonitorTable({
   data,
@@ -40,6 +48,8 @@ export function MonitorTable({
   onToggleSelect,
   onToggleAll,
   onOpenDetail,
+  onBindOpportunity,
+  onNavigateOpportunity,
   page,
   total,
   pageSize,
@@ -66,39 +76,37 @@ export function MonitorTable({
       ),
     },
     {
-      key: 'gid',
-      header: '商品 gid',
+      key: 'productInfo',
+      header: '商品信息',
       render: (item) => (
-        <span className="text-sm text-gray-700 tabular-nums">{item.gid}</span>
-      ),
-    },
-    {
-      key: 'title',
-      header: '标题',
-      render: (item) => (
-        <span className="text-sm text-gray-800 leading-snug line-clamp-2">{item.title || '-'}</span>
+        <div className="flex flex-col min-w-0">
+          <span className="text-xs text-gray-500 tabular-nums truncate">{item.gid}</span>
+          <span className="text-sm text-gray-800 leading-snug line-clamp-1">{item.title || '-'}</span>
+        </div>
       ),
     },
     {
       key: 'price',
       header: '价格',
-      align: 'right',
+      align: 'center',
       render: (item) => (
-        <span className="text-sm text-gray-700 tabular-nums">{item.price != null ? fmtPrice(item.price) : '-'}</span>
+        <span className="text-sm text-gray-700 tabular-nums">
+          {item.price != null ? fmtPrice(item.price) : '-'}
+        </span>
       ),
     },
     {
       key: 'wantSlope',
       header: '想要斜率',
       sortable: true,
-      align: 'right',
+      align: 'center',
       render: (item) => {
         const td = item.trendData as Record<string, unknown> | null | undefined
         const fc = td?.fetchCount as number | undefined
         const windows = td?.windows as number | undefined
         const lowConfidence = fc != null && fc < 6
         return (
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-center">
             <span className={`text-sm tabular-nums ${(item.wantSlope ?? 0) > 0 ? 'text-green-600' : (item.wantSlope ?? 0) < 0 ? 'text-red-600' : 'text-gray-500'}`}>
               {fmtGrowth(item.wantSlope ?? null)}
             </span>
@@ -113,37 +121,36 @@ export function MonitorTable({
       key: 'wantAvg',
       header: '日均想要',
       sortable: true,
-      align: 'right',
+      align: 'center',
       render: (item) => (
-        <span className="text-sm text-gray-700 tabular-nums">{item.wantAvg != null ? fmtNumber(item.wantAvg) : '-'}</span>
+        <span className="text-sm text-gray-700 tabular-nums">
+          {item.wantAvg != null ? fmtNumber(item.wantAvg) : '-'}
+        </span>
       ),
     },
     {
       key: 'convertRate',
       header: '转化率',
       sortable: true,
-      align: 'right',
+      align: 'center',
       render: (item) => (
-        <span className="text-sm text-gray-700 tabular-nums">{fmtPercent(item.convertRate ?? null)}</span>
+        <span className="text-sm text-gray-700 tabular-nums">
+          {fmtPercent(item.convertRate ?? null)}
+        </span>
       ),
     },
     {
       key: 'itemStatus',
       header: '商品状态',
-      render: (item) => {
-        const itemStatusConfig: Record<number, { label: string; color: 'green' | 'red' | 'amber' | 'gray' }> = {
-          0: { label: '在售', color: 'green' },
-          1: { label: '下架', color: 'gray' },
-          2: { label: '售出', color: 'amber' },
-        }
-        return (
-          <StatusBadge status={item.itemStatus ?? 0} config={itemStatusConfig} />
-        )
-      },
+      align: 'center',
+      render: (item) => (
+        <StatusBadge status={item.itemStatus ?? 0} config={ITEM_STATUS_CONFIG} />
+      ),
     },
     {
       key: 'monitorStatus',
       header: '监控状态',
+      align: 'center',
       render: (item) => (
         <StatusBadge status={item.monitorStatus ?? 0} config={MONITOR_STATUS_CONFIG} />
       ),
@@ -151,26 +158,29 @@ export function MonitorTable({
     {
       key: 'opportunity',
       header: '绑定商机',
-      render: (item) => (
-        <span className={`text-sm ${item.opportunity?.id ? 'text-blue-600' : 'text-gray-400'}`}>
-          {item.opportunity?.name ?? (item.opportunity?.id ? `商机 #${item.opportunity.id}` : '未绑定')}
-        </span>
-      ),
-    },
-    {
-      key: 'actions',
-      header: '操作',
       align: 'center',
-      render: (item) => (
-        <button
-          onClick={() => onOpenDetail(item)}
-          className="h-10 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-        >
-          详情
-        </button>
-      ),
+      render: (item) => {
+        if (item.opportunity?.id) {
+          return (
+            <button
+              onClick={() => onNavigateOpportunity(item.opportunity!.id)}
+              className="text-sm text-blue-600 hover:underline transition-colors"
+            >
+              {item.opportunity.name ?? `商机 #${item.opportunity.id}`}
+            </button>
+          )
+        }
+        return (
+          <button
+            onClick={() => onBindOpportunity(item.gid)}
+            className="text-sm text-gray-500 hover:text-blue-600 transition-colors"
+          >
+            未绑定
+          </button>
+        )
+      },
     },
-  ], [selectedGids, onToggleSelect, onToggleAll, onOpenDetail, data.length])
+  ], [selectedGids, data.length, onToggleSelect, onToggleAll, onBindOpportunity, onNavigateOpportunity])
 
   return (
     <div>
@@ -187,6 +197,8 @@ export function MonitorTable({
         orderBy={orderBy}
         asc={asc}
         onSortChange={onSortChange}
+        onRowClick={onOpenDetail}
+        maxHeight="calc(100vh - 320px)"
         stickyHeader
       />
       <Pagination
