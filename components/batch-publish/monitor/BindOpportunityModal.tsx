@@ -11,6 +11,7 @@ interface BindOpportunityModalProps {
   open: boolean
   onClose: () => void
   selectedCount: number
+  mode?: 'batch' | 'single'
   onConfirm: (opportunityId: number) => void
   isPending: boolean
 }
@@ -19,6 +20,7 @@ export function BindOpportunityModal({
   open,
   onClose,
   selectedCount,
+  mode = 'batch',
   onConfirm,
   isPending,
 }: BindOpportunityModalProps) {
@@ -62,7 +64,16 @@ export function BindOpportunityModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={`绑定商品到商机（已选 ${selectedCount} 个）`} size="md">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={
+        mode === 'single'
+          ? '绑定商品到商机'
+          : `绑定商品到商机（已选 ${selectedCount} 个）`
+      }
+      size="md"
+    >
       {/* Tab 切换 */}
       <div className="flex gap-0 border-b border-gray-100 mb-4">
         <button
