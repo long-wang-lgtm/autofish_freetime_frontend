@@ -63,11 +63,19 @@ export function ReferencePanel({ items, isLoading, opportunityId }: ReferencePan
       {!collapsed && (
         <div className="px-4 pb-3 overflow-x-auto">
           <div className="flex gap-3" style={{ scrollSnapType: 'x mandatory' }}>
-            {items.map((item) => (
+            {items.slice(0, 5).map((item) => (
               <div key={item.gid} style={{ scrollSnapAlign: 'start' }}>
                 <ReferenceCard item={item} />
               </div>
             ))}
+            {items.length > 5 && (
+              <span
+                className="flex-shrink-0 inline-flex items-center px-3 py-2 text-xs text-gray-400"
+                style={{ scrollSnapAlign: 'start' }}
+              >
+                +{items.length - 5} 更多 →
+              </span>
+            )}
           </div>
         </div>
       )}

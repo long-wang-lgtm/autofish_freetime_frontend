@@ -7,8 +7,10 @@ import { useWorkbenchMutations } from '@/hooks/batch-publish/useWorkbenchMutatio
 import { TEMPLATE_TYPE_LABELS } from '@/components/batch-publish/shared/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { listMonitoredItems } from '@/lib/api/batch-publish'
+import { uploadFileToFlare, imageDisplayUrl } from '@/lib/api/upload'
 import { fmtGrowth, fmtNumber } from '@/lib/utils/format'
-import type { MaterialListResponse, MonitoredItem, TemplateType } from '@/lib/api/batch-publish'
+import type { MaterialListResponse, MonitoredItem, TemplateType, MaterialImage } from '@/lib/api/batch-publish'
+import type { MaterialImage as UploadMaterialImage } from '@/lib/api/upload'
 
 interface MaterialEditSheetProps {
   materialId: number | null
@@ -29,22 +31,19 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose }: Ma
 
   // 表单字段
   const [description, setDescription] = useState('')
-  const [price, setPrice] = useState('')
-  const [category, setCategory] = useState('')
-  const [toUid, setToUid] = useState('')
+  const [images, setImages] = useState<MaterialImage[]>([])
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
   const [templateType, setTemplateType] = useState<TemplateType>('only_opportunity')
   const [selectedGids, setSelectedGids] = useState<string[]>([])
 
-  // 监控商品列表（用于 AI 上下文勾选）
+  // 监控商品列表
   const [monitoredItems, setMonitoredItems] = useState<MonitoredItem[]>([])
 
   // 初始化表单
   useEffect(() => {
     if (material) {
       setDescription(material.description ?? '')
-      setPrice(material.price != null ? String(material.price) : '')
-      setCategory(material.category ?? '')
-      setToUid(material.to_uid ?? '')
+      setImages(material.images ?? [])
       setTemplateType((material.ai_context?.template as TemplateType) ?? 'only_opportunity')
       setSelectedGids(material.ai_context?.items ?? [])
     }
@@ -61,13 +60,50 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose }: Ma
 
   if (!material) return null
 
+  // ---- Image management ----
+  const handleImageUpload = async (file: File) => {
+    setUploadingIndex(images.length)
+    try {
+      const uploaded = await uploadFileToFlare(file, material.to_uid ?? undefined)
+      setImages(prev => [...prev, uploaded as MaterialImage])
+    } catch {
+      // silent
+    } finally {
+      setUploadingIndex(null)
+    }
+  }
+
+  const handleImageDelete = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleImageMoveUp = (index: number) => {
+    if (index <= 0) return
+    setImages(prev => {
+      const next = [...prev]
+      const temp = next[index - 1]
+      next[index - 1] = next[index]
+      next[index] = temp
+      return next
+    })
+  }
+
+  const handleImageMoveDown = (index: number) => {
+    if (index >= images.length - 1) return
+    setImages(prev => {
+      const next = [...prev]
+      const temp = next[index + 1]
+      next[index + 1] = next[index]
+      next[index] = temp
+      return next
+    })
+  }
+
   const handleSaveMaterial = () => {
     editMaterialMutation.mutate({
       id: material.id,
       description: description || undefined,
-      price: price ? Number(price) : undefined,
-      category: category || undefined,
-      to_uid: toUid || undefined,
+      images: images.length > 0 ? images : undefined,
     })
   }
 
@@ -90,62 +126,76 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose }: Ma
 
   const formContent = (
     <div className={`flex-1 overflow-y-auto ${padding} space-y-6`}>
-      {/* 素材基本信息 */}
+      {/* 商品图片 */}
       <section className="space-y-4">
-        <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">素材信息</h4>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700">描述</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={5}
-            className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
-            placeholder="商品描述文案"
-          />
+        <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">商品图片</h4>
+        <div className="flex flex-wrap gap-3">
+          {images.map((img, i) => (
+            <div key={img.md5 || i} className="relative group">
+              <img
+                src={imageDisplayUrl(img as UploadMaterialImage) || undefined}
+                alt=""
+                className="w-[120px] h-[120px] object-cover rounded-lg border border-gray-200"
+                loading="lazy"
+              />
+              <div className="absolute top-0 right-0 p-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => handleImageMoveUp(i)}
+                  disabled={i === 0}
+                  className="w-5 h-5 bg-white/90 rounded text-gray-600 text-xs disabled:opacity-30"
+                  title="上移"
+                >↑</button>
+                <button
+                  onClick={() => handleImageMoveDown(i)}
+                  disabled={i === images.length - 1}
+                  className="w-5 h-5 bg-white/90 rounded text-gray-600 text-xs disabled:opacity-30"
+                  title="下移"
+                >↓</button>
+                <button
+                  onClick={() => handleImageDelete(i)}
+                  className="w-5 h-5 bg-red-500 text-white rounded text-xs"
+                  title="删除"
+                >×</button>
+              </div>
+            </div>
+          ))}
+          {images.length < 8 && (
+            <label className="w-[120px] h-[120px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 cursor-pointer transition-colors">
+              {uploadingIndex !== null ? (
+                <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span className="text-2xl">+</span>
+                  <span className="text-xs mt-1">上传图片</span>
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleImageUpload(file)
+                  e.target.value = ''
+                }}
+                className="hidden"
+              />
+            </label>
+          )}
         </div>
+        <p className="text-xs text-gray-400">最多 8 张，支持 JPG/PNG/WebP，单张不超过 10MB</p>
+      </section>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700">价格</label>
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            min={0}
-            step={0.01}
-            className="mt-1 w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700">类目</label>
-          <input
-            type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="mt-1 w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-            placeholder="如：手机配件"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700">发布账号 (to_uid)</label>
-          <input
-            type="text"
-            value={toUid}
-            onChange={(e) => setToUid(e.target.value)}
-            className="mt-1 w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-            placeholder="选择发布账号"
-          />
-        </div>
-
-        <button
-          onClick={handleSaveMaterial}
-          disabled={isSaving}
-          className="h-10 px-5 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-        >
-          {editMaterialMutation.isPending ? '保存中...' : '保存素材信息'}
-        </button>
+      {/* 描述 */}
+      <section className="space-y-4">
+        <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">描述文案</h4>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={8}
+          className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
+          style={{ minHeight: 200 }}
+          placeholder="商品描述文案"
+        />
       </section>
 
       {/* AI 上下文配置 */}
@@ -200,7 +250,6 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose }: Ma
           </div>
         )}
 
-        {/* 配置摘要 */}
         <p className="text-xs text-gray-500 leading-relaxed">
           {templateType === 'only_opportunity'
             ? '将注入：仅商机信息'
@@ -223,10 +272,27 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose }: Ma
           {updateContextMutation.isPending ? '保存中...' : '保存 AI 上下文'}
         </button>
       </section>
+
+      {/* 保存素材 */}
+      <div className="flex gap-2 pt-3 border-t border-gray-100">
+        <button
+          onClick={handleSaveMaterial}
+          disabled={isSaving}
+          className="flex-1 h-10 px-5 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+        >
+          {editMaterialMutation.isPending ? '保存中...' : '保存素材'}
+        </button>
+        <button
+          onClick={onClose}
+          disabled={isSaving}
+          className="h-10 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          关闭
+        </button>
+      </div>
     </div>
   )
 
-  // 移动端使用 BottomSheet
   if (isMobile) {
     return (
       <BottomSheet
@@ -240,7 +306,6 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose }: Ma
     )
   }
 
-  // 桌面端使用 Sheet（侧边抽屉）
   return (
     <Sheet
       open={open}
