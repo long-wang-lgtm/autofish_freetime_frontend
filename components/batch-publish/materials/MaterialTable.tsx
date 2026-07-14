@@ -20,7 +20,7 @@ interface MaterialTableProps {
   onOpportunityClick: (id: number) => void
 }
 
-const GRID_COLS = '0.8fr 2fr 0.6fr 0.8fr 0.6fr 1fr 0.7fr 0.7fr'
+const GRID_COLS = '1fr 2.5fr 0.7fr 0.7fr 0.8fr 0.7fr 0.7fr 0.8fr'
 
 export function MaterialTable({
   data, isLoading, error, onRetry,
@@ -29,13 +29,22 @@ export function MaterialTable({
 }: MaterialTableProps) {
   const columns = useMemo<DataTableColumn<PublishMaterial>[]>(() => [
     {
-      key: 'updated_at',
-      header: '发布时间',
-      render: (item) => (
-        <span className="text-sm text-gray-700 tabular-nums">
-          {item.updated_at ? fmtDateTime(item.updated_at) : '-'}
-        </span>
-      ),
+      key: 'opportunity',
+      header: '所属商机',
+      align: 'center',
+      render: (item) => {
+        if (item.opportunity?.id) {
+          return (
+            <button
+              onClick={() => onOpportunityClick(item.opportunity!.id)}
+              className="text-sm text-blue-600 hover:underline transition-colors"
+            >
+              {item.opportunity.name ?? `商机 #${item.opportunity.id}`}
+            </button>
+          )
+        }
+        return <span className="text-sm text-gray-400">—</span>
+      },
     },
     {
       key: 'description',
@@ -47,50 +56,53 @@ export function MaterialTable({
     {
       key: 'price',
       header: '价格',
-      align: 'right',
+      align: 'center',
       render: (item) => (
-        <span className="text-sm text-gray-700 tabular-nums">{item.price != null ? fmtPrice(item.price) : '-'}</span>
+        <span className="text-sm text-gray-700 tabular-nums">
+          {item.price != null ? fmtPrice(item.price) : '-'}
+        </span>
       ),
     },
     {
       key: 'category',
       header: '类目',
+      align: 'center',
       render: (item) => (
         <span className="text-sm text-gray-600">{item.category || '-'}</span>
       ),
     },
     {
-      key: 'status',
-      header: '状态',
-      render: (item) => (
-        <StatusBadge status={item.status} config={MATERIAL_STATUS_CONFIG} />
-      ),
-    },
-    {
-      key: 'opportunity',
-      header: '所属商机',
-      render: (item) => (
-        <button
-          onClick={() => { if (item.opportunity?.id) onOpportunityClick(item.opportunity.id) }}
-          className="text-sm text-blue-600 hover:underline disabled:text-gray-400 disabled:no-underline"
-          disabled={!item.opportunity?.id}
-        >
-          {item.opportunity?.name ?? (item.opportunity?.id ? `商机 #${item.opportunity.id}` : '未知商机')}
-        </button>
-      ),
-    },
-    {
       key: 'to_uid',
       header: '发布账号',
+      align: 'center',
       render: (item) => (
         <span className="text-sm text-gray-600">{item.to_uid || '-'}</span>
       ),
     },
     {
+      key: 'status',
+      header: '状态',
+      align: 'center',
+      render: (item) => (
+        <StatusBadge status={item.status} config={MATERIAL_STATUS_CONFIG} />
+      ),
+    },
+    {
       key: 'to_gid',
       header: '发布商品',
+      align: 'center',
       render: (item) => (
         <span className="text-sm text-gray-600 tabular-nums">{item.to_gid || '-'}</span>
+      ),
+    },
+    {
+      key: 'updated_at',
+      header: '发布时间',
+      align: 'center',
+      render: (item) => (
+        <span className="text-sm text-gray-700 tabular-nums">
+          {item.updated_at ? fmtDateTime(item.updated_at) : '-'}
+        </span>
       ),
     },
   ], [onOpportunityClick])
@@ -108,6 +120,7 @@ export function MaterialTable({
         emptyTitle="暂无发布记录"
         emptyDescription="在创作台完成素材发布后，记录将出现在这里"
         stickyHeader
+        maxHeight="calc(100vh - 320px)"
       />
       <Pagination page={page} total={total} pageSize={pageSize} onChange={onPageChange} />
     </div>
