@@ -47,6 +47,11 @@ export interface DataTableProps<T> {
 
   // 表头
   stickyHeader?: boolean
+
+  // 行点击
+  onRowClick?: (item: T, index: number) => void
+  // 滚动容器最大高度（opt-in，传入时启用滚动 + 冻结表头）
+  maxHeight?: string
 }
 
 // ---- 内部子组件（从 ItemsTab SortHeader 迁移而来） ----
@@ -124,6 +129,8 @@ export function DataTable<T>({
 
   rowClassName,
   stickyHeader = false,
+  onRowClick,
+  maxHeight,
 }: DataTableProps<T>) {
   // 1. Loading
   if (isLoading) {
@@ -159,16 +166,16 @@ export function DataTable<T>({
     )
   }
 
-  // 4. Data
-  return (
-    <div className={cn('', className)}>
+  // 4. Data — 表头 + 数据行
+  const renderTable = () => (
+    <>
       {/* 表头 */}
       <div
         className={cn(
           'grid gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800',
           'text-xs font-medium text-gray-500 dark:text-gray-400',
           'border-b border-gray-200 dark:border-gray-700',
-          stickyHeader && 'sticky top-0 z-10',
+          stickyHeader && maxHeight && 'sticky top-0 z-10',
         )}
         style={{ gridTemplateColumns }}
       >
@@ -204,6 +211,25 @@ export function DataTable<T>({
             ? rowClassName(item, index)
             : rowClassName
 
+        const handleRowClick = onRowClick
+          ? (e: React.MouseEvent<HTMLDivElement>) => {
+              const target = e.target as HTMLElement
+              if (target.closest('button, a, input, select')) return
+              onRowClick(item, index)
+            }
+          : undefined
+
+        const handleKeyDown = onRowClick
+          ? (e: React.KeyboardEvent<HTMLDivElement>) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                const target = e.target as HTMLElement
+                if (target.closest('button, a, input, select')) return
+                onRowClick(item, index)
+              }
+            }
+          : undefined
+
         return (
           <div
             key={keyExtractor(item)}
@@ -214,9 +240,14 @@ export function DataTable<T>({
               isEven
                 ? 'bg-white dark:bg-gray-900'
                 : 'bg-gray-50/30 dark:bg-gray-800/30',
+              onRowClick && 'cursor-pointer',
               extraClass,
             )}
             style={{ gridTemplateColumns }}
+            onClick={handleRowClick}
+            onKeyDown={handleKeyDown}
+            tabIndex={onRowClick ? 0 : undefined}
+            role={onRowClick ? 'button' : undefined}
           >
             {columns.map((col) => (
               <div
@@ -233,6 +264,18 @@ export function DataTable<T>({
           </div>
         )
       })}
+    </>
+  )
+
+  return (
+    <div className={cn('', className)}>
+      {maxHeight ? (
+        <div className="overflow-auto" style={{ maxHeight }}>
+          {renderTable()}
+        </div>
+      ) : (
+        renderTable()
+      )}
     </div>
   )
 }
