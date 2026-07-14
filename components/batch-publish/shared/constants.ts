@@ -143,7 +143,7 @@ export const queryKeys = {
   accounts: ['accounts'] as const,
   opportunities: (params: Record<string, unknown>) => ['batch-publish', 'opportunities', params] as const,
   materials: {
-    byOid: (oid: number | undefined) => ['batch-publish', 'materials', oid] as const,
+    byOid: (oid: number | undefined, page: number) => ['batch-publish', 'materials', oid, { page }] as const,
     overview: (page: number) => ['batch-publish', 'materials', 'overview', { page }] as const,
   },
   channel: (materialId: number) => ['batch-publish', 'channel', materialId] as const,
@@ -202,3 +202,10 @@ export const OPPORTUNITY_STATUS_FILTER_OPTIONS: { value: string; label: string }
   { value: 'active', label: '启用' },
   { value: 'inactive', label: '停用' },
 ]
+
+// ============================================================
+// 分页
+// ============================================================
+
+/** 列表统一分页大小——商机列表、概览待办、素材工作区均使用此值 */
+export const PAGE_SIZE = 20
