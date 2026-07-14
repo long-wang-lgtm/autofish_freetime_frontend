@@ -7,7 +7,7 @@ import { Pagination } from '@/components/ui/data/Pagination'
 import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
 import { ReferencePanel } from './ReferencePanel'
 import { MaterialRow } from './MaterialRow'
-import { MATERIAL_GRID_COLS, MATERIAL_HEADER_LABELS } from '@/components/batch-publish/shared/constants'
+import { MATERIAL_GRID_COLS, MATERIAL_HEADER_LABELS, PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import { fmtPrice } from '@/lib/utils/format'
 import type { OpportunityItem, MonitoredItem, PublishMaterial } from '@/lib/api/batch-publish'
 
@@ -29,6 +29,7 @@ interface MaterialWorkspaceProps {
   total: number
   onPageChange: (p: number) => void
   onBackToOverview: () => void
+  materialPage: number
 }
 
 export function MaterialWorkspace({
@@ -37,7 +38,7 @@ export function MaterialWorkspace({
   selectedMaterialIds, onToggleSelect, onClearSelection, onOpenEditor,
   onCreateClick, selectedOid,
   page, total, onPageChange,
-  onBackToOverview,
+  onBackToOverview, materialPage,
 }: MaterialWorkspaceProps) {
   if (!opportunity) {
     return (
@@ -133,6 +134,7 @@ export function MaterialWorkspace({
                 onToggleSelect={onToggleSelect}
                 onOpenSheet={onOpenEditor}
                 selectedOid={selectedOid}
+                materialPage={materialPage}
               />
             ))}
 
@@ -152,7 +154,7 @@ export function MaterialWorkspace({
 
       {/* 分页 */}
       <div className="border-t border-gray-100 flex-shrink-0">
-        <Pagination page={page} total={total} pageSize={20} onChange={onPageChange} />
+        <Pagination page={page} total={total} pageSize={PAGE_SIZE} onChange={onPageChange} />
       </div>
     </div>
   )
