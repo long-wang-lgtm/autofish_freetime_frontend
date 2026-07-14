@@ -34,7 +34,11 @@ export async function fetchApi<T>(
   const apiBase = baseUrl ?? API_BASE_URL
   const query = params
     ? '?' + new URLSearchParams(
-        Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)]))
+        Object.fromEntries(
+          Object.entries(params)
+            .filter(([, v]) => v != null)
+            .map(([k, v]) => [k, String(v)])
+        )
       ).toString()
     : ''
 
