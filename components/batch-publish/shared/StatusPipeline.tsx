@@ -5,6 +5,8 @@ import { PIPELINE_NODES, getPipelineState } from './constants'
 
 interface StatusPipelineProps {
   status: MaterialStatus
+  /** 紧凑模式：仅圆点无标签，用于行内进度+操作列 */
+  variant?: 'default' | 'compact'
 }
 
 const STATE_STYLES = {
@@ -31,9 +33,34 @@ const STATE_ICONS: Record<string, string> = {
   failed: '✕',
 }
 
-export function StatusPipeline({ status }: StatusPipelineProps) {
+export function StatusPipeline({ status, variant = 'default' }: StatusPipelineProps) {
   const states = getPipelineState(status)
 
+  if (variant === 'compact') {
+    return (
+      <div className="flex items-center gap-0.5">
+        {PIPELINE_NODES.map((node, i) => {
+          const state = states[i]
+          const style = STATE_STYLES[state]
+          const isLast = i === PIPELINE_NODES.length - 1
+
+          return (
+            <div key={node.key} className="flex items-center">
+              <span
+                className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[9px] leading-none border ${style.dot}`}
+                title={`${node.label}: ${state}`}
+              >
+                <span className={style.text}>{STATE_ICONS[state]}</span>
+              </span>
+              {!isLast && <div className={`w-3 h-px ${style.line}`} />}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // default — full size with labels
   return (
     <div className="flex items-center gap-0">
       {PIPELINE_NODES.map((node, i) => {
@@ -43,15 +70,12 @@ export function StatusPipeline({ status }: StatusPipelineProps) {
 
         return (
           <div key={node.key} className="flex items-center">
-            {/* 节点圆点 */}
             <span
               className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] leading-none border ${style.dot}`}
             >
               <span className={style.text}>{STATE_ICONS[state]}</span>
             </span>
-            {/* 节点标签 */}
             <span className={`ml-1 text-xs ${style.text}`}>{node.label}</span>
-            {/* 连接线 */}
             {!isLast && <div className={`w-4 h-px mx-1 ${style.line}`} />}
           </div>
         )
