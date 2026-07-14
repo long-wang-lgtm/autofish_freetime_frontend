@@ -193,7 +193,8 @@ export async function batchBindOpportunity(gids: string[], opportunityId: number
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ gids, opportunity_id: opportunityId }),
+    params: { opportunity_id: opportunityId },
+    body: JSON.stringify({ gids }),
   })
 }
 
@@ -203,7 +204,7 @@ export async function bindOpportunity(gid: string, opportunityId: number): Promi
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ gid, opportunity_id: opportunityId }),
+    params: { gid, opportunity_id: opportunityId },
   })
 }
 
@@ -218,7 +219,7 @@ export async function bindOpportunityAndCreate(
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ gid, name, description, ai_context_template }),
+    params: { gid, name, description, ai_context_template },
   })
 }
 
@@ -228,7 +229,7 @@ export async function unbindOpportunity(gid: string): Promise<OperationResponse>
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ gid }),
+    params: { gid },
   })
 }
 
@@ -238,7 +239,7 @@ export async function deleteMonitoredItem(gid: string): Promise<OperationRespons
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ gid }),
+    params: { gid },
   })
 }
 
@@ -320,27 +321,34 @@ export async function createMaterials(params: MaterialCreateParams): Promise<Pub
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify(params),
+    params: { num: params.num },
+    body: JSON.stringify(params.opp),
   })
 }
 
 /** 编辑素材 — POST /api/selection/material.edit */
 export async function editMaterial(input: MaterialEditInput): Promise<PublishMaterial> {
+  const { id, ...edit } = input
   return fetchApi<PublishMaterial>('/material.edit', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify(input),
+    params: { id },
+    body: JSON.stringify(edit),
   })
 }
 
 /** 更新 AI 上下文 — POST /api/selection/material.context */
 export async function updateMaterialContext(input: MaterialContextInput): Promise<PublishMaterial> {
-  return fetchApi<PublishMaterial>('/material.context', {
+  const { id, templateType, gids } = input
+  const sp = new URLSearchParams()
+  sp.set('id', String(id))
+  if (templateType) sp.set('templateType', templateType)
+  if (gids) gids.forEach(g => sp.append('gids', g))
+  return fetchApi<PublishMaterial>(`/material.context?${sp.toString()}`, {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify(input),
   })
 }
 
@@ -350,7 +358,8 @@ export async function triggerWork(materialId: number, stage: RewriteStage): Prom
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ id: materialId, work: { stage } }),
+    params: { id: materialId },
+    body: JSON.stringify({ stage }),
   })
 }
 
@@ -360,7 +369,7 @@ export async function getChannel(materialId: number): Promise<ChannelItemRespons
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ id: materialId }),
+    params: { id: materialId },
   })
 }
 
@@ -370,7 +379,7 @@ export async function publishMaterial(materialId: number): Promise<PublishMateri
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ id: materialId }),
+    params: { id: materialId },
   })
 }
 
@@ -380,7 +389,7 @@ export async function deleteMaterial(id: number): Promise<OperationResponse> {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ id }),
+    params: { id },
   })
 }
 

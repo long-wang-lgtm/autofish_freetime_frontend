@@ -34,7 +34,8 @@ export function InlineEditCell({
     }
   }, [editing])
 
-  const handleStartEdit = () => {
+  const handleStartEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (isSaving) return
     setEditValue(value != null ? String(value) : '')
     setEditing(true)

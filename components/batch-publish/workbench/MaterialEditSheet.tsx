@@ -1,15 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { useWorkbenchMutations } from '@/hooks/batch-publish/useWorkbenchMutations'
 import { TEMPLATE_TYPE_LABELS } from '@/components/batch-publish/shared/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { listMonitoredItems } from '@/lib/api/batch-publish'
 import { uploadFileToFlare, imageDisplayUrl } from '@/lib/api/upload'
 import { fmtGrowth, fmtNumber } from '@/lib/utils/format'
-import type { MaterialListResponse, MonitoredItem, TemplateType, MaterialImage } from '@/lib/api/batch-publish'
+import type { MonitoredItem, TemplateType, MaterialImage, PublishMaterial } from '@/lib/api/batch-publish'
 import type { MaterialImage as UploadMaterialImage } from '@/lib/api/upload'
 
 interface MaterialEditSheetProps {
@@ -17,16 +15,16 @@ interface MaterialEditSheetProps {
   selectedOid: number | undefined
   open: boolean
   onClose: () => void
+  /** 监控商品列表——从父组件传入，由 useWorkbenchData 统一加载 */
+  monitoredItems: MonitoredItem[]
+  /** 素材列表——从父组件传入，避免缓存 key 不匹配导致读不到数据 */
+  materials: PublishMaterial[]
 }
 
-export function MaterialEditSheet({ materialId, selectedOid, open, onClose }: MaterialEditSheetProps) {
+export function MaterialEditSheet({ materialId, selectedOid, open, onClose, monitoredItems, materials }: MaterialEditSheetProps) {
   const isMobile = useIsMobile()
-  const queryClient = useQueryClient()
   const { editMaterialMutation, updateContextMutation } = useWorkbenchMutations(selectedOid)
 
-  // 从缓存读取素材数据
-  const cached = queryClient.getQueryData<MaterialListResponse>(['batch-publish', 'materials', selectedOid])
-  const materials = cached?.items ?? []
   const material = materialId ? materials.find(m => m.id === materialId) : null
 
   // 表单字段
@@ -35,9 +33,6 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose }: Ma
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
   const [templateType, setTemplateType] = useState<TemplateType>('only_opportunity')
   const [selectedGids, setSelectedGids] = useState<string[]>([])
-
-  // 监控商品列表
-  const [monitoredItems, setMonitoredItems] = useState<MonitoredItem[]>([])
 
   // 初始化表单
   useEffect(() => {
@@ -48,15 +43,6 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose }: Ma
       setSelectedGids(material.ai_context?.items ?? [])
     }
   }, [material])
-
-  // 加载监控商品
-  useEffect(() => {
-    if (selectedOid && open) {
-      listMonitoredItems({ oid: selectedOid, page_size: 100 }).then(res => {
-        setMonitoredItems(res.items ?? [])
-      }).catch(() => {})
-    }
-  }, [selectedOid, open])
 
   if (!material) return null
 

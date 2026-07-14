@@ -202,50 +202,29 @@ export function WorkbenchTab() {
           </div>
         )}
 
-        {/* 选中商机：Push 工作区 */}
+        {/* 选中商机：Push 工作区（header 由 MaterialWorkspace 自己渲染） */}
         {!!page.selectedOid && (
           <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 flex-shrink-0">
-              <button
-                onClick={handleBackToOverview}
-                className="flex items-center justify-center w-11 h-11 -ml-1 text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <span className="text-sm font-semibold text-gray-900 truncate flex-1">
-                {page.selectedOpportunity?.name ?? '创作台'}
-              </span>
-              <button
-                onClick={() => page.setShowCreateModal(true)}
-                className="h-9 px-3 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
-              >
-                批量创建
-              </button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <MaterialWorkspace
-                opportunity={page.selectedOpportunity}
-                materials={page.materials}
-                materialLoading={page.materialLoading}
-                materialError={page.materialError}
-                materialRefetch={page.materialRefetch}
-                monitoredItems={page.monitoredItems}
-                monitoredLoading={page.monitoredLoading}
-                selectedMaterialIds={page.selectedMaterialIds}
-                onToggleSelect={page.toggleSelect}
-                onClearSelection={page.clearSelection}
-                onOpenEditor={page.openEditor}
-                onCreateClick={() => page.setShowCreateModal(true)}
-                selectedOid={page.selectedOid}
-                page={page.materialPage}
-                total={page.materialTotal}
-                onPageChange={page.setMaterialPage}
-                onBackToOverview={handleBackToOverview}
-                materialPage={page.materialPage}
-              />
-            </div>
+            <MaterialWorkspace
+              opportunity={page.selectedOpportunity}
+              materials={page.materials}
+              materialLoading={page.materialLoading}
+              materialError={page.materialError}
+              materialRefetch={page.materialRefetch}
+              monitoredItems={page.monitoredItems}
+              monitoredLoading={page.monitoredLoading}
+              selectedMaterialIds={page.selectedMaterialIds}
+              onToggleSelect={page.toggleSelect}
+              onClearSelection={page.clearSelection}
+              onOpenEditor={page.openEditor}
+              onCreateClick={() => page.setShowCreateModal(true)}
+              selectedOid={page.selectedOid}
+              page={page.materialPage}
+              total={page.materialTotal}
+              onPageChange={page.setMaterialPage}
+              onBackToOverview={handleBackToOverview}
+              materialPage={page.materialPage}
+            />
           </div>
         )}
 
@@ -255,6 +234,8 @@ export function WorkbenchTab() {
           selectedOid={page.selectedOid}
           open={page.editingMaterialId !== null}
           onClose={page.closeEditor}
+          monitoredItems={page.monitoredItems}
+          materials={page.materials}
         />
 
         {/* 批量创建弹窗 */}
@@ -293,6 +274,8 @@ export function WorkbenchTab() {
         selectedOid={page.selectedOid}
         open={page.editingMaterialId !== null}
         onClose={page.closeEditor}
+        monitoredItems={page.monitoredItems}
+        materials={page.materials}
       />
 
       {/* 批量创建弹窗 */}

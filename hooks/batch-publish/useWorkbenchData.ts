@@ -66,7 +66,7 @@ export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStat
     refetch: monitoredRefetch,
   } = useQuery({
     queryKey: ['batch-publish', 'monitored-items', 'workbench', selectedOid],
-    queryFn: () => listMonitoredItems({ oid: selectedOid, page_size: 100 }),
+    queryFn: () => listMonitoredItems({ oid: selectedOid, page_size: 10 }),
     enabled: !!selectedOid,
   })
 

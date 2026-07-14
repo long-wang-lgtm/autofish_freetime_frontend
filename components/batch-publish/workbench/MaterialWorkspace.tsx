@@ -9,6 +9,7 @@ import { ReferencePanel } from './ReferencePanel'
 import { MaterialRow } from './MaterialRow'
 import { MATERIAL_GRID_COLS, MATERIAL_HEADER_LABELS, PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import { fmtPrice } from '@/lib/utils/format'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { OpportunityItem, MonitoredItem, PublishMaterial } from '@/lib/api/batch-publish'
 
 interface MaterialWorkspaceProps {
@@ -40,6 +41,8 @@ export function MaterialWorkspace({
   page, total, onPageChange,
   onBackToOverview, materialPage,
 }: MaterialWorkspaceProps) {
+  const isMobile = useIsMobile()
+
   if (!opportunity) {
     return (
       <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
@@ -73,7 +76,11 @@ export function MaterialWorkspace({
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={onCreateClick}
-            className="h-10 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className={
+              isMobile
+                ? 'h-9 px-3 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                : 'h-10 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+            }
           >
             批量创建
           </button>
