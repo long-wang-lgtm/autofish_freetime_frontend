@@ -8,6 +8,7 @@ interface BatchActionBarProps {
     onClick: () => void
     variant?: 'primary' | 'secondary' | 'danger'
   }[]
+  sticky?: boolean
 }
 
 const variantStyles = {
@@ -16,11 +17,11 @@ const variantStyles = {
   danger: 'bg-red-600 text-white hover:bg-red-700',
 }
 
-export function BatchActionBar({ selectedCount, onClear, actions }: BatchActionBarProps) {
+export function BatchActionBar({ selectedCount, onClear, actions, sticky = true }: BatchActionBarProps) {
   if (selectedCount === 0) return null
 
   return (
-    <div className="sticky bottom-0 z-20 flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl shadow-lg -mx-1">
+    <div className={`flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl shadow-lg -mx-1 ${sticky ? 'sticky bottom-0 z-20' : ''}`}>
       <div className="flex items-center gap-3">
         <span className="text-sm font-medium text-gray-700">
           已选{' '}
