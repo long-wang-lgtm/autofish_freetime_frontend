@@ -33,6 +33,7 @@ export function useWorkbenchPage() {
     oppSearch: debouncedOppSearch,
     oppStatus,
     oppPage,
+    materialPage,
   })
 
   const mutations = useWorkbenchMutations(filters.selectedOid)

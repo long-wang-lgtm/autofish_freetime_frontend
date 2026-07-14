@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { listOpportunities, listMaterials, listMonitoredItems } from '@/lib/api/batch-publish'
+import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 
 interface UseWorkbenchDataParams {
   selectedOid: number | undefined
@@ -9,11 +10,10 @@ interface UseWorkbenchDataParams {
   oppSearch: string
   oppStatus: string
   oppPage: number
+  materialPage: number
 }
 
-const PAGE_SIZE = 20
-
-export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStatus, oppPage }: UseWorkbenchDataParams) {
+export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStatus, oppPage, materialPage }: UseWorkbenchDataParams) {
   // 左侧商机列表
   const {
     data: oppData,
@@ -40,7 +40,7 @@ export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStat
     queryKey: ['batch-publish', 'materials', 'overview', { page: overviewPage }],
     queryFn: () => listMaterials({
       page: overviewPage,
-      page_size: 50,
+      page_size: 20,
       status: 'pending,writing_done,genimageplan_done,genimage_done,publish_failed',
     }),
     enabled: !selectedOid,
@@ -53,8 +53,8 @@ export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStat
     error: materialError,
     refetch: materialRefetch,
   } = useQuery({
-    queryKey: ['batch-publish', 'materials', selectedOid],
-    queryFn: () => listMaterials({ oid: selectedOid, page_size: 100 }),
+    queryKey: ['batch-publish', 'materials', selectedOid, { page: materialPage }],
+    queryFn: () => listMaterials({ oid: selectedOid, page: materialPage, page_size: 20 }),
     enabled: !!selectedOid,
   })
 
