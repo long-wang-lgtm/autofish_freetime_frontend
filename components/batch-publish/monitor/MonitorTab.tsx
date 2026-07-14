@@ -11,6 +11,7 @@ import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { renderErrorGuard } from '@/components/batch-publish/shared/ErrorGuard'
+import { useRouter } from 'next/navigation'
 import type { MonitoredItem } from '@/lib/api/batch-publish'
 
 export function MonitorTab() {
@@ -20,12 +21,16 @@ export function MonitorTab() {
     page, pageSize, total, setPage,
     data, isLoading, error, refetch,
     bindMutation, unbindMutation, deleteMutation,
+    singleBindMutation,
     isMobile,
   } = useMonitorPage()
+
+  const router = useRouter()
 
   const [selectedGids, setSelectedGids] = useState<Set<string>>(new Set())
   const [selectionMode, setSelectionMode] = useState(false)
   const [bindModalOpen, setBindModalOpen] = useState(false)
+  const [singleBindGid, setSingleBindGid] = useState<string | null>(null)
   const [detailItem, setDetailItem] = useState<MonitoredItem | null>(null)
   const [unbindTarget, setUnbindTarget] = useState<MonitoredItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<MonitoredItem | null>(null)
@@ -49,14 +54,47 @@ export function MonitorTab() {
   const onClearSelection = useCallback(() => {
     setSelectedGids(new Set())
     setSelectionMode(false)
+    setSingleBindGid(null)
+    setBindModalOpen(false)
   }, [])
 
-  const handleBindConfirm = useCallback((opportunityId: number) => {
+  // 批量绑定
+  const handleBatchBindConfirm = useCallback((opportunityId: number) => {
     bindMutation.mutate(
       { gids: Array.from(selectedGids), opportunityId },
       { onSuccess: () => { setBindModalOpen(false); onClearSelection() } }
     )
   }, [selectedGids, bindMutation, onClearSelection])
+
+  // 单条绑定
+  const handleSingleBindConfirm = useCallback((opportunityId: number) => {
+    if (!singleBindGid) return
+    singleBindMutation.mutate(
+      { gid: singleBindGid, opportunityId },
+      { onSuccess: () => { setSingleBindGid(null); setBindModalOpen(false); onClearSelection() } }
+    )
+  }, [singleBindGid, singleBindMutation, onClearSelection])
+
+  const bindModalOnConfirm = singleBindGid ? handleSingleBindConfirm : handleBatchBindConfirm
+  const bindModalSelectedCount = singleBindGid ? 1 : selectedGids.size
+  const bindModalMode = singleBindGid ? 'single' as const : 'batch' as const
+  const bindModalIsPending = singleBindGid ? singleBindMutation.isPending : bindMutation.isPending
+
+  const handleOpenSingleBind = useCallback((gid: string) => {
+    setSingleBindGid(gid)
+    setBindModalOpen(true)
+  }, [])
+
+  const handleOpenBatchBind = useCallback(() => {
+    setSingleBindGid(null)
+    setBindModalOpen(true)
+  }, [])
+
+  const handleNavigateOpportunity = useCallback((oid: number) => {
+    router.push(`/dashboard/batch-publish?tab=workbench&oid=${oid}`)
+  }, [router])
+
+  const handleCloseDetail = useCallback(() => setDetailItem(null), [])
 
   const errorGuard = renderErrorGuard({
     error,
@@ -75,6 +113,18 @@ export function MonitorTab() {
         onFilterChange={onFilterChange}
         onRefresh={() => refetch()}
       />
+
+      {/* BatchActionBar — 非 sticky，在筛选栏和表格之间 */}
+      {!isMobile && selectedGids.size > 0 && (
+        <BatchActionBar
+          selectedCount={selectedGids.size}
+          onClear={onClearSelection}
+          sticky={false}
+          actions={[
+            { label: '绑定商机', onClick: handleOpenBatchBind, variant: 'primary' },
+          ]}
+        />
+      )}
 
       {isMobile ? (
         <div className="flex-1 overflow-y-auto space-y-3">
@@ -96,13 +146,12 @@ export function MonitorTab() {
               />
             ))
           )}
-          {/* 移动端：长按进入批量选择，BatchActionBar 常驻底部 */}
           {selectionMode && (
             <BatchActionBar
               selectedCount={selectedGids.size}
               onClear={onClearSelection}
               actions={[
-                { label: '绑定商机', onClick: () => setBindModalOpen(true), variant: 'primary' },
+                { label: '绑定商机', onClick: handleOpenBatchBind, variant: 'primary' },
                 { label: '退出选择', onClick: () => { setSelectionMode(false); onClearSelection() }, variant: 'secondary' },
               ]}
             />
@@ -122,6 +171,8 @@ export function MonitorTab() {
             onToggleSelect={onToggleSelect}
             onToggleAll={onToggleAll}
             onOpenDetail={setDetailItem}
+            onBindOpportunity={handleOpenSingleBind}
+            onNavigateOpportunity={handleNavigateOpportunity}
             page={page}
             total={total}
             pageSize={pageSize}
@@ -130,35 +181,33 @@ export function MonitorTab() {
         </div>
       )}
 
-      {/* PC 端批量操作栏 */}
-      {!isMobile && selectedGids.size > 0 && (
-        <BatchActionBar
-          selectedCount={selectedGids.size}
-          onClear={onClearSelection}
-          actions={[
-            { label: '绑定商机', onClick: () => setBindModalOpen(true), variant: 'primary' },
-          ]}
-        />
-      )}
-
-      {/* 侧边栏详情面板 */}
+      {/* Detail Panel */}
       {detailItem && (
         <>
-          <div className="fixed inset-0 bg-black/30 z-20" onClick={() => setDetailItem(null)} />
-          <MonitorDetailPanel item={detailItem} onClose={() => setDetailItem(null)} />
+          <div className="fixed inset-0 bg-black/30 z-20" onClick={handleCloseDetail} />
+          <MonitorDetailPanel
+            item={detailItem}
+            onClose={handleCloseDetail}
+            onSingleBind={handleOpenSingleBind}
+            onDeleteItem={(gid) => {
+              const target = data.find((d) => d.gid === gid)
+              if (target) setDeleteTarget(target)
+            }}
+          />
         </>
       )}
 
-      {/* 绑定弹窗 */}
+      {/* Bind Modal */}
       <BindOpportunityModal
         open={bindModalOpen}
-        onClose={() => setBindModalOpen(false)}
-        selectedCount={selectedGids.size}
-        onConfirm={handleBindConfirm}
-        isPending={bindMutation.isPending}
+        onClose={() => { setBindModalOpen(false); setSingleBindGid(null) }}
+        selectedCount={bindModalSelectedCount}
+        mode={bindModalMode}
+        onConfirm={bindModalOnConfirm}
+        isPending={bindModalIsPending}
       />
 
-      {/* 解绑确认 */}
+      {/* Unbind Confirm */}
       {unbindTarget && (
         <ConfirmDialog
           open={!!unbindTarget}
@@ -172,7 +221,7 @@ export function MonitorTab() {
         />
       )}
 
-      {/* 删除确认 */}
+      {/* Delete Confirm */}
       {deleteTarget && (
         <ConfirmDialog
           open={!!deleteTarget}
