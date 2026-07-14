@@ -45,7 +45,6 @@ export function WorkbenchTab() {
   }, [router, searchParams])
 
   // Select opportunity → set URL param → right panel switches to workspace
-  // Clicking the already-selected opportunity toggles back to overview
   const handleSelectOid = useCallback((oid: number) => {
     if (oid === page.selectedOid) {
       handleBackToOverview()
@@ -197,9 +196,7 @@ export function WorkbenchTab() {
                   onSelectMaterial={handleSelectFromOverview}
                 />
               ) : (
-                <div className="h-full overflow-y-auto">
-                  {leftPanel}
-                </div>
+                leftPanel
               )}
             </div>
           </div>

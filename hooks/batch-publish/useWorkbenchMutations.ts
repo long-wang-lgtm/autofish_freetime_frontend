@@ -16,7 +16,6 @@ export function useWorkbenchMutations(selectedOid: number | undefined) {
     if (selectedOid) {
       queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
     }
-    queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', 'all'] })
     queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', 'overview'] })
     queryClient.invalidateQueries({ queryKey: ['batch-publish', 'opportunities'] })
   }

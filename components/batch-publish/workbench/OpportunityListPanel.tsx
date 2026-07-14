@@ -111,22 +111,20 @@ export function OpportunityListPanel({
             return (
               <div
                 key={item.id}
-                className={`px-3 py-3 border-b border-gray-100 transition-colors hover:bg-gray-50 ${
+                onClick={() => onSelectOid(item.id)}
+                className={`px-3 py-3 border-b border-gray-100 transition-colors hover:bg-gray-50 cursor-pointer ${
                   isSelected ? 'border-l-2 border-l-blue-600 bg-blue-50/50' : ''
                 }`}
               >
-                {/* 可点击主体：选中商机 */}
-                <div onClick={() => onSelectOid(item.id)} className="cursor-pointer">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium line-clamp-1 ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
-                        {item.name}
-                      </p>
-                    </div>
-                    {isSelected && (
-                      <span className="text-blue-600 text-xs flex-shrink-0">✓</span>
-                    )}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium line-clamp-1 ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
+                      {item.name || '未命名商机'}
+                    </p>
                   </div>
+                  {isSelected && (
+                    <span className="text-blue-600 text-xs flex-shrink-0">✓</span>
+                  )}
                 </div>
 
                 {/* 底部信息 + 操作按钮 */}
