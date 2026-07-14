@@ -10,7 +10,7 @@ import { BindOpportunityModal } from './BindOpportunityModal'
 import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
-import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
+import { renderErrorGuard } from '@/components/batch-publish/shared/ErrorGuard'
 import type { MonitoredItem } from '@/lib/api/batch-publish'
 
 export function MonitorTab() {
@@ -58,15 +58,13 @@ export function MonitorTab() {
     )
   }, [selectedGids, bindMutation, onClearSelection])
 
-  if (error && !isLoading && data.length === 0) {
-    return (
-      <ErrorBanner
-        variant="banner"
-        message={`加载失败：${(error as Error)?.message || '未知错误'}`}
-        onRetry={() => refetch()}
-      />
-    )
-  }
+  const errorGuard = renderErrorGuard({
+    error,
+    isLoading,
+    hasData: data.length > 0,
+    onRetry: () => refetch(),
+  })
+  if (errorGuard) return errorGuard
 
   return (
     <div className="flex-1 flex flex-col min-h-0 gap-5">

@@ -5,7 +5,7 @@ import { SearchToolbar } from '@/components/ui/data/SearchToolbar'
 import { MaterialTable } from './MaterialTable'
 import { MaterialCard } from './MaterialCard'
 import { MATERIALS_STATUS_FILTER_OPTIONS } from '@/components/batch-publish/shared/constants'
-import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
+import { renderErrorGuard } from '@/components/batch-publish/shared/ErrorGuard'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -27,15 +27,13 @@ export function MaterialsTab() {
     router.push(`/dashboard/batch-publish?${params.toString()}`)
   }
 
-  if (error && !isLoading && data.length === 0) {
-    return (
-      <ErrorBanner
-        variant="banner"
-        message={`加载失败：${(error as Error)?.message || '未知错误'}`}
-        onRetry={() => refetch()}
-      />
-    )
-  }
+  const errorGuard = renderErrorGuard({
+    error,
+    isLoading,
+    hasData: data.length > 0,
+    onRetry: () => refetch(),
+  })
+  if (errorGuard) return errorGuard
 
   return (
     <div className="flex-1 flex flex-col min-h-0 gap-5">
