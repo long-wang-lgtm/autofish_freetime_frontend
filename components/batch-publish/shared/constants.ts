@@ -4,7 +4,7 @@
  * 包含：状态映射、颜色配置、进度节点、筛选选项等。
  */
 
-import type { MaterialStatus, TemplateType, RewriteStage } from '@/lib/api/batch-publish'
+import type { MaterialStatus, TemplateType } from '@/lib/api/batch-publish'
 
 // ============================================================
 // 素材状态映射（StatusBadge 配置）
@@ -122,7 +122,7 @@ export const BIND_STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
 // 素材表格 — 列宽配置（新 8 列）
 // ============================================================
 
-export const MATERIAL_GRID_COLS = '32px 1fr 2fr 0.6fr 0.8fr 0.8fr 1.8fr 0.3fr'
+export const MATERIAL_GRID_COLS = '32px 1fr 2.5fr 0.6fr 0.8fr 0.8fr 0.6fr 0.3fr'
 
 export const MATERIAL_HEADER_LABELS = [
   '',        // checkbox
@@ -131,7 +131,7 @@ export const MATERIAL_HEADER_LABELS = [
   '价格',     // price
   '账号',     // account
   '类目',     // category
-  '进度+操作', // progress + action
+  '进度',     // progress pipeline（节点可点击触发）
   '',        // delete
 ] as const
 
@@ -148,49 +148,6 @@ export const queryKeys = {
   },
   channel: (materialId: number) => ['batch-publish', 'channel', materialId] as const,
   monitoredItems: (oid: number | undefined) => ['batch-publish', 'monitored-items', 'workbench', oid] as const,
-}
-
-// ============================================================
-// 进度+操作列 — 主按钮状态机
-// ============================================================
-
-export interface ActionButtonState {
-  label: string
-  stage?: 'write' | 'genimageplan' | 'genimage'
-  isPublish?: boolean
-  variant: 'primary' | 'success' | 'danger'
-}
-
-export function getActionButton(status: MaterialStatus): ActionButtonState {
-  switch (status) {
-    case 'pending':
-      return { label: '改写', stage: 'write', variant: 'primary' }
-    case 'writing_done':
-      return { label: '封面', stage: 'genimageplan', variant: 'primary' }
-    case 'genimageplan_done':
-      return { label: '生图', stage: 'genimage', variant: 'primary' }
-    case 'genimage_done':
-      return { label: '发布', isPublish: true, variant: 'primary' }
-    case 'published':
-      return { label: '✓已发布', variant: 'success' }
-    case 'publish_failed':
-      return { label: '重试', isPublish: true, variant: 'danger' }
-  }
-}
-
-export function getMoreActions(status: MaterialStatus): { label: string; stage: RewriteStage }[] {
-  const all: { label: string; stage: RewriteStage }[] = [
-    { label: '重写', stage: 'write' },
-    { label: '重做封面', stage: 'genimageplan' },
-    { label: '重生图', stage: 'genimage' },
-  ]
-  if (status === 'published') return []
-  return all.filter(a => {
-    if (a.stage === 'write') return status !== 'pending'
-    if (a.stage === 'genimageplan') return status === 'genimageplan_done' || status === 'genimage_done' || status === 'publish_failed'
-    if (a.stage === 'genimage') return status === 'genimage_done' || status === 'publish_failed'
-    return false
-  })
 }
 
 // ============================================================
