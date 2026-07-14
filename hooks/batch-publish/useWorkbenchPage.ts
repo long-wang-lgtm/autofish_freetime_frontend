@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWorkbenchFilters } from './useWorkbenchFilters'
@@ -46,20 +46,9 @@ export function useWorkbenchPage() {
     gcTime: 30 * 60 * 1000,
   })
 
-  // 移动端导航栈
-  type MobileView = 'overview' | 'opportunity-list' | 'workspace'
-  const [mobileView, setMobileView] = useState<MobileView>(
-    filters.selectedOid ? 'workspace' : 'overview'
-  )
-
-  // 当 selectedOid 变化时同步 mobileView（深度链接、导航跳转）
-  useEffect(() => {
-    if (isMobile) {
-      if (filters.selectedOid) {
-        setMobileView('workspace')
-      }
-    }
-  }, [isMobile, filters.selectedOid])
+  // 移动端顶层视图切换（仅控制无选中商机时显示概览还是商机列表）
+  type MobileView = 'overview' | 'opportunities'
+  const [mobileView, setMobileView] = useState<MobileView>('overview')
 
   return {
     ...filters,
