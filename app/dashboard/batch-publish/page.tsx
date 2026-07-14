@@ -19,6 +19,10 @@ const MaterialsTab = dynamic(
   () => import('@/components/batch-publish/materials/MaterialsTab').then(m => ({ default: m.MaterialsTab })),
   { loading: () => <TabPlaceholder text="发布记录加载中..." /> }
 )
+const WorkbenchTab = dynamic(
+  () => import('@/components/batch-publish/workbench/WorkbenchTab').then(m => ({ default: m.WorkbenchTab })),
+  { loading: () => <TabPlaceholder text="创作台加载中..." /> }
+)
 
 function TabPlaceholder({ text }: { text: string }) {
   return (
@@ -54,11 +58,7 @@ function PageContent() {
 
       {activeTab === 'monitor' && <MonitorTab />}
       {activeTab === 'opportunity' && <OpportunityTab />}
-      {activeTab === 'workbench' && (
-        <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
-          创作台 — Phase 5 开发中
-        </div>
-      )}
+      {activeTab === 'workbench' && <WorkbenchTab />}
       {activeTab === 'materials' && <MaterialsTab />}
     </div>
   )
