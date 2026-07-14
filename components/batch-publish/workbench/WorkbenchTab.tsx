@@ -36,7 +36,16 @@ export function WorkbenchTab() {
     })
   }, [])
 
+  // Back to overview → clear oid param
+  const handleBackToOverview = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', 'workbench')
+    params.delete('oid')
+    router.push(`/dashboard/batch-publish?${params.toString()}`, { scroll: false })
+  }, [router, searchParams])
+
   // Select opportunity → set URL param → right panel switches to workspace
+  // Clicking the already-selected opportunity toggles back to overview
   const handleSelectOid = useCallback((oid: number) => {
     if (oid === page.selectedOid) {
       handleBackToOverview()
@@ -46,15 +55,7 @@ export function WorkbenchTab() {
     params.set('tab', 'workbench')
     params.set('oid', String(oid))
     router.push(`/dashboard/batch-publish?${params.toString()}`, { scroll: false })
-  }, [router, searchParams, page.selectedOid])
-
-  // Back to overview → clear oid param
-  const handleBackToOverview = useCallback(() => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('tab', 'workbench')
-    params.delete('oid')
-    router.push(`/dashboard/batch-publish?${params.toString()}`, { scroll: false })
-  }, [router, searchParams])
+  }, [router, searchParams, page.selectedOid, handleBackToOverview])
 
   // From PendingOverviewPanel: click material row → select its opportunity
   const handleSelectFromOverview = useCallback((material: PublishMaterial) => {
