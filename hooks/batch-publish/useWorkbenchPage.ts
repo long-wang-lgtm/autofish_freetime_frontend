@@ -1,15 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWorkbenchFilters } from './useWorkbenchFilters'
 import { useWorkbenchData } from './useWorkbenchData'
 import { useWorkbenchMutations } from './useWorkbenchMutations'
+import { useOpportunityMutations } from './useOpportunityMutations'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { listAccounts, type Account } from '@/lib/api/accounts'
 
 export function useWorkbenchPage() {
   const isMobile = useIsMobile()
   const filters = useWorkbenchFilters()
+  const opportunityMutations = useOpportunityMutations()
 
   // 左侧商机列表的筛选
   const [oppSearch, setOppSearch] = useState('')
@@ -33,6 +37,14 @@ export function useWorkbenchPage() {
 
   const mutations = useWorkbenchMutations(filters.selectedOid)
 
+  // 全局账号列表 — 挂载时获取，长期缓存
+  const { data: accounts = [] } = useQuery<Account[]>({
+    queryKey: ['accounts'],
+    queryFn: () => listAccounts(),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  })
+
   // 移动端导航栈
   type MobileView = 'overview' | 'opportunity-list' | 'workspace'
   const [mobileView, setMobileView] = useState<MobileView>(
@@ -45,7 +57,6 @@ export function useWorkbenchPage() {
       if (filters.selectedOid) {
         setMobileView('workspace')
       }
-      // 不自动切回 overview — 由面包屑返回按钮触发
     }
   }, [isMobile, filters.selectedOid])
 
@@ -54,10 +65,15 @@ export function useWorkbenchPage() {
     ...data,
     ...mutations,
     isMobile,
+    accounts,
     oppSearch, oppStatus, oppPage,
     setOppSearch, setOppStatus, setOppPage,
     overviewPage, setOverviewPage,
     materialPage, setMaterialPage,
     mobileView, setMobileView,
+    // 商机 CRUD（来自 useOpportunityMutations，注意不与 ...mutations 中 deleteMaterialMutation 冲突）
+    createOpportunity: opportunityMutations.createMutation,
+    updateOpportunity: opportunityMutations.updateMutation,
+    deleteOpportunity: opportunityMutations.deleteMutation,
   }
 }

@@ -362,41 +362,58 @@ type MobileView = 'overview' | 'workspace'
 
 - 默认显示 `fmtPrice(value)`，只读外观
 - 点击 → 变为 `<input type="number" step="0.01">`，自动聚焦
-- Enter 或 blur → 调用 `editMaterial` 保存，恢复只读外观
-- Escape → 取消编辑，恢复原值
-- loading 时显示 spinner
+- **blur → 保存**：调用 `editMaterial({ id, price })`，恢复只读外观
+- **Enter → 保存 + 保持聚焦**：保存后不 blur，继续编辑下一个价格
+- **Escape → 取消编辑**，恢复原值
+- 保存期间显示 spinner（替换 input）
 
 #### 👤 账号列（0.8fr）— 行内下拉
 
 ```
 ┌──────────────┐
-│ [账号1    ▾] │  ← select 下拉
+│ [账号1    ▾] │  ← select 下拉，仅显示正常状态账号
 └──────────────┘
 ```
 
 - `<select>` 下拉，选项来自 accounts 列表
-- 改动即时保存（onChange → `editMaterial({ id, to_uid })`）
-- 选择后触发类目列表刷新（`getChannel` API，按新账号获取可选类目）
-- accounts 列表从 React Query 缓存读取（key: `['accounts']` 或共享的账号查询）
+- **过滤规则**：仅 `status === 1`（正常）的账号出现在下拉选项中。禁用（2）和异常（3）账号不显示
+- **onChange → 即时保存**：`editMaterial({ id, to_uid: selectedUid })`
+- **保存成功后 → 自动刷新类目**：调用 `queryClient.invalidateQueries({ queryKey: ['batch-publish', 'channel', materialId] })` 触发类目重新拉取
 - 未选择时显示 `未选择`（text-gray-400）
 
-**数据来源**：需要新增一个轻量级的 accounts 查询。方案：
-- 在 `useWorkbenchPage` 中预取 `useQuery({ queryKey: ['accounts'], ... })`
-- 或复用已有的 accounts API（`lib/api/accounts.ts` 中的 `getAccounts`）
-- MaterialRow 通过 `useQueryClient().getQueryData(['accounts'])` 读取
+**数据来源（唯一方案）**：
+
+| 环节 | 实现 |
+|------|------|
+| **API** | `getAccountNames()` from `lib/api/accounts.ts`，返回 `AccountName[]`（仅 `uid` + `name`），比 `listAccounts()` 轻量 |
+| **获取时机** | `useWorkbenchPage` 挂载时用 `useQuery` 预取，`staleTime: 10 * 60 * 1000`（账号名称极少变动） |
+| **缓存 key** | `['accounts', 'names']`（全局共享） |
+| **过滤** | 在 MaterialRow 读取缓存后过滤 `status === 1`。但 `getAccountNames()` 不返回 status——因此改用 `listAccounts()`，在 `select` 中过滤：`data.filter(a => a.status === 1).map(a => ({ uid: a.uid, name: a.name }))` |
+| **缓存失效** | 永不主动 invalidate（账号变更后需手动刷新页面，或监听账号页面的 mutation 事件） |
+| **MaterialRow 读取** | `queryClient.getQueryData<Account[]>(['accounts'])?.filter(a => a.status === 1)` |
 
 #### 📂 类目列（0.8fr）— 行内下拉
 
 ```
 ┌──────────────┐
-│ [手机配件 ▾] │  ← select 下拉
+│ [手机配件 ▾] │  ← select 下拉，选项来自 getChannel(materialId)
 └──────────────┘
 ```
 
-- `<select>` 下拉，选项来自 `getChannel` API（按当前选中账号获取）
-- 改动即时保存（onChange → `editMaterial({ id, category })`）
-- 未选择账号时显示 `请先选账号`（text-gray-400, disabled）
-- 类目列表从 React Query 缓存读取（key: `['batch-publish', 'channel', to_uid]`）
+- `<select>` 下拉，选项来自 `getChannel(materialId)` API
+- **前置条件**：`material.to_uid` 已设置（账号已选择）。未设置时显示 `请先选账号`，`disabled`
+- **onChange → 即时保存**：`editMaterial({ id, category: selectedCategory })`
+- **数据获取**：MaterialRow 内部通过 `useQuery` 按 materialId 获取：
+  ```typescript
+  const { data: channels } = useQuery({
+    queryKey: ['batch-publish', 'channel', materialId],
+    queryFn: () => getChannel(materialId),
+    enabled: !!material?.to_uid,
+    staleTime: 10 * 60 * 1000,  // 类目列表低频变动
+  })
+  ```
+- **刷新时机**：账号变更后自动 invalidate（见账号列）→ `getChannel(materialId)` 用新账号重新获取类目
+- **缓存 key**：`['batch-publish', 'channel', materialId]`（按素材隔离）
 
 #### 📊 进度+操作列（1.8fr）— 合并 3→1
 
@@ -420,7 +437,11 @@ type MobileView = 'overview' | 'workspace'
   - genimage_done → **[发布]**（蓝底白字）
   - published → ✓已发布（绿字，无按钮）
   - publish_failed → **[重试]**（红底白字）
-- 点击 → 调用 `triggerWork` 或 `publishMaterial`，按钮显示 loading spinner
+- 点击主按钮 → 根据按钮类型调用对应 API：
+  - **[改写]** / **[封面]** / **[生图]** → `triggerWork(materialId, stage)`，stage 取 `'write'` / `'genimageplan'` / `'genimage'`
+  - **[发布]** → `publishMaterial(materialId)`
+  - **[重试]** → `publishMaterial(materialId)`（与发布调用同一接口）
+- 调用期间按钮显示 loading spinner + 禁用其余操作按钮
 
 **更多操作**（"..." 下拉菜单，按钮右侧）：
 - 点击 [...] → 弹出小菜单：重写 / 重做封面 / 重生图（根据当前状态显示可用操作）
@@ -478,7 +499,7 @@ interface MaterialRowProps {
 | 类目 | Sheet | **行内下拉** | 高频操作，行内 2 秒完成 |
 | 图片管理 | ❌缺失 | **Sheet（新增）** | 大图预览+拖拽排序需要空间 |
 | AI 上下文 | Sheet | Sheet（保留） | 低频配置，独立保存按钮 |
-| 封面规划 prompt | ❌缺失 | Sheet（可选） | 高级配置 |
+| 封面规划 prompt | ❌缺失 | **不在首版范围**（封面规划由 AI 自动生成，前端不提供手动编辑） | 见 §1.4 |
 
 ### 5.2 Sheet 新布局
 
@@ -626,31 +647,35 @@ components/batch-publish/
 
 ### 7.1 新增 React Query 缓存条目
 
-| Key | 内容 | 来源 | 消费者 |
-|-----|------|------|--------|
-| `['accounts']` | 账号列表（uid+name） | `useWorkbenchPage` 预取 `listAccounts()` | MaterialRow（账号下拉） |
-| `['batch-publish', 'channel', materialId]` | 该素材当前账号的可选类目 | MaterialRow 按需获取 `getChannel(materialId)` | MaterialRow（类目下拉） |
+| Key | 内容 | API | 获取时机 | staleTime | 消费者 | 备注 |
+|-----|------|-----|----------|-----------|--------|------|
+| `['accounts']` | `Account[]`（全量，含 status 字段） | `listAccounts()` from `lib/api/accounts.ts` | `useWorkbenchPage` 挂载时预取 | `10 * 60 * 1000` | MaterialRow 账号下拉 | MaterialRow 获取后过滤 `status === 1` |
+| `['batch-publish', 'channel', materialId]` | `ChannelItemResponse[]` | `getChannel(materialId)` | MaterialRow 内部 `useQuery`，`enabled: !!material?.to_uid` | `10 * 60 * 1000` | MaterialRow 类目下拉 | 账号变更后 invalidate 触发重新获取 |
 
 ### 7.2 useWorkbenchPage 扩展
 
 ```typescript
-export function useWorkbenchPage() {
-  // ... 现有逻辑 ...
+import { listAccounts, type Account } from '@/lib/api/accounts'
+import { useOpportunityMutations } from '@/hooks/batch-publish/useOpportunityMutations'
 
-  // 新增：全局账号列表（供 MaterialRow 行内下拉使用）
-  const { data: accounts = [] } = useQuery({
+export function useWorkbenchPage() {
+  // ... 现有逻辑（selectedOid / filters / 素材数据 / 概览数据 / 监控商品等）...
+
+  // 全局账号列表：挂载时获取一次，长期缓存
+  // 返回全量 Account[]，由消费者自行过滤 status
+  const { data: accounts = [] } = useQuery<Account[]>({
     queryKey: ['accounts'],
-    queryFn: () => listAccounts(),  // 从 lib/api/accounts.ts 导入
-    staleTime: 5 * 60 * 1000,       // 账号列表变化频率极低
+    queryFn: () => listAccounts(),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   })
 
-  // 新增：商机 CRUD（从 useOpportunityPage 迁入）
+  // 商机 CRUD（从原 useOpportunityPage 迁入，替换 useWorkbenchPage 中缺失的商机变更能力）
   const opportunityMutations = useOpportunityMutations()
 
   return {
-    // ... 现有 ...
+    // ... 现有返回值 ...
     accounts,
-    // 商机 CRUD
     createOpportunity: opportunityMutations.createMutation,
     updateOpportunity: opportunityMutations.updateMutation,
     deleteOpportunity: opportunityMutations.deleteMutation,
@@ -660,10 +685,37 @@ export function useWorkbenchPage() {
 
 ### 7.3 MaterialRow 数据自取
 
-行内编辑需要**静默保存**（无 toast），使用 `queryClient.setQueryData` 乐观更新 + `editMaterial` API 直接调用：
+MaterialRow 从缓存读取以下数据：
 
 ```typescript
-// MaterialRow 内部 — 行内编辑（价格/账号/类目/图片）
+export function MaterialRow({ materialId, isSelected, onToggleSelect, onOpenSheet, selectedOid }: MaterialRowProps) {
+  const queryClient = useQueryClient()
+  const toast = useToast()
+
+  // 1. 素材数据
+  const cached = queryClient.getQueryData<MaterialListResponse>(['batch-publish', 'materials', selectedOid])
+  const material = cached?.items.find(m => m.id === materialId)
+
+  // 2. 账号列表（过滤仅正常状态账号）
+  const accounts = queryClient.getQueryData<Account[]>(['accounts'])
+  const activeAccounts = (accounts ?? []).filter(a => a.status === 1)
+
+  // 3. 类目选项（按 materialId 按需获取）
+  const { data: channels = [] } = useQuery({
+    queryKey: ['batch-publish', 'channel', materialId],
+    queryFn: () => getChannel(materialId),
+    enabled: !!material?.to_uid,
+    staleTime: 10 * 60 * 1000,
+  })
+
+  if (!material) return null
+  // ... 渲染 8 列 ...
+}
+```
+
+**行内编辑静默保存**（价格/账号/类目/图片变更，无 toast）：
+
+```typescript
 const handleInlineSave = async (field: keyof MaterialEditInput, value: unknown) => {
   if (!material) return
   // 1. 乐观更新缓存
@@ -674,18 +726,22 @@ const handleInlineSave = async (field: keyof MaterialEditInput, value: unknown) 
       items: old.items.map(m => m.id === materialId ? { ...m, [field]: value } : m)
     } : old
   )
-  // 2. 调用 API（静默，不弹 toast）
+  // 2. 静默调用 API
   try {
     await editMaterial({ id: materialId, [field]: value })
+    // 3. 账号变更 → 刷新类目列表
+    if (field === 'to_uid') {
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'channel', materialId] })
+    }
   } catch (err) {
-    // 3. 失败回滚
+    // 4. 失败回滚 + 仅此时弹 toast
     queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
     toast.addToast({ title: `保存失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })
   }
 }
 ```
 
-> **注意**：MaterialRow 不使用 `useWorkbenchMutations` 的 `editMaterialMutation`（它会弹 toast），而是直接调用 `editMaterial` API + 手动 `setQueryData`。Sheet 中的"保存素材"按钮使用 `editMaterialMutation`（需要 toast）。
+**注意**：MaterialRow 不调用 `useWorkbenchMutations` 的 `editMaterialMutation`（它会弹 toast）。静默编辑直接调 `editMaterial` API + 手动 `setQueryData`。MaterialEditSheet 的"保存素材"按钮仍使用 `editMaterialMutation`（需要 toast 反馈）。
 ```
 
 ---
