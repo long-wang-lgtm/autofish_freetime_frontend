@@ -126,10 +126,8 @@ export interface MaterialEditInput {
 /** AI 上下文更新入参 */
 export interface MaterialContextInput {
   id: number
-  contextTemplateType: TemplateType
-  items?: string[]
-  images?: string[]
-  coverprompt?: string
+  templateType?: TemplateType
+  gids?: string[]
 }
 
 /** AI 工作阶段 */
@@ -386,9 +384,9 @@ export async function deleteMaterial(id: number): Promise<OperationResponse> {
   })
 }
 
-/** 获取 AI 上下文模板 — GET /api/selection/material.context.templateType */
-export async function getContextTemplate(): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>('/material.context.templateType', {
+/** 获取可用的 AI 上下文模板类型列表 — GET /api/selection/opportunity.context.templateType */
+export async function getContextTemplateTypes(): Promise<OperationResponse> {
+  return fetchApi<OperationResponse>('/opportunity.context.templateType', {
     baseUrl: BP_BASE,
     credentials_: 'include',
   })

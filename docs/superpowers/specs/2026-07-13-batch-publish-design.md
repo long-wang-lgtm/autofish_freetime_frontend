@@ -2,7 +2,7 @@
 
 > 2026-07-13 | 替代旧 `/dashboard/publish`（1:1 模型 → 1:N 模型 + 后端同步返回 + 4 节点进度）
 > 层级说明：第一章（战略）→ 第二章（数据）→ 第三/四章（页面）→ 第五/六章（执行）
-> **2026-07-13 更新**：附录 C 全部 23 项 API 差异已修复，§5.1 已更新为对齐后的接口，附录 C 已删除。修复详情见 `2026-07-13-batch-publish-api-alignment-fix.md`。
+> **2026-07-14 更新**：Phase 5 全部前置条件已解决（status 逗号分隔、material.context 补完、opportunity.context.templateType 修正）。§4.3.0、§4.3.3、§5.1 已更新。
 
 ---
 
@@ -476,7 +476,7 @@ wantSlope 列副标题逻辑：读取 `trendData.fetchCount` 和 `trendData.wind
 | `category` | string? | 按类目筛选 |
 | `status` | string? | 按状态筛选（此处排除 published） |
 
-概览视图传入 `status` 为 `pending,writing_done,genimageplan_done,genimage_done,publish_failed`（排除 published），前端不做二次过滤。
+概览视图传入 `status` 为 `pending,writing_done,genimageplan_done,genimage_done,publish_failed`（逗号分隔，排除 published）。后端 `material.list` 支持逗号分隔多值过滤（按逗号 split 后逐项 `filter(status = s)`），前端不做二次过滤。
 
 #### 4.3.1 工作区视图（选中商机时）
 
@@ -554,15 +554,20 @@ wantSlope 列副标题逻辑：读取 `trendData.fetchCount` 和 `trendData.wind
 - 价格：input[number]，fmtYuan 显示
 - 类目：下拉（调用 `POST /material.channel`）
 - 发布账号：下拉（复用 accounts 列表）
-- **AI 上下文配置**（素材级，调用 `POST /material.context`，独立保存）：
-  - 模板下拉：`仅商机信息`（only_opportunity）/ `商机+监控商品`（with_item），默认继承 `opportunity.ai_context_template`
-  - 当模板为 `with_item`：展示当前商机绑定的所有监控商品，每行带 checkbox + 核心指标摘要（wantSlope/wantAvg）
-     - 从 `material.ai_context.items[]` 读取已选 gid 列表，匹配勾选状态
-     - 用户修改勾选后点击"保存 AI 上下文"→ `POST /material.context { id, contextTemplateType, items: [...] }`
-     - 响应返回更新后的完整素材对象，前端更新缓存
-  - 配置摘要：一行文字说明当前注入策略，如"将注入：商机信息 + 3 个监控商品（透明软壳、磨砂硬壳、硅胶防摔）"
-- 素材字段保存：手动保存（`POST /material.edit`），非自动保存
-- AI 上下文保存：独立的"保存 AI 上下文"按钮（`POST /material.context`），与素材字段保存解耦
+- **AI 上下文配置**（素材级，独立保存，与素材字段编辑解耦）：
+  - **模板下拉选项来源**：`GET /api/selection/opportunity.context.templateType` → `getContextTemplateTypes()`
+    - 无需参数，返回 `OperationResponse { success, message, data: ["only_opportunity", "with_item"] }`
+    - 此接口属于商机体系（非素材体系），返回全局可用的 AI 上下文模板类型列表
+  - **模板下拉**：`仅商机信息`（only_opportunity）/ `商机+监控商品`（with_item），默认值从 `material.ai_context?.template` 读取，若未设置则继承 `opportunity.ai_context_template`
+  - **保存 AI 上下文**：`POST /api/selection/material.context` → `updateMaterialContext(input)`
+    - 请求体：`{ id: number, templateType?: "only_opportunity" | "with_item", gids?: string[] }`
+    - `templateType`：设置素材的 `ai_context.template`
+    - `gids`：设置素材的 `ai_context.items`（注入的监控商品 gid 列表），仅当模板为 `with_item` 时有效
+    - 响应：`PublishMaterial`（更新后的完整素材对象），前端用 `setQueryData` 更新缓存
+  - **监控商品勾选列表**：当模板为 `with_item` 时展示。通过 `listMonitoredItems({ oid })` 获取当前商机绑定的所有监控商品，每行带 checkbox + 核心指标摘要（wantSlope/wantAvg）。勾选状态从 `material.ai_context?.items[]` 初始化
+  - **配置摘要**：一行文字说明当前注入策略，如"将注入：商机信息 + 3 个监控商品（透明软壳、磨砂硬壳、硅胶防摔）"
+- **素材字段保存**：手动保存，`POST /api/selection/material.edit` → `editMaterial(input)`，与 AI 上下文保存解耦
+- **AI 上下文保存按钮**：独立的"保存 AI 上下文"按钮，仅调用 `POST /material.context`，不影响素材其他字段
 
 #### 4.3.4 移动端 Push/Pop
 
@@ -620,12 +625,12 @@ const [viewStack, setViewStack] = useState<MobileView[]>(['opportunity-list'])
 
 统一管理所有 `/api/selection/*` 接口。类型与 API 函数就近定义。
 
-**核心类型**：`MonitoredItem`, `OpportunityItem`, `OpportunityParams`, `PublishMaterial`, `MaterialStatus`（6 稳定态联合类型）, `MaterialAIContext`, `MaterialImage`, `TemplateType`, `RewriteStage`, `ChannelItemResponse`, `OperationResponse`, `TrendData`, `TrendTime`, `TrendDays`
+**核心类型**：`MonitoredItem`, `OpportunityItem`, `OpportunityParams`, `PublishMaterial`, `MaterialStatus`（6 稳定态联合类型）, `MaterialAIContext`, `MaterialImage`, `MaterialContextInput`, `TemplateType`, `RewriteStage`, `ChannelItemResponse`, `OperationResponse`, `TrendData`, `TrendTime`, `TrendDays`
 
 **API 函数分组**：
 - 监控：`listMonitoredItems`, `bindOpportunity`, `batchBindOpportunity`, `bindOpportunityAndCreate`, `unbindOpportunity`, `deleteMonitoredItem`
-- 商机：`listOpportunities`, `createOpportunity`, `updateOpportunity`, `deleteOpportunity`
-- 素材：`listMaterials`, `createMaterials`, `editMaterial`, `updateMaterialContext`, `triggerWork`, `getChannel`, `publishMaterial`, `deleteMaterial`, `getContextTemplate`
+- 商机：`listOpportunities`, `createOpportunity`, `updateOpportunity`, `deleteOpportunity`, `getContextTemplateTypes`
+- 素材：`listMaterials`, `createMaterials`, `editMaterial`, `updateMaterialContext`, `triggerWork`, `getChannel`, `publishMaterial`, `deleteMaterial`
 
 **`listMaterials` 接口对齐**：后端 `GET /material.list` 支持以下查询参数，前端 `listMaterials` 函数同步更新参数签名以对齐：
 
@@ -828,63 +833,3 @@ Phase 6: 移动端降级
 | `components/ui/DataTable.tsx` | 通用表格 |
 | `hooks/useItemsPage.ts` | Hook 三层拆分参考 |
 | `.claude/rules/frontend-*.md` | 各类规范文档 |
-
----
-
-## 附录 C：Phase 5 创作台开发前置条件（2026-07-13）
-
-> **定位**：API 对齐后（附录 C 已解决），创作台设计与当前 API 之间仍有 3 项矛盾/缺口。**Phase 5 开始前必须解决。**
-
-### C.1 概览视图 status 多值过滤矛盾 🔴
-
-**设计期望**（§4.3.0）：一次请求获取所有非 `published` 的素材，传 `status=pending,writing_done,genimageplan_done,genimage_done,publish_failed`。
-
-**后端实际**（`selection.py:426-427`）：`query.filter(status = status)` — 精确等值匹配，不支持逗号分隔。
-
-**后果**：传逗号分隔字符串会去数据库里查找 status 精确等于该长字符串的记录 → 永远返回 0 条。
-
-**解决方案**：**前端过滤**。概览视图不传 `status` 参数（拉取全部素材），在组件层 `data.filter(item => item.status !== 'published')` 排除已发布项。每页最多 100 条，前端过滤开销可忽略。
-
-| 角色 | 行动 | 状态 |
-|------|------|------|
-| 前端 | 概览视图去掉 `status` 参数，改用组件层 filter | ⬜ 待实施 |
-
-### C.2 `material.context` 后端未完整实现 🟡
-
-**设计期望**（§4.3.3）：保存 AI 上下文时传 `{ id, contextTemplateType, items, images, coverprompt }`，返回 `PublishMaterial`。
-
-**后端实际**（`selection.py:290-299`）：
-- `items`/`images`/`coverprompt` 标记为 `# 待定参数`，不会被处理
-- 函数体 `return` 返回 `None`（非有效 Response）
-
-**后果**：前端 `updateMaterialContext` 发送完整参数但后端不处理 `items`/`images`/`coverprompt`，且返回 `None` 会导致 fetchApi 解析失败。
-
-**解决方案**：后端补完 `material.context` 逻辑——接收并持久化 `items`/`images`/`coverprompt` 到素材的 `ai_context` JSON 字段，返回更新后的 `PublishMaterialSchema`。前端 `MaterialContextInput` 类型和 `updateMaterialContext` 函数已就绪。
-
-| 角色 | 行动 | 状态 |
-|------|------|------|
-| 后端 | 补完 `POST /material.context` — 接受并持久化 `items`/`images`/`coverprompt`，返回 `PublishMaterialSchema` | ⬜ 待实施 |
-
-### C.3 `getContextTemplate` 签名变化 🟡
-
-**设计期望**（§5.1）：`getContextTemplate(materialId: number): Promise<MaterialAIContext>` — 按素材 ID 获取模板。
-
-**当前实现**：`getContextTemplate(): Promise<OperationResponse>` — 无参数，返回 `{ success, message, data: ["only_opportunity", "with_item"] }`。
-
-后端 `GET /material.context.templateType` 不需要 `materialId`，仅返回全局可用的模板类型列表。
-
-**影响**：调用方不需要传 `materialId`。返回值从 `MaterialAIContext` 变为 `OperationResponse`，需从 `data` 字段取 `string[]`。
-
-**解决方案**：前端调用方适配新的签名——不传参，从 `response.data` 中解析模板列表。如果以后需要按素材获取已保存的模板，从 `material.ai_context?.template` 直接读取即可。
-
-| 角色 | 行动 | 状态 |
-|------|------|------|
-| 前端 | Phase 5 组件中调用 `getContextTemplate()` 不传参，从 `data` 字段取模板列表 | ⬜ 待实施 |
-
-### C.4 前置条件总结
-
-| # | 阻塞级别 | 解决方 | Phase 5 前必须？ |
-|---|---------|--------|-----------------|
-| C.1 | 🔴 功能矛盾 | 前端过滤 | **是** — 否则概览视图空白 |
-| C.2 | 🔴 功能缺口 | 后端补完 | **是** — 否则 AI 上下文配置无法保存 |
-| C.3 | 🟡 签名适配 | 前端适配 | 建议提前，否则调用处需返工 |
