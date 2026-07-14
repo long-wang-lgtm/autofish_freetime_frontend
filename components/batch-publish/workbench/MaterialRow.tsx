@@ -8,6 +8,7 @@ import { MATERIAL_GRID_COLS } from '@/components/batch-publish/shared/constants'
 import { editMaterial, getChannel, triggerWork, publishMaterial, deleteMaterial } from '@/lib/api/batch-publish'
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 import { useToast } from '@/components/ui/Toaster'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { useState } from 'react'
 import type { PublishMaterial, MaterialListResponse, MaterialImage, ChannelItemResponse, RewriteStage } from '@/lib/api/batch-publish'
 import type { Account } from '@/lib/api/accounts'
@@ -18,10 +19,11 @@ interface MaterialRowProps {
   onToggleSelect: (id: number) => void
   onOpenSheet: (id: number) => void
   selectedOid: number | undefined
+  materialPage: number
 }
 
 export function MaterialRow({
-  materialId, isSelected, onToggleSelect, onOpenSheet, selectedOid,
+  materialId, isSelected, onToggleSelect, onOpenSheet, selectedOid, materialPage,
 }: MaterialRowProps) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -29,7 +31,9 @@ export function MaterialRow({
   const [savingField, setSavingField] = useState<string | null>(null)
 
   // 1. Material data from cache
-  const cached = queryClient.getQueryData<MaterialListResponse>(['batch-publish', 'materials', selectedOid])
+  const cached = queryClient.getQueryData<MaterialListResponse>(
+    ['batch-publish', 'materials', selectedOid, { page: materialPage }]
+  )
   const material = cached?.items.find(m => m.id === materialId)
 
   // 2. Accounts (filtered: only status === 1 = normal)
@@ -47,12 +51,14 @@ export function MaterialRow({
   if (!material) {
     return (
       <div
-        className="grid gap-2 px-4 py-2 items-center text-xs leading-tight border-b border-gray-100 text-gray-400"
+        className="grid gap-2 px-4 py-2 items-center text-xs leading-tight border-b border-gray-100"
         style={{ gridTemplateColumns: MATERIAL_GRID_COLS }}
       >
         <span />
         <span />
-        <span>加载中...</span>
+        <span className="inline-flex items-center gap-1 text-gray-400">
+          <LoadingSpinner size="sm" />
+        </span>
       </div>
     )
   }
@@ -61,7 +67,7 @@ export function MaterialRow({
 
   const optimisticUpdate = (field: string, value: unknown) => {
     queryClient.setQueryData<MaterialListResponse>(
-      ['batch-publish', 'materials', selectedOid],
+      ['batch-publish', 'materials', selectedOid, { page: materialPage }],
       (old) => old ? {
         ...old,
         items: old.items.map(m => m.id === materialId ? { ...m, [field]: value } : m)
