@@ -38,8 +38,8 @@ export function Pagination({
   return (
     <div className="@container border-t border-gray-100">
 
-      {/* ====== @xs: < 256px — 纯箭头 + 页码 ====== */}
-      <div className="hidden @xs:flex items-center justify-center gap-1.5 px-2 py-2">
+      {/* ====== < 256px — 纯箭头 + 页码（默认，不依赖断点） ====== */}
+      <div className="flex @xs:hidden items-center justify-center gap-1.5 px-2 py-2">
         <button
           onClick={() => onChange(page - 1)}
           disabled={prevDisabled}
@@ -61,8 +61,8 @@ export function Pagination({
         </button>
       </div>
 
-      {/* ====== @sm: 256–384px — 文字按钮 + 页码 ====== */}
-      <div className="hidden @sm:flex @md:hidden items-center justify-center gap-1.5 px-3 py-2">
+      {/* ====== 256–383px (@xs) — 文字按钮 + 页码 ====== */}
+      <div className="hidden @xs:flex @sm:hidden items-center justify-center gap-1.5 px-3 py-2">
         <button
           onClick={() => onChange(page - 1)}
           disabled={prevDisabled}
@@ -82,8 +82,8 @@ export function Pagination({
         </button>
       </div>
 
-      {/* ====== @md: 384–512px — 简化页码 + 总数缩写 ====== */}
-      <div className="hidden @md:flex @lg:hidden items-center justify-end gap-1 px-4 py-2">
+      {/* ====== 384–511px (@sm) — 简化页码 + 总数缩写 ====== */}
+      <div className="hidden @sm:flex @lg:hidden items-center justify-end gap-1 px-4 py-2">
         <button
           onClick={() => onChange(page - 1)}
           disabled={prevDisabled}
@@ -93,7 +93,7 @@ export function Pagination({
         </button>
         {pages.map((p, i) =>
           p === '...' ? (
-            <span key={`md-dot-${i}`} className="px-1.5 text-gray-400 text-sm">
+            <span key={`sm-dot-${i}`} className="px-1.5 text-gray-400 text-sm">
               …
             </span>
           ) : (
