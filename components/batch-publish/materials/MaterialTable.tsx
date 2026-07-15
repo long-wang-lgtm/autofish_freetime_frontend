@@ -108,20 +108,21 @@ export function MaterialTable({
   ], [onOpportunityClick])
 
   return (
-    <div>
-      <DataTable
-        columns={columns}
-        data={data}
-        keyExtractor={(item) => String(item.id)}
-        gridTemplateColumns={GRID_COLS}
-        isLoading={isLoading}
-        error={error}
-        onRetry={onRetry}
-        emptyTitle="暂无发布记录"
-        emptyDescription="在创作台完成素材发布后，记录将出现在这里"
-        stickyHeader
-        maxHeight="calc(100vh - 320px)"
-      />
+    <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 min-h-0 overflow-auto">
+        <DataTable
+          columns={columns}
+          data={data}
+          keyExtractor={(item) => String(item.id)}
+          gridTemplateColumns={GRID_COLS}
+          isLoading={isLoading}
+          error={error}
+          onRetry={onRetry}
+          emptyTitle="暂无发布记录"
+          emptyDescription="在创作台完成素材发布后，记录将出现在这里"
+          stickyHeader
+        />
+      </div>
       <Pagination page={page} total={total} pageSize={pageSize} onChange={onPageChange} />
     </div>
   )

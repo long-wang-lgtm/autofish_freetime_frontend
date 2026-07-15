@@ -46,14 +46,16 @@ function SelectionContent() {
       </div>
 
       {/* Tab 内容 */}
-      {selectionTab === 'keyword' && (
-        <KeywordCollectionTab
-          selectedKeywordId={selectedKeywordId}
-          onSelectKeyword={setSelectedKeywordId}
-        />
-      )}
-      {selectionTab === 'product' && <ProductMonitorTab />}
-      {selectionTab === 'merchant' && <MerchantMonitorTab />}
+      <div className="flex-1 min-h-0">
+        {selectionTab === 'keyword' && (
+          <KeywordCollectionTab
+            selectedKeywordId={selectedKeywordId}
+            onSelectKeyword={setSelectedKeywordId}
+          />
+        )}
+        {selectionTab === 'product' && <ProductMonitorTab />}
+        {selectionTab === 'merchant' && <MerchantMonitorTab />}
+      </div>
 
       {/* 设置抽屉 */}
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />

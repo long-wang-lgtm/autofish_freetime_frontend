@@ -183,24 +183,25 @@ export function MonitorTable({
   ], [selectedGids, data.length, onToggleSelect, onToggleAll, onBindOpportunity, onNavigateOpportunity])
 
   return (
-    <div>
-      <DataTable
-        columns={columns}
-        data={data}
-        keyExtractor={(item) => item.gid}
-        gridTemplateColumns={GRID_COLS}
-        isLoading={isLoading}
-        error={error}
-        onRetry={onRetry}
-        emptyTitle="暂无监控商品"
-        emptyDescription="添加关键词后，系统将自动采集监控商品数据"
-        orderBy={orderBy}
-        asc={asc}
-        onSortChange={onSortChange}
-        onRowClick={onOpenDetail}
-        maxHeight="calc(100vh - 320px)"
-        stickyHeader
-      />
+    <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 min-h-0 overflow-auto">
+        <DataTable
+          columns={columns}
+          data={data}
+          keyExtractor={(item) => item.gid}
+          gridTemplateColumns={GRID_COLS}
+          isLoading={isLoading}
+          error={error}
+          onRetry={onRetry}
+          emptyTitle="暂无监控商品"
+          emptyDescription="添加关键词后，系统将自动采集监控商品数据"
+          orderBy={orderBy}
+          asc={asc}
+          onSortChange={onSortChange}
+          onRowClick={onOpenDetail}
+          stickyHeader
+        />
+      </div>
       <Pagination
         page={page}
         total={total}

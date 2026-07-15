@@ -452,7 +452,7 @@ export function ProductMonitorTab() {
   // ===== 渲染 =====
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col min-h-0 gap-3 h-full">
       {/* ── 工具栏 ── */}
       <div className="bg-white rounded-xl border border-gray-200 px-4 py-4">
         <div className="flex items-center gap-4">
@@ -497,8 +497,8 @@ export function ProductMonitorTab() {
         />
       ) : (
         /* 桌面端：完整数据表格 */
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="max-h-[calc(100vh-280px)] overflow-auto custom-scrollbar">
+        <div className="flex-1 min-h-0 bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="h-full overflow-auto custom-scrollbar">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <LoadingSpinner size="md" />

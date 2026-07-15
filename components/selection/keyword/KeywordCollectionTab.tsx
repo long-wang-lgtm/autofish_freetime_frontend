@@ -70,10 +70,10 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
   }, [keywords, searchText])
 
   return (
-    <div className="grid grid-cols-12 gap-3">
+    <div className="h-full grid grid-cols-12 gap-3 min-h-0">
       {/* 左侧：关键词列表 */}
-      <div className="col-span-2 space-y-3">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+      <div className="col-span-2 flex flex-col min-h-0 space-y-3">
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 flex flex-col min-h-0">
           <div className="pb-3 border-b border-gray-100">
             <h3 className="font-semibold text-gray-900">关键词列表</h3>
             <p className="text-xs text-gray-400 mt-0.5">管理搜索关键词</p>
@@ -90,7 +90,7 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
             />
           </div>
 
-          <div className="max-h-[calc(100vh-320px)] overflow-y-auto custom-scrollbar mt-2 space-y-1">
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar mt-2 space-y-1">
             {keywordsLoading ? (
               <div className="flex justify-center py-6"><LoadingSpinner size="md" /></div>
             ) : filteredKeywords.length === 0 ? (
@@ -141,8 +141,8 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
       </div>
 
       {/* 右侧：时间轴 + 商品 + AI报告 */}
-      <div className="col-span-10 space-y-3">
-        <div className="grid grid-cols-12 gap-3">
+      <div className="col-span-10 flex flex-col min-h-0 space-y-3">
+        <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
           {/* 时间轴 */}
           <div className="col-span-2 bg-white rounded-xl border border-gray-200 p-3">
             <VerticalTimeline
@@ -156,9 +156,9 @@ export function KeywordCollectionTab({ selectedKeywordId, onSelectKeyword }: Key
           </div>
 
           {/* 商品列表 */}
-          <div className="col-span-10 bg-white rounded-xl border border-gray-200 p-3">
+          <div className="col-span-10 flex flex-col min-h-0 bg-white rounded-xl border border-gray-200 p-3">
             <h3 className="font-semibold text-gray-900 mb-3">采集商品</h3>
-            <div className="max-h-[calc(100vh-380px)] overflow-y-auto custom-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
               {products.length === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-6">选择关键词查看采集结果</p>
               ) : (

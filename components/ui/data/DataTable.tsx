@@ -50,11 +50,8 @@ export interface DataTableProps<T> {
 
   // 行点击
   onRowClick?: (item: T, index: number) => void
-  // 滚动容器最大高度（opt-in，传入时启用滚动 + 冻结表头）
-  maxHeight?: string
 }
 
-// ---- 内部子组件（从 ItemsTab SortHeader 迁移而来） ----
 
 function SortHeaderButton({
   field,
@@ -130,7 +127,7 @@ export function DataTable<T>({
   rowClassName,
   stickyHeader = false,
   onRowClick,
-  maxHeight,
+
 }: DataTableProps<T>) {
   // 1. Loading
   if (isLoading) {
@@ -175,7 +172,7 @@ export function DataTable<T>({
           'grid gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800',
           'text-xs font-medium text-gray-500 dark:text-gray-400',
           'border-b border-gray-200 dark:border-gray-700',
-          stickyHeader && maxHeight && 'sticky top-0 z-10',
+          stickyHeader && 'sticky top-0 z-10',
         )}
         style={{ gridTemplateColumns }}
       >
@@ -269,13 +266,7 @@ export function DataTable<T>({
 
   return (
     <div className={cn('', className)}>
-      {maxHeight ? (
-        <div className="overflow-auto" style={{ maxHeight }}>
-          {renderTable()}
-        </div>
-      ) : (
-        renderTable()
-      )}
+      {renderTable()}
     </div>
   )
 }
