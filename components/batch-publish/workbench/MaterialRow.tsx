@@ -44,7 +44,7 @@ export function MaterialRow({
   const { data: channels = [] } = useQuery<ChannelItemResponse[]>({
     queryKey: ['batch-publish', 'channel', materialId],
     queryFn: () => getChannel(materialId),
-    enabled: !!material?.to_uid,
+    enabled: !!material?.to_uid && !!material?.description,
     staleTime: 10 * 60 * 1000,
   })
 
@@ -77,10 +77,15 @@ export function MaterialRow({
 
   const handleInlineSave = async (field: string, value: unknown) => {
     setSavingField(field)
-    optimisticUpdate(field, value)
+    // to_uid 不乐观更新 — getChannel 须在后端确认 + description 非空后才触发
+    if (field !== 'to_uid') {
+      optimisticUpdate(field, value)
+    }
     try {
       await editMaterial({ id: materialId, [field]: value } as Parameters<typeof editMaterial>[0])
       if (field === 'to_uid') {
+        // 后端确认后刷新素材缓存（to_uid 就绪 → enabled → getChannel 触发）
+        queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
         queryClient.invalidateQueries({ queryKey: ['batch-publish', 'channel', materialId] })
       }
     } catch (err) {

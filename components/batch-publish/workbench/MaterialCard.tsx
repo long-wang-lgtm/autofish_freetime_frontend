@@ -31,7 +31,7 @@ export function MaterialCard({ materialId, selectedOid, onOpenSheet }: MaterialC
   const { data: channels = [] } = useQuery<ChannelItemResponse[]>({
     queryKey: ['batch-publish', 'channel', materialId],
     queryFn: () => getChannel(materialId),
-    enabled: !!material?.to_uid,
+    enabled: !!material?.to_uid && !!material?.description,
     staleTime: 10 * 60 * 1000,
   })
 
