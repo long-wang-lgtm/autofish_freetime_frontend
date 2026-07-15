@@ -30,7 +30,6 @@ export function Pagination({
   const prevDisabled = page <= 1
   const nextDisabled = page >= totalPages
 
-  // 共享按钮基础样式
   const btnBase =
     'rounded-lg border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors'
   const activeBtn = 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
@@ -38,31 +37,8 @@ export function Pagination({
   return (
     <div className="@container border-t border-gray-100">
 
-      {/* ====== < 256px — 纯箭头 + 页码（默认，不依赖断点） ====== */}
-      <div className="flex @xs:hidden items-center justify-center gap-1.5 px-2 py-2">
-        <button
-          onClick={() => onChange(page - 1)}
-          disabled={prevDisabled}
-          className={`px-2 py-1 text-xs ${btnBase}`}
-          aria-label="上一页"
-        >
-          ←
-        </button>
-        <span className="text-xs text-gray-600 tabular-nums whitespace-nowrap">
-          第 {page}/{totalPages} 页
-        </span>
-        <button
-          onClick={() => onChange(page + 1)}
-          disabled={nextDisabled}
-          className={`px-2 py-1 text-xs ${btnBase}`}
-          aria-label="下一页"
-        >
-          →
-        </button>
-      </div>
-
-      {/* ====== 256–383px (@xs) — 文字按钮 + 页码 ====== */}
-      <div className="hidden @xs:flex @sm:hidden items-center justify-center gap-1.5 px-3 py-2">
+      {/* ====== 默认 (< 384px / @sm 以下) — 文字按钮 + 页码 ====== */}
+      <div className="flex @sm:hidden items-center justify-center gap-1.5 px-3 py-2">
         <button
           onClick={() => onChange(page - 1)}
           disabled={prevDisabled}
@@ -82,7 +58,7 @@ export function Pagination({
         </button>
       </div>
 
-      {/* ====== 384–511px (@sm) — 简化页码 + 总数缩写 ====== */}
+      {/* ====== @sm (384–511px) — 简化页码 + 总数缩写 ====== */}
       <div className="hidden @sm:flex @lg:hidden items-center justify-end gap-1 px-4 py-2">
         <button
           onClick={() => onChange(page - 1)}
@@ -120,7 +96,7 @@ export function Pagination({
         </span>
       </div>
 
-      {/* ====== @lg+: ≥ 512px — 完整分页（当前行为） ====== */}
+      {/* ====== @lg+ (≥ 512px) — 完整分页（保持原有行为不变） ====== */}
       <div className="hidden @lg:flex items-center justify-end gap-1 px-4 py-3">
         <button
           onClick={() => onChange(page - 1)}
