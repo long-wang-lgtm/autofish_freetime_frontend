@@ -41,7 +41,7 @@ export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStat
     queryFn: () => listMaterials({
       page: overviewPage,
       page_size: 20,
-      status: 'pending,writing_done,genimageplan_done,genimage_done,publish_failed',
+      status: 'pending,write_success,write_failed,genimageplan_success,genimageplan_failed,genimage_success,genimage_failed,publish_failed',
     }),
     enabled: !selectedOid,
   })

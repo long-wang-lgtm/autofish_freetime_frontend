@@ -11,12 +11,15 @@ import type { MaterialStatus, TemplateType } from '@/lib/api/batch-publish'
 // ============================================================
 
 export const MATERIAL_STATUS_CONFIG: Record<MaterialStatus, { label: string; color: 'green' | 'red' | 'amber' | 'gray' }> = {
-  pending:            { label: '待处理',   color: 'gray' },
-  writing_done:       { label: '改写完成', color: 'amber' },
-  genimageplan_done:  { label: '封面完成', color: 'amber' },
-  genimage_done:      { label: '生图完成', color: 'amber' },
-  published:          { label: '已发布',   color: 'green' },
-  publish_failed:     { label: '发布失败', color: 'red' },
+  pending:                { label: '待处理',   color: 'gray' },
+  write_success:          { label: '改写完成', color: 'amber' },
+  write_failed:           { label: '改写失败', color: 'red' },
+  genimageplan_success:   { label: '封面完成', color: 'amber' },
+  genimageplan_failed:    { label: '封面失败', color: 'red' },
+  genimage_success:       { label: '生图完成', color: 'amber' },
+  genimage_failed:        { label: '生图失败', color: 'red' },
+  published_success:      { label: '已发布',   color: 'green' },
+  publish_failed:         { label: '发布失败', color: 'red' },
 }
 
 // ============================================================
@@ -43,13 +46,19 @@ export function getPipelineState(status: MaterialStatus): ('done' | 'pending' | 
   switch (status) {
     case 'pending':
       return ['pending', 'pending', 'pending', 'pending']
-    case 'writing_done':
+    case 'write_success':
       return ['done', 'pending', 'pending', 'pending']
-    case 'genimageplan_done':
+    case 'write_failed':
+      return ['failed', 'pending', 'pending', 'pending']
+    case 'genimageplan_success':
       return ['done', 'done', 'pending', 'pending']
-    case 'genimage_done':
+    case 'genimageplan_failed':
+      return ['done', 'failed', 'pending', 'pending']
+    case 'genimage_success':
       return ['done', 'done', 'done', 'pending']
-    case 'published':
+    case 'genimage_failed':
+      return ['done', 'done', 'failed', 'pending']
+    case 'published_success':
       return ['done', 'done', 'done', 'done']
     case 'publish_failed':
       return ['done', 'done', 'done', 'failed']
@@ -92,7 +101,7 @@ export const TEMPLATE_TYPE_LABELS: Record<TemplateType, string> = {
 
 export const MATERIALS_STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: '全部' },
-  { value: 'published', label: '已发布' },
+  { value: 'published_success', label: '已发布' },
   { value: 'publish_failed', label: '发布失败' },
 ]
 

@@ -5,7 +5,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 
 export function useMaterialsFilters() {
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('published,publish_failed')
+  const [status, setStatus] = useState('published_success,publish_failed')
   const [opportunityId, setOpportunityId] = useState<number | undefined>(undefined)
   const [page, setPage] = useState(1)
   const [pageSize] = useState(20)

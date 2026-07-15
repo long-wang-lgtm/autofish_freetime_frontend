@@ -13,13 +13,16 @@ const BP_BASE = `${API_BASE_URL}/api/selection`
 // 类型定义
 // ============================================================
 
-/** 素材状态 — 前端可见的 6 个稳定状态 */
+/** 素材状态 — 与后端 MaterialStatus StrEnum 对齐，每步只有 success/failed */
 export type MaterialStatus =
   | 'pending'
-  | 'writing_done'
-  | 'genimageplan_done'
-  | 'genimage_done'
-  | 'published'
+  | 'write_success'
+  | 'write_failed'
+  | 'genimageplan_success'
+  | 'genimageplan_failed'
+  | 'genimage_success'
+  | 'genimage_failed'
+  | 'published_success'
   | 'publish_failed'
 
 /** AI 上下文模板类型 */
