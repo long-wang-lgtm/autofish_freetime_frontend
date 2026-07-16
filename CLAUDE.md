@@ -14,12 +14,11 @@
 
 ## 业务领域模型
 
-账号 → 商品 → 选品 → 发布 → 设置
+账号 → 商品 → 批量创作 → 设置
 
 - **账号**：闲鱼店铺账号，是其他所有功能的基础。必须先有账号才能管理商品。
 - **商品**：账号下的闲鱼商品，支持自动回复、自动发货、AI回复等自动化配置。
-- **选品**：市场数据采集和分析。通过关键词采集发现商品→监控商品数据→发现商机→入库商机库。
-- **发布**：将商机转化为发布素材，通过 AI 辅助完成改写→封面→生图→发布的流水线。
+- **批量创作**：选品监控→商机入库→素材创作→发布的完整流水线。
 - **设置**：AI 模型配置和通知渠道。
 
 ## 页面与路由
@@ -28,8 +27,7 @@
 |------|------|------|----------|
 | `/dashboard/accounts` | 账号管理 | DashboardLayout | accounts.ts |
 | `/dashboard/items` | 商品管理 + 回复规则 | DashboardLayout | items.ts, keywords.ts |
-| `/dashboard/publish` | 商品发布（商机库+工作区）| DashboardLayout | opportunities.ts, publish-items.ts |
-| `/dashboard/selection` | 选品监控 | DashboardLayout | selection.ts, keywords.ts |
+| `/dashboard/batch-publish` | 批量创作 | DashboardLayout | batch-publish.ts |
 | `/dashboard/settings` | 设置（AI配置+通知）| DashboardLayout | ai-config.ts, notification.ts |
 | `/admin` | 管理仪表盘 | AdminLayout | admin/dashboard.ts |
 | `/admin/accounts` | 管理员-账号管理 | AdminLayout | admin/accounts.ts |
@@ -43,7 +41,7 @@
 3. **API 类型就近定义**：API 相关的类型定义放在对应的 API 模块文件中，不单独抽离 types 目录。只有被 3+ 模块共享的类型才提取。
 4. **移动端检测统一为 useIsMobile**：基于 CSS media query，避免 hydration 不匹配。
 5. **Header 在移动端常驻**：作为全局导航锚点（含汉堡菜单、标题、用户头像），不随滚动隐藏。
-6. **发布页桌面端双面板，移动端导航栈**：桌面并排（商机列表+工作区），移动端 Push/Pop 导航。
+6. **批量创作页桌面端双面板，移动端导航栈**：桌面并排（商机列表+工作区），移动端 Push/Pop 导航。
 
 ## 按需加载
 

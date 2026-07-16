@@ -140,7 +140,7 @@ toaster 通知的 variant 颜色对照表（基于 Tailwind 默认色板）：
    - 修复 `tailwind.config.js` 确认 `darkMode: "class"`
 2. **逐页适配**（后续 Phase）：
    - 每个页面的组件添加 `dark:` 前缀
-   - 优先适配高频页面：商品管理、账号管理、选品监控
+   - 优先适配高频页面：商品管理、账号管理、批量创作
    - 图表组件在夜间模式下切换 ECharts 暗色主题（`echarts.init(dom, 'dark')`）
 
 #### 铁律

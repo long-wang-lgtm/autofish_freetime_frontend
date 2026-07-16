@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useWorkbenchPage } from '@/hooks/batch-publish/useWorkbenchPage'
-import { ResizableDivider } from '@/components/publish/ResizableDivider'
+import { ResizableDivider } from '@/components/ui/ResizableDivider'
 import { PendingOverviewPanel } from './PendingOverviewPanel'
 import { OpportunityListPanel } from './OpportunityListPanel'
 import { MaterialWorkspace } from './MaterialWorkspace'

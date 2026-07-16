@@ -41,7 +41,7 @@
 |------|-----|
 | **严重度** | 严重 |
 | **问题** | `localStorage.setItem/getItem/removeItem` 在隐私模式或存储满时可能抛出异常，但代码中均未包裹 try/catch |
-| **涉及文件** | `lib/utils/auth.ts` — `setTokens()`, `getAccessToken()`, `getRefreshToken()`, `clearTokens()`, `isAuthenticated()`；`components/layout/Sidebar.tsx`；`components/layout/AdminSidebar.tsx`；`app/dashboard/publish/page.tsx` — 第 32 行 `localStorage.getItem('publish_panel_left_width')`；`components/publish/OpportunityHeader.tsx` |
+| **涉及文件** | `lib/utils/auth.ts` — `setTokens()`, `getAccessToken()`, `getRefreshToken()`, `clearTokens()`, `isAuthenticated()`；`components/layout/Sidebar.tsx`；`components/layout/AdminSidebar.tsx` |
 | **建议修复** | 创建 `safeStorage` 工具模块，所有 `localStorage` 操作统一封装 try/catch + 降级处理 |
 
 ### #5 navigator.clipboard 3 处无 try/catch
@@ -131,7 +131,7 @@
 | **严重度** | —（已修复） |
 | **问题** | ~~移动端断点检测有 3 种实现：`useIsMobile()` hook（CSS media query）、`useMediaQuery('max-width: 768px')`、以及 `window.innerWidth < 768` 的 useEffect 自建监听~~ |
 | **修复** | `accounts/page.tsx` 的 `window.innerWidth` 和 `publish/page.tsx` 的 `useMediaQuery('max-width:768px')` 已全部替换为 `useIsMobile()`，全项目仅 `useIsMobile` 一种移动端检测方式 |
-| **涉及文件** | `app/dashboard/accounts/page.tsx`, `app/dashboard/publish/page.tsx`, `hooks/useIsMobile.ts` |
+| **涉及文件** | `app/dashboard/accounts/page.tsx`, `hooks/useIsMobile.ts` |
 
 ### #14 useItemsPage hook 过度膨胀 ✅ 已修复 (Phase 2, 2026-06-29)
 

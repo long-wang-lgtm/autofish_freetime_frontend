@@ -47,8 +47,7 @@
 |-----|----------|------|----------|----------|----------|
 | `/dashboard/accounts` | 账号管理 | DashboardLayout | `AccountRow`, `AccountCard`, `QrLoginModal`, `LinkLoginModal`, `LinkManagement`, `TabBar` | `accounts.ts` | `?tab=accounts`（预留扩展） |
 | `/dashboard/items` | 商品管理 + 回复规则 | DashboardLayout | `ItemsTab`, `RulesTab`, `useItemsPage` hook | `items.ts`, `keywords.ts` | `?tab=items`, `?tab=rules` |
-| `/dashboard/publish` | 商品发布 | DashboardLayout | `OpportunityLibrary`, `PublishWorkspace`, `EditorDrawer`, `ResizableDivider`, `MobileTabView` | `opportunities.ts`, `publish-items.ts`, `accounts.ts` | 无（单页，单 Tab） |
-| `/dashboard/selection` | 选品监控 | DashboardLayout | `KeywordCollectionTab`, `ProductMonitorTab`, `MerchantMonitorTab`, `SettingsDrawer` | `selection.ts` | `?tab=keyword`, `?tab=product`, `?tab=merchant` |
+| `/dashboard/batch-publish` | 批量创作 | DashboardLayout | `OpportunityListPanel`, `MaterialWorkspace`, `PendingOverviewPanel`, `MaterialEditSheet` | `batch-publish.ts` | 无 |
 | `/dashboard/settings` | 系统设置 | DashboardLayout | `AIConfigTab`, `NotificationTab` | `ai-config.ts`, `notification.ts` | `?tab=ai-config`, `?tab=notification` |
 
 #### 子视图切换机制

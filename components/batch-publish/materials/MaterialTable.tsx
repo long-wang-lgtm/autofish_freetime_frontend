@@ -73,7 +73,7 @@ export function MaterialTable({
     },
     {
       key: 'to_uid',
-      header: '发布账号',
+      header: '账号ID',
       align: 'center',
       render: (item) => (
         <span className="text-sm text-gray-600">{item.to_uid || '-'}</span>
@@ -81,7 +81,7 @@ export function MaterialTable({
     },
     {
       key: 'status',
-      header: '状态',
+      header: '发布状态',
       align: 'center',
       render: (item) => (
         <StatusBadge status={item.status} config={MATERIAL_STATUS_CONFIG} />
@@ -89,7 +89,7 @@ export function MaterialTable({
     },
     {
       key: 'to_gid',
-      header: '发布商品',
+      header: '商品ID',
       align: 'center',
       render: (item) => (
         <span className="text-sm text-gray-600 tabular-nums">{item.to_gid || '-'}</span>
@@ -97,7 +97,7 @@ export function MaterialTable({
     },
     {
       key: 'updated_at',
-      header: '发布时间',
+      header: '最后更新时间',
       align: 'center',
       render: (item) => (
         <span className="text-sm text-gray-700 tabular-nums">
