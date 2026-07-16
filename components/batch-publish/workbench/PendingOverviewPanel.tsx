@@ -82,12 +82,12 @@ export function PendingOverviewPanel({
   })
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div className="h-full flex flex-col min-h-0">
       <div className="px-4 py-3 text-sm text-gray-500 border-b border-gray-100 flex-shrink-0">
         待发布素材（共 {total} 份素材未完成）
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="h-full overflow-y-auto">
         <DataTable
           columns={COLUMNS}
           data={sorted}
