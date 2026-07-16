@@ -351,7 +351,7 @@ export async function updateMaterialContext(input: MaterialContextInput): Promis
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ gids }),
+    body: JSON.stringify(gids),
   })
 }
 
