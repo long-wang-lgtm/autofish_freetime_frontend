@@ -272,7 +272,7 @@ export async function createOpportunity(opp: OpportunityParams): Promise<Opportu
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify({ opp }),
+    body: JSON.stringify( opp ),
   })
 }
 
@@ -283,7 +283,7 @@ export async function updateOpportunity(oid: number, opp: Partial<OpportunityPar
     credentials_: 'include',
     method: 'POST',
     params: { oid } as Record<string, string | number>,
-    body: JSON.stringify({ opp }),
+    body: JSON.stringify( opp ),
   })
 }
 
