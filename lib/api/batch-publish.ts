@@ -347,11 +347,11 @@ export async function updateMaterialContext(input: MaterialContextInput): Promis
   const sp = new URLSearchParams()
   sp.set('id', String(id))
   if (templateType) sp.set('templateType', templateType)
-  if (gids) gids.forEach(g => sp.append('gids', g))
   return fetchApi<PublishMaterial>(`/material.context?${sp.toString()}`, {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
+    body: JSON.stringify({ gids }),
   })
 }
 
