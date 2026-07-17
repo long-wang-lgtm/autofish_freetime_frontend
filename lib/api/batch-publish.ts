@@ -246,6 +246,17 @@ export async function deleteMonitoredItem(gid: string): Promise<OperationRespons
   })
 }
 
+/** 切换监控状态 — POST /api/selection/monitor.item.status */
+export async function updateMonitorItemStatus(gid: string, status: 0 | 1): Promise<MonitoredItem> {
+  return fetchApi<MonitoredItem>('/monitor.item.status', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+    method: 'POST',
+    params: { gid },
+    body: JSON.stringify(status),
+  })
+}
+
 // ============================================================
 // 商机 API
 // ============================================================

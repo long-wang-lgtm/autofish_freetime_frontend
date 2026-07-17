@@ -21,7 +21,7 @@ export function MonitorTab() {
     page, pageSize, total, setPage,
     data, isLoading, error, refetch,
     bindMutation, unbindMutation, deleteMutation,
-    singleBindMutation,
+    singleBindMutation, statusToggleMutation,
     isMobile,
   } = useMonitorPage()
 
@@ -94,6 +94,11 @@ export function MonitorTab() {
     router.push(`/dashboard/batch-publish?tab=workbench&oid=${oid}`)
   }, [router])
 
+  const handleStatusToggle = useCallback((gid: string, currentStatus: number) => {
+    const newStatus = currentStatus === 0 ? 1 : 0
+    statusToggleMutation.mutate({ gid, newStatus: newStatus as 0 | 1 })
+  }, [statusToggleMutation])
+
   const handleCloseDetail = useCallback(() => setDetailItem(null), [])
 
   const errorGuard = renderErrorGuard({
@@ -143,6 +148,7 @@ export function MonitorTab() {
                 onToggleSelect={onToggleSelect}
                 onOpenDetail={setDetailItem}
                 selectionMode={selectionMode}
+                onStatusToggle={handleStatusToggle}
               />
             ))
           )}
@@ -173,6 +179,7 @@ export function MonitorTab() {
             onOpenDetail={setDetailItem}
             onBindOpportunity={handleOpenSingleBind}
             onNavigateOpportunity={handleNavigateOpportunity}
+            onStatusToggle={handleStatusToggle}
             page={page}
             total={total}
             pageSize={pageSize}

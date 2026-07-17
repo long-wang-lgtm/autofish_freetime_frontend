@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { batchBindOpportunity, unbindOpportunity, deleteMonitoredItem, bindOpportunity, bindOpportunityAndCreate, type TemplateType } from '@/lib/api/batch-publish'
+import { batchBindOpportunity, unbindOpportunity, deleteMonitoredItem, bindOpportunity, bindOpportunityAndCreate, updateMonitorItemStatus, type TemplateType, type MonitoredItem, type MonitorItemListResponse } from '@/lib/api/batch-publish'
 import { useToast } from '@/components/ui/Toaster'
 
 export function useMonitorMutations() {
@@ -71,11 +71,47 @@ export function useMonitorMutations() {
     },
   })
 
+  const statusToggleMutation = useMutation({
+    mutationFn: ({ gid, newStatus }: { gid: string; newStatus: 0 | 1 }) =>
+      updateMonitorItemStatus(gid, newStatus),
+    onMutate: async ({ gid, newStatus }) => {
+      await queryClient.cancelQueries({ queryKey: ['batch-publish', 'monitored-items'] })
+      const previous = queryClient.getQueriesData<MonitorItemListResponse>({ queryKey: ['batch-publish', 'monitored-items'] })
+
+      queryClient.setQueriesData<MonitorItemListResponse>(
+        { queryKey: ['batch-publish', 'monitored-items'] },
+        (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              item.gid === gid ? { ...item, monitorStatus: newStatus } : item
+            ),
+          }
+        }
+      )
+
+      return { previous }
+    },
+    onError: (err: Error, _vars, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+      toast.addToast({ title: `状态切换失败：${err?.message || '请稍后重试'}`, variant: 'error' })
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'monitored-items'] })
+    },
+  })
+
   return {
     bindMutation,
     unbindMutation,
     deleteMutation,
     singleBindMutation,
     bindAndCreateMutation,
+    statusToggleMutation,
   }
 }

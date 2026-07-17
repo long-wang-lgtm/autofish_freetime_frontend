@@ -5,7 +5,7 @@ import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { MONITOR_STATUS_CONFIG } from '@/components/batch-publish/shared/constants'
-import { fmtPrice, fmtGrowth, fmtNumber, fmtPercent } from '@/lib/utils/format'
+import { fmtPrice, fmtGrowth, fmtNumber, fmtPercent, fmtDateTime } from '@/lib/utils/format'
 import type { MonitoredItem } from '@/lib/api/batch-publish'
 
 interface MonitorTableProps {
@@ -22,13 +22,14 @@ interface MonitorTableProps {
   onOpenDetail: (item: MonitoredItem) => void
   onBindOpportunity: (gid: string) => void
   onNavigateOpportunity: (oid: number) => void
+  onStatusToggle: (gid: string, currentStatus: number) => void
   page: number
   total: number
   pageSize: number
   onPageChange: (p: number) => void
 }
 
-const GRID_COLS = '32px 2fr 0.7fr 0.8fr 0.8fr 0.7fr 0.6fr 0.6fr 0.8fr'
+const GRID_COLS = '32px 2fr 0.7fr 0.8fr 0.8fr 0.7fr 0.6fr 0.6fr 0.8fr 0.8fr 0.8fr'
 
 const ITEM_STATUS_CONFIG: Record<number, { label: string; color: 'green' | 'red' | 'amber' | 'gray' }> = {
   0: { label: '在售', color: 'green' },
@@ -50,6 +51,7 @@ export function MonitorTable({
   onOpenDetail,
   onBindOpportunity,
   onNavigateOpportunity,
+  onStatusToggle,
   page,
   total,
   pageSize,
@@ -151,9 +153,25 @@ export function MonitorTable({
       key: 'monitorStatus',
       header: '监控状态',
       align: 'center',
-      render: (item) => (
-        <StatusBadge status={item.monitorStatus ?? 0} config={MONITOR_STATUS_CONFIG} />
-      ),
+      render: (item) => {
+        const status = item.monitorStatus ?? 0
+        const isTogglable = status === 0 || status === 1
+        return (
+          <button
+            type="button"
+            className={isTogglable ? 'cursor-pointer' : 'cursor-default'}
+            disabled={!isTogglable}
+            onClick={(e) => {
+              if (!isTogglable) return
+              e.stopPropagation()
+              onStatusToggle(item.gid, status)
+            }}
+            title={isTogglable ? '点击切换监控状态' : undefined}
+          >
+            <StatusBadge status={status} config={MONITOR_STATUS_CONFIG} />
+          </button>
+        )
+      },
     },
     {
       key: 'opportunity',
@@ -180,7 +198,30 @@ export function MonitorTable({
         )
       },
     },
-  ], [selectedGids, data.length, onToggleSelect, onToggleAll, onBindOpportunity, onNavigateOpportunity])
+    {
+      key: 'created_at',
+      header: '创建时间',
+      sortable: true,
+      align: 'center',
+      render: (item) => (
+        <span className="text-sm text-gray-700 tabular-nums">
+          {item.created_at ? fmtDateTime(item.created_at) : '-'}
+        </span>
+      ),
+    },
+    {
+      key: 'updated_at',
+      header: '更新时间',
+      sortable: true,
+      align: 'center',
+      render: (item) => (
+        <span className="text-sm text-gray-700 tabular-nums">
+          {item.updated_at ? fmtDateTime(item.updated_at) : '-'}
+        </span>
+      ),
+    },
+
+  ], [selectedGids, data.length, onToggleSelect, onToggleAll, onBindOpportunity, onNavigateOpportunity, onStatusToggle])
 
   return (
     <div className="flex-1 flex flex-col min-h-0">

@@ -36,6 +36,7 @@ export function useMonitorPage() {
     deleteMutation,
     singleBindMutation,
     bindAndCreateMutation,
+    statusToggleMutation,
   } = useMonitorMutations()
 
   return {
@@ -63,6 +64,7 @@ export function useMonitorPage() {
     deleteMutation,
     singleBindMutation,
     bindAndCreateMutation,
+    statusToggleMutation,
     isMobile,
   }
 }

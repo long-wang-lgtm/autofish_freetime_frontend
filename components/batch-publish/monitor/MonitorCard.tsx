@@ -11,6 +11,7 @@ interface MonitorCardProps {
   onToggleSelect: (gid: string) => void
   onOpenDetail: (item: MonitoredItem) => void
   selectionMode: boolean
+  onStatusToggle: (gid: string, currentStatus: number) => void
 }
 
 const ITEM_STATUS_CONFIG: Record<number, { label: string; color: 'green' | 'red' | 'amber' | 'gray' }> = {
@@ -19,7 +20,7 @@ const ITEM_STATUS_CONFIG: Record<number, { label: string; color: 'green' | 'red'
   2: { label: '售出', color: 'amber' },
 }
 
-export function MonitorCard({ item, isSelected, onToggleSelect, onOpenDetail, selectionMode }: MonitorCardProps) {
+export function MonitorCard({ item, isSelected, onToggleSelect, onOpenDetail, selectionMode, onStatusToggle }: MonitorCardProps) {
   const td = item.trendData as Record<string, unknown> | null | undefined
   const fc = td?.fetchCount as number | undefined
   const windows = td?.windows as number | undefined
@@ -53,7 +54,25 @@ export function MonitorCard({ item, isSelected, onToggleSelect, onOpenDetail, se
         {item.price != null && (
           <span className="text-sm font-semibold text-gray-900">{fmtPrice(item.price)}</span>
         )}
-        <StatusBadge status={item.monitorStatus ?? 0} config={MONITOR_STATUS_CONFIG} />
+        {(() => {
+          const ms = item.monitorStatus ?? 0
+          const isTogglable = ms === 0 || ms === 1
+          return (
+            <button
+              type="button"
+              className={isTogglable ? 'cursor-pointer' : 'cursor-default'}
+              disabled={!isTogglable}
+              onClick={(e) => {
+                if (!isTogglable) return
+                e.stopPropagation()
+                onStatusToggle(item.gid, ms)
+              }}
+              title={isTogglable ? '点击切换监控状态' : undefined}
+            >
+              <StatusBadge status={ms} config={MONITOR_STATUS_CONFIG} />
+            </button>
+          )
+        })()}
         {item.itemStatus != null && (
           <StatusBadge status={item.itemStatus} config={ITEM_STATUS_CONFIG} />
         )}
