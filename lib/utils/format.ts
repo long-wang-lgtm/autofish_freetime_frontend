@@ -1,10 +1,10 @@
 /**
- * 价格格式化——千分位，无小数
- * fmtPrice(12345) → "¥12,345"
- * fmtPrice(12345.5) → "¥12,346"
+ * 价格格式化——千分位，保留两位小数
+ * fmtPrice(12345) → "¥12,345.00"
+ * fmtPrice(12345.5) → "¥12,345.50"
  */
 export function fmtPrice(v: number): string {
-  return `¥${Math.round(v).toLocaleString('zh-CN')}`
+  return `¥${v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 /**
