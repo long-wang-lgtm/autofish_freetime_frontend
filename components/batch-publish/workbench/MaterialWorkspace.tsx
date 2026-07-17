@@ -58,13 +58,33 @@ export function MaterialWorkspace({
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={onBackToOverview}
-            className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0"
-            title="返回概览"
+            aria-label="返回概览"
+            className={
+              isMobile
+                ? 'h-9 w-9 inline-flex items-center justify-center text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0 dark:text-gray-300 dark:bg-gray-900 dark:border-gray-700 dark:hover:bg-gray-800'
+                : 'h-9 px-3.5 inline-flex items-center gap-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0 dark:text-gray-300 dark:bg-gray-900 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:border-gray-600'
+            }
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
+            {!isMobile && <span>返回</span>}
           </button>
+          <button
+            onClick={onCreateClick}
+            aria-label="创建素材"
+            className={
+              isMobile
+                ? 'h-9 w-9 inline-flex items-center justify-center text-base font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0 dark:bg-blue-500 dark:hover:bg-blue-600'
+                : 'h-9 px-3.5 inline-flex items-center gap-1.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0 dark:bg-blue-500 dark:hover:bg-blue-600'
+            }
+          >
+            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14M5 12h14" />
+            </svg>
+            {!isMobile && <span>创建素材</span>}
+          </button>
+
           <h3 className="text-base font-semibold text-gray-900 truncate">{opportunity.name}</h3>
           {(opportunity.price ?? 0) > 0 && (
             <span className="text-sm text-gray-600 flex-shrink-0">{fmtPrice(opportunity.price!)}</span>
@@ -72,18 +92,6 @@ export function MaterialWorkspace({
           <span className="text-xs text-gray-400 flex-shrink-0">
             📦{opportunity.monitoredItemCount ?? 0} · 📝{opportunity.materialCount ?? 0}
           </span>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            onClick={onCreateClick}
-            className={
-              isMobile
-                ? 'h-9 px-3 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-                : 'h-10 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-            }
-          >
-            批量创建
-          </button>
         </div>
       </div>
 
