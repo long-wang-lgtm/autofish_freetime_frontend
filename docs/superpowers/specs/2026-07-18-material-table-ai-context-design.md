@@ -72,8 +72,8 @@ PublishMaterial.ai_context      ← 每个素材独立存储
 
 | 接口 | 方法 | 用途 |
 |------|------|------|
-| `/material.edit` | POST | 编辑素材字段 |
-| `/material.context` | POST | 更新 AI 上下文（templateType + gids） |
+| `/material.edit` | POST | 编辑素材字段（描述、价格、类目、账号、图片） |
+| `/material.context` | POST | 更新 AI 上下文（templateType + gids + coverprompt） |
 | `/material.channel` | POST | 获取类目列表 |
 
 ### 关键类型
@@ -93,13 +93,14 @@ interface MaterialEditInput {
   category?: string
   to_uid?: string
   images?: MaterialImage[]
-  // ⚠️ coverprompt 不在此类型中 — 需要新增
+  // coverprompt 不在此处，走 MaterialContextInput
 }
 
 interface MaterialContextInput {
   id: number
   templateType?: TemplateType
   gids?: string[]
+  coverprompt?: string          // ← NEW
 }
 ```
 
@@ -331,7 +332,7 @@ function useAutoSave<T>(
 
 应用于两个字段：
 1. **描述**：`saveFn = (v) => editMaterial({ id, description: v })`
-2. **封面提示词**：`saveFn = (v) => editMaterial({ id, coverprompt: v })`
+2. **封面提示词**：`saveFn = (v) => updateMaterialContext({ id, coverprompt: v })`
 
 图片无防抖直接保存：上传/删除/排序 → 立即 `editMaterial({ id, images })`。
 
@@ -357,7 +358,7 @@ function useAutoSave<T>(
 MaterialRow（截断展示）
   └── 点击行 → MaterialEditSheet
         └── textarea onChange → auto-save（onBlur 立即 / 1s 防抖）
-              └── editMaterial({ id, coverprompt: value })
+              └── updateMaterialContext({ id, coverprompt: value })
                     └── invalidateQueries(['batch-publish', 'materials', selectedOid])
 ```
 
@@ -447,26 +448,41 @@ interface MaterialWorkspaceProps {
 
 ## 7. API 变更
 
-### 扩展 `MaterialEditInput` — 新增 `coverprompt`
+### 扩展 `MaterialContextInput` — 新增 `coverprompt`
 
 ```ts
 // lib/api/batch-publish.ts
-export interface MaterialEditInput {
+export interface MaterialContextInput {
   id: number
-  description?: string
-  price?: number
-  category?: string
-  to_uid?: string
-  images?: MaterialImage[]
+  templateType?: TemplateType
+  gids?: string[]
   coverprompt?: string           // ← NEW
 }
 ```
 
-后端 `/material.edit` 接口需支持接收 `coverprompt` 字段。如果后端暂不支持，这是实施的前置依赖。
+`coverprompt` 属于 `MaterialAIContext`，走 `/material.context` 接口，不走 `/material.edit`。
 
-### `MaterialContextInput` — 无需改动
+### `updateMaterialContext` 函数签名更新
 
-已有 `updateMaterialContext` API 已支持 `templateType` 和 `gids`，不需要变更。
+```ts
+export async function updateMaterialContext(input: MaterialContextInput): Promise<PublishMaterial> {
+  const { id, templateType, gids, coverprompt } = input
+  const sp = new URLSearchParams()
+  sp.set('id', String(id))
+  if (templateType) sp.set('templateType', templateType)
+  if (coverprompt !== undefined) sp.set('coverprompt', coverprompt)
+  return fetchApi<PublishMaterial>(`/material.context?${sp.toString()}`, {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+    method: 'POST',
+    body: JSON.stringify(gids),
+  })
+}
+```
+
+### `MaterialEditInput` — 无需改动
+
+`MaterialEditInput` 不新增 `coverprompt` 字段。
 
 ---
 
@@ -508,7 +524,7 @@ export const MATERIAL_HEADER_LABELS = [
 | `ReferencePanel.tsx` | **删除** |
 | `ReferenceCard.tsx` | **删除** |
 | `constants.ts` | 更新 `MATERIAL_GRID_COLS`（8→10）和 `MATERIAL_HEADER_LABELS` |
-| `batch-publish.ts` | `MaterialEditInput` 新增 `coverprompt` 字段 |
+| `batch-publish.ts` | `MaterialContextInput` 新增 `coverprompt`，`updateMaterialContext` 函数签名更新 |
 
 ---
 
@@ -541,5 +557,5 @@ export const MATERIAL_HEADER_LABELS = [
 
 ## 12. 后端依赖
 
-- **`coverprompt` 字段在 `/material.edit`**：`editMaterial` API 的请求体新增 `coverprompt` 字段。后端需支持接收并持久化。如果后端暂不支持，需要先协调后端。
-- `/material.context` 无需变更。
+- **`coverprompt` 字段在 `/material.context`**：`updateMaterialContext` API 的 query string 新增 `coverprompt` 参数。后端需支持接收并持久化。如果后端暂不支持，需要先协调后端。
+- `/material.edit` 无需变更。
