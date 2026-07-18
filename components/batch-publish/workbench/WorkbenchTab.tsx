@@ -8,6 +8,7 @@ import { PendingOverviewPanel } from './PendingOverviewPanel'
 import { OpportunityListPanel } from './OpportunityListPanel'
 import { MaterialWorkspace } from './MaterialWorkspace'
 import { MaterialEditSheet } from './MaterialEditSheet'
+import { AIContextModal } from './AIContextModal'
 import { CreateMaterialModal } from './CreateMaterialModal'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import type { PublishMaterial, OpportunityParams } from '@/lib/api/batch-publish'
@@ -22,6 +23,7 @@ export function WorkbenchTab() {
   const searchParams = useSearchParams()
 
   const [leftWidth, setLeftWidth] = useState(LEFT_PANEL_DEFAULT_WIDTH)
+  const [contextMaterialId, setContextMaterialId] = useState<number | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem('bp-workbench-left-width')
@@ -122,12 +124,11 @@ export function WorkbenchTab() {
       materialLoading={page.materialLoading}
       materialError={page.materialError}
       materialRefetch={page.materialRefetch}
-      monitoredItems={page.monitoredItems}
-      monitoredLoading={page.monitoredLoading}
       selectedMaterialIds={page.selectedMaterialIds}
       onToggleSelect={page.toggleSelect}
       onClearSelection={page.clearSelection}
       onOpenEditor={page.openEditor}
+      onOpenContextModal={setContextMaterialId}
       onCreateClick={() => page.setShowCreateModal(true)}
       selectedOid={page.selectedOid}
       page={page.materialPage}
@@ -211,12 +212,11 @@ export function WorkbenchTab() {
               materialLoading={page.materialLoading}
               materialError={page.materialError}
               materialRefetch={page.materialRefetch}
-              monitoredItems={page.monitoredItems}
-              monitoredLoading={page.monitoredLoading}
               selectedMaterialIds={page.selectedMaterialIds}
               onToggleSelect={page.toggleSelect}
               onClearSelection={page.clearSelection}
               onOpenEditor={page.openEditor}
+              onOpenContextModal={setContextMaterialId}
               onCreateClick={() => page.setShowCreateModal(true)}
               selectedOid={page.selectedOid}
               page={page.materialPage}
@@ -234,6 +234,15 @@ export function WorkbenchTab() {
           selectedOid={page.selectedOid}
           open={page.editingMaterialId !== null}
           onClose={page.closeEditor}
+          materials={page.materials}
+        />
+
+        {/* AI 上下文弹窗 */}
+        <AIContextModal
+          materialId={contextMaterialId}
+          selectedOid={page.selectedOid}
+          open={contextMaterialId !== null}
+          onClose={() => setContextMaterialId(null)}
           monitoredItems={page.monitoredItems}
           materials={page.materials}
         />
@@ -274,6 +283,15 @@ export function WorkbenchTab() {
         selectedOid={page.selectedOid}
         open={page.editingMaterialId !== null}
         onClose={page.closeEditor}
+        materials={page.materials}
+      />
+
+      {/* AI 上下文弹窗 */}
+      <AIContextModal
+        materialId={contextMaterialId}
+        selectedOid={page.selectedOid}
+        open={contextMaterialId !== null}
+        onClose={() => setContextMaterialId(null)}
         monitoredItems={page.monitoredItems}
         materials={page.materials}
       />
