@@ -131,6 +131,7 @@ export interface MaterialContextInput {
   id: number
   templateType?: TemplateType
   gids?: string[]
+  coverprompt?: string
 }
 
 /** AI 工作阶段 */
@@ -354,10 +355,11 @@ export async function editMaterial(input: MaterialEditInput): Promise<PublishMat
 
 /** 更新 AI 上下文 — POST /api/selection/material.context */
 export async function updateMaterialContext(input: MaterialContextInput): Promise<PublishMaterial> {
-  const { id, templateType, gids } = input
+  const { id, templateType, gids, coverprompt } = input
   const sp = new URLSearchParams()
   sp.set('id', String(id))
   if (templateType) sp.set('templateType', templateType)
+  if (coverprompt !== undefined) sp.set('coverprompt', coverprompt)
   return fetchApi<PublishMaterial>(`/material.context?${sp.toString()}`, {
     baseUrl: BP_BASE,
     credentials_: 'include',
