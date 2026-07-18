@@ -48,12 +48,10 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     }
   }, [material])
 
-  if (!material) return null
-
-  // ---- 自动保存函数 ----
+  // ---- 自动保存函数（必须在 if (!material) return null 之前） ----
 
   const autoSaveDesc = useCallback(async (value: string) => {
-    if (descSavingRef.current) return
+    if (!material || descSavingRef.current) return
     descSavingRef.current = true
     try {
       await editMaterial({ id: material.id, description: value || undefined })
@@ -64,10 +62,10 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     } finally {
       descSavingRef.current = false
     }
-  }, [material.id, selectedOid, queryClient])
+  }, [material, selectedOid, queryClient])
 
   const autoSaveCover = useCallback(async (value: string) => {
-    if (coverSavingRef.current) return
+    if (!material || coverSavingRef.current) return
     coverSavingRef.current = true
     try {
       await updateMaterialContext({ id: material.id, coverprompt: value || undefined })
@@ -78,7 +76,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     } finally {
       coverSavingRef.current = false
     }
-  }, [material.id, selectedOid, queryClient])
+  }, [material, selectedOid, queryClient])
 
   const handleDescChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const v = e.target.value
@@ -120,6 +118,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
   // ---- Image management (auto-save on change) ----
 
   const handleImageUpload = async (file: File) => {
+    if (!material) return
     setUploadingIndex(images.length)
     try {
       const uploaded = await uploadFileToFlare(file, material.to_uid ?? undefined)
@@ -135,6 +134,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
   }
 
   const handleImageDelete = async (index: number) => {
+    if (!material) return
     const nextImages = images.filter((_, i) => i !== index)
     setImages(nextImages)
     try {
@@ -144,6 +144,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
   }
 
   const handleImageMoveUp = async (index: number) => {
+    if (!material) return
     if (index <= 0) return
     const nextImages = [...images]
     const temp = nextImages[index - 1]
@@ -157,6 +158,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
   }
 
   const handleImageMoveDown = async (index: number) => {
+    if (!material) return
     if (index >= images.length - 1) return
     const nextImages = [...images]
     const temp = nextImages[index + 1]
@@ -168,6 +170,8 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
       queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
     } catch { /* silent */ }
   }
+
+  if (!material) return null
 
   const isAnySaving = descSavingRef.current || coverSavingRef.current
   const padding = isMobile ? 'p-4' : 'p-6'
