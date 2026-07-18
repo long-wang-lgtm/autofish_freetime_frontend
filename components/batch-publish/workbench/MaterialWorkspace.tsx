@@ -5,12 +5,11 @@ import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
-import { ReferencePanel } from './ReferencePanel'
 import { MaterialRow } from './MaterialRow'
 import { MATERIAL_GRID_COLS, MATERIAL_HEADER_LABELS, PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import { fmtPrice } from '@/lib/utils/format'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import type { OpportunityItem, MonitoredItem, PublishMaterial } from '@/lib/api/batch-publish'
+import type { OpportunityItem, PublishMaterial } from '@/lib/api/batch-publish'
 
 interface MaterialWorkspaceProps {
   opportunity: OpportunityItem | null
@@ -18,12 +17,11 @@ interface MaterialWorkspaceProps {
   materialLoading: boolean
   materialError: unknown
   materialRefetch: () => void
-  monitoredItems: MonitoredItem[]
-  monitoredLoading: boolean
   selectedMaterialIds: Set<number>
   onToggleSelect: (id: number) => void
   onClearSelection: () => void
   onOpenEditor: (id: number) => void
+  onOpenContextModal: (id: number) => void
   onCreateClick: () => void
   selectedOid: number | undefined
   page: number
@@ -35,9 +33,8 @@ interface MaterialWorkspaceProps {
 
 export function MaterialWorkspace({
   opportunity, materials, materialLoading, materialError, materialRefetch,
-  monitoredItems, monitoredLoading,
   selectedMaterialIds, onToggleSelect, onClearSelection, onOpenEditor,
-  onCreateClick, selectedOid,
+  onOpenContextModal, onCreateClick, selectedOid,
   page, total, onPageChange,
   onBackToOverview, materialPage,
 }: MaterialWorkspaceProps) {
@@ -95,13 +92,6 @@ export function MaterialWorkspace({
         </div>
       </div>
 
-      {/* 参考面板 */}
-      <ReferencePanel
-        items={monitoredItems}
-        isLoading={monitoredLoading}
-        opportunityId={opportunity.id}
-      />
-
       {/* 素材表格 */}
       <div className="flex-1 overflow-y-auto relative">
         {materialLoading ? (
@@ -148,6 +138,7 @@ export function MaterialWorkspace({
                 isSelected={selectedMaterialIds.has(m.id)}
                 onToggleSelect={onToggleSelect}
                 onOpenSheet={onOpenEditor}
+                onOpenContextModal={onOpenContextModal}
                 selectedOid={selectedOid}
                 materialPage={materialPage}
               />
