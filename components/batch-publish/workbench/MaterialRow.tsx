@@ -160,7 +160,7 @@ export function MaterialRow({
         onClick={handleRowClick}
       >
         {/* ☐ 复选框 */}
-        <div>
+        <div className="flex justify-center">
           <input
             type="checkbox"
             checked={isSelected}
@@ -170,12 +170,14 @@ export function MaterialRow({
         </div>
 
         {/* 🖼 封面图 */}
-        <MaterialImageCell
+        <div className="flex justify-center">
+          <MaterialImageCell
           images={material.images ?? []}
           materialId={materialId}
           toUid={material.to_uid}
           onImagesChange={handleImagesChange}
         />
+        </div>
 
         {/* 📝 描述 */}
         <span className="text-sm text-gray-800 leading-snug line-clamp-2">
@@ -188,19 +190,21 @@ export function MaterialRow({
         </span>
 
         {/* 💰 价格（行内编辑） */}
-        <InlineEditCell
+        <div className="flex justify-center">
+          <InlineEditCell
           value={material.price}
           onSave={(v) => handleInlineSave('price', v)}
           isSaving={savingField === 'price'}
         />
+        </div>
 
         {/* 👤 账号（行内下拉） */}
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()} className="flex justify-center">
           <select
             value={material.to_uid ?? ''}
             onChange={(e) => handleInlineSave('to_uid', e.target.value || undefined)}
             disabled={savingField === 'to_uid'}
-            className="w-full h-8 px-2 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50"
+            className="h-8 px-3 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50"
           >
             <option value="">未选择</option>
             {activeAccounts.map((a) => (
@@ -210,7 +214,7 @@ export function MaterialRow({
         </div>
 
         {/* 📂 类目（行内下拉） — 已有类目时不自动拉取 channel，点击下拉时按需加载 */}
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()} className="flex justify-center">
           <select
             value={material.category ?? ''}
             onChange={(e) => handleInlineSave('category', e.target.value || undefined)}
@@ -221,7 +225,7 @@ export function MaterialRow({
               }
             }}
             disabled={!material.to_uid || savingField === 'category'}
-            className="w-full h-8 px-2 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 disabled:bg-gray-50"
+            className="h-8 px-3 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 disabled:bg-gray-50"
           >
             <option value="">{material.to_uid ? '请选择' : '请先选账号'}</option>
             {/* Fallback: when channels haven't loaded yet but category is set,
@@ -251,12 +255,14 @@ export function MaterialRow({
         </div>
 
         {/* 📊 进度+操作 */}
-        <ProgressActionCell
+        <div className="flex justify-center">
+          <ProgressActionCell
           status={material.status}
           onTriggerWork={handleTriggerWork}
           onPublish={handlePublish}
           isAnyLoading={isAnyLoading}
         />
+        </div>
 
         {/* 🗑 删除 */}
         <div className="flex justify-center">

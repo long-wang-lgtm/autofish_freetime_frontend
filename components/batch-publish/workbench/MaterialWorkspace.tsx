@@ -114,20 +114,22 @@ export function MaterialWorkspace({
               className="grid gap-2 px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500 border-b border-gray-200 sticky top-0 z-10"
               style={{ gridTemplateColumns: MATERIAL_GRID_COLS }}
             >
-              <div>
+              <div className="flex justify-center">
                 {selectedMaterialIds.size > 0 && (
                   <button onClick={onClearSelection} className="text-blue-600 hover:underline text-xs">
                     取消
                   </button>
                 )}
               </div>
-              <div>{MATERIAL_HEADER_LABELS[1]}</div>
-              <div>{MATERIAL_HEADER_LABELS[2]}</div>
-              <div>{MATERIAL_HEADER_LABELS[3]}</div>
-              <div>{MATERIAL_HEADER_LABELS[4]}</div>
-              <div>{MATERIAL_HEADER_LABELS[5]}</div>
-              <div>{MATERIAL_HEADER_LABELS[6]}</div>
-              <div>{MATERIAL_HEADER_LABELS[7]}</div>
+              <div className="flex justify-center">封面</div>
+              <div>描述</div>
+              <div>封面提示词</div>
+              <div className="flex justify-center">价格</div>
+              <div className="flex justify-center">账号</div>
+              <div className="flex justify-center">类目</div>
+              <div className="flex justify-center">AI上下文</div>
+              <div className="flex justify-center">进度/操作</div>
+              <div className="flex justify-center">删除</div>
             </div>
 
             {/* 数据行 */}
