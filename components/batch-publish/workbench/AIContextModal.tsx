@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Modal } from '@/components/ui/overlay/Modal'
 import { fmtGrowth, fmtNumber } from '@/lib/utils/format'
 import { useWorkbenchMutations } from '@/hooks/batch-publish/useWorkbenchMutations'
@@ -30,6 +30,7 @@ export function AIContextModal({
 
   const [templateType, setTemplateType] = useState<TemplateType>('only_opportunity')
   const [selectedGids, setSelectedGids] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   // 初始化本地状态
   useEffect(() => {
@@ -91,13 +92,48 @@ export function AIContextModal({
             </span>
           </div>
 
-          {monitoredItems.length === 0 ? (
-            <p className="text-sm text-gray-400 py-4 text-center border border-gray-200 rounded-lg">
-              该商机下暂无绑定商品
-            </p>
-          ) : (
-            <div className="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-64 overflow-y-auto">
-              {monitoredItems.map((item) => {
+          {/* 搜索框 */}
+          <div className="relative mb-2">
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索监控商品..."
+              className="w-full h-8 pl-8 pr-3 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+          </div>
+
+          {(() => {
+            const q = searchQuery.trim().toLowerCase()
+            const filtered = q
+              ? monitoredItems.filter(item =>
+                  (item.title || item.gid).toLowerCase().includes(q) ||
+                  item.gid.toLowerCase().includes(q)
+                )
+              : monitoredItems
+
+            if (monitoredItems.length === 0) {
+              return (
+                <p className="text-sm text-gray-400 py-4 text-center border border-gray-200 rounded-lg">
+                  该商机下暂无绑定商品
+                </p>
+              )
+            }
+
+            if (filtered.length === 0) {
+              return (
+                <p className="text-sm text-gray-400 py-4 text-center border border-gray-200 rounded-lg">
+                  无匹配商品
+                </p>
+              )
+            }
+
+            return (
+              <div className="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                {filtered.map((item) => {
                 const checked = selectedGids.includes(item.gid)
                 const trendData = item.trendData as { fetchCount?: number } | null | undefined
                 const fetchCount = trendData?.fetchCount ?? 0
@@ -151,7 +187,8 @@ export function AIContextModal({
                 )
               })}
             </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* 注入摘要 */}
