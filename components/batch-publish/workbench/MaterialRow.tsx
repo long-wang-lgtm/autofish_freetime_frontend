@@ -18,12 +18,14 @@ interface MaterialRowProps {
   isSelected: boolean
   onToggleSelect: (id: number) => void
   onOpenSheet: (id: number) => void
+  onOpenContextModal: (id: number) => void
   selectedOid: number | undefined
   materialPage: number
 }
 
 export function MaterialRow({
-  materialId, isSelected, onToggleSelect, onOpenSheet, selectedOid, materialPage,
+  materialId, isSelected, onToggleSelect, onOpenSheet, onOpenContextModal,
+  selectedOid, materialPage,
 }: MaterialRowProps) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -180,6 +182,11 @@ export function MaterialRow({
           {material.description || '(无描述)'}
         </span>
 
+        {/* 🎨 封面提示词 */}
+        <span className="text-xs text-gray-700 leading-snug truncate">
+          {material.ai_context?.coverprompt || <span className="text-gray-400">（未设置）</span>}
+        </span>
+
         {/* 💰 价格（行内编辑） */}
         <InlineEditCell
           value={material.price}
@@ -227,6 +234,20 @@ export function MaterialRow({
               ))
             )}
           </select>
+        </div>
+
+        {/* 🤖 AI 上下文 */}
+        <div onClick={(e) => e.stopPropagation()} className="flex justify-center">
+          <button
+            onClick={() => onOpenContextModal(materialId)}
+            className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer whitespace-nowrap"
+          >
+            {material.ai_context?.template === 'with_item'
+              ? `商机 + ${(material.ai_context?.items?.length ?? 0)} 商品`
+              : material.ai_context?.template === 'only_opportunity'
+                ? '仅商机'
+                : '未配置'}
+          </button>
         </div>
 
         {/* 📊 进度+操作 */}
