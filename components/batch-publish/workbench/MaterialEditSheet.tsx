@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
-import { useWorkbenchMutations } from '@/hooks/batch-publish/useWorkbenchMutations'
-import { TEMPLATE_TYPE_LABELS } from '@/components/batch-publish/shared/constants'
+import { useQueryClient } from '@tanstack/react-query'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { uploadFileToFlare, imageDisplayUrl } from '@/lib/api/upload'
-import { fmtGrowth, fmtNumber } from '@/lib/utils/format'
-import type { MonitoredItem, TemplateType, MaterialImage, PublishMaterial } from '@/lib/api/batch-publish'
+import { editMaterial, updateMaterialContext } from '@/lib/api/batch-publish'
+import type { MaterialImage, PublishMaterial } from '@/lib/api/batch-publish'
 import type { MaterialImage as UploadMaterialImage } from '@/lib/api/upload'
 
 interface MaterialEditSheetProps {
@@ -15,43 +14,119 @@ interface MaterialEditSheetProps {
   selectedOid: number | undefined
   open: boolean
   onClose: () => void
-  /** 监控商品列表——从父组件传入，由 useWorkbenchData 统一加载 */
-  monitoredItems: MonitoredItem[]
   /** 素材列表——从父组件传入，避免缓存 key 不匹配导致读不到数据 */
   materials: PublishMaterial[]
 }
 
-export function MaterialEditSheet({ materialId, selectedOid, open, onClose, monitoredItems, materials }: MaterialEditSheetProps) {
+export function MaterialEditSheet({ materialId, selectedOid, open, onClose, materials }: MaterialEditSheetProps) {
   const isMobile = useIsMobile()
-  const { editMaterialMutation, updateContextMutation } = useWorkbenchMutations(selectedOid)
+  const queryClient = useQueryClient()
 
   const material = materialId ? materials.find(m => m.id === materialId) : null
 
-  // 表单字段
+  // ---- 表单字段 ----
   const [description, setDescription] = useState('')
+  const [coverprompt, setCoverprompt] = useState('')
   const [images, setImages] = useState<MaterialImage[]>([])
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
-  const [templateType, setTemplateType] = useState<TemplateType>('only_opportunity')
-  const [selectedGids, setSelectedGids] = useState<string[]>([])
+
+  // ---- 自动保存状态 ----
+  const descDirtyRef = useRef(false)
+  const descTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const descSavingRef = useRef(false)
+
+  const coverDirtyRef = useRef(false)
+  const coverTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const coverSavingRef = useRef(false)
 
   // 初始化表单
   useEffect(() => {
     if (material) {
       setDescription(material.description ?? '')
+      setCoverprompt(material.ai_context?.coverprompt ?? '')
       setImages(material.images ?? [])
-      setTemplateType((material.ai_context?.template as TemplateType) ?? 'only_opportunity')
-      setSelectedGids(material.ai_context?.items ?? [])
     }
   }, [material])
 
   if (!material) return null
 
-  // ---- Image management ----
+  // ---- 自动保存函数 ----
+
+  const autoSaveDesc = useCallback(async (value: string) => {
+    if (descSavingRef.current) return
+    descSavingRef.current = true
+    try {
+      await editMaterial({ id: material.id, description: value || undefined })
+      descDirtyRef.current = false
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+    } catch {
+      // 静默处理
+    } finally {
+      descSavingRef.current = false
+    }
+  }, [material.id, selectedOid, queryClient])
+
+  const autoSaveCover = useCallback(async (value: string) => {
+    if (coverSavingRef.current) return
+    coverSavingRef.current = true
+    try {
+      await updateMaterialContext({ id: material.id, coverprompt: value || undefined })
+      coverDirtyRef.current = false
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+    } catch {
+      // 静默处理
+    } finally {
+      coverSavingRef.current = false
+    }
+  }, [material.id, selectedOid, queryClient])
+
+  const handleDescChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value
+    setDescription(v)
+    descDirtyRef.current = true
+    if (descTimerRef.current) clearTimeout(descTimerRef.current)
+    descTimerRef.current = setTimeout(() => autoSaveDesc(v), 1000)
+  }
+
+  const handleDescBlur = () => {
+    if (descTimerRef.current) { clearTimeout(descTimerRef.current); descTimerRef.current = undefined }
+    if (descDirtyRef.current) autoSaveDesc(description)
+  }
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value
+    setCoverprompt(v)
+    coverDirtyRef.current = true
+    if (coverTimerRef.current) clearTimeout(coverTimerRef.current)
+    coverTimerRef.current = setTimeout(() => autoSaveCover(v), 1000)
+  }
+
+  const handleCoverBlur = () => {
+    if (coverTimerRef.current) { clearTimeout(coverTimerRef.current); coverTimerRef.current = undefined }
+    if (coverDirtyRef.current) autoSaveCover(coverprompt)
+  }
+
+  // Sheet 关闭时 flush 所有待保存内容
+  const handleCloseWithFlush = useCallback(async () => {
+    if (descTimerRef.current) { clearTimeout(descTimerRef.current); descTimerRef.current = undefined }
+    if (coverTimerRef.current) { clearTimeout(coverTimerRef.current); coverTimerRef.current = undefined }
+    const promises: Promise<void>[] = []
+    if (descDirtyRef.current) promises.push(autoSaveDesc(description))
+    if (coverDirtyRef.current) promises.push(autoSaveCover(coverprompt))
+    await Promise.race([Promise.all(promises), new Promise<void>(r => setTimeout(r, 3000))])
+    onClose()
+  }, [description, coverprompt, autoSaveDesc, autoSaveCover, onClose])
+
+  // ---- Image management (auto-save on change) ----
+
   const handleImageUpload = async (file: File) => {
     setUploadingIndex(images.length)
     try {
       const uploaded = await uploadFileToFlare(file, material.to_uid ?? undefined)
-      setImages(prev => [...prev, uploaded as MaterialImage])
+      const nextImages = [...images, uploaded as MaterialImage]
+      setImages(nextImages)
+      await editMaterial({ id: material.id, images: nextImages })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
     } catch {
       // silent
     } finally {
@@ -59,55 +134,42 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, moni
     }
   }
 
-  const handleImageDelete = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index))
+  const handleImageDelete = async (index: number) => {
+    const nextImages = images.filter((_, i) => i !== index)
+    setImages(nextImages)
+    try {
+      await editMaterial({ id: material.id, images: nextImages.length > 0 ? nextImages : undefined })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+    } catch { /* silent */ }
   }
 
-  const handleImageMoveUp = (index: number) => {
+  const handleImageMoveUp = async (index: number) => {
     if (index <= 0) return
-    setImages(prev => {
-      const next = [...prev]
-      const temp = next[index - 1]
-      next[index - 1] = next[index]
-      next[index] = temp
-      return next
-    })
+    const nextImages = [...images]
+    const temp = nextImages[index - 1]
+    nextImages[index - 1] = nextImages[index]
+    nextImages[index] = temp
+    setImages(nextImages)
+    try {
+      await editMaterial({ id: material.id, images: nextImages })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+    } catch { /* silent */ }
   }
 
-  const handleImageMoveDown = (index: number) => {
+  const handleImageMoveDown = async (index: number) => {
     if (index >= images.length - 1) return
-    setImages(prev => {
-      const next = [...prev]
-      const temp = next[index + 1]
-      next[index + 1] = next[index]
-      next[index] = temp
-      return next
-    })
+    const nextImages = [...images]
+    const temp = nextImages[index + 1]
+    nextImages[index + 1] = nextImages[index]
+    nextImages[index] = temp
+    setImages(nextImages)
+    try {
+      await editMaterial({ id: material.id, images: nextImages })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+    } catch { /* silent */ }
   }
 
-  const handleSaveMaterial = () => {
-    editMaterialMutation.mutate({
-      id: material.id,
-      description: description || undefined,
-      images: images.length > 0 ? images : undefined,
-    })
-  }
-
-  const handleSaveContext = () => {
-    updateContextMutation.mutate({
-      id: material.id,
-      templateType,
-      gids: templateType === 'with_item' ? selectedGids : undefined,
-    })
-  }
-
-  const toggleGid = (gid: string) => {
-    setSelectedGids(prev =>
-      prev.includes(gid) ? prev.filter(g => g !== gid) : [...prev, gid]
-    )
-  }
-
-  const isSaving = editMaterialMutation.isPending || updateContextMutation.isPending
+  const isAnySaving = descSavingRef.current || coverSavingRef.current
   const padding = isMobile ? 'p-4' : 'p-6'
 
   const formContent = (
@@ -176,7 +238,8 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, moni
         <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">描述文案</h4>
         <textarea
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={handleDescChange}
+          onBlur={handleDescBlur}
           rows={8}
           className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
           style={{ minHeight: 200 }}
@@ -184,96 +247,33 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, moni
         />
       </section>
 
-      {/* AI 上下文配置 */}
+      {/* 封面绘画提示词 */}
       <section className="space-y-4">
-        <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">AI 上下文配置</h4>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700">注入模板</label>
-          <select
-            value={templateType}
-            onChange={(e) => setTemplateType(e.target.value as TemplateType)}
-            className="mt-1 w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-          >
-            <option value="only_opportunity">{TEMPLATE_TYPE_LABELS.only_opportunity}</option>
-            <option value="with_item">{TEMPLATE_TYPE_LABELS.with_item}</option>
-          </select>
-        </div>
-
-        {templateType === 'with_item' && (
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              注入监控商品（{selectedGids.length} 个已选）
-            </label>
-            <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
-              {monitoredItems.length === 0 ? (
-                <p className="px-3 py-2 text-xs text-gray-400">该商机下暂无绑定商品</p>
-              ) : (
-                monitoredItems.map((item) => (
-                  <label
-                    key={item.gid}
-                    className="flex items-center gap-3 px-3 py-3 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedGids.includes(item.gid)}
-                      onChange={() => toggleGid(item.gid)}
-                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="flex-1 text-sm text-gray-700 line-clamp-1">{item.title || item.gid}</span>
-                    {item.wantSlope != null && (
-                      <span className={`text-xs tabular-nums ${item.wantSlope >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {fmtGrowth(item.wantSlope)}
-                      </span>
-                    )}
-                    {item.wantAvg != null && (
-                      <span className="text-xs text-gray-500 tabular-nums">{fmtNumber(item.wantAvg)}</span>
-                    )}
-                  </label>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        <p className="text-xs text-gray-500 leading-relaxed">
-          {templateType === 'only_opportunity'
-            ? '将注入：仅商机信息'
-            : `将注入：商机信息 + ${selectedGids.length} 个监控商品${
-              selectedGids.length > 0
-                ? '（' + selectedGids.map(g => {
-                    const found = monitoredItems.find(m => m.gid === g)
-                    return found?.title ?? g
-                  }).join('、') + '）'
-                : ''
-            }`
-          }
-        </p>
-
-        <button
-          onClick={handleSaveContext}
-          disabled={isSaving}
-          className="h-10 px-5 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
-        >
-          {updateContextMutation.isPending ? '保存中...' : '保存 AI 上下文'}
-        </button>
+        <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">封面绘画提示词</h4>
+        <textarea
+          value={coverprompt}
+          onChange={handleCoverChange}
+          onBlur={handleCoverBlur}
+          rows={4}
+          className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
+          placeholder="例如：白色背景，柔和自然光，产品居中构图..."
+        />
       </section>
 
-      {/* 保存素材 */}
+      {/* 底部 — 自动保存状态 + 关闭 */}
       <div className="flex gap-2 pt-3 border-t border-gray-100">
+        <p className="flex-1 flex items-center gap-1.5 text-xs text-green-600">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          所有改动已自动保存
+        </p>
         <button
-          onClick={handleSaveMaterial}
-          disabled={isSaving}
-          className="flex-1 h-10 px-5 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          onClick={handleCloseWithFlush}
+          disabled={isAnySaving}
+          className="h-10 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
-          {editMaterialMutation.isPending ? '保存中...' : '保存素材'}
-        </button>
-        <button
-          onClick={onClose}
-          disabled={isSaving}
-          className="h-10 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          关闭
+          {isAnySaving ? '保存中...' : '关闭'}
         </button>
       </div>
     </div>
@@ -283,7 +283,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, moni
     return (
       <BottomSheet
         open={open}
-        onClose={onClose}
+        onClose={handleCloseWithFlush}
         title={`编辑素材 #${material.id}`}
         heightRatio={0.85}
       >
@@ -295,7 +295,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, moni
   return (
     <Sheet
       open={open}
-      onClose={onClose}
+      onClose={handleCloseWithFlush}
       title={`编辑素材 #${material.id}`}
       subtitle={material.description?.slice(0, 40) ?? ''}
       width="500px"
