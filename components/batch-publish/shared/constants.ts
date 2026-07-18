@@ -128,20 +128,22 @@ export const BIND_STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
 ]
 
 // ============================================================
-// 素材表格 — 列宽配置（新 8 列）
+// 素材表格 — 列宽配置（10 列）
 // ============================================================
 
-export const MATERIAL_GRID_COLS = '32px 1fr 2.5fr 0.6fr 0.8fr 0.8fr 0.6fr 0.3fr'
+export const MATERIAL_GRID_COLS = '32px 56px 2fr 1.5fr 80px 100px 100px 100px 96px 32px'
 
 export const MATERIAL_HEADER_LABELS = [
-  '',        // checkbox
-  '封面图',   // images
-  '描述',     // description
-  '价格',     // price
-  '账号',     // account
-  '类目',     // category
-  '进度',     // progress pipeline（节点可点击触发）
-  '',        // delete
+  '',            // checkbox
+  '封面',         // 封面图
+  '描述',         // description
+  '封面提示词',    // coverprompt
+  '价格',         // price
+  '账号',         // account
+  '类目',         // category
+  'AI上下文',     // AI context
+  '进度/操作',    // progress + actions
+  '',            // delete
 ] as const
 
 // ============================================================
