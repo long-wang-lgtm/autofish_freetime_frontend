@@ -28,10 +28,10 @@ export function MaterialCard({ materialId, selectedOid, onOpenSheet }: MaterialC
   const accounts = queryClient.getQueryData<Account[]>(['accounts'])
   const activeAccounts = (accounts ?? []).filter(a => a.status === 1)
 
-  const { data: channels = [] } = useQuery<ChannelItemResponse[]>({
+  const { data: channels = [], refetch: refetchChannels } = useQuery<ChannelItemResponse[]>({
     queryKey: ['batch-publish', 'channel', materialId],
     queryFn: () => getChannel(materialId),
-    enabled: !!material?.to_uid && !!material?.description,
+    enabled: !!material?.to_uid && !!material?.description && !material?.category,
     staleTime: 10 * 60 * 1000,
   })
 
@@ -137,14 +137,23 @@ export function MaterialCard({ materialId, selectedOid, onOpenSheet }: MaterialC
           <select
             value={material.category ?? ''}
             onChange={handleCategoryChange}
+            onMouseDown={() => {
+              if (material.to_uid && material.category && channels.length === 0) {
+                refetchChannels()
+              }
+            }}
             onClick={(e) => e.stopPropagation()}
             disabled={!material.to_uid}
             className="h-8 px-2 py-1 text-xs border border-gray-200 rounded bg-white disabled:opacity-50 disabled:bg-gray-50"
           >
             <option value="">{material.to_uid ? '请选择' : '请先选账号'}</option>
-            {channels.map((ch) => (
-              <option key={ch.channelCateId} value={ch.channelCateName}>{ch.channelCateName}</option>
-            ))}
+            {channels.length === 0 && material.category ? (
+              <option value={material.category}>{material.category}</option>
+            ) : (
+              channels.map((ch) => (
+                <option key={ch.channelCateId} value={ch.channelCateName}>{ch.channelCateName}</option>
+              ))
+            )}
           </select>
         </div>
 

@@ -40,11 +40,12 @@ export function MaterialRow({
   const accounts = queryClient.getQueryData<Account[]>(['accounts'])
   const activeAccounts = (accounts ?? []).filter(a => a.status === 1)
 
-  // 3. Channel options (fetched per-material, enabled only when to_uid is set)
-  const { data: channels = [] } = useQuery<ChannelItemResponse[]>({
+  // 3. Channel options (lazy: only fetch when to_uid is set AND category is empty;
+  //    if category already selected, defer fetch until user clicks the dropdown)
+  const { data: channels = [], refetch: refetchChannels } = useQuery<ChannelItemResponse[]>({
     queryKey: ['batch-publish', 'channel', materialId],
     queryFn: () => getChannel(materialId),
-    enabled: !!material?.to_uid && !!material?.description,
+    enabled: !!material?.to_uid && !!material?.description && !material?.category,
     staleTime: 10 * 60 * 1000,
   })
 
@@ -201,18 +202,30 @@ export function MaterialRow({
           </select>
         </div>
 
-        {/* 📂 类目（行内下拉） */}
+        {/* 📂 类目（行内下拉） — 已有类目时不自动拉取 channel，点击下拉时按需加载 */}
         <div onClick={(e) => e.stopPropagation()}>
           <select
             value={material.category ?? ''}
             onChange={(e) => handleInlineSave('category', e.target.value || undefined)}
+            onMouseDown={() => {
+              // Lazy-load channel options on first interaction when category is already set
+              if (material.to_uid && material.category && channels.length === 0) {
+                refetchChannels()
+              }
+            }}
             disabled={!material.to_uid || savingField === 'category'}
             className="w-full h-8 px-2 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 disabled:bg-gray-50"
           >
             <option value="">{material.to_uid ? '请选择' : '请先选账号'}</option>
-            {channels.map((ch) => (
-              <option key={ch.channelCateId} value={ch.channelCateName}>{ch.channelCateName}</option>
-            ))}
+            {/* Fallback: when channels haven't loaded yet but category is set,
+                render the current value so the select doesn't appear blank */}
+            {channels.length === 0 && material.category ? (
+              <option value={material.category}>{material.category}</option>
+            ) : (
+              channels.map((ch) => (
+                <option key={ch.channelCateId} value={ch.channelCateName}>{ch.channelCateName}</option>
+              ))
+            )}
           </select>
         </div>
 
