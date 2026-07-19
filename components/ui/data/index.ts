@@ -1,5 +1,7 @@
 export { DataTable } from './DataTable'
 export type { DataTableColumn, DataTableProps } from './DataTable'
+export { NativeTable } from './NativeTable'
+export type { NativeTableColumn, NativeTableProps } from './NativeTable'
 export { EditableCell } from './EditableCell'
 export type { EditableCellProps } from './EditableCell'
 export { Pagination } from './Pagination'
