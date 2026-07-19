@@ -170,7 +170,7 @@ export function NativeTable<T>({
 
   return (
     <div className={cn('overflow-auto', className)}>
-      <table className="w-full table-fixed border-collapse">
+      <table className="w-full table-auto border-collapse">
         {/* 列宽定义 */}
         <colgroup>
           {columns.map((col) => (

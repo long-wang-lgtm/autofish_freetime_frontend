@@ -169,7 +169,7 @@ export function MaterialTableRow({
           value={material.to_uid ?? ''}
           onChange={(e) => handleInlineSave('to_uid', e.target.value || undefined)}
           disabled={savingField === 'to_uid'}
-          className="h-8 px-2 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
+          className="h-8 px-3 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
         >
           <option value="">未选择</option>
           {activeAccounts.map((a) => (
@@ -189,7 +189,7 @@ export function MaterialTableRow({
             }
           }}
           disabled={!material.to_uid || savingField === 'category'}
-          className="h-8 px-2 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 disabled:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:disabled:bg-gray-800"
+          className="h-8 px-3 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 disabled:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:disabled:bg-gray-800"
         >
           <option value="">{material.to_uid ? '请选择' : '请先选账号'}</option>
           {channels.length === 0 && material.category ? (

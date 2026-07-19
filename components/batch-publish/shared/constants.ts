@@ -133,19 +133,6 @@ export const BIND_STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
 
 export const MATERIAL_GRID_COLS = '32px 56px 2fr 1.5fr 80px 100px 100px 100px 96px 32px'
 
-export const MATERIAL_HEADER_LABELS = [
-  '',            // checkbox
-  '封面',         // 封面图
-  '描述',         // description
-  '封面提示词',    // coverprompt
-  '价格',         // price
-  '账号',         // account
-  '类目',         // category
-  'AI上下文',     // AI context
-  '进度/操作',    // progress + actions
-  '',            // delete
-] as const
-
 // ============================================================
 // React Query 缓存 Key 工厂
 // ============================================================

@@ -31,26 +31,18 @@ interface MaterialWorkspaceProps {
   materialPage: number
 }
 
-/**
- * 素材表格列定义 — 仅用于表头渲染（数据行由 MaterialTableRow 通过 RowComponent 渲染）
- *
- * 固定列用 px，弹性列（描述、封面提示词）不设 width，由浏览器均分剩余空间。
- * 列宽基于 cell 内容最小宽度计算，确保 table-layout:fixed 下内容不溢出：
- *   封面 = 1 缩略图 48px + gap 6px + 上传按钮 48px + 安全余量 2px ≈ 104px
- *   删除 = 按钮 padding 12px + SVG 16px + td padding 8px + 安全余量 ≈ 48px
- *   账号/类目 = select 文本 + 内边距 ≈ 120px
- */
+/** 素材表格列定义 — 仅用于表头渲染（数据行由 MaterialTableRow 通过 RowComponent 渲染） */
 const MATERIAL_COLUMNS: NativeTableColumn<PublishMaterial>[] = [
-  { key: 'checkbox',  width: '40px',  align: 'center', header: ' ' },
-  { key: 'cover',     width: '104px', align: 'center', header: '封面' },
-  { key: 'desc',      /* elastic */   align: 'left',   header: '描述' },
-  { key: 'prompt',    /* elastic */   align: 'left',   header: '封面提示词' },
-  { key: 'price',     width: '80px',  align: 'center', header: '价格' },
-  { key: 'account',   width: '120px', align: 'center', header: '账号' },
-  { key: 'category',  width: '120px', align: 'center', header: '类目' },
-  { key: 'aiContext', width: '100px', align: 'center', header: 'AI上下文' },
-  { key: 'progress',  width: '96px',  align: 'center', header: '进度/操作' },
-  { key: 'delete',    width: '48px',  align: 'center', header: '删除' },
+  { key: 'checkbox',  width: '1%', align: 'center', header: ' ' },
+  { key: 'cover',     width: '1%', align: 'center', header: '封面' },
+  { key: 'desc',      align: 'left',   header: '描述' },
+  { key: 'prompt',    align: 'left',   header: '封面提示词' },
+  { key: 'price',     width: '1%', align: 'center', header: '价格' },
+  { key: 'account',   width: '1%', align: 'center', header: '账号' },
+  { key: 'category',  width: '1%', align: 'center', header: '类目' },
+  { key: 'aiContext', width: '1%', align: 'center', header: 'AI上下文' },
+  { key: 'progress',  width: '1%', align: 'center', header: '进度/操作' },
+  { key: 'delete',    width: '1%', align: 'center', header: '删除' },
 ]
 
 export function MaterialWorkspace({
