@@ -1,12 +1,12 @@
 'use client'
 
-import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
-import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
-import { EmptyState } from '@/components/ui/feedback/EmptyState'
+import { useCallback } from 'react'
 import { Pagination } from '@/components/ui/data/Pagination'
+import { NativeTable } from '@/components/ui/data/NativeTable'
+import type { NativeTableColumn } from '@/components/ui/data/NativeTable'
 import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
-import { MaterialRow } from './MaterialRow'
-import { MATERIAL_GRID_COLS, MATERIAL_HEADER_LABELS, PAGE_SIZE } from '@/components/batch-publish/shared/constants'
+import { MaterialTableRow } from './MaterialTableRow'
+import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import { fmtPrice } from '@/lib/utils/format'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import type { OpportunityItem, PublishMaterial } from '@/lib/api/batch-publish'
@@ -31,6 +31,20 @@ interface MaterialWorkspaceProps {
   materialPage: number
 }
 
+/** 素材表格列定义 — 仅用于表头渲染（数据行由 MaterialTableRow 通过 RowComponent 渲染） */
+const MATERIAL_COLUMNS: NativeTableColumn<PublishMaterial>[] = [
+  { key: 'checkbox',  width: '32px',  align: 'center', header: ' ' },
+  { key: 'cover',     width: '56px',  align: 'center', header: '封面' },
+  { key: 'desc',      width: '28%',   align: 'left',   header: '描述' },
+  { key: 'prompt',    width: '20%',   align: 'left',   header: '封面提示词' },
+  { key: 'price',     width: '80px',  align: 'center', header: '价格' },
+  { key: 'account',   width: '100px', align: 'center', header: '账号' },
+  { key: 'category',  width: '100px', align: 'center', header: '类目' },
+  { key: 'aiContext', width: '100px', align: 'center', header: 'AI上下文' },
+  { key: 'progress',  width: '96px',  align: 'center', header: '进度/操作' },
+  { key: 'delete',    width: '32px',  align: 'center', header: '删除' },
+]
+
 export function MaterialWorkspace({
   opportunity, materials, materialLoading, materialError, materialRefetch,
   selectedMaterialIds, onToggleSelect, onClearSelection, onOpenEditor,
@@ -39,6 +53,23 @@ export function MaterialWorkspace({
   onBackToOverview, materialPage,
 }: MaterialWorkspaceProps) {
   const isMobile = useIsMobile()
+
+  // 行组件包装器——闭包捕获 workspace props 注入到 MaterialTableRow
+  const RowWrapper = useCallback(
+    ({ item }: { item: PublishMaterial; index: number }) => (
+      <MaterialTableRow
+        item={item}
+        index={0}
+        isSelected={selectedMaterialIds.has(item.id)}
+        onToggleSelect={onToggleSelect}
+        onOpenEditor={onOpenEditor}
+        onOpenContextModal={onOpenContextModal}
+        selectedOid={selectedOid}
+        materialPage={materialPage}
+      />
+    ),
+    [selectedMaterialIds, onToggleSelect, onOpenEditor, onOpenContextModal, selectedOid, materialPage]
+  )
 
   if (!opportunity) {
     return (
@@ -93,70 +124,33 @@ export function MaterialWorkspace({
       </div>
 
       {/* 素材表格 */}
-      <div className="flex-1 overflow-y-auto relative">
-        {materialLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <LoadingSpinner size="md" />
+      <div className="flex-1 min-h-0">
+        <NativeTable
+          columns={MATERIAL_COLUMNS}
+          data={materials}
+          keyExtractor={(m) => String(m.id)}
+          isLoading={materialLoading}
+          error={materialError}
+          errorMessage="加载素材失败"
+          onRetry={materialRefetch}
+          emptyTitle="暂无素材"
+          emptyDescription="点击「批量创建」为该商机创建素材"
+          emptyAction={{ label: '批量创建', onClick: onCreateClick }}
+          stickyHeader
+          RowComponent={RowWrapper}
+          onRowClick={(m) => onOpenEditor(m.id)}
+          className="h-full"
+        />
+
+        {/* 批量操作栏 */}
+        {selectedMaterialIds.size > 0 && (
+          <div className="sticky bottom-0 px-3 pb-3 z-10">
+            <BatchActionBar
+              selectedCount={selectedMaterialIds.size}
+              onClear={onClearSelection}
+              actions={[]}
+            />
           </div>
-        ) : materialError ? (
-          <ErrorBanner variant="banner" message="加载素材失败" onRetry={materialRefetch} />
-        ) : materials.length === 0 ? (
-          <EmptyState
-            size="md"
-            title="暂无素材"
-            description="点击「批量创建」为该商机创建素材"
-            action={{ label: '批量创建', onClick: onCreateClick }}
-          />
-        ) : (
-          <>
-            {/* 表头 */}
-            <div
-              className="grid gap-2 px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500 border-b border-gray-200 sticky top-0 z-10"
-              style={{ gridTemplateColumns: MATERIAL_GRID_COLS }}
-            >
-              <div className="flex justify-center">
-                {selectedMaterialIds.size > 0 && (
-                  <button onClick={onClearSelection} className="text-blue-600 hover:underline text-xs">
-                    取消
-                  </button>
-                )}
-              </div>
-              <div className="flex justify-center">封面</div>
-              <div>描述</div>
-              <div>封面提示词</div>
-              <div className="flex justify-center">价格</div>
-              <div className="flex justify-center">账号</div>
-              <div className="flex justify-center">类目</div>
-              <div className="flex justify-center">AI上下文</div>
-              <div className="flex justify-center">进度/操作</div>
-              <div className="flex justify-center">删除</div>
-            </div>
-
-            {/* 数据行 */}
-            {materials.map((m) => (
-              <MaterialRow
-                key={m.id}
-                materialId={m.id}
-                isSelected={selectedMaterialIds.has(m.id)}
-                onToggleSelect={onToggleSelect}
-                onOpenSheet={onOpenEditor}
-                onOpenContextModal={onOpenContextModal}
-                selectedOid={selectedOid}
-                materialPage={materialPage}
-              />
-            ))}
-
-            {/* 批量操作栏 */}
-            {selectedMaterialIds.size > 0 && (
-              <div className="sticky bottom-0 px-3 pb-3 z-10">
-                <BatchActionBar
-                  selectedCount={selectedMaterialIds.size}
-                  onClear={onClearSelection}
-                  actions={[]}
-                />
-              </div>
-            )}
-          </>
         )}
       </div>
 
