@@ -76,12 +76,12 @@ export function MaterialImageCell({ images, materialId, toUid, onImagesChange }:
     }
   }
 
-  const visibleImages = images.slice(0, 3)
   const canUpload = images.length < MAX_IMAGES
 
   return (
-    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-      {visibleImages.map((img, i) => (
+    <div className="overflow-x-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="inline-flex items-center gap-1.5 min-w-max">
+        {images.map((img, i) => (
         <div
           key={img.md5 || i}
           className="relative group flex-shrink-0"
@@ -110,7 +110,7 @@ export function MaterialImageCell({ images, materialId, toUid, onImagesChange }:
 
       {images.length === 0 && (
         <div
-          className="w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-300 text-xs"
+          className="w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-300 text-xs flex-shrink-0"
           style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
         >
           无图
@@ -122,7 +122,7 @@ export function MaterialImageCell({ images, materialId, toUid, onImagesChange }:
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors disabled:opacity-50"
+            className="w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors disabled:opacity-50 flex-shrink-0"
             style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
           >
             {uploading ? (
@@ -140,6 +140,7 @@ export function MaterialImageCell({ images, materialId, toUid, onImagesChange }:
           />
         </>
       )}
+      </div>
 
       {/* Lightbox */}
       {lightboxIndex !== null && (

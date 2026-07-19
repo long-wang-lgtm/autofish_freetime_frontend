@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
+import { cn } from '@/lib/utils'
 import { InlineEditCell } from './InlineEditCell'
 import { MaterialImageCell } from './MaterialImageCell'
 import { ProgressActionCell } from './ProgressActionCell'
@@ -11,10 +12,13 @@ import { useToast } from '@/components/ui/Toaster'
 import { useState } from 'react'
 import type { PublishMaterial, MaterialListResponse, MaterialImage, ChannelItemResponse, RewriteStage } from '@/lib/api/batch-publish'
 import type { Account } from '@/lib/api/accounts'
+import type { NativeTableColumn } from '@/components/ui/data/NativeTable'
 
 export interface MaterialTableRowProps {
   item: PublishMaterial
   index: number
+  /** 列定义——控制单元格渲染顺序。表头与表行的列顺序由此单一来源控制 */
+  columns: NativeTableColumn<PublishMaterial>[]
   isSelected: boolean
   onToggleSelect: (id: number) => void
   onOpenEditor: (id: number) => void
@@ -24,7 +28,7 @@ export interface MaterialTableRowProps {
 }
 
 export function MaterialTableRow({
-  item: material, index: _index, isSelected, onToggleSelect, onOpenEditor,
+  item: material, index: _index, columns, isSelected, onToggleSelect, onOpenEditor,
   onOpenContextModal, selectedOid, materialPage,
 }: MaterialTableRowProps) {
   const queryClient = useQueryClient()
@@ -118,126 +122,162 @@ export function MaterialTableRow({
 
   const isAnyLoading = savingField !== null
 
+  // 按列定义顺序渲染单元格——列顺序由 MATERIAL_COLUMNS 单一控制
+  const renderCell = (col: NativeTableColumn<PublishMaterial>): React.ReactNode => {
+    const tdClass = cn(
+      'px-2 py-2',
+      col.align === 'center' && 'text-center',
+      col.align === 'right' && 'text-right',
+    )
+
+    switch (col.key) {
+      case 'checkbox':
+        return (
+          <td key={col.key} className={tdClass}>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onToggleSelect(material.id)}
+              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+          </td>
+        )
+
+      case 'cover':
+        return (
+          <td key={col.key} className={tdClass}>
+            <MaterialImageCell
+              images={material.images ?? []}
+              materialId={material.id}
+              toUid={material.to_uid}
+              onImagesChange={handleImagesChange}
+            />
+          </td>
+        )
+
+      case 'desc':
+        return (
+          <td key={col.key} className={tdClass}>
+            <span className="text-sm text-gray-800 leading-snug line-clamp-2 dark:text-gray-200">
+              {material.description || '(无描述)'}
+            </span>
+          </td>
+        )
+
+      case 'prompt':
+        return (
+          <td key={col.key} className={tdClass}>
+            <span className="text-sm text-gray-800 leading-snug line-clamp-2 dark:text-gray-200">
+              {material.ai_context?.coverprompt || <span className="text-gray-400">（未设置）</span>}
+            </span>
+          </td>
+        )
+
+      case 'price':
+        return (
+          <td key={col.key} className={tdClass}>
+            <InlineEditCell
+              value={material.price}
+              onSave={(v) => handleInlineSave('price', v)}
+              isSaving={savingField === 'price'}
+            />
+          </td>
+        )
+
+      case 'account':
+        return (
+          <td key={col.key} className={tdClass} onClick={(e) => e.stopPropagation()}>
+            <select
+              value={material.to_uid ?? ''}
+              onChange={(e) => handleInlineSave('to_uid', e.target.value || undefined)}
+              disabled={savingField === 'to_uid'}
+              className="w-full min-w-0 h-8 px-3 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
+            >
+              <option value="">未选择</option>
+              {activeAccounts.map((a) => (
+                <option key={a.uid} value={a.uid}>{a.name}</option>
+              ))}
+            </select>
+          </td>
+        )
+
+      case 'category':
+        return (
+          <td key={col.key} className={tdClass} onClick={(e) => e.stopPropagation()}>
+            <select
+              value={material.category ?? ''}
+              onChange={(e) => handleInlineSave('category', e.target.value || undefined)}
+              onMouseDown={() => {
+                if (material.to_uid && material.category && channels.length === 0) {
+                  refetchChannels()
+                }
+              }}
+              disabled={!material.to_uid || savingField === 'category'}
+              className="w-full min-w-0 h-8 px-3 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 disabled:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:disabled:bg-gray-800"
+            >
+              <option value="">{material.to_uid ? '请选择' : '请先选账号'}</option>
+              {channels.length === 0 && material.category ? (
+                <option value={material.category}>{material.category}</option>
+              ) : (
+                channels.map((ch) => (
+                  <option key={ch.channelCateId} value={ch.channelCateName}>{ch.channelCateName}</option>
+                ))
+              )}
+            </select>
+          </td>
+        )
+
+      case 'aiContext':
+        return (
+          <td key={col.key} className={tdClass} onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => onOpenContextModal(material.id)}
+              className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer whitespace-nowrap dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
+            >
+              {material.ai_context?.template === 'with_item'
+                ? `商机 + ${(material.ai_context?.items?.length ?? 0)} 商品`
+                : material.ai_context?.template === 'only_opportunity'
+                  ? '仅商机'
+                  : '未配置'}
+            </button>
+          </td>
+        )
+
+      case 'progress':
+        return (
+          <td key={col.key} className={tdClass}>
+            <ProgressActionCell
+              status={material.status}
+              onTriggerWork={handleTriggerWork}
+              onPublish={handlePublish}
+              isAnyLoading={isAnyLoading}
+            />
+          </td>
+        )
+
+      case 'delete':
+        return (
+          <td key={col.key} className={tdClass}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowDelete(true) }}
+              className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors dark:hover:bg-red-950"
+              title="删除素材"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </td>
+        )
+
+      default:
+        return <td key={col.key} className={tdClass} />
+    }
+  }
+
   return (
     <>
-      {/* ☐ 复选框 */}
-      <td className="px-2 py-2 text-center">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => onToggleSelect(material.id)}
-          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-        />
-      </td>
-
-      {/* 🖼 封面图 */}
-      <td className="px-2 py-2 text-center">
-        <MaterialImageCell
-          images={material.images ?? []}
-          materialId={material.id}
-          toUid={material.to_uid}
-          onImagesChange={handleImagesChange}
-        />
-      </td>
-
-      {/* 📝 描述 */}
-      <td className="px-2 py-2">
-        <span className="text-sm text-gray-800 leading-snug line-clamp-2 dark:text-gray-200">
-          {material.description || '(无描述)'}
-        </span>
-      </td>
-
-      {/* 🎨 封面提示词 */}
-      <td className="px-2 py-2">
-        <span className="text-sm text-gray-800 leading-snug line-clamp-2 dark:text-gray-200">
-          {material.ai_context?.coverprompt || <span className="text-gray-400">（未设置）</span>}
-        </span>
-      </td>
-
-      {/* 💰 价格 */}
-      <td className="px-2 py-2 text-center">
-        <InlineEditCell
-          value={material.price}
-          onSave={(v) => handleInlineSave('price', v)}
-          isSaving={savingField === 'price'}
-        />
-      </td>
-
-      {/* 👤 账号 */}
-      <td className="px-2 py-2 text-center" onClick={(e) => e.stopPropagation()}>
-        <select
-          value={material.to_uid ?? ''}
-          onChange={(e) => handleInlineSave('to_uid', e.target.value || undefined)}
-          disabled={savingField === 'to_uid'}
-          className="h-8 px-3 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
-        >
-          <option value="">未选择</option>
-          {activeAccounts.map((a) => (
-            <option key={a.uid} value={a.uid}>{a.name}</option>
-          ))}
-        </select>
-      </td>
-
-      {/* 📂 类目 */}
-      <td className="px-2 py-2 text-center" onClick={(e) => e.stopPropagation()}>
-        <select
-          value={material.category ?? ''}
-          onChange={(e) => handleInlineSave('category', e.target.value || undefined)}
-          onMouseDown={() => {
-            if (material.to_uid && material.category && channels.length === 0) {
-              refetchChannels()
-            }
-          }}
-          disabled={!material.to_uid || savingField === 'category'}
-          className="h-8 px-3 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 disabled:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:disabled:bg-gray-800"
-        >
-          <option value="">{material.to_uid ? '请选择' : '请先选账号'}</option>
-          {channels.length === 0 && material.category ? (
-            <option value={material.category}>{material.category}</option>
-          ) : (
-            channels.map((ch) => (
-              <option key={ch.channelCateId} value={ch.channelCateName}>{ch.channelCateName}</option>
-            ))
-          )}
-        </select>
-      </td>
-
-      {/* 🤖 AI 上下文 */}
-      <td className="px-2 py-2 text-center" onClick={(e) => e.stopPropagation()}>
-        <button
-          onClick={() => onOpenContextModal(material.id)}
-          className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer whitespace-nowrap dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
-        >
-          {material.ai_context?.template === 'with_item'
-            ? `商机 + ${(material.ai_context?.items?.length ?? 0)} 商品`
-            : material.ai_context?.template === 'only_opportunity'
-              ? '仅商机'
-              : '未配置'}
-        </button>
-      </td>
-
-      {/* 📊 进度+操作 */}
-      <td className="px-2 py-2 text-center">
-        <ProgressActionCell
-          status={material.status}
-          onTriggerWork={handleTriggerWork}
-          onPublish={handlePublish}
-          isAnyLoading={isAnyLoading}
-        />
-      </td>
-
-      {/* 🗑 删除 */}
-      <td className="px-2 py-2 text-center">
-        <button
-          onClick={(e) => { e.stopPropagation(); setShowDelete(true) }}
-          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors dark:hover:bg-red-950"
-          title="删除素材"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-      </td>
+      {columns.map(renderCell)}
 
       {/* ConfirmDialog 通过 portal 渲染到 body，避免放在 <tr> 内导致无效 DOM 嵌套 */}
       {showDelete && createPortal(

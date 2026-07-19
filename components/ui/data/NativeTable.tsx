@@ -44,6 +44,8 @@ export interface NativeTableProps<T> {
   onRowClick?: (item: T, index: number) => void
 
   stickyHeader?: boolean
+  /** 表格布局算法。'auto' 由内容决定列宽，'fixed' 严格按 col width 比例分配。默认 'auto' */
+  tableLayout?: 'auto' | 'fixed'
   className?: string
 }
 
@@ -119,6 +121,7 @@ export function NativeTable<T>({
   onRowClick,
 
   stickyHeader = false,
+  tableLayout = 'auto',
   className,
 }: NativeTableProps<T>) {
   // 1. Loading
@@ -170,7 +173,7 @@ export function NativeTable<T>({
 
   return (
     <div className={cn('overflow-auto', className)}>
-      <table className="w-full table-auto border-collapse">
+      <table className={cn('w-full border-collapse', tableLayout === 'fixed' ? 'table-fixed' : 'table-auto')}>
         {/* 列宽定义 */}
         <colgroup>
           {columns.map((col) => (

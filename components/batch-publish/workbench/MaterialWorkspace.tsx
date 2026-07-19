@@ -31,18 +31,18 @@ interface MaterialWorkspaceProps {
   materialPage: number
 }
 
-/** 素材表格列定义 — 仅用于表头渲染（数据行由 MaterialTableRow 通过 RowComponent 渲染） */
+/** 素材表格列定义——表头与表行的列顺序、宽度、对齐均由此单一来源控制 */
 const MATERIAL_COLUMNS: NativeTableColumn<PublishMaterial>[] = [
-  { key: 'checkbox',  width: '1%',  align: 'center', header: ' ' },
-  { key: 'cover',     align: 'center', header: '封面' },
-  { key: 'desc',      align: 'left',   header: '描述' },
-  { key: 'prompt',    align: 'left',   header: '封面提示词' },
-  { key: 'price',     width: '12%', align: 'center', header: '价格' },
-  { key: 'account',   width: '12%', align: 'center', header: '账号' },
-  { key: 'category',  width: '12%', align: 'center', header: '类目' },
-  { key: 'aiContext', width: '1%',  align: 'center', header: 'AI上下文' },
-  { key: 'progress',  width: '1%',  align: 'center', header: '进度/操作' },
-  { key: 'delete',    width: '1%',  align: 'center', header: '删除' },
+  { key: 'checkbox',  width: '3%',  align: 'center', header: ' ' },
+  { key: 'cover',     width: '10%', align: 'center', header: '封面' },
+  { key: 'desc',      align: 'left',   header: '描述' },          // 弹性——与 prompt 平分剩余宽度
+  { key: 'prompt',    align: 'left',   header: '封面提示词' },      // 弹性——与 desc 平分剩余宽度
+  { key: 'price',     width: '7%',  align: 'center', header: '价格' },
+  { key: 'account',   width: '9%',  align: 'center', header: '账号' },
+  { key: 'category',  width: '9%',  align: 'center', header: '类目' },
+  { key: 'aiContext', width: '7%',  align: 'center', header: 'AI上下文' },
+  { key: 'progress',  width: '10%', align: 'center', header: '进度/操作' },
+  { key: 'delete',    width: '4%',  align: 'center', header: '删除' },
 ]
 
 export function MaterialWorkspace({
@@ -56,10 +56,11 @@ export function MaterialWorkspace({
 
   // 行组件包装器——闭包捕获 workspace props 注入到 MaterialTableRow
   const RowWrapper = useCallback(
-    ({ item }: { item: PublishMaterial; index: number }) => (
+    ({ item, index }: { item: PublishMaterial; index: number }) => (
       <MaterialTableRow
         item={item}
-        index={0}
+        index={index}
+        columns={MATERIAL_COLUMNS}
         isSelected={selectedMaterialIds.has(item.id)}
         onToggleSelect={onToggleSelect}
         onOpenEditor={onOpenEditor}
@@ -137,6 +138,7 @@ export function MaterialWorkspace({
           emptyDescription="点击「批量创建」为该商机创建素材"
           emptyAction={{ label: '批量创建', onClick: onCreateClick }}
           stickyHeader
+          tableLayout="fixed"
           RowComponent={RowWrapper}
           onRowClick={(m) => onOpenEditor(m.id)}
           className="h-full"

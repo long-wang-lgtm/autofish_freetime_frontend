@@ -39,7 +39,7 @@ export function ProgressActionCell({
   }
 
   return (
-    <div onClick={(e) => e.stopPropagation()}>
+    <div className="inline-flex justify-center" onClick={(e) => e.stopPropagation()}>
       <StatusPipeline
         status={status}
         variant="compact"
