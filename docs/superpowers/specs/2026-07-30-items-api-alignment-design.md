@@ -234,4 +234,29 @@ interface ShipConfigUpdate {
 - 表格列定义适配
 - 上架/下架按钮状态逻辑重写
 
+---
+
+## 调用方影响面（2026-07-31 验证）
+
+`lib/api/items.ts` 重写后，`npx tsc --noEmit` 产生 22 个 TS2305/TS2724 错误，涉及 15 个源文件：
+
+| 文件 | 缺失的导出 |
+|------|-----------|
+| `hooks/useItemsFilters.ts` | `chipsToFilters`, `ItemsFilterState`, `ItemFilters` |
+| `hooks/useItemsData.ts` | `ItemFilters` (签名变更) |
+| `hooks/useItemMutations.ts` | `Item`, `ItemListResponse` |
+| `components/items/ItemsTab.tsx` | `Item` |
+| `components/items/views/ItemRow.tsx` | `Item` |
+| `components/items/views/MobileProductCard.tsx` | `Item` |
+| `components/items/parts/ItemsFilterBarMobile.tsx` | `SEARCH_FIELD_LABELS`, `SearchField`, `ItemsFilterState` |
+| `components/items/parts/ItemsFilterBarDesktop.tsx` | `SEARCH_FIELD_LABELS`, `SearchField`, `ItemsFilterState` |
+| `components/items/parts/SearchChip.tsx` | `SearchField` |
+| `components/items/parts/ShelfActions.tsx` | `getShelfState`, `Item` |
+| `components/items/parts/RuleBindingPanel.tsx` | `ItemGroup` |
+| `components/items/drawers/ItemEditDrawer.tsx` | `Item`, `ItemUpdate`, `updateItem` |
+| `components/items/drawers/ConfigDrawer.tsx` | `Item` |
+| `components/items/drawers/RuleItemsAllDrawer.tsx` | `listItemGroups` |
+| `components/items/drawers/RulesItemsingleDrawer.tsx` | `Item` |
+
+以上文件的适配属于后续页面适配阶段，不在本次实施范围。
 
