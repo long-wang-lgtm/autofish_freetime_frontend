@@ -1,20 +1,34 @@
 "use client"
 
 import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import {
-  KeywordRule,
-  getDisplayKeyword,
+  type ReplyRule,
+  formatRuleKeyword,
+  fetchRuleItems,
+  fetchPredefinedKeywords,
 } from "@/lib/api/keywords"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 
 interface RuleTableProps {
-  rules: KeywordRule[]
-  onEdit: (rule: KeywordRule) => void
-  onToggleEnabled: (rule: KeywordRule) => void
-  onDelete: (rule: KeywordRule) => void
+  rules: ReplyRule[]
+  onEdit: (rule: ReplyRule) => void
+  onToggleEnabled: (rule: ReplyRule) => void
+  onDelete: (rule: ReplyRule) => void
   toggling: string | null
   deleting: string | null
   className?: string
+}
+
+const replyTypeLabels: Record<string, string> = {
+  predefined: "预定义关键词",
+  custom: "自定义关键词",
+}
+
+const matchTypeLabels: Record<string, string> = {
+  exact: "精确匹配",
+  fuzzy: "模糊匹配",
+  regex: "正则匹配",
 }
 
 export function RuleTable({
@@ -26,21 +40,23 @@ export function RuleTable({
   deleting,
   className,
 }: RuleTableProps) {
+  // 预定义关键词标签映射
+  const { data: prefLabels = {} } = useQuery({
+    queryKey: ["predefined-keywords"],
+    queryFn: fetchPredefinedKeywords,
+    staleTime: 5 * 60 * 1000,
+  })
 
-  const replyTypeLabels: Record<string, string> = {
-    predefined: "预定义关键词",
-    custom: "自定义关键词",
-  }
+  const [expandedRule, setExpandedRule] = useState<number | null>(null)
 
-  const matchTypeLabels: Record<string, string> = {
-    exact: "精确匹配",
-    fuzzy: "模糊匹配",
-    regex: "正则匹配",
-  }
+  // 惰性加载关联商品
+  const { data: linkedItems = [], isLoading: linkedLoading } = useQuery({
+    queryKey: ["rule-items", expandedRule],
+    queryFn: () => fetchRuleItems(expandedRule!),
+    enabled: expandedRule !== null,
+  })
 
-  const [expandedRule, setExpandedRule] = useState<string | null>(null)
-
-  const toggleExpand = (ruleId: string) => {
+  const toggleExpand = (ruleId: number) => {
     setExpandedRule(expandedRule === ruleId ? null : ruleId)
   }
 
@@ -68,6 +84,9 @@ export function RuleTable({
               优先级
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              全店
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               关联
             </th>
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -78,7 +97,7 @@ export function RuleTable({
         <tbody className="divide-y divide-gray-200">
           {rules.map((rule) => (
             <>
-              <tr key={rule.rule_id} className={rule.enabled ? "" : "bg-gray-50"}>
+              <tr key={rule.id} className={rule.enabled ? "" : "bg-gray-50"}>
                 <td className="px-4 py-3">
                   <span
                     className={`px-3 py-1 text-xs rounded-full whitespace-nowrap ${
@@ -91,48 +110,57 @@ export function RuleTable({
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-900">
-                  {replyTypeLabels[rule.reply_type] || rule.reply_type}
+                  {replyTypeLabels[rule.keyType] || rule.keyType}
                 </td>
                 <td className="px-4 py-3">
                   <div className="text-sm font-medium text-gray-900">
-                    {getDisplayKeyword(rule)}
+                    {formatRuleKeyword(rule, prefLabels)}
                   </div>
-                  {rule.reply_type === "custom" && rule.keyword && (
+                  {rule.keyType === "custom" && rule.keyword.length > 0 && (
                     <div className="text-xs text-gray-500 font-mono">
-                      {rule.keyword.length > 20 ? rule.keyword.slice(0, 20) + "..." : rule.keyword}
+                      {rule.keyword.join("，").length > 20
+                        ? rule.keyword.join("，").slice(0, 20) + "..."
+                        : rule.keyword.join("，")}
                     </div>
                   )}
                 </td>
                 <td className="px-4 py-3">
                   <div className="text-sm text-gray-700 max-w-xs truncate">
-                    {rule.reply_content || "-"}
+                    {rule.replyContent || "-"}
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500">
-                  {rule.reply_type === "custom"
-                    ? matchTypeLabels[rule.match_type] || rule.match_type
+                  {rule.keyType === "custom"
+                    ? matchTypeLabels[rule.matchType] || rule.matchType
                     : "-"}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500">
                   {rule.priority}
                 </td>
                 <td className="px-4 py-3">
+                  <span
+                    className={`px-1.5 py-0.5 text-xs rounded-full ${
+                      rule.fullShop
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {rule.fullShop ? "全店" : "指定"}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
                   <button
-                    onClick={() => toggleExpand(rule.rule_id)}
+                    onClick={() => toggleExpand(rule.id)}
                     className="text-sm text-blue-600 hover:text-blue-800"
                   >
-                    {rule.linked_items > 0 && (
-                      <span className="mr-2">商品: {rule.linked_items}</span>
-                    )}
-                    {rule.linked_groups > 0 && (
-                      <span>商品组: {rule.linked_groups}</span>
-                    )}
-                    {(rule.linked_items > 0 || rule.linked_groups > 0) && (
-                      <span className="ml-1 text-xs">
-                        {expandedRule === rule.rule_id ? "▲" : "▼"}
-                      </span>
-                    )}
-                    {rule.linked_items === 0 && rule.linked_groups === 0 && (
+                    {rule.itemsCount > 0 ? (
+                      <>
+                        <span>商品: {rule.itemsCount}</span>
+                        <span className="ml-1 text-xs">
+                          {expandedRule === rule.id ? "▲" : "▼"}
+                        </span>
+                      </>
+                    ) : (
                       <span className="text-gray-400">无关联</span>
                     )}
                   </button>
@@ -145,17 +173,16 @@ export function RuleTable({
                     >
                       编辑
                     </button>
-
                     <button
                       onClick={() => onToggleEnabled(rule)}
-                      disabled={toggling === rule.rule_id}
+                      disabled={toggling === String(rule.id)}
                       className={`px-3 py-1 text-sm rounded-lg transition-colors ${
                         rule.enabled
                           ? "bg-orange-100 hover:bg-orange-200 text-orange-700"
                           : "bg-green-100 hover:bg-green-200 text-green-700"
                       } disabled:opacity-50`}
                     >
-                      {toggling === rule.rule_id ? (
+                      {toggling === String(rule.id) ? (
                         <LoadingSpinner size="sm" />
                       ) : rule.enabled ? (
                         "禁用"
@@ -163,13 +190,12 @@ export function RuleTable({
                         "启用"
                       )}
                     </button>
-
                     <button
                       onClick={() => onDelete(rule)}
-                      disabled={deleting === rule.rule_id}
+                      disabled={deleting === String(rule.id)}
                       className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                     >
-                      {deleting === rule.rule_id ? (
+                      {deleting === String(rule.id) ? (
                         <LoadingSpinner size="sm" />
                       ) : (
                         "删除"
@@ -178,45 +204,33 @@ export function RuleTable({
                   </div>
                 </td>
               </tr>
-              {/* 展开的关联详情 */}
-              {expandedRule === rule.rule_id &&
-                (rule.linked_item_list.length > 0 || rule.linked_group_list.length > 0) && (
-                  <tr key={`${rule.rule_id}-expanded`}>
-                    <td colSpan={8} className="px-4 py-3 bg-blue-50">
-                      <div className="text-xs text-gray-500 mb-2">关联详情：</div>
-                      {rule.linked_item_list.length > 0 && (
-                        <div className="mb-2">
-                          <div className="text-xs font-medium text-gray-700 mb-1">关联商品：</div>
-                          <div className="flex flex-wrap gap-1">
-                            {rule.linked_item_list.map((item) => (
-                              <span
-                                key={item.item_id}
-                                className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-lg"
-                              >
-                                {item.title} (¥{item.price})
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {rule.linked_group_list.length > 0 && (
-                        <div>
-                          <div className="text-xs font-medium text-gray-700 mb-1">关联商品组：</div>
-                          <div className="flex flex-wrap gap-1">
-                            {rule.linked_group_list.map((group) => (
-                              <span
-                                key={group.group_id}
-                                className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-lg"
-                              >
-                                {group.group_name}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                )}
+              {/* 惰性加载的关联商品展开行 */}
+              {expandedRule === rule.id && (
+                <tr key={`${rule.id}-expanded`}>
+                  <td colSpan={9} className="px-4 py-3 bg-blue-50">
+                    <div className="text-xs text-gray-500 mb-2">关联商品：</div>
+                    {linkedLoading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <LoadingSpinner size="md" />
+                      </div>
+                    ) : linkedItems.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {linkedItems.map((item) => (
+                          <span
+                            key={item.gid}
+                            className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-lg"
+                          >
+                            {item.title || `商品#${item.gid}`}
+                            {item.reservePrice && ` (¥${item.reservePrice})`}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">暂无关联商品</span>
+                    )}
+                  </td>
+                </tr>
+              )}
             </>
           ))}
         </tbody>

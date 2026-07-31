@@ -1,29 +1,29 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import type { KeywordRule } from "@/lib/api/keywords"
-import { updateKeywordRule, deleteKeywordRule } from "@/lib/api/keywords"
+import type { ReplyRule } from "@/lib/api/keywords"
+import { updateReplyRule, deleteReplyRule } from "@/lib/api/keywords"
 import { RuleTable } from "@/components/items/rules/RuleTable"
 import { MobileRuleCard } from "@/components/items/views/MobileRuleCard"
 import { RuleDrawer } from "@/components/items/drawers/RuleItemsAllDrawer"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { useQueryClient } from "@tanstack/react-query"
 import { useToast } from '@/components/ui/Toaster'
+import type { KeywordStats } from "@/hooks/useKeywords"
 
 interface RulesTabProps {
   isMobile: boolean
-  keywordRules: KeywordRule[]
-  rulesStats: { total: number; enabled: number; disabled: number; linkedItems: number; linkedGroups: number }
+  keywordRules: ReplyRule[]
+  rulesStats: KeywordStats
   keywordsLoading: boolean
   keywordsError: unknown
 }
 
 const DESKTOP_STAT_CARDS = [
-  { key: "total",        label: "规则总数",   color: "text-gray-900", bg: "bg-gray-50" },
-  { key: "enabled",      label: "已启用",     color: "text-green-600", bg: "bg-green-50" },
-  { key: "disabled",     label: "已禁用",     color: "text-gray-600", bg: "bg-gray-50" },
-  { key: "linkedItems",  label: "关联商品",   color: "text-blue-600", bg: "bg-blue-50" },
-  { key: "linkedGroups", label: "关联商品组", color: "text-purple-600", bg: "bg-purple-50" },
+  { key: "total",        label: "规则总数", color: "text-gray-900", bg: "bg-gray-50" },
+  { key: "enabled",      label: "已启用",   color: "text-green-600", bg: "bg-green-50" },
+  { key: "disabled",     label: "已禁用",   color: "text-gray-600", bg: "bg-gray-50" },
+  { key: "linkedItems",  label: "关联商品", color: "text-blue-600", bg: "bg-blue-50" },
 ] as const
 
 const MOBILE_STAT_PILLS = [
@@ -31,7 +31,6 @@ const MOBILE_STAT_PILLS = [
   { key: "enabled",      label: "启用", color: "text-green-600" },
   { key: "disabled",     label: "禁用", color: "text-gray-600" },
   { key: "linkedItems",  label: "商品", color: "text-blue-600" },
-  { key: "linkedGroups", label: "组",   color: "text-purple-600" },
 ] as const
 
 export function RulesTab({
@@ -46,16 +45,16 @@ export function RulesTab({
 
   // — 抽屉状态 —
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [editingRule, setEditingRule] = useState<KeywordRule | null>(null)
+  const [editingRule, setEditingRule] = useState<ReplyRule | null>(null)
 
   // — toggle/delete loading 状态 —
   const [toggling, setToggling] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
 
-  const handleToggleEnabled = useCallback(async (rule: KeywordRule) => {
-    setToggling(rule.rule_id)
+  const handleToggleEnabled = useCallback(async (rule: ReplyRule) => {
+    setToggling(String(rule.id))
     try {
-      await updateKeywordRule(rule.rule_id, { enabled: !rule.enabled })
+      await updateReplyRule(rule.id, { enabled: !rule.enabled })
       addToast({
         title: "更新成功",
         description: `规则已${!rule.enabled ? "启用" : "禁用"}`,
@@ -72,11 +71,11 @@ export function RulesTab({
     }
   }, [queryClient, addToast])
 
-  const handleDelete = useCallback(async (rule: KeywordRule) => {
+  const handleDelete = useCallback(async (rule: ReplyRule) => {
     if (!confirm(`确定要删除此规则吗？`)) return
-    setDeleting(rule.rule_id)
+    setDeleting(String(rule.id))
     try {
-      await deleteKeywordRule(rule.rule_id)
+      await deleteReplyRule(rule.id)
       addToast({
         title: "已删除",
         description: "规则已删除",
@@ -104,7 +103,9 @@ export function RulesTab({
                 key={key}
                 className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-3 py-1 flex-shrink-0"
               >
-                <span className={`text-xs font-semibold ${color}`}>{rulesStats[key]}</span>
+                <span className={`text-xs font-semibold ${color}`}>
+                  {rulesStats[key as keyof KeywordStats]}
+                </span>
                 <span className="text-xs text-gray-500">{label}</span>
               </div>
             ))}
@@ -122,10 +123,12 @@ export function RulesTab({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-5 gap-3 p-4 border-b border-gray-100">
+          <div className="grid grid-cols-4 gap-3 p-4 border-b border-gray-100">
             {DESKTOP_STAT_CARDS.map(({ key, label, color, bg }) => (
               <div key={key} className={`${bg} border border-gray-200 rounded-xl p-3`}>
-                <div className={`text-2xl font-semibold ${color}`}>{rulesStats[key]}</div>
+                <div className={`text-2xl font-semibold ${color}`}>
+                  {rulesStats[key as keyof KeywordStats]}
+                </div>
                 <div className="text-xs text-gray-500">{label}</div>
               </div>
             ))}
@@ -187,12 +190,12 @@ export function RulesTab({
             <div className="flex-1 overflow-y-auto px-1 py-2 space-y-2">
               {keywordRules.map((rule) => (
                 <MobileRuleCard
-                  key={rule.rule_id}
+                  key={rule.id}
                   rule={rule}
                   onToggleEnabled={handleToggleEnabled}
                   onEdit={setEditingRule}
                   onDelete={handleDelete}
-                  toggling={toggling === rule.rule_id}
+                  toggling={toggling === String(rule.id)}
                 />
               ))}
             </div>

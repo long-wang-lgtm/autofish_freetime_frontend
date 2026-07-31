@@ -1,13 +1,17 @@
 "use client"
 
-import type { KeywordRule } from "@/lib/api/keywords"
-import { getDisplayKeyword } from "@/lib/api/keywords"
+import { useQuery } from "@tanstack/react-query"
+import {
+  type ReplyRule,
+  formatRuleKeyword,
+  fetchPredefinedKeywords,
+} from "@/lib/api/keywords"
 
 interface MobileRuleCardProps {
-  rule: KeywordRule
-  onToggleEnabled: (rule: KeywordRule) => void
-  onEdit: (rule: KeywordRule) => void
-  onDelete: (rule: KeywordRule) => void
+  rule: ReplyRule
+  onToggleEnabled: (rule: ReplyRule) => void
+  onEdit: (rule: ReplyRule) => void
+  onDelete: (rule: ReplyRule) => void
   toggling: boolean
 }
 
@@ -29,7 +33,13 @@ export function MobileRuleCard({
   onDelete,
   toggling,
 }: MobileRuleCardProps) {
-  const keyword = getDisplayKeyword(rule)
+  const { data: prefLabels = {} } = useQuery({
+    queryKey: ["predefined-keywords"],
+    queryFn: fetchPredefinedKeywords,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const keyword = formatRuleKeyword(rule, prefLabels)
   const disabled = !rule.enabled
 
   return (
@@ -69,13 +79,21 @@ export function MobileRuleCard({
         </span>
       </div>
 
-      {/* 信息行：匹配方式 · 回复类型 */}
+      {/* 信息行：匹配方式 · 回复类型 · 全店 */}
       <div className="px-3 pb-1 flex items-center gap-1.5 text-xs text-gray-400 flex-wrap">
         <span className="bg-gray-100 text-gray-500 px-1.5 py-px rounded-full">
-          {matchTypeLabels[rule.match_type] || rule.match_type}
+          {matchTypeLabels[rule.matchType] || rule.matchType}
         </span>
         <span className="text-gray-300">·</span>
-        <span>{replyTypeLabels[rule.reply_type] || rule.reply_type}</span>
+        <span>{replyTypeLabels[rule.keyType] || rule.keyType}</span>
+        {rule.fullShop && (
+          <>
+            <span className="text-gray-300">·</span>
+            <span className="bg-blue-50 text-blue-600 px-1.5 py-px rounded-full">
+              全店
+            </span>
+          </>
+        )}
       </div>
 
       {/* 回复预览 */}
@@ -84,23 +102,17 @@ export function MobileRuleCard({
           disabled ? "text-gray-400" : "text-gray-600"
         }`}
       >
-        {rule.reply_content || "（无回复内容）"}
+        {rule.replyContent || "（无回复内容）"}
       </div>
 
       {/* 底部操作栏 */}
       <div className="flex items-center gap-1.5 px-3 py-2 border-t border-gray-100">
-        {/* 关联标签 */}
-        {rule.linked_items > 0 && (
+        {rule.itemsCount > 0 && (
           <span className="text-xs bg-blue-50 text-blue-600 px-1.5 py-px rounded-full">
-            📦{rule.linked_items}商品
+            📦{rule.itemsCount}商品
           </span>
         )}
-        {rule.linked_groups > 0 && (
-          <span className="text-xs bg-purple-50 text-purple-600 px-1.5 py-px rounded-full">
-            📁{rule.linked_groups}组
-          </span>
-        )}
-        {rule.linked_items === 0 && rule.linked_groups === 0 && (
+        {rule.itemsCount === 0 && (
           <span className="text-xs text-gray-400">无关联</span>
         )}
         <span className="flex-1" />
