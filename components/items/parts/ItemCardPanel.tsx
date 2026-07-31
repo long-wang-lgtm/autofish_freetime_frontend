@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { listRuleItems } from "@/lib/api/keywords"
+import { fetchBindableItems } from "@/lib/api/keywords"
 import { CollapsiblePanel } from "./CollapsiblePanel"
 
 interface ItemCardPanelProps {
@@ -15,7 +15,7 @@ export function ItemCardPanel({ onInsert }: ItemCardPanelProps) {
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["item-card-panel-items"],
-    queryFn: listRuleItems,
+    queryFn: fetchBindableItems,
     enabled: dataRequested,
   })
 
@@ -24,7 +24,7 @@ export function ItemCardPanel({ onInsert }: ItemCardPanelProps) {
     const q = search.toLowerCase()
     return items.filter(
       (i) =>
-        i.gid.toLowerCase().includes(q) ||
+        String(i.gid).toLowerCase().includes(q) ||
         (i.title && i.title.toLowerCase().includes(q))
     )
   }, [items, search])
@@ -60,15 +60,15 @@ export function ItemCardPanel({ onInsert }: ItemCardPanelProps) {
               <button
                 key={item.gid}
                 type="button"
-                onClick={() => handleInsert(item.gid)}
+                onClick={() => handleInsert(String(item.gid))}
                 className="w-full text-left p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors bg-white"
               >
                 <div className="font-medium text-gray-900 truncate text-xs">
                   {item.title || "无标题"}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-                  <span>ID: {item.gid.slice(0, 10)}...</span>
-                  <span>¥{item.price}</span>
+                  <span>ID: {String(item.gid).slice(0, 10)}...</span>
+                  {item.reservePrice && <span>¥{item.reservePrice}</span>}
                 </div>
               </button>
             ))
