@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import type { SearchField } from '@/lib/api/items'
+/** 芯片搜索字段（暂留，后续 Phase 移除） */
+export type SearchField = 'title' | 'gid' | 'deliveryContent' | 'receiptAfter' | 'positiveReviewAfter' | 'aiReplyItemPrompt' | 'sendCode'
 
 interface SearchChipProps {
   field: SearchField

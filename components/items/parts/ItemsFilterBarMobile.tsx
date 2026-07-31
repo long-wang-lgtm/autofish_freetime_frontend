@@ -5,11 +5,21 @@ import { SlidersHorizontal, RefreshCw, Search, X, Eraser } from 'lucide-react'
 import type { AccountName } from '@/lib/api/accounts'
 import {
   ITEM_SORT_FIELDS,
-  SEARCH_FIELD_LABELS,
-  type ItemsFilterState,
-  type SearchField,
 } from '@/lib/api/items'
+import type { ItemsFilterState } from '@/hooks/useItemsFilters'
 import { SearchChip } from '@/components/items/parts/SearchChip'
+import type { SearchField } from '@/components/items/parts/SearchChip'
+
+// 暂留：芯片搜索标签映射（后续 Phase 随芯片 UI 一起移除）
+const SEARCH_FIELD_LABELS: Record<SearchField, string> = {
+  title: '商品标题',
+  gid: '商品ID',
+  deliveryContent: '付款后发货',
+  receiptAfter: '收货后赠送',
+  positiveReviewAfter: '评价后赠送',
+  aiReplyItemPrompt: 'AI提示词',
+  sendCode: '指令码',
+}
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import type { ItemsFilterBarProps } from '@/components/items/parts/ItemsFilterBarDesktop'
 
