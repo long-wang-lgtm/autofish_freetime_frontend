@@ -1,10 +1,17 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { KeywordRule, PREDEFINED_KEYWORDS } from "@/lib/api/keywords"
+import { useQuery } from "@tanstack/react-query"
+import {
+  type ReplyRule,
+  type ReplyRuleCreate,
+  type ReplyRuleUpdate,
+  fetchPredefinedKeywords,
+  parseKeywordInput,
+} from "@/lib/api/keywords"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { TextEditor } from '@/components/ui/TextEditor'
 import { PlaceholderPicker } from "./PlaceholderPicker"
@@ -13,21 +20,22 @@ import { ItemCardPanel } from "./ItemCardPanel"
 const makeItemCardPlaceholder = (itemId: string) => `[ITEM:${itemId}]`
 
 export const ruleSchema = z.object({
-  reply_type: z.enum(["predefined", "custom"]),
+  keyType: z.enum(["predefined", "custom"]),
   keyword: z.string(),
-  reply_content: z.string().min(1, "回复内容不能为空"),
-  match_type: z.enum(["exact", "fuzzy", "regex"]),
+  replyContent: z.string().min(1, "回复内容不能为空"),
+  matchType: z.enum(["exact", "fuzzy", "regex"]),
   priority: z.number().int().min(0),
   enabled: z.boolean(),
+  fullShop: z.boolean(),
 })
 
 export type RuleFormData = z.infer<typeof ruleSchema>
 
 export interface KeywordRuleFormProps {
-  rule?: KeywordRule
+  rule?: ReplyRule
   linkedItem?: { title?: string; price?: number; gid?: string }
   bindingWarning?: string
-  onSubmit: (data: RuleFormData) => Promise<void>
+  onSubmit: (data: ReplyRuleCreate | ReplyRuleUpdate) => Promise<void>
   onCancel: () => void
   onDestructiveAction?: { label: string; onAction: () => Promise<void> }
   onDirtyChange?: (dirty: boolean) => void
@@ -52,6 +60,19 @@ export function KeywordRuleForm({
   const [loading, setLoading] = useState(false)
   const [destructiveLoading, setDestructiveLoading] = useState(false)
 
+  // 预定义关键词 — React Query 去重，多组件共享同一缓存
+  const { data: prefLabels = {} } = useQuery({
+    queryKey: ["predefined-keywords"],
+    queryFn: fetchPredefinedKeywords,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // 从字典派生下拉选项
+  const prefOptions = useMemo(
+    () => Object.entries(prefLabels).map(([value, label]) => ({ value, label })),
+    [prefLabels]
+  )
+
   const {
     register,
     handleSubmit,
@@ -62,17 +83,18 @@ export function KeywordRuleForm({
   } = useForm<RuleFormData>({
     resolver: zodResolver(ruleSchema),
     defaultValues: {
-      reply_type: rule?.reply_type || "custom",
-      keyword: rule?.keyword || "",
-      reply_content: rule?.reply_content || "",
-      match_type: rule?.match_type || "exact",
+      keyType: rule?.keyType || "custom",
+      keyword: rule?.keyword.join("，") || "",
+      replyContent: rule?.replyContent || "",
+      matchType: rule?.matchType || "exact",
       priority: rule?.priority || 0,
       enabled: rule?.enabled ?? true,
+      fullShop: rule?.fullShop ?? false,
     },
   })
 
-  const replyType = watch("reply_type")
-  const replyContent = watch("reply_content")
+  const keyType = watch("keyType")
+  const replyContentValue = watch("replyContent")
 
   // Dirty state tracking
   const isDirty = Object.keys(dirtyFields).length > 0
@@ -83,10 +105,10 @@ export function KeywordRuleForm({
   // Insert placeholder via PlaceholderPicker or drag-drop
   const insertPlaceholder = useCallback(
     (placeholder: string) => {
-      const currentValue = replyContent || ""
-      setValue("reply_content", currentValue + placeholder, { shouldValidate: true, shouldDirty: true })
+      const currentValue = replyContentValue || ""
+      setValue("replyContent", currentValue + placeholder, { shouldValidate: true, shouldDirty: true })
     },
-    [replyContent, setValue]
+    [replyContentValue, setValue]
   )
 
   // Handle drop into reply content textarea
@@ -95,18 +117,19 @@ export function KeywordRuleForm({
       e.preventDefault()
       const text = e.dataTransfer.getData("text/plain")
       if (text && (text.startsWith("[ITEM:") || text.startsWith("{"))) {
-        const currentValue = replyContent || ""
-        setValue("reply_content", currentValue + text, { shouldValidate: true, shouldDirty: true })
+        const currentValue = replyContentValue || ""
+        setValue("replyContent", currentValue + text, { shouldValidate: true, shouldDirty: true })
       }
     },
-    [replyContent, setValue]
+    [replyContentValue, setValue]
   )
 
   const handleSubmitForm = async (data: RuleFormData) => {
     setLoading(true)
     try {
-      await onSubmit(data)
-      reset(data)
+      const keyword = parseKeywordInput(data.keyword)
+      await onSubmit({ ...data, keyword })
+      reset({ ...data, keyword: keyword.join("，") })
     } finally {
       setLoading(false)
     }
@@ -165,9 +188,9 @@ export function KeywordRuleForm({
                 <div className="flex gap-0.5 bg-blue-100 rounded-lg p-0.5">
                   <button
                     type="button"
-                    onClick={() => setValue("reply_type", "custom", { shouldDirty: true })}
+                    onClick={() => setValue("keyType", "custom", { shouldDirty: true })}
                     className={`px-1.5 py-0.5 text-sm rounded-lg transition-colors ${
-                      replyType === "custom"
+                      keyType === "custom"
                         ? "bg-white text-blue-700 font-medium shadow-sm"
                         : "text-blue-500 hover:text-blue-700"
                     }`}
@@ -176,9 +199,9 @@ export function KeywordRuleForm({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setValue("reply_type", "predefined", { shouldDirty: true })}
+                    onClick={() => setValue("keyType", "predefined", { shouldDirty: true })}
                     className={`px-1.5 py-0.5 text-sm rounded-lg transition-colors ${
-                      replyType === "predefined"
+                      keyType === "predefined"
                         ? "bg-white text-blue-700 font-medium shadow-sm"
                         : "text-blue-500 hover:text-blue-700"
                     }`}
@@ -199,12 +222,12 @@ export function KeywordRuleForm({
             </div>
 
             {/* 关键词 / 匹配方式 或 预定义选择 */}
-            {replyType === "predefined" ? (
+            {keyType === "predefined" ? (
               <select
                 {...register("keyword")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
               >
-                {PREDEFINED_KEYWORDS.map((kw) => (
+                {prefOptions.map((kw) => (
                   <option key={kw.value} value={kw.value}>
                     {kw.label}
                   </option>
@@ -223,7 +246,7 @@ export function KeywordRuleForm({
                 <div className="flex-[2]">
                   <label className="block text-sm text-gray-500 mb-1">匹配方式</label>
                   <select
-                    {...register("match_type")}
+                    {...register("matchType")}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                   >
                     <option value="exact">精确匹配</option>
@@ -233,6 +256,28 @@ export function KeywordRuleForm({
                 </div>
               </div>
             )}
+
+            {/* 全店生效开关 */}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-blue-200">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={watch("fullShop")}
+                onClick={() => setValue("fullShop", !watch("fullShop"), { shouldDirty: true })}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${
+                  watch("fullShop") ? "bg-blue-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                    watch("fullShop") ? "translate-x-[18px]" : "translate-x-[2px]"
+                  }`}
+                />
+              </button>
+              <span className="text-sm text-gray-700 select-none">
+                全店生效（覆盖所有商品）
+              </span>
+            </div>
           </div>
 
           {/* 💬 回复内容卡片 */}
@@ -247,15 +292,15 @@ export function KeywordRuleForm({
             {/* Textarea */}
             <div className="mt-2">
               <TextEditor
-                {...register("reply_content")}
+                {...register("replyContent")}
                 rows={5}
                 maxHeight="35vh"
                 onDrop={handleReplyContentDrop}
                 onDragOver={(e) => e.preventDefault()}
                 placeholder="当消息匹配时，自动发送此回复内容"
               />
-              {errors.reply_content && (
-                <p className="mt-1 text-xs text-red-500">{errors.reply_content.message}</p>
+              {errors.replyContent && (
+                <p className="mt-1 text-xs text-red-500">{errors.replyContent.message}</p>
               )}
               <p className="mt-1 text-sm text-gray-400">
                 占位符格式：{"{占位符名称}"}，商品卡片格式：[ITEM:商品ID]
@@ -287,7 +332,7 @@ export function KeywordRuleForm({
               <ItemCardPanel
                 onInsert={(itemId) => {
                   const placeholder = makeItemCardPlaceholder(itemId)
-                  setValue("reply_content", (watch("reply_content") || "") + placeholder, {
+                  setValue("replyContent", (replyContentValue || "") + placeholder, {
                     shouldValidate: true,
                     shouldDirty: true,
                   })
