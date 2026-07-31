@@ -2,14 +2,20 @@
 
 import { useState, useCallback } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { updateItem, refreshItems, shelvesItem, offlineItem, type Item, type ItemListResponse } from "@/lib/api/items"
+import {
+  updateItem,
+  refreshItems,
+  shelvesItem,
+  offlineItem,
+  updateItemShipConfig,
+  type ShopItem,
+  type ShopItemListResponse,
+  type ShipByVoucher,
+} from "@/lib/api/items"
 import { useToast } from '@/components/ui/Toaster'
 
 /**
  * 商品管理页 — 变更操作层
- *
- * 包含 toggle（自动回复/自动发货等开关）和 refresh（刷新商品）两个 mutation。
- * handleRefresh 接受 uid 参数——由调用方传入当前筛选的账号。
  */
 export function useItemMutations() {
   const queryClient = useQueryClient()
@@ -17,7 +23,7 @@ export function useItemMutations() {
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const updateMutation = useMutation({
-    mutationFn: ({ gid, data }: { gid: string; data: Parameters<typeof updateItem>[1] }) =>
+    mutationFn: ({ gid, data }: { gid: number; data: Record<string, unknown> }) =>
       updateItem(gid, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["items"] })
@@ -28,18 +34,16 @@ export function useItemMutations() {
   })
 
   const shelfMutation = useMutation({
-    mutationFn: ({ gid, uid, action }: { gid: string; uid: string; action: "shelves" | "offline" }) =>
+    mutationFn: ({ gid, uid, action }: { gid: number; uid: string; action: "shelves" | "offline" }) =>
       action === "shelves" ? shelvesItem(gid, uid) : offlineItem(gid, uid),
     onSuccess: (updated, { action }) => {
-      // 就地 merge 更新所有 ["items", ...] 列表缓存（merge 而非替换，防返回字段不全丢字段）
-      queryClient.setQueriesData<ItemListResponse>({ queryKey: ["items"] }, (old) => {
+      queryClient.setQueriesData<ShopItemListResponse>({ queryKey: ["items"] }, (old) => {
         if (!old) return old
         return {
           ...old,
           items: old.items.map((it) => (it.gid === updated.gid ? { ...it, ...updated } : it)),
         }
       })
-      // 后台重拉，校正状态筛选结果与统计
       queryClient.invalidateQueries({ queryKey: ["items"] })
       addToast({ title: action === "shelves" ? "上架成功" : "下架成功", variant: "success" })
     },
@@ -48,9 +52,27 @@ export function useItemMutations() {
     },
   })
 
+  /** ShipConfig 保存 mutation */
+  const shipConfigMutation = useMutation({
+    mutationFn: ({ gid, stage, byEntirety, voucher }: {
+      gid: number
+      stage: 'shipment' | 'shipconfirm' | 'evaluation'
+      byEntirety: boolean
+      voucher: ShipByVoucher
+    }) => updateItemShipConfig(gid, { stage, byEntirety, voucher }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["items"] })
+      addToast({ title: "配置已保存", variant: "success" })
+    },
+    onError: (e: Error) => {
+      addToast({ title: "保存失败", description: e.message, variant: "error" })
+    },
+  })
+
   const handleToggle = useCallback(
-    (item: Item, field: "auto_reply" | "auto_delivery" | "auto_ai_reply" | "auto_restock") => {
-      updateMutation.mutate({ gid: item.gid, data: { [field]: !item[field] } })
+    (item: ShopItem, field: "auto_reply" | "auto_ship" | "auto_ai_reply" | "auto_restock") => {
+      const gid = item.gid
+      updateMutation.mutate({ gid, data: { [field]: !item[field] } })
     },
     [updateMutation],
   )
@@ -85,6 +107,7 @@ export function useItemMutations() {
   return {
     updateMutation,
     shelfMutation,
+    shipConfigMutation,
     handleToggle,
     handleRefresh,
     isRefreshing,

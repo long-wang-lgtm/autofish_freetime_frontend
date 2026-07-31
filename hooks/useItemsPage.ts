@@ -42,6 +42,7 @@ export function useItemsPage() {
   const {
     updateMutation,
     shelfMutation,
+    shipConfigMutation,
     handleToggle,
     handleRefresh: refreshFn,
     isRefreshing,
@@ -73,6 +74,7 @@ export function useItemsPage() {
     // 变更操作
     updateMutation,
     shelfMutation,
+    shipConfigMutation,
     handleToggle,
     handleRefresh,
     // 工具
