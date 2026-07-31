@@ -3,13 +3,14 @@
 import { useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
-  type KeywordRule,
-  createKeywordRule,
-  updateKeywordRule,
-  unlinkItemFromRule,
-  linkItemToRule,
-  PREDEFINED_KEYWORDS,
-  getRulesForItem,
+  type ReplyRule,
+  createReplyRule,
+  updateReplyRule,
+  unbindItemRules,
+  bindItemRules,
+  fetchItemRules,
+  fetchPredefinedKeywords,
+  formatRuleKeyword,
 } from "@/lib/api/keywords"
 import type { Item } from "@/lib/api/items"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
@@ -30,19 +31,26 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
   const isMobile = useIsMobile()
   const [loading, setLoading] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [editingRule, setEditingRule] = useState<KeywordRule | null>(null)
+  const [editingRule, setEditingRule] = useState<ReplyRule | null>(null)
   const [isDirty, setIsDirty] = useState(false)
 
+  // 预定义关键词标签
+  const { data: prefLabels = {} } = useQuery({
+    queryKey: ["predefined-keywords"],
+    queryFn: fetchPredefinedKeywords,
+    staleTime: 5 * 60 * 1000,
+  })
+
   // 获取当前商品关联的规则
-  const { data: linkedRulesData, isLoading: linkedLoading } = useQuery({
-    queryKey: ["keywords", "item", item.gid],
-    queryFn: () => getRulesForItem(item.gid),
+  const { data: linkedRules = [], isLoading: linkedLoading } = useQuery({
+    queryKey: ["item-rules", item.gid],
+    queryFn: () => fetchItemRules(item.gid),
   })
 
   // 绑定警告：编辑规则时，若已关联多个商品则提示
   const bindingWarning =
-    editingRule && editingRule.linked_items > 0
-      ? `此规则已关联 ${editingRule.linked_items} 个商品，修改将影响所有关联商品`
+    editingRule && editingRule.itemsCount > 0
+      ? `此规则已关联 ${editingRule.itemsCount} 个商品，修改将影响所有关联商品`
       : undefined
 
   // 开始创建新规则
@@ -53,7 +61,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
   }
 
   // 开始编辑规则
-  const handleEditRule = (rule: KeywordRule) => {
+  const handleEditRule = (rule: ReplyRule) => {
     setEditingRule(rule)
     setIsDirty(false)
     setShowCreateForm(true)
@@ -64,14 +72,30 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
     setLoading(true)
     try {
       if (editingRule) {
-        await updateKeywordRule(editingRule.rule_id, data)
+        await updateReplyRule(editingRule.id, {
+          keyType: data.keyType,
+          keyword: data.keyword,
+          matchType: data.matchType,
+          replyContent: data.replyContent,
+          priority: data.priority,
+          enabled: data.enabled,
+          fullShop: data.fullShop,
+        })
         addToast({ title: "更新成功", description: "规则已更新" })
       } else {
-        const savedRule = await createKeywordRule(data)
-        await linkItemToRule(savedRule.rule_id, item.gid)
+        const savedRule = await createReplyRule({
+          keyType: data.keyType,
+          keyword: data.keyword,
+          matchType: data.matchType,
+          replyContent: data.replyContent,
+          priority: data.priority,
+          enabled: data.enabled,
+          fullShop: data.fullShop,
+        })
+        await bindItemRules(item.gid, [savedRule.id])
         addToast({ title: "创建成功", description: "规则已创建并关联到此商品" })
       }
-      queryClient.invalidateQueries({ queryKey: ["keywords", "item", item.gid] })
+      queryClient.invalidateQueries({ queryKey: ["item-rules", item.gid] })
       queryClient.invalidateQueries({ queryKey: ["keywords"] })
       setShowCreateForm(false)
       setEditingRule(null)
@@ -88,13 +112,14 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
   }
 
   // 解除绑定（替代原来的删除规则）
-  const handleUnlinkRule = async (rule: KeywordRule) => {
-    if (!confirm(`确定要解除规则"${rule.keyword}"与此商品的绑定吗？`)) return
+  const handleUnlinkRule = async (rule: ReplyRule) => {
+    const keyword = formatRuleKeyword(rule, prefLabels)
+    if (!confirm(`确定要解除规则"${keyword}"与此商品的绑定吗？`)) return
     setLoading(true)
     try {
-      await unlinkItemFromRule(rule.rule_id, item.gid)
+      await unbindItemRules(item.gid, [rule.id])
       addToast({ title: "已解除绑定", description: "规则与此商品的关联已取消" })
-      queryClient.invalidateQueries({ queryKey: ["keywords", "item", item.gid] })
+      queryClient.invalidateQueries({ queryKey: ["item-rules", item.gid] })
       queryClient.invalidateQueries({ queryKey: ["keywords"] })
       setShowCreateForm(false)
       setEditingRule(null)
@@ -105,19 +130,12 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
     }
   }
 
-  const getDisplayKeyword = (rule: KeywordRule) => {
-    if (rule.reply_type === "predefined") {
-      return PREDEFINED_KEYWORDS.find((k) => k.value === rule.keyword)?.label || rule.keyword
-    }
-    return rule.keyword
-  }
-
   // ==== 规则列表视图 ====
   const ruleListView = (
     <>
       <div className="flex items-center justify-between mb-4">
         <div className="text-sm text-gray-600">
-          已关联 {linkedRulesData?.total || 0} 个规则
+          已关联 {linkedRules.length} 个规则
         </div>
         <button
           onClick={handleCreateNew}
@@ -131,11 +149,11 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
         <div className="flex items-center justify-center py-6">
           <LoadingSpinner size="md" />
         </div>
-      ) : linkedRulesData?.rules && linkedRulesData.rules.length > 0 ? (
+      ) : linkedRules.length > 0 ? (
         <div className="space-y-2">
-          {linkedRulesData.rules.map((rule) => (
+          {linkedRules.map((rule) => (
             <div
-              key={rule.rule_id}
+              key={rule.id}
               className="border border-gray-200 rounded-xl p-3 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-start justify-between">
@@ -151,14 +169,14 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
                       {rule.enabled ? "启用" : "禁用"}
                     </span>
                     <span className="text-sm font-medium text-gray-900">
-                      {getDisplayKeyword(rule)}
+                      {formatRuleKeyword(rule, prefLabels)}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {rule.reply_type === "predefined" ? "预定义" : rule.match_type}
+                      {rule.keyType === "predefined" ? "预定义" : rule.matchType}
                     </span>
                   </div>
                   <div className="text-xs text-gray-500 line-clamp-2">
-                    {rule.reply_content || "(无回复内容)"}
+                    {rule.replyContent || "(无回复内容)"}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
@@ -190,7 +208,6 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
   )
 
   const title = "关键词回复"
-  const subtitle = `为商品「${item.title || item.gid.slice(0, 10)}...」配置关键词自动回复`
 
   // ==== 编辑表单视图 ====
   const editView = (
@@ -220,7 +237,6 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
         open={open}
         onClose={onClose}
         title={title}
-        subtitle={subtitle}
         heightRatio={0.95}
         closeOnBackdrop={!isDirty}
       >
