@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 
-// ——— 模块私有 hook（从 useSendCodeEdit.ts 内联合并） ———
+// ——— 模块私有 hook ———
 function useSendCodeEdit(
-  gid: string,
+  gid: number,
   sendCode: string | null,
-  onUpdateField: (gid: string, field: "sendCode", value: string) => void
+  onUpdateField: (gid: number, field: "sendCode", value: string) => void
 ) {
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState("")
@@ -49,10 +49,10 @@ function useSendCodeEdit(
 
 // ——— SendCodeEditor 组件 ———
 interface SendCodeEditorProps {
-  gid: string
+  gid: number
   sendCode: string | null
   variant: "cell" | "row"
-  onUpdateField: (gid: string, field: "sendCode", value: string) => void
+  onUpdateField: (gid: number, field: "sendCode", value: string) => void
   /** variant="row" 时用于 display 模式的 hasValue（可选，避免重复计算） */
   hasValue?: boolean
 }
@@ -69,7 +69,7 @@ export function SendCodeEditor({
 
   const actualHasValue = propHasValue ?? !!(sendCode && sendCode.trim().length > 0)
 
-  // --- 编辑态（两种 variant 共享 hook，UI 不同） ---
+  // --- 编辑态 ---
   if (editing) {
     if (variant === "cell") {
       return (
@@ -86,7 +86,6 @@ export function SendCodeEditor({
         />
       )
     }
-    // variant === "row"
     return (
       <div className="flex items-center justify-between px-4 py-2">
         <span className="text-sm text-gray-600">⌨️ 指令码</span>
@@ -120,7 +119,6 @@ export function SendCodeEditor({
       </button>
     )
   }
-  // variant === "row"
   return (
     <button
       onClick={startEdit}

@@ -1,15 +1,26 @@
 "use client"
 
 import { useState } from "react"
-import { getShelfState, type Item } from "@/lib/api/items"
+import type { ShopItem } from "@/lib/api/items"
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 
 interface ShelfActionsProps {
-  item: Item
+  item: ShopItem
   variant: "desktop" | "mobile"
-  pending: boolean                 // 该行是否正在请求（锁定按钮 + 确认框 loading）
-  onShelve: (item: Item) => void
-  onOffline: (item: Item) => void
+  pending: boolean
+  onShelve: (item: ShopItem) => void
+  onOffline: (item: ShopItem) => void
+}
+
+/** 判断上架/下架按钮可用性 */
+function getShelfState(item: ShopItem) {
+  const isPro = item.account.isPro
+  return {
+    canShelve: !isPro && (item.status === -2 || item.status === 1),
+    canOffline: !isPro && item.status === 0,
+    shelveDisabledReason: isPro ? "Pro 账号不支持上架" : undefined,
+    offlineDisabledReason: isPro ? "Pro 账号不支持下架" : undefined,
+  }
 }
 
 export function ShelfActions({ item, variant, pending, onShelve, onOffline }: ShelfActionsProps) {
@@ -22,7 +33,6 @@ export function ShelfActions({ item, variant, pending, onShelve, onOffline }: Sh
     setConfirm(null)
   }
 
-  // 确认框（桌面/移动共用；variant="default" 中性样式）
   const dialog = (
     <ConfirmDialog
       open={confirm !== null}
@@ -50,7 +60,6 @@ export function ShelfActions({ item, variant, pending, onShelve, onOffline }: Sh
   )
 
   if (variant === "mobile") {
-    // 移动端：只渲染与当前状态相关的单个按钮
     const showShelve = item.status === -2 || item.status === 1
     const showOffline = item.status === 0
     if (!showShelve && !showOffline) return null
@@ -91,7 +100,6 @@ export function ShelfActions({ item, variant, pending, onShelve, onOffline }: Sh
     )
   }
 
-  // 桌面端：两个按钮都显示（禁用不可用者）
   return (
     <span className="inline-flex items-center gap-2">
       <button
