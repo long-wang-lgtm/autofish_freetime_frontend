@@ -106,7 +106,7 @@ interface ShipConfigModalProps {
 2. 发货方式切换：两个并列按钮（无卡配置 / 卡密配置），选中态 `bg-blue-50 text-blue-700`
 3. 卡种选择（仅 VOUCHER 显示）：select 下拉，数据源 `voucherKinds`
 4. 使用说明 / 发货内容：textarea
-5. 占位符插入：折叠面板，当前仅 `{分段符}`，结构为数组可扩展
+5. 占位符插入：始终展示，点击/拖拽插入到光标处（无光标则追加到末尾），当前仅 `{分段符}`，结构为数组可扩展
 6. 底部：取消 + 保存按钮
 
 **保存逻辑**: 组装 `ShipByVoucher` 对象，调用 `onSave`，成功后关闭弹窗。
