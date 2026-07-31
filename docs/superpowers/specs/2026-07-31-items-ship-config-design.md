@@ -42,26 +42,31 @@ interface ShipByVoucher {
 ```
 点击表格中 shipment/shipconfirm/evaluation 状态单元格
   │
-  ├── item.skus 为 null 或 item.skus.length ≤ 1（单规格 / 无SKU）
+  ├── item.skus 为 null（无规格数据）
   │   └── 直接打开 ShipConfigModal（byEntirety=true, 无 skuInfo）
   │
-  └── item.skus.length > 1（多规格）
+  └── item.skus 非 null（有规格数据，多规格）
       └── 打开 SkuConfigModal（默认 SKU 明细视图）
-          ├── SKU 明细视图：点击某 SKU 行
-          │   └── 打开 ShipConfigModal（byEntirety=false, 传入该 SKU 的 skuid + values）
-          │       保存后返回 SkuConfigModal（刷新数据）
+          ├── SKU 明细视图：点击某 SKU 行 → 打开 ShipConfigModal
+          │   （byEntirety=false, 传入该 SKU 的 skuid + values）
+          │   ├── 保存 → 调用 updateItemShipConfig → 关闭弹窗，回到 SkuConfigModal（刷新数据）
+          │   └── 取消 → 关闭弹窗，回到 SkuConfigModal
           │
-          └── 切换至"按商品配置"
-              └── 打开 ShipConfigModal（byEntirety=true, 无 skuInfo）
-                  通过"切换到按SKU配置"按钮返回 SkuConfigModal
+          └── 切换至"按商品配置" → 打开 ShipConfigModal
+              （byEntirety=true, 无 skuInfo）
+              ├── 保存 → 调用 API → 关闭弹窗，回到 SkuConfigModal
+              ├── 取消 → 关闭弹窗，回到 SkuConfigModal
+              └── 顶部"返回SKU列表"按钮 → 同取消，回到 SkuConfigModal SKU 明细视图
 ```
 
 ### 关键规则
 
 - 两个弹窗均为居中 Modal（桌面端 + 移动端统一）
+- 多规格判断：`item.skus` 是否为 null。非 null = 有规格 = 多规格
 - SkuConfigModal 中"按SKU / 按商品"切换为双向，可来回切换
-- ShipConfigModal 从 SkuConfigModal 进入时，顶部显示"返回SKU列表"按钮（= 切换回按SKU配置）
-- 保存调用 `updateItemShipConfig`，成功后通过 React Query 刷新列表
+- ShipConfigModal 从 SkuConfigModal 进入时，顶部显示"返回SKU列表"按钮（点击同取消，回到 SkuConfigModal）
+- 每个 SKU 单独保存，调用 `updateItemShipConfig`，成功后通过 React Query 刷新列表缓存
+- 取消不保存任何内容，直接回到 SkuConfigModal
 
 ---
 
