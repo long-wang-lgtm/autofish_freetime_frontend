@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Item } from "@/lib/api/items"
+import type { ShopItem } from "@/lib/api/items"
 import { Bot, Truck, Upload, ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
-import { ConfigField, formatPublishTime, statusLabel } from "../config"
+import type { ShipStage, ConfigField } from "../config"
+import { formatPublishTime, statusLabel, hasShipConfig } from "../config"
 import { IconToggle } from "../parts/IconToggle"
 import { SendCodeEditor } from "../parts/SendCodeEditor"
 import { ShelfActions } from "../parts/ShelfActions"
@@ -16,15 +17,15 @@ interface ConfigEntry {
 }
 
 interface MobileProductCardProps {
-  item: Item
+  item: ShopItem
   keywordCount: number
-  onToggle: (item: Item, field: "auto_reply" | "auto_delivery" | "auto_ai_reply" | "auto_restock") => void
+  onToggle: (item: ShopItem, field: "auto_reply" | "auto_ship" | "auto_ai_reply" | "auto_restock") => void
   onEdit: () => void
   onKeywordClick: () => void
-  onConfigClick: (field: ConfigField) => void
-  onSendCodeChange: (gid: string, value: string) => void
-  onShelve: (item: Item) => void
-  onOffline: (item: Item) => void
+  onConfigClick: (stage: ShipStage) => void
+  onSendCodeChange: (gid: number, value: string) => void
+  onShelve: (item: ShopItem) => void
+  onOffline: (item: ShopItem) => void
   shelfPending: boolean
 }
 
@@ -43,19 +44,38 @@ export function MobileProductCard({
   const status = statusLabel(item.status)
   const [expanded, setExpanded] = useState(false)
 
-  // 构建配置入口列表（有序）
   const allConfigs: ConfigEntry[] = [
-    { key: "deliveryContent", label: "付款后发货", icon: "📝", hasValue: (item.deliveryContent || "").trim().length > 0 },
-    { key: "receiptAfter", label: "收货后赠送", icon: "🎁", hasValue: (item.receiptAfter || "").trim().length > 0 },
-    { key: "positiveReviewAfter", label: "评价后赠送", icon: "⭐", hasValue: (item.positiveReviewAfter || "").trim().length > 0 },
-    { key: "ai_reply_item_prompt", label: "AI提示词", icon: "💬", hasValue: (item.ai_reply_item_prompt || "").trim().length > 0 },
-    { key: "keyword", label: "关键词回复", icon: "🔑", hasValue: keywordCount > 0 },
-    { key: "sendCode", label: "指令码", icon: "⌨️", hasValue: !!(item.sendCode && item.sendCode.trim().length > 0) },
+    {
+      key: "shipment", label: "付款后发货", icon: "📝",
+      hasValue: item.config ? hasShipConfig(item.config.shipment) : false
+    },
+    {
+      key: "shipconfirm", label: "收货后赠送", icon: "🎁",
+      hasValue: item.config ? hasShipConfig(item.config.shipconfirm) : false
+    },
+    {
+      key: "evaluation", label: "评价后赠送", icon: "⭐",
+      hasValue: item.config ? hasShipConfig(item.config.evaluation) : false
+    },
+    {
+      key: "aiReplyItemPrompt", label: "AI提示词", icon: "💬",
+      hasValue: (item.config?.ai_prompt || "").trim().length > 0
+    },
+    {
+      key: "keyword", label: "关键词回复", icon: "🔑",
+      hasValue: keywordCount > 0
+    },
+    {
+      key: "sendCode", label: "指令码", icon: "⌨️",
+      hasValue: !!(item.config?.sendCode && item.config.sendCode.trim().length > 0)
+    },
   ]
 
   const configuredConfigs = allConfigs.filter((c) => c.hasValue)
   const unconfiguredConfigs = allConfigs.filter((c) => !c.hasValue)
   const hasUnconfigured = unconfiguredConfigs.length > 0
+
+  const shipStages: ShipStage[] = ['shipment', 'shipconfirm', 'evaluation']
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden active:scale-[0.98] transition-transform">
@@ -68,7 +88,6 @@ export function MobileProductCard({
           {item.title || "无标题"}
         </button>
 
-        {/* 纯图标开关（无文字） */}
         <div className="flex items-center gap-0.5 flex-shrink-0">
           <IconToggle
             active={item.auto_ai_reply}
@@ -80,10 +99,10 @@ export function MobileProductCard({
           </IconToggle>
 
           <IconToggle
-            active={item.auto_delivery}
+            active={item.auto_ship}
             activeClass="text-green-500 bg-green-50"
-            title={item.auto_delivery ? "自动发货：开" : "自动发货：关"}
-            onClick={() => onToggle(item, "auto_delivery")}
+            title={item.auto_ship ? "自动发货：开" : "自动发货：关"}
+            onClick={() => onToggle(item, "auto_ship")}
           >
             <Truck className="w-4 h-4" />
           </IconToggle>
@@ -91,16 +110,16 @@ export function MobileProductCard({
           <IconToggle
             active={item.auto_restock}
             activeClass="text-teal-500 bg-teal-50"
-            disabled={item.account.isPro && !item.auto_restock}
+            disabled={item.account.isPro}
             title={
-              item.account.isPro && !item.auto_restock
+              item.account.isPro
                 ? "Pro账号无法开启自动上架"
                 : item.auto_restock
                 ? "自动上架：开"
                 : "自动上架：关"
             }
             onClick={() => {
-              if (item.account.isPro && !item.auto_restock) return
+              if (item.account.isPro) return
               onToggle(item, "auto_restock")
             }}
           >
@@ -109,7 +128,7 @@ export function MobileProductCard({
         </div>
       </div>
 
-      {/* === 信息栏（账号 → GID → 状态 → 价格 → 时间） === */}
+      {/* === 信息栏 === */}
       <div className="px-4 pb-3 flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
         <span className="truncate max-w-[80px]">{item.account.name}</span>
         <span className="text-gray-300">|</span>
@@ -119,7 +138,7 @@ export function MobileProductCard({
           {status.text}
         </span>
         <span className="text-gray-300">|</span>
-        <span className="text-orange-600 font-semibold flex-shrink-0">¥{item.price}</span>
+        <span className="text-orange-600 font-semibold flex-shrink-0">{item.reservePrice || '-'}</span>
         <span className="text-gray-300">|</span>
         <span className="flex-shrink-0">{formatPublishTime(item.publishTime)}</span>
         <ShelfActions
@@ -131,10 +150,9 @@ export function MobileProductCard({
         />
       </div>
 
-      {/* 分割线 */}
       <div className="border-t border-gray-100" />
 
-      {/* === 已配置项（始终显示） === */}
+      {/* === 已配置项 === */}
       <div className="divide-y divide-gray-50">
         {configuredConfigs.map((cfg) =>
           cfg.key === "keyword" ? (
@@ -155,20 +173,43 @@ export function MobileProductCard({
             <SendCodeEditor
               key={cfg.key}
               gid={item.gid}
-              sendCode={item.sendCode}
+              sendCode={item.config?.sendCode ?? null}
               variant="row"
               hasValue={cfg.hasValue}
               onUpdateField={(gid, _field, value) => onSendCodeChange(gid, value)}
             />
-          ) : (
-            <ConfigRow
+          ) : shipStages.includes(cfg.key as ShipStage) ? (
+            <button
               key={cfg.key}
-              label={cfg.label}
-              icon={cfg.icon}
-              hasValue={cfg.hasValue}
-              value={item[cfg.key as keyof Item] as string}
-              onClick={() => onConfigClick(cfg.key as ConfigField)}
-            />
+              onClick={() => onConfigClick(cfg.key as ShipStage)}
+              className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+            >
+              <span className={cfg.hasValue ? "text-gray-600" : "text-gray-400"}>
+                {cfg.icon} {cfg.label}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className={`text-xs max-w-[100px] truncate ${cfg.hasValue ? "text-blue-600" : "text-gray-400"}`}>
+                  {cfg.hasValue ? "已配置" : "未配置"}
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+              </span>
+            </button>
+          ) : (
+            <button
+              key={cfg.key}
+              onClick={() => onConfigClick('shipment')}
+              className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+            >
+              <span className={cfg.hasValue ? "text-gray-600" : "text-gray-400"}>
+                {cfg.icon} {cfg.label}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className={`text-xs max-w-[100px] truncate ${cfg.hasValue ? "text-blue-600" : "text-gray-400"}`}>
+                  {cfg.hasValue ? "已配置" : "未配置"}
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+              </span>
+            </button>
           )
         )}
       </div>
@@ -212,20 +253,35 @@ export function MobileProductCard({
                   <SendCodeEditor
                     key={cfg.key}
                     gid={item.gid}
-                    sendCode={item.sendCode}
+                    sendCode={item.config?.sendCode ?? null}
                     variant="row"
                     hasValue={cfg.hasValue}
                     onUpdateField={(gid, _field, value) => onSendCodeChange(gid, value)}
                   />
-                ) : (
-                  <ConfigRow
+                ) : shipStages.includes(cfg.key as ShipStage) ? (
+                  <button
                     key={cfg.key}
-                    label={cfg.label}
-                    icon={cfg.icon}
-                    hasValue={cfg.hasValue}
-                    value={item[cfg.key as keyof Item] as string}
-                    onClick={() => onConfigClick(cfg.key as ConfigField)}
-                  />
+                    onClick={() => onConfigClick(cfg.key as ShipStage)}
+                    className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-gray-400">{cfg.icon} {cfg.label}</span>
+                    <span className="flex items-center gap-1">
+                      <span className="text-gray-400 text-xs">未配置</span>
+                      <ChevronRight className="w-4 h-4 text-gray-300" />
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    key={cfg.key}
+                    onClick={() => onConfigClick('shipment')}
+                    className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-gray-400">{cfg.icon} {cfg.label}</span>
+                    <span className="flex items-center gap-1">
+                      <span className="text-gray-400 text-xs">未配置</span>
+                      <ChevronRight className="w-4 h-4 text-gray-300" />
+                    </span>
+                  </button>
                 )
               )}
             </div>
@@ -233,41 +289,5 @@ export function MobileProductCard({
         </>
       )}
     </div>
-  )
-}
-
-/** 可点击的配置行 */
-function ConfigRow({
-  label,
-  icon,
-  hasValue,
-  value,
-  onClick,
-}: {
-  label: string
-  icon: string
-  hasValue: boolean
-  value: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-    >
-      <span className={hasValue ? "text-gray-600" : "text-gray-400"}>
-        {icon} {label}
-      </span>
-      <span className="flex items-center gap-1">
-        <span
-          className={`text-xs max-w-[100px] truncate ${
-            hasValue ? "text-blue-600" : "text-gray-400"
-          }`}
-        >
-          {hasValue ? value : "未配置"}
-        </span>
-        <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
-      </span>
-    </button>
   )
 }

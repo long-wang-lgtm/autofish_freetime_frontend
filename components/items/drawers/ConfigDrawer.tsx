@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Item } from "@/lib/api/items"
+import type { ShopItem } from "@/lib/api/items"
 import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { TextEditor } from '@/components/ui/TextEditor'
 import { useIsMobile } from "@/hooks/useIsMobile"
@@ -10,15 +10,20 @@ import { PlaceholderPicker } from "../parts/PlaceholderPicker"
 
 interface ConfigDrawerProps {
   open: boolean
-  item: Item
+  item: ShopItem
   field: ConfigField
   onClose: () => void
-  onSave: (gid: string, field: ConfigField, value: string) => void
+  onSave: (gid: number, field: ConfigField, value: string) => void
 }
 
 export function ConfigDrawer({ open, item, field, onClose, onSave }: ConfigDrawerProps) {
   const isMobile = useIsMobile()
-  const [localValue, setLocalValue] = useState(item[field] || "")
+  const fieldValue = field === 'sendCode'
+    ? (item.config?.sendCode ?? '')
+    : field === 'ai_reply_item_prompt'
+    ? (item.config?.ai_prompt ?? '')
+    : ''
+  const [localValue, setLocalValue] = useState(fieldValue)
 
   const insertPlaceholder = (value: string) => {
     setLocalValue((prev) => prev + value)
@@ -31,6 +36,8 @@ export function ConfigDrawer({ open, item, field, onClose, onSave }: ConfigDrawe
   }
 
   const handleSave = () => {
+    // 映射前端字段名 → 后端字段名
+    const apiField = field === 'ai_reply_item_prompt' ? 'ai_prompt' : field
     onSave(item.gid, field, localValue)
     onClose()
   }
@@ -48,7 +55,7 @@ export function ConfigDrawer({ open, item, field, onClose, onSave }: ConfigDrawe
         <div className="flex items-center gap-4 text-xs text-gray-500">
           <span>ID: {item.gid}</span>
           <span>账号: {item.account.name}</span>
-          <span>价格: ¥{item.price}</span>
+          <span>价格: {item.reservePrice || '-'}</span>
         </div>
       </div>
 
@@ -91,7 +98,7 @@ export function ConfigDrawer({ open, item, field, onClose, onSave }: ConfigDrawe
         open={open}
         onClose={onClose}
         title={title}
-        subtitle={`${item.title || "无标题"} · ¥${item.price}`}
+        subtitle={`${item.title || "无标题"} · ${item.reservePrice || '-'}`}
         footer={footer}
       >
         {content}
