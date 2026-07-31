@@ -39,17 +39,32 @@ export const PLACEHOLDERS: { label: string; value: string }[] = [
 // 工具函数
 // ═══════════════════════════════════════════════════════════════
 
+/** 判断单个 ShipByVoucher 是否有效：无卡看使用说明，卡密看卡种ID */
+export function isShipByVoucherValid(cfg: ShipByVoucher | null | undefined): boolean {
+  if (!cfg) return false
+  if (cfg.kind === 'VOUCHER') return cfg.voucherkindid != null
+  return (cfg.useinstructions?.trim().length ?? 0) > 0
+}
+
 /** 判断 ShipConfig 是否有配置 */
 export function hasShipConfig(config: ShipConfig | null | undefined): boolean {
   if (!config) return false
   if (config.byEntirety === null) return false
-  if (config.byEntirety === true) return config.entirety !== null
-  return Object.keys(config.skus).length > 0
+  if (config.byEntirety === true) return isShipByVoucherValid(config.entirety)
+  return Object.values(config.skus).some((cfg) => isShipByVoucherValid(cfg))
 }
 
 /** 获取 SKU 的配置（从 config.skus 中查找） */
 export function getSkuConfig(config: ShipConfig, skuid: number): ShipByVoucher | null {
   return config.skus[skuid] ?? null
+}
+
+/** SKU 明细表行数据（用于 ShipConfigModal 内嵌的 SKU 选择表） */
+export interface SkuSummary {
+  skuid: number
+  values: string          // 规格值拼接，如 "红色 / XL"
+  price: number | null    // 单位：分
+  hasConfig: boolean
 }
 
 /** 格式化发布时间 — ISO 8601 字符串 → yyyy/MM/dd HH:mm */

@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Modal } from "@/components/ui/overlay/Modal"
 import type { ItemSKU, ShipConfig, ShipByVoucher, VoucherKind } from "@/lib/api/items"
-import { STAGE_LABELS, getSkuConfig } from "../config"
+import { STAGE_LABELS, getSkuConfig, isShipByVoucherValid } from "../config"
+import type { SkuSummary } from "../config"
 import { ShipConfigModal } from "./ShipConfigModal"
 
 interface SkuConfigModalProps {
@@ -47,6 +48,18 @@ export function SkuConfigModal({
   const [viewMode, setViewMode] = useState<'sku' | 'entirety'>('sku')
   const [activeSku, setActiveSku] = useState<ItemSKU | null>(null)
   const [showEntiretyConfig, setShowEntiretyConfig] = useState(false)
+
+  /** ItemSKU[] → SkuSummary[]（传给 ShipConfigModal 内嵌 SKU 明细表） */
+  const skuSummaries = useMemo<SkuSummary[]>(
+    () =>
+      skus.map((sku) => ({
+        skuid: sku.skuid,
+        values: skuValuesLabel(sku),
+        price: sku.price,
+        hasConfig: isShipByVoucherValid(getSkuConfig(config, sku.skuid)),
+      })),
+    [skus, config],
+  )
 
   const handleSaveSku = async (data: ShipByVoucher): Promise<void> => {
     await onSaveSku(data)
@@ -146,8 +159,15 @@ export function SkuConfigModal({
           skuInfo={{ skuid: activeSku.skuid, values: skuValuesLabel(activeSku) }}
           currentConfig={getSkuConfig(config, activeSku.skuid)}
           byEntirety={false}
+          hasSkus
+          skus={skuSummaries}
           voucherKinds={voucherKinds}
           onBackToSku={() => { setActiveSku(null); onConfigSaved() }}
+          onToggleByEntirety={() => { setActiveSku(null); setShowEntiretyConfig(true) }}
+          onSelectSku={(skuid) => {
+            const next = skus.find((s) => s.skuid === skuid)
+            if (next) setActiveSku(next)
+          }}
           onSave={handleSaveSku}
         />
       )}
@@ -162,8 +182,11 @@ export function SkuConfigModal({
           title={title}
           currentConfig={config.byEntirety === true ? config.entirety : null}
           byEntirety={true}
+          hasSkus
+          skus={skuSummaries}
           voucherKinds={voucherKinds}
           onBackToSku={() => { setShowEntiretyConfig(false); onConfigSaved() }}
+          onToggleByEntirety={() => { setShowEntiretyConfig(false) }}
           onSave={handleSaveEntirety}
         />
       )}
