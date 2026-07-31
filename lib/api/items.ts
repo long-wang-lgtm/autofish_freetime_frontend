@@ -126,6 +126,20 @@ export interface ShipConfigUpdate {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// 卡种
+// ═══════════════════════════════════════════════════════════════
+
+/** 卡种（VoucherKindSchema） */
+export interface VoucherKind {
+  id: number
+  name: string
+  desc: string | null
+  prefix_credit: string | null
+  prefix_secret: string | null
+  secretsCount: number | null
+}
+
+// ═══════════════════════════════════════════════════════════════
 // API 函数
 // ═══════════════════════════════════════════════════════════════
 
@@ -183,4 +197,9 @@ export async function refreshItems(uid: string): Promise<OperationResponse> {
     method: "POST",
     params: { uid },
   })
+}
+
+/** 获取卡种列表 — GET /api/voucher.list */
+export async function getVoucherKinds(): Promise<VoucherKind[]> {
+  return fetchApi<VoucherKind[]>("/api/voucher.list")
 }
