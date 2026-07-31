@@ -1,27 +1,31 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Bot, Truck, Upload } from "lucide-react"
-import type { Item } from "@/lib/api/items"
-import type { ConfigField } from "@/components/items/config"
-import { formatPublishTime } from "@/components/items/config"
+import type { ShopItem, ItemSKU, ShipConfig, ShipByVoucher } from "@/lib/api/items"
+import { getVoucherKinds } from "@/lib/api/items"
+import type { ShipStage } from "@/components/items/config"
+import { hasShipConfig, formatPublishTime } from "@/components/items/config"
 import { ITEMS_GRID_COLS } from "@/components/items/views/ItemRow"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
 import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
 import { KeywordDrawer } from "@/components/items/drawers/RulesItemsingleDrawer"
-import { ConfigDrawer } from "@/components/items/drawers/ConfigDrawer"
 import { IconToggle } from "@/components/items/parts/IconToggle"
 import { SendCodeEditor } from "@/components/items/parts/SendCodeEditor"
+import { ShelfActions } from "@/components/items/parts/ShelfActions"
+import { ConfigStatusCell } from "@/components/items/parts/ConfigStatusCell"
+import { ShipConfigModal } from "@/components/items/parts/ShipConfigModal"
+import { SkuConfigModal } from "@/components/items/parts/SkuConfigModal"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
-import { ShelfActions } from "@/components/items/parts/ShelfActions"
 
 interface ItemsTabProps {
   isMobile: boolean
-  data: Item[] | undefined
+  data: ShopItem[] | undefined
   isLoading: boolean
   error: unknown
   itemKeywordCounts: Record<string, number>
@@ -31,16 +35,30 @@ interface ItemsTabProps {
   pageSize: number
   onPageChange: (page: number) => void
   onRetry: () => void
-  onToggle: (item: Item, field: string) => void
-  updateMutation: { mutate: (args: { gid: string; data: Record<string, unknown> }) => void }
+  onToggle: (item: ShopItem, field: string) => void
+  updateMutation: { mutate: (args: { gid: number; data: Record<string, unknown> }) => void }
   shelfMutation: {
-    mutate: (args: { gid: string; uid: string; action: "shelves" | "offline" }) => void
+    mutate: (args: { gid: number; uid: string; action: "shelves" | "offline" }) => void
     isPending: boolean
-    variables?: { gid: string; uid: string; action: "shelves" | "offline" }
+    variables?: { gid: number; uid: string; action: "shelves" | "offline" }
+  }
+  shipConfigMutation: {
+    mutate: (args: {
+      gid: number
+      stage: 'shipment' | 'shipconfirm' | 'evaluation'
+      byEntirety: boolean
+      voucher: ShipByVoucher
+    }) => void
+    isPending: boolean
   }
   orderBy: string | null
   asc: boolean
   onSortChange: (field: string) => void
+}
+
+/** 判断是否为多规格商品 */
+function isMultiSku(item: ShopItem): boolean {
+  return item.skus !== null && item.skus.length > 1
 }
 
 export function ItemsTab({
@@ -58,27 +76,38 @@ export function ItemsTab({
   onToggle,
   updateMutation,
   shelfMutation,
+  shipConfigMutation,
   orderBy,
   asc,
   onSortChange,
 }: ItemsTabProps) {
-  // — 抽屉状态（内部管理）—
-  const [editingItem, setEditingItem] = useState<Item | null>(null)
-  const [keywordItem, setKeywordItem] = useState<Item | null>(null)
-  const [mobileConfig, setMobileConfig] = useState<{ item: Item; field: ConfigField } | null>(null)
+  // 弹窗状态
+  const [editingItem, setEditingItem] = useState<ShopItem | null>(null)
+  const [keywordItem, setKeywordItem] = useState<ShopItem | null>(null)
 
-  // — 上架/下架：仅锁定当前正在请求的那一行 —
-  const isShelfPending = (item: Item) =>
+  // ShipConfig 弹窗状态（单规格直接使用）
+  const [directStage, setDirectStage] = useState<ShipStage | null>(null)
+  const [directItem, setDirectItem] = useState<ShopItem | null>(null)
+
+  // SkuConfigModal 状态（多规格中间层）
+  const [skuModalStage, setSkuModalStage] = useState<ShipStage | null>(null)
+  const [skuModalItem, setSkuModalItem] = useState<ShopItem | null>(null)
+
+  // 卡种列表
+  const { data: voucherKinds = [] } = useQuery({
+    queryKey: ["voucherKinds"],
+    queryFn: getVoucherKinds,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const isShelfPending = (item: ShopItem) =>
     shelfMutation.isPending && shelfMutation.variables?.gid === item.gid
 
-  // — 列表滚动 ref，翻页时滚回顶部 —
   const listRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     listRef.current?.scrollTo({ top: 0, behavior: "smooth" })
   }, [page])
 
-  // — 排序适配：DataTable 内部封装三态逻辑，传出 field | null —
-  // — null = 取消排序，此时传当前 orderBy 给父组件，父组件已有三态逻辑处理取消 —
   const handleSortChange = (field: string | null) => {
     if (field === null) {
       if (orderBy) onSortChange(orderBy)
@@ -87,8 +116,55 @@ export function ItemsTab({
     }
   }
 
-  // — 桌面端列定义 —
-  const columns: DataTableColumn<Item>[] = [
+  // 点击配置列 → 分支判断
+  const handleConfigClick = (item: ShopItem, stage: ShipStage) => {
+    if (isMultiSku(item)) {
+      setSkuModalStage(stage)
+      setSkuModalItem(item)
+    } else {
+      setDirectStage(stage)
+      setDirectItem(item)
+    }
+  }
+
+  // SkuConfigModal → 保存 SKU 级配置
+  const handleSaveSkuConfig = async (skuData: ShipByVoucher): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!skuModalItem || !skuModalStage) { resolve(); return }
+      shipConfigMutation.mutate(
+        { gid: skuModalItem.gid, stage: skuModalStage, byEntirety: false, voucher: skuData },
+        { onSuccess: () => resolve(), onError: () => resolve() }
+      )
+    })
+  }
+
+  // SkuConfigModal → 保存商品级配置
+  const handleSaveEntiretyConfig = async (skuData: ShipByVoucher): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!skuModalItem || !skuModalStage) { resolve(); return }
+      shipConfigMutation.mutate(
+        { gid: skuModalItem.gid, stage: skuModalStage, byEntirety: true, voucher: skuData },
+        { onSuccess: () => resolve(), onError: () => resolve() }
+      )
+    })
+  }
+
+  // 单规格 → 直接保存
+  const handleSaveDirectConfig = async (skuData: ShipByVoucher): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!directItem || !directStage) { resolve(); return }
+      shipConfigMutation.mutate(
+        { gid: directItem.gid, stage: directStage, byEntirety: true, voucher: skuData },
+        { onSuccess: () => resolve(), onError: () => resolve() }
+      )
+    }).then(() => {
+      setDirectStage(null)
+      setDirectItem(null)
+    })
+  }
+
+  // 构建表格列定义
+  const columns: DataTableColumn<ShopItem>[] = [
     {
       key: 'title',
       header: '商品信息',
@@ -103,9 +179,9 @@ export function ItemsTab({
             {item.title || '无标题'}
           </span>
           <div className="flex items-center gap-1.5 mt-0.5 text-gray-400 text-xs">
-            <span title={item.account.uid} className="truncate ">{item.account.name}</span>
+            <span title={item.account.uid} className="truncate">{item.account.name}</span>
             <span className="text-gray-300">|</span>
-            <span title={item.gid} className="min-w-[85px] truncate">{item.gid}</span>
+            <span title={String(item.gid)} className="min-w-[85px] truncate">{item.gid}</span>
             <span className="text-gray-300">|</span>
             <ShelfActions
               item={item}
@@ -124,7 +200,7 @@ export function ItemsTab({
       sortable: true,
       align: 'center',
       render: (item) => (
-        <span className="text-orange-600 font-semibold">¥{item.price}</span>
+        <span className="text-orange-600 font-semibold text-xs">{item.reservePrice || '-'}</span>
       ),
     },
     {
@@ -152,73 +228,52 @@ export function ItemsTab({
       ),
     },
     {
-      key: 'auto_delivery',
+      key: 'auto_ship',
       header: '自动发货',
       align: 'center',
       render: (item) => (
         <IconToggle
-          active={item.auto_delivery}
+          active={item.auto_ship}
           activeClass="text-green-500 bg-green-50"
-          title={item.auto_delivery ? '自动发货：开' : '自动发货：关'}
-          onClick={() => onToggle(item, 'auto_delivery')}
+          title={item.auto_ship ? '自动发货：开' : '自动发货：关'}
+          onClick={() => onToggle(item, 'auto_ship')}
         >
           <Truck className="w-4 h-4" />
         </IconToggle>
       ),
     },
     {
-      key: 'deliveryContent',
+      key: 'shipment',
       header: '付款后发货',
       align: 'center',
-      render: (item) => {
-        const value = item.deliveryContent || ''
-        const hasValue = value.trim().length > 0
-        return (
-          <button
-            onClick={() => setMobileConfig({ item, field: 'deliveryContent' })}
-            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
-            title={value || '点击配置'}
-          >
-            {hasValue ? '已配置' : '未配置'}
-          </button>
-        )
-      },
+      render: (item) => (
+        <ConfigStatusCell
+          hasConfig={item.config ? hasShipConfig(item.config.shipment) : false}
+          onClick={() => handleConfigClick(item, 'shipment')}
+        />
+      ),
     },
     {
-      key: 'receiptAfter',
+      key: 'shipconfirm',
       header: '收货后赠送',
       align: 'center',
-      render: (item) => {
-        const value = item.receiptAfter || ''
-        const hasValue = value.trim().length > 0
-        return (
-          <button
-            onClick={() => setMobileConfig({ item, field: 'receiptAfter' })}
-            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
-            title={value || '点击配置'}
-          >
-            {hasValue ? '已配置' : '未配置'}
-          </button>
-        )
-      },
+      render: (item) => (
+        <ConfigStatusCell
+          hasConfig={item.config ? hasShipConfig(item.config.shipconfirm) : false}
+          onClick={() => handleConfigClick(item, 'shipconfirm')}
+        />
+      ),
     },
     {
-      key: 'positiveReviewAfter',
+      key: 'evaluation',
       header: '评价后赠送',
       align: 'center',
-      render: (item) => {
-        const value = item.positiveReviewAfter || ''
-        const hasValue = value.trim().length > 0
-        return (
-          <button
-            onClick={() => setMobileConfig({ item, field: 'positiveReviewAfter' })}
-            className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
-            title={value || '点击配置'}
-          >
-            {hasValue ? '已配置' : '未配置'}
-          </button>
-        )
-      },
+      render: (item) => (
+        <ConfigStatusCell
+          hasConfig={item.config ? hasShipConfig(item.config.evaluation) : false}
+          onClick={() => handleConfigClick(item, 'evaluation')}
+        />
+      ),
     },
     {
       key: 'keywordCount',
@@ -230,9 +285,7 @@ export function ItemsTab({
           <button
             onClick={() => setKeywordItem(item)}
             className={`text-xs font-medium ${
-              count > 0
-                ? 'text-blue-600 hover:text-blue-800'
-                : 'text-gray-400 hover:text-gray-600'
+              count > 0 ? 'text-blue-600 hover:text-blue-800' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
             {count > 0 ? `${count}条规则` : '未配置'}
@@ -245,11 +298,10 @@ export function ItemsTab({
       header: 'AI提示词',
       align: 'center',
       render: (item) => {
-        const value = item.ai_reply_item_prompt || ''
+        const value = item.config?.ai_prompt || ''
         const hasValue = value.trim().length > 0
         return (
           <button
-            onClick={() => setMobileConfig({ item, field: 'ai_reply_item_prompt' })}
             className={`text-xs ${hasValue ? 'text-blue-600' : 'text-gray-400'} hover:underline`}
             title={value || '点击配置'}
           >
@@ -263,23 +315,14 @@ export function ItemsTab({
       header: '自动上架',
       align: 'center',
       render: (item) => {
-        const disabled = item.account.isPro && !item.auto_restock
+        const disabled = item.account.isPro
         return (
           <IconToggle
             active={item.auto_restock}
             activeClass="text-teal-500 bg-teal-50"
             disabled={disabled}
-            title={
-              disabled
-                ? 'Pro 账号不支持自动上架'
-                : item.auto_restock
-                  ? '自动上架：开'
-                  : '自动上架：关'
-            }
-            onClick={() => {
-              if (disabled) return
-              onToggle(item, 'auto_restock')
-            }}
+            title={disabled ? 'Pro 账号不支持自动上架' : item.auto_restock ? '自动上架：开' : '自动上架：关'}
+            onClick={() => { if (!disabled) onToggle(item, 'auto_restock') }}
           >
             <Upload className="w-4 h-4" />
           </IconToggle>
@@ -289,12 +332,11 @@ export function ItemsTab({
     {
       key: 'sendCode',
       header: '指令码',
-      sortable: true,
       align: 'center',
       render: (item) => (
         <SendCodeEditor
           gid={item.gid}
-          sendCode={item.sendCode}
+          sendCode={item.config?.sendCode ?? null}
           variant="cell"
           onUpdateField={(gid, _field, value) =>
             updateMutation.mutate({ gid, data: { sendCode: value } })
@@ -306,14 +348,12 @@ export function ItemsTab({
 
   return (
     <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-      {/* 加载状态 */}
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
       )}
 
-      {/* 错误状态 */}
       {!!error && !isLoading && (
         <ErrorBanner
           message={`加载商品列表失败: ${String(error)}`}
@@ -322,23 +362,17 @@ export function ItemsTab({
         />
       )}
 
-      {/* 空状态 */}
       {!isLoading && !error && data && data.length === 0 && (
-        <EmptyState
-          title="暂无商品"
-          description="没有找到符合条件的商品"
-        />
+        <EmptyState title="暂无商品" description="没有找到符合条件的商品" />
       )}
 
-      {/* 数据列表 */}
       {!isLoading && !error && data && data.length > 0 && (
         <>
-          {/* === 桌面端表格 === */}
           <div ref={listRef} className="flex-1 overflow-auto hidden md:block min-h-[200px]">
             <DataTable
               columns={columns}
               data={data}
-              keyExtractor={(item) => item.gid}
+              keyExtractor={(item) => String(item.gid)}
               gridTemplateColumns={ITEMS_GRID_COLS}
               stickyHeader
               orderBy={orderBy}
@@ -347,7 +381,6 @@ export function ItemsTab({
             />
           </div>
 
-          {/* === 移动端卡片列表 === */}
           <div className="flex-1 overflow-auto md:hidden pb-3 space-y-2 min-h-[200px]">
             {data.map((item) => (
               <MobileProductCard
@@ -357,7 +390,7 @@ export function ItemsTab({
                 onToggle={onToggle}
                 onEdit={() => setEditingItem(item)}
                 onKeywordClick={() => setKeywordItem(item)}
-                onConfigClick={(field) => setMobileConfig({ item, field })}
+                onConfigClick={(stage) => handleConfigClick(item, stage as ShipStage)}
                 onSendCodeChange={(gid, value) => updateMutation.mutate({ gid, data: { sendCode: value } })}
                 onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
                 onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
@@ -368,46 +401,66 @@ export function ItemsTab({
         </>
       )}
 
-      {/* 分页器 */}
-      <Pagination
-        page={page}
-        total={totalItems}
-        pageSize={pageSize}
-        onChange={onPageChange}
-      />
+      <Pagination page={page} total={totalItems} pageSize={pageSize} onChange={onPageChange} />
 
-      {/* ==== 抽屉（内部调度）==== */}
+      {/* 单规格 → 直接 ShipConfigModal */}
+      {directStage && directItem && (
+        <ShipConfigModal
+          open
+          onClose={() => { setDirectStage(null); setDirectItem(null) }}
+          stage={directStage}
+          gid={directItem.gid}
+          title={directItem.title}
+          currentConfig={(() => {
+            const cfg = directItem.config?.[directStage]
+            if (!cfg || cfg.byEntirety !== true) return null
+            return cfg.entirety
+          })()}
+          byEntirety={true}
+          voucherKinds={voucherKinds}
+          onSave={handleSaveDirectConfig}
+        />
+      )}
 
-      {/* 编辑商品 */}
+      {/* 多规格 → SkuConfigModal */}
+      {skuModalStage && skuModalItem && (
+        <SkuConfigModal
+          open
+          onClose={() => { setSkuModalStage(null); setSkuModalItem(null) }}
+          gid={skuModalItem.gid}
+          title={skuModalItem.title}
+          stage={skuModalStage}
+          skus={skuModalItem.skus!}
+          config={skuModalItem.config?.[skuModalStage] ?? {
+            byEntirety: null,
+            entirety: null,
+            skus: {} as Record<number, ShipByVoucher>,
+          }}
+          voucherKinds={voucherKinds}
+          onSaveSku={handleSaveSkuConfig}
+          onSaveEntirety={handleSaveEntiretyConfig}
+          onConfigSaved={() => {
+            // shipConfigMutation.onSuccess 已触发 invalidateQueries
+          }}
+        />
+      )}
+
+      {/* 编辑商品（后续适配） */}
       {editingItem && (
         <ItemEditDrawer
-          item={editingItem}
+          item={editingItem as any}
           open={!!editingItem}
           onClose={() => setEditingItem(null)}
           onSuccess={() => setEditingItem(null)}
         />
       )}
 
-      {/* 关键词回复 */}
+      {/* 关键词回复（后续适配） */}
       {keywordItem && (
         <KeywordDrawer
-          item={keywordItem}
+          item={keywordItem as any}
           open={!!keywordItem}
           onClose={() => setKeywordItem(null)}
-        />
-      )}
-
-      {/* 配置编辑 */}
-      {mobileConfig && (
-        <ConfigDrawer
-          open={!!mobileConfig}
-          item={mobileConfig.item}
-          field={mobileConfig.field}
-          onClose={() => setMobileConfig(null)}
-          onSave={(gid, field, value) => {
-            updateMutation.mutate({ gid, data: { [field]: value } })
-            setMobileConfig(null)
-          }}
         />
       )}
     </div>
