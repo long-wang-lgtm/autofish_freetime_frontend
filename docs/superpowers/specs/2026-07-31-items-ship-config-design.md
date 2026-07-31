@@ -171,10 +171,9 @@ interface ConfigStatusCellProps {
 - `hasConfig=false`: 灰色文字 "未配置"，可点击
 
 **hasConfig 判断规则**（调用方计算）:
-- 单规格 / `byEntirety=true`：`config.entirety !== null`
-- 多规格 / `byEntirety=false`：`Object.keys(config.skus).length > 0`
-- 简化：`byEntirety ? (entirety !== null) : (Object.keys(skus).length > 0)`
-- 当 `byEntirety === null`（从未配置过）时：`hasConfig = false`
+- `byEntirety === null`（从未配置过）：`hasConfig = false`
+- `byEntirety === true`（按商品配置）：`entirety !== null`
+- `byEntirety === false`（按 SKU 配置）：`Object.keys(skus).length > 0`
 
 ---
 
@@ -229,7 +228,7 @@ const hasConfig = config
   : false
 ```
 
-点击时判断 SKU 数量，决定打开哪个弹窗。
+点击时判断 `item.skus` 是否为 null，决定打开哪个弹窗。
 
 ### 表格列变更汇总
 
