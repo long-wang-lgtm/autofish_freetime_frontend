@@ -122,7 +122,7 @@ export interface OperationResult {
 |----------|------|----------|------|
 | `/api/keywords/predefined` | GET | `fetchPredefinedKeywords()` | 获取预定义关键词字典 |
 | `/api/keywords?page=&size=&keyword=&enabled=&fullShop=&order_by=&asc=` | GET | `fetchReplyRules(params)` | 规则列表（分页+筛选+排序） |
-| `/api/keywords` | POST | `createReplyRule(data)` | 创建规则 |
+| `/api/keywords/create` | POST | `createReplyRule(data)` | 创建规则 |
 | `/api/keywords?rid=X` | PUT | `updateReplyRule(id, data)` | 更新规则 |
 | `/api/keywords/?rid=X` | DELETE | `deleteReplyRule(id)` | 删除规则 |
 | `/api/keywords/bindable.items` | POST | `fetchBindableItems()` | 获取可绑定商品 |
@@ -185,6 +185,9 @@ export async function unbindItemRules(gid: string, rids: number[]): Promise<Oper
 后端不使用 RESTful 路径参数，改为 query parameter。前端函数内部拼接方式：
 
 ```ts
+// 创建：POST /api/keywords/create
+fetchApi("/api/keywords/create", { method: "POST", body: ... })
+
 // 更新：PUT /api/keywords?rid=123
 fetchApi(`/api/keywords?rid=${id}`, { method: "PUT", body: ... })
 
