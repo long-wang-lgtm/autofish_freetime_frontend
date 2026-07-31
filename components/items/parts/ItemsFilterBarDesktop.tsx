@@ -27,7 +27,7 @@ export interface ItemsFilterBarProps {
   isRefreshing: boolean
 }
 
-const ALL_SEARCH_FIELDS: SearchField[] = [
+const ALL_SEARCH_FIELDS = [
   'title',
   'gid',
   'deliveryContent',
@@ -35,7 +35,7 @@ const ALL_SEARCH_FIELDS: SearchField[] = [
   'positiveReviewAfter',
   'aiReplyItemPrompt',
   'sendCode',
-]
+] as SearchField[]
 
 export function ItemsFilterBarDesktop({
   accounts,

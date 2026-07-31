@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   type ReplyRule,
+  type ReplyRuleCreate,
+  type ReplyRuleUpdate,
   createReplyRule,
   updateReplyRule,
   bindRuleItems,
@@ -13,7 +15,7 @@ import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { useToast } from '@/components/ui/Toaster'
 import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { useIsMobile } from "@/hooks/useIsMobile"
-import { KeywordRuleForm, type RuleFormData } from "../parts/KeywordRuleForm"
+import { KeywordRuleForm } from "../parts/KeywordRuleForm"
 import { RuleBindingPanel } from "../parts/RuleBindingPanel"
 
 interface RuleDrawerProps {
@@ -60,7 +62,7 @@ export function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawerProps) 
   }
 
   // 保存（含关联同步 — 批量操作）
-  const handleSave = async (data: RuleFormData) => {
+  const handleSave = async (data: ReplyRuleCreate | ReplyRuleUpdate) => {
     try {
       let savedRule: ReplyRule | null = null
 

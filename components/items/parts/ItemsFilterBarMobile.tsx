@@ -23,7 +23,7 @@ const SEARCH_FIELD_LABELS: Record<SearchField, string> = {
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import type { ItemsFilterBarProps } from '@/components/items/parts/ItemsFilterBarDesktop'
 
-const ALL_SEARCH_FIELDS: SearchField[] = [
+const ALL_SEARCH_FIELDS = [
   'title',
   'gid',
   'deliveryContent',
@@ -31,7 +31,7 @@ const ALL_SEARCH_FIELDS: SearchField[] = [
   'positiveReviewAfter',
   'aiReplyItemPrompt',
   'sendCode',
-]
+] as SearchField[]
 
 export function ItemsFilterBarMobile({
   accounts,

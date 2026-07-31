@@ -43,12 +43,12 @@ interface ItemsTabProps {
     variables?: { gid: number; uid: string; action: "shelves" | "offline" }
   }
   shipConfigMutation: {
-    mutate: (args: {
+    mutateAsync: (args: {
       gid: number
       stage: 'shipment' | 'shipconfirm' | 'evaluation'
       byEntirety: boolean
       voucher: ShipByVoucher
-    }) => void
+    }) => Promise<unknown>
     isPending: boolean
   }
   orderBy: string | null
@@ -129,38 +129,28 @@ export function ItemsTab({
 
   // SkuConfigModal → 保存 SKU 级配置
   const handleSaveSkuConfig = async (skuData: ShipByVoucher): Promise<void> => {
-    return new Promise((resolve) => {
-      if (!skuModalItem || !skuModalStage) { resolve(); return }
-      shipConfigMutation.mutate(
-        { gid: skuModalItem.gid, stage: skuModalStage, byEntirety: false, voucher: skuData },
-        { onSuccess: () => resolve(), onError: () => resolve() }
-      )
+    if (!skuModalItem || !skuModalStage) return
+    await shipConfigMutation.mutateAsync({
+      gid: skuModalItem.gid, stage: skuModalStage, byEntirety: false, voucher: skuData,
     })
   }
 
   // SkuConfigModal → 保存商品级配置
   const handleSaveEntiretyConfig = async (skuData: ShipByVoucher): Promise<void> => {
-    return new Promise((resolve) => {
-      if (!skuModalItem || !skuModalStage) { resolve(); return }
-      shipConfigMutation.mutate(
-        { gid: skuModalItem.gid, stage: skuModalStage, byEntirety: true, voucher: skuData },
-        { onSuccess: () => resolve(), onError: () => resolve() }
-      )
+    if (!skuModalItem || !skuModalStage) return
+    await shipConfigMutation.mutateAsync({
+      gid: skuModalItem.gid, stage: skuModalStage, byEntirety: true, voucher: skuData,
     })
   }
 
   // 单规格 → 直接保存
   const handleSaveDirectConfig = async (skuData: ShipByVoucher): Promise<void> => {
-    return new Promise((resolve) => {
-      if (!directItem || !directStage) { resolve(); return }
-      shipConfigMutation.mutate(
-        { gid: directItem.gid, stage: directStage, byEntirety: true, voucher: skuData },
-        { onSuccess: () => resolve(), onError: () => resolve() }
-      )
-    }).then(() => {
-      setDirectStage(null)
-      setDirectItem(null)
+    if (!directItem || !directStage) return
+    await shipConfigMutation.mutateAsync({
+      gid: directItem.gid, stage: directStage, byEntirety: true, voucher: skuData,
     })
+    setDirectStage(null)
+    setDirectItem(null)
   }
 
   // 构建表格列定义

@@ -3,19 +3,20 @@
 import { useState, useMemo, useEffect, useRef } from "react"
 import { useDebounce } from "@/hooks/useDebounce"
 import type { ItemFilters } from "@/lib/api/items"
+import type { SearchField } from "@/components/items/parts/SearchChip"
 
 // ═══════════════════════════════════════════════════════════════
 // 筛选状态（chips 字段暂留，后续 Phase 移除芯片搜索 UI）
 // ═══════════════════════════════════════════════════════════════
 
 interface SearchChipData {
-  field: string
+  field: SearchField
   value: string
 }
 
 export interface ItemsFilterState {
   uid?: string
-  status: number
+  status: number | undefined
   chips: SearchChipData[]        // 暂留，后续 Phase 移除
   orderBy: string | null
   asc: boolean
