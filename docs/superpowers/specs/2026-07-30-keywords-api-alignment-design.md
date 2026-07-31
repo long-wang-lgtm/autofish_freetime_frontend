@@ -109,8 +109,8 @@ export interface OperationResult {
 | `LinkedGroupInfo` | 后端无商品组关联功能 |
 | `KeywordRuleListResponse` | 重命名为 `ReplyRuleListResponse` |
 | `RuleItem` | 重命名为 `BindableItem` |
-| `PREDEFINED_KEYWORDS` (常量) | 改为从 API 获取 |
-| `PREDEFINED_KEYWORD_LABELS` (常量) | 改为从 API 获取 |
+| `PREDEFINED_KEYWORDS` (常量) | 删去 — API 返回字典后本地派生下拉数组 |
+| `PREDEFINED_KEYWORD_LABELS` (常量) | 删去 — 直接使用 API 返回的 `Record<string, string>` |
 
 ---
 
@@ -243,24 +243,33 @@ const { data: predefinedLabels } = useQuery({
 })
 ```
 
-### 6.2 格式转换
+### 6.2 单一数据源，本地派生
 
-后端返回 `Record<string, string>`（如 `{ "first_reply": "首次回复", ... }`），前端按需转换为下拉选项：
+API 返回一个 `Record<string, string>`（如 `{ "first_reply": "首次回复", ... }`），前端所有形式都从这个字典派生，不发起二次请求，不保留两套变量：
 
 ```ts
-// 下拉选择用
-const predefinedOptions = useMemo(
-  () => Object.entries(predefinedLabels ?? {}).map(([value, label]) => ({ value, label })),
-  [predefinedLabels]
+// API 返回 → prefLabels: Record<string, string>
+const { data: prefLabels } = useQuery({
+  queryKey: ["predefined-keywords"],
+  queryFn: fetchPredefinedKeywords,
+  staleTime: 5 * 60 * 1000,
+})
+
+// 下拉选项数组 — 从字典本地派生
+const prefOptions = useMemo(
+  () => Object.entries(prefLabels ?? {}).map(([value, label]) => ({ value, label })),
+  [prefLabels]
 )
 
-// 值→标签映射（直接使用 Record，无需二次转换）
-// predefinedLabels["first_reply"] → "首次回复"
+// 值→标签映射 — 字典本身就是，直接使用
+// prefLabels["first_reply"] → "首次回复"
 ```
+
+**铁律**：`prefLabels` 是唯一数据源。`prefOptions` 由它派生，不允许两处各自调用 API 或各自保存一份。
 
 ### 6.3 删除的前端硬编码
 
-`PREDEFINED_KEYWORDS` 数组和 `PREDEFINED_KEYWORD_LABELS` 映射从 `keywords.ts` 中移除。所有引用处改为通过 React Query 获取。
+`PREDEFINED_KEYWORDS` 数组和 `PREDEFINED_KEYWORD_LABELS` 映射从 `keywords.ts` 中移除。所有引用处改为通过 React Query 获取字典后本地派生。
 
 ---
 
