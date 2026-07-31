@@ -1,262 +1,186 @@
 /**
  * 商品管理 API 客户端
+ *
+ * 对齐后端 ShopItem 新模型（旧 ItemList 模型已弃用）。
+ * 所有查询参数统一走 fetchApi 的 params 选项。
  */
 import { fetchApi, OperationResponse } from "@/lib/utils/api"
 
-export interface Item {
-  gid: string
-  account: {
-    uid: string
-    name: string
-    status: number
-    isPro: boolean
-  }
-  title: string
-  description: string
-  remark: string
-  auto_delivery: boolean
-  auto_reply: boolean
-  auto_ai_reply: boolean
-  deliveryType: string
-  deliveryContent: string
-  receiptAfter: string
-  positiveReviewAfter: string
-  default_reply_content: string
-  ai_reply_item_prompt: string
-  price: number
-  status: number
-  lookCount: number
-  wantCount: number
-  collectCount: number
-  itemType: string
-  createTime: string | null
-  publishTime: string | null
-  sendCode: string | null
-  auto_restock: boolean
-}
+// ═══════════════════════════════════════════════════════════════
+// 排序字段
+// ═══════════════════════════════════════════════════════════════
 
-export interface ItemGroup {
-  groupId: string
-  groupName: string
-  auto_reply: boolean
-  auto_delivery: boolean
-  default_reply_content: string
-}
-
-export interface ItemGroupListResponse {
-  total: number
-  groups: ItemGroup[]
-}
-
-export interface ItemUpdate {
-  title?: string
-  description?: string
-  remark?: string
-  auto_delivery?: boolean
-  auto_reply?: boolean
-  auto_ai_reply?: boolean
-  deliveryType?: string
-  deliveryContent?: string
-  receiptAfter?: string
-  positiveReviewAfter?: string
-  default_reply_content?: string
-  ai_reply_item_prompt?: string
-  sendCode?: string
-}
-
-/** 后端 SORTABLE_FIELDS 映射 */
 export const ITEM_SORT_FIELDS = [
+  { key: "gid",          label: "商品ID" },
   { key: "title",        label: "标题" },
-  { key: "price",        label: "价格" },
+  { key: "reservePrice", label: "价格" },
   { key: "publishTime",  label: "发布时间" },
+  { key: "created_at",   label: "创建时间" },
+  { key: "updated_at",   label: "更新时间" },
 ] as const
 
-// ——— 搜索芯片 ———
-
-/** 可搜索的商品字段 */
-export type SearchField =
-  | 'title'
-  | 'gid'
-  | 'deliveryContent'
-  | 'receiptAfter'
-  | 'positiveReviewAfter'
-  | 'aiReplyItemPrompt'
-  | 'sendCode'
-
-/** 搜索字段显示标签 */
-export const SEARCH_FIELD_LABELS: Record<SearchField, string> = {
-  title: '商品标题',
-  gid: '商品ID',
-  deliveryContent: '发货配置内容',
-  receiptAfter: '收货后赠送配置',
-  positiveReviewAfter: '评价后赠送配置',
-  aiReplyItemPrompt: 'AI 提示词',
-  sendCode: '指令码',
-}
-
-/** 一个已确认的搜索条件 */
-export interface SearchChipData {
-  field: SearchField
-  value: string
-}
-
-/** 筛选卡片完整状态（替代旧 searchInput + filters 碎片） */
-export interface ItemsFilterState {
-  uid?: string
-  status?: number
-  chips: SearchChipData[]
-  orderBy: string | null
-  asc: boolean
-  page: number
-}
-
-/** 商品统计响应 — GET /api/items/stats */
-export interface ItemStats {
-  status: Record<number, number>
-  deliveryEmpty: number
-  receiptEmpty: number
-  reviewEmpty: number
-}
-
-/** 商品列表分页响应 — GET /api/items/list */
-export interface ItemListResponse {
-  total: number
-  page: number
-  size: number
-  items: Item[]
-}
+// ═══════════════════════════════════════════════════════════════
+// 筛选参数
+// ═══════════════════════════════════════════════════════════════
 
 export interface ItemFilters {
   uid?: string
   status?: number
-  title?: string
   gid?: string
-  deliveryContent?: string
-  receiptAfter?: string
-  positiveReviewAfter?: string
-  aiReplyItemPrompt?: string
-  defaultReplyContent?: string
-  sendCode?: string
+  title?: string
   page?: number
   size?: number
   order_by?: string
   asc?: boolean
 }
 
-/** chip field → API query param mapping */
-const CHIP_FIELD_PARAM: Record<string, string> = {
-  title: 'title',
-  gid: 'gid',
-  deliveryContent: 'deliveryContent',
-  receiptAfter: 'receiptAfter',
-  positiveReviewAfter: 'positiveReviewAfter',
-  aiReplyItemPrompt: 'aiReplyItemPrompt',
-  sendCode: 'sendCode',
+// ═══════════════════════════════════════════════════════════════
+// 核心数据模型（对齐后端 ShopItemSchema）
+// ═══════════════════════════════════════════════════════════════
+
+/** 账号精简信息（AccountNameSchema） */
+export interface AccountName {
+  uid: string
+  name: string
+  status: number
+  isPro: boolean
 }
 
-/** chips → ItemFilters 额外字段 */
-export function chipsToFilters(chips: SearchChipData[]): Partial<ItemFilters> {
-  const extra: Record<string, string> = {}
-  for (const c of chips) {
-    const param = CHIP_FIELD_PARAM[c.field]
-    if (param && c.value) extra[param] = c.value  // 空值芯片不生成查询参数（用户尚未输入）
-  }
-  return extra
+/** SKU 规格项 */
+export interface ItemSKU {
+  skuid: number
+  price: number                        // 单位：分
+  quantity: number
+  values: { name: string; value: string }[]
 }
 
-export async function listItems(filters?: ItemFilters): Promise<ItemListResponse> {
-  const params = new URLSearchParams()
-  if (filters?.uid) params.append("uid", filters.uid)
-  if (filters?.status !== undefined) params.append("status", String(filters.status))
-  if (filters?.title) params.append("title", filters.title)
-  if (filters?.gid) params.append("gid", filters.gid)
-  if (filters?.deliveryContent) params.append("deliveryContent", filters.deliveryContent)
-  if (filters?.receiptAfter) params.append("receiptAfter", filters.receiptAfter)
-  if (filters?.positiveReviewAfter) params.append("positiveReviewAfter", filters.positiveReviewAfter)
-  if (filters?.aiReplyItemPrompt) params.append("aiReplyItemPrompt", filters.aiReplyItemPrompt)
-  if (filters?.defaultReplyContent) params.append("defaultReplyContent", filters.defaultReplyContent)
-  if (filters?.sendCode) params.append("sendCode", filters.sendCode)
-  if (filters?.page) params.append("page", String(filters.page))
-  if (filters?.size) params.append("size", String(filters.size))
-  if (filters?.order_by) params.append("order_by", filters.order_by)
-  if (filters?.asc !== undefined) params.append("asc", String(filters.asc))
-
-  const query = params.toString()
-  return fetchApi<ItemListResponse>(`/api/items/list${query ? `?${query}` : ""}`)
+/** 发货方式（DIRECT=直发 VOUCHER=卡密） */
+export interface ShipByVoucher {
+  kind: 'DIRECT' | 'VOUCHER'
+  skuid: number | null
+  voucherkindid: number | null         // 卡种 ID
+  useinstructions: string | null       // 使用说明
 }
 
-export async function getItem(gid: string): Promise<Item> {
-  return fetchApi<Item>(`/api/items/${gid}`)
+/** 发货/收货后赠送/评价后赠送 — 三家共用 */
+export interface ShipConfig {
+  byEntirety: boolean | null           // true=按商品 false=按 SKU
+  entirety: ShipByVoucher | null
+  skus: Record<number, ShipByVoucher>
 }
 
-export async function updateItem(gid: string, data: ItemUpdate): Promise<Item> {
-  return fetchApi<Item>(`/api/items/${gid}`, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  })
+/** 商品配置（一对一关联 ItemConfig 表） */
+export interface ShopItemConfig {
+  gid: number
+  sendCode: string | null
+  reply_default_content: string | null
+  ai_prompt: string | null
+  shipment: ShipConfig                 // 发货配置
+  shipconfirm: ShipConfig              // 收货后赠送
+  evaluation: ShipConfig               // 评价后赠送
 }
 
-export async function listItemGroups(): Promise<ItemGroupListResponse> {
-  return fetchApi<ItemGroupListResponse>("/api/items/groups")
+/** 商品主模型（ShopItemSchema） */
+export interface ShopItem {
+  gid: number
+  title: string
+  picurl: string
+  status: number
+  reservePrice: string                 // 价格字符串（多 SKU 时为 "min~max"）
+  publishTime: string | null           // ISO 8601 datetime
+  auto_ship: boolean
+  auto_reply: boolean
+  auto_ai_reply: boolean
+  auto_restock: boolean
+  skus: ItemSKU[] | null
+  created_at: string                   // ISO 8601 datetime
+  updated_at: string                   // ISO 8601 datetime
+  account: AccountName
+  config: ShopItemConfig | null
+  rulesCount: number | null
 }
 
-export async function refreshItems(uid: string): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>(`/api/items/refresh/${uid}`, {
+/** 商品列表分页响应 */
+export interface ShopItemListResponse {
+  total: number
+  page: number
+  size: number
+  items: ShopItem[]
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 更新专用类型
+// ═══════════════════════════════════════════════════════════════
+
+/** PUT /update.item body — 排除 config / account */
+export type ShopItemUpdate = Partial<Omit<ShopItem, 'config' | 'account'>>
+
+/** PUT /update.item.config body — 排除 shipment / shipconfirm / evaluation */
+export type ShopItemConfigUpdate = Partial<Omit<ShopItemConfig, 'shipment' | 'shipconfirm' | 'evaluation'>>
+
+/** PUT /update.item.ship.config body */
+export interface ShipConfigUpdate {
+  stage: 'shipment' | 'shipconfirm' | 'evaluation'
+  byEntirety: boolean
+  voucher: ShipByVoucher
+}
+
+// ═══════════════════════════════════════════════════════════════
+// API 函数
+// ═══════════════════════════════════════════════════════════════
+
+/** 商品列表 — GET /api/items/list */
+export async function listItems(filters?: ItemFilters): Promise<ShopItemListResponse> {
+  return fetchApi<ShopItemListResponse>("/api/items/list", { params: filters as Record<string, string | number> })
+}
+
+/** 上架商品 — POST /api/items/shelves?gid=&uid= */
+export async function shelvesItem(gid: number, uid: string): Promise<ShopItem> {
+  return fetchApi<ShopItem>("/api/items/shelves", {
     method: "POST",
-  })
-}
-
-export async function getItemStats(uid?: string, status?: number): Promise<ItemStats> {
-  const params = new URLSearchParams()
-  if (uid) params.append("uid", uid)
-  if (status !== undefined) params.append("status", String(status))
-  const query = params.toString()
-  return fetchApi<ItemStats>(`/api/items/stats${query ? `?${query}` : ""}`)
-}
-
-/** 上架商品 — POST /api/items/shelves?gid=&uid=（gid/uid 走 query，返回更新后的商品对象） */
-export async function shelvesItem(gid: string, uid: string): Promise<Item> {
-  const params = new URLSearchParams({ gid, uid })
-  return fetchApi<Item>(`/api/items/shelves?${params.toString()}`, {
-    method: "POST",
+    params: { gid, uid },
   })
 }
 
 /** 下架商品 — POST /api/items/offline?gid=&uid= */
-export async function offlineItem(gid: string, uid: string): Promise<Item> {
-  const params = new URLSearchParams({ gid, uid })
-  return fetchApi<Item>(`/api/items/offline?${params.toString()}`, {
+export async function offlineItem(gid: number, uid: string): Promise<ShopItem> {
+  return fetchApi<ShopItem>("/api/items/offline", {
     method: "POST",
+    params: { gid, uid },
   })
 }
 
-/** 上架/下架按钮可用性 */
-export interface ShelfState {
-  canShelve: boolean             // 上架是否可点
-  canOffline: boolean            // 下架是否可点
-  shelveDisabledReason?: string  // 上架禁用时的 tooltip
-  offlineDisabledReason?: string // 下架禁用时的 tooltip
+/** 更新商品基础字段 — PUT /api/items/update.item?gid= */
+export async function updateItem(gid: number, data: ShopItemUpdate): Promise<ShopItem> {
+  return fetchApi<ShopItem>("/api/items/update.item", {
+    method: "PUT",
+    params: { gid },
+    body: JSON.stringify(data),
+  })
 }
 
-/**
- * 根据商品状态与账号状态，计算上架/下架按钮可用性。
- * 优先级：账号未启用 > 商品状态分派 > 未知兜底。
- * account.status === 1 表示账号已启用（与后端 `!= 1` 判据同源）。
- * item.status: 0=在售, -2=已下架, 1=已售出。
- */
-export function getShelfState(item: Item): ShelfState {
-  if (item.account.status !== 1) {
-    const reason = "账号未启用，无法操作"
-    return { canShelve: false, canOffline: false, shelveDisabledReason: reason, offlineDisabledReason: reason }
-  }
-  switch (item.status) {
-    case 0: // 在售
-      return { canShelve: false, canOffline: true, shelveDisabledReason: "商品在售中" }
-    case -2: // 已下架
-      return { canShelve: true, canOffline: false, offlineDisabledReason: "商品已下架" }
-    case 1: // 已售出
-      return { canShelve: true, canOffline: false, offlineDisabledReason: "商品已售出" }
-    default: // 未知状态兜底
-      return { canShelve: false, canOffline: false, shelveDisabledReason: "商品状态未知", offlineDisabledReason: "商品状态未知" }
-  }
+/** 更新商品配置 — PUT /api/items/update.item.config?gid= */
+export async function updateItemConfig(gid: number, data: ShopItemConfigUpdate): Promise<ShopItem> {
+  return fetchApi<ShopItem>("/api/items/update.item.config", {
+    method: "PUT",
+    params: { gid },
+    body: JSON.stringify(data),
+  })
+}
+
+/** 更新发货/收货/评价配置 — PUT /api/items/update.item.ship.config?gid= */
+export async function updateItemShipConfig(gid: number, data: ShipConfigUpdate): Promise<ShopItem> {
+  return fetchApi<ShopItem>("/api/items/update.item.ship.config", {
+    method: "PUT",
+    params: { gid },
+    body: JSON.stringify(data),
+  })
+}
+
+/** 刷新账号商品 — POST /api/items/refresh?uid= */
+export async function refreshItems(uid: string): Promise<OperationResponse> {
+  return fetchApi<OperationResponse>("/api/items/refresh", {
+    method: "POST",
+    params: { uid },
+  })
 }
