@@ -123,8 +123,8 @@ export interface OperationResult {
 | `/api/keywords/predefined` | GET | `fetchPredefinedKeywords()` | 获取预定义关键词字典 |
 | `/api/keywords?page=&size=&keyword=&enabled=&fullShop=&order_by=&asc=` | GET | `fetchReplyRules(params)` | 规则列表（分页+筛选+排序） |
 | `/api/keywords/create` | POST | `createReplyRule(data)` | 创建规则 |
-| `/api/keywords?rid=X` | PUT | `updateReplyRule(id, data)` | 更新规则 |
-| `/api/keywords/?rid=X` | DELETE | `deleteReplyRule(id)` | 删除规则 |
+| `/api/keywords/update.rule?rid=X` | PUT | `updateReplyRule(id, data)` | 更新规则 |
+| `/api/keywords/delete.rule?rid=X` | DELETE | `deleteReplyRule(id)` | 删除规则 |
 | `/api/keywords/bindable.items` | POST | `fetchBindableItems()` | 获取可绑定商品 |
 | `/api/keywords/bindable.rules` | POST | `fetchBindableRules()` | 获取可绑定规则 |
 | `/api/keywords/rule.items?rid=X` | GET | `fetchRuleItems(rid)` | 获取规则已关联的商品（惰性） |
@@ -188,11 +188,11 @@ export async function unbindItemRules(gid: string, rids: number[]): Promise<Oper
 // 创建：POST /api/keywords/create
 fetchApi("/api/keywords/create", { method: "POST", body: ... })
 
-// 更新：PUT /api/keywords?rid=123
-fetchApi(`/api/keywords?rid=${id}`, { method: "PUT", body: ... })
+// 更新：PUT /api/keywords/update.rule?rid=123
+fetchApi(`/api/keywords/update.rule?rid=${id}`, { method: "PUT", body: ... })
 
-// 删除：DELETE /api/keywords/?rid=123
-fetchApi(`/api/keywords/?rid=${id}`, { method: "DELETE" })
+// 删除：DELETE /api/keywords/delete.rule?rid=123
+fetchApi(`/api/keywords/delete.rule?rid=${id}`, { method: "DELETE" })
 
 // 绑/解绑：POST /api/keywords/bind.rule.items?rid=123
 fetchApi(`/api/keywords/bind.rule.items?rid=${id}`, { method: "POST", body: ... })
