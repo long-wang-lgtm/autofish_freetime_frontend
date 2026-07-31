@@ -159,7 +159,7 @@ export function ShipConfigModal({
                   onClick={() => { if (!byEntirety && onToggleByEntirety) onToggleByEntirety() }}
                   className={toggleBtn(byEntirety, hasSkus)}
                 >
-                  按商品整体
+                  按商品整体设置
                 </button>
                 {hasSkus && (
                   <button

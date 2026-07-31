@@ -199,7 +199,7 @@ export async function refreshItems(uid: string): Promise<OperationResponse> {
   })
 }
 
-/** 获取卡种列表 — GET /api/voucher.list */
+/** 获取卡种列表 — GET /api/items/voucher.list */
 export async function getVoucherKinds(): Promise<VoucherKind[]> {
-  return fetchApi<VoucherKind[]>("/api/voucher.list")
+  return fetchApi<VoucherKind[]>("/api/items/voucher.list")
 }
