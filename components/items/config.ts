@@ -1,39 +1,62 @@
-export type ConfigField =
-  | "deliveryContent"
-  | "receiptAfter"
-  | "positiveReviewAfter"
-  | "ai_reply_item_prompt"
-  | "sendCode"
+import type { ShipConfig, ShipByVoucher } from "@/lib/api/items"
+
+// ═══════════════════════════════════════════════════════════════
+// 配置字段类型
+// ═══════════════════════════════════════════════════════════════
+
+/** ShipConfig 的三个 stage */
+export type ShipStage = 'shipment' | 'shipconfirm' | 'evaluation'
+
+/** 弹窗可编辑的字段（ShipConfig 三字段 + 保留的文本字段） */
+export type ConfigField = ShipStage | 'ai_reply_item_prompt' | 'sendCode'
 
 export const FIELD_LABELS: Record<ConfigField, string> = {
-  deliveryContent: "付款后发货内容",
-  receiptAfter: "收货后赠送内容",
-  positiveReviewAfter: "评价后赠送内容",
+  shipment: "付款后发货",
+  shipconfirm: "收货后赠送",
+  evaluation: "评价后赠送",
   ai_reply_item_prompt: "AI系统提示词",
   sendCode: "指令码",
 }
 
-export const PLACEHOLDERS = [
-  { label: "订单号", value: "{订单号}" },
-  { label: "商品标题", value: "{商品标题}" },
-  { label: "价格", value: "{价格}" },
-  { label: "数量", value: "{数量}" },
-  { label: "使用说明", value: "{使用说明}" },
-  { label: "商家编码", value: "{商家编码}" },
-  { label: "卡种/卡券方案名称", value: "{卡种/卡券方案名称}" },
-  { label: "卡券信息", value: "{卡券信息}" },
+export const STAGE_LABELS: Record<ShipStage, string> = {
+  shipment: "付款后发货",
+  shipconfirm: "收货后赠送",
+  evaluation: "评价后赠送",
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 占位符
+// ═══════════════════════════════════════════════════════════════
+
+export const PLACEHOLDERS: { label: string; value: string }[] = [
   { label: "分段符", value: "{分段符}" },
-  { label: "Sku属性名", value: "{Sku属性名}" },
-  { label: "充值账号", value: "{充值账号}" },
-  { label: "拍下时间", value: "{拍下时间}" },
-  { label: "付款时间", value: "{付款时间}" },
-  { label: "当前时间", value: "{当前时间}" },
-  { label: "买家留言", value: "{买家留言}" },
+  // 后续按需扩展：
+  // { label: "订单号", value: "{订单号}" },
+  // { label: "卡券信息", value: "{卡券信息}" },
 ]
 
-export function formatPublishTime(timestamp: string | null): string {
-  if (!timestamp) return "-"
-  const date = new Date(Number(timestamp) * 1000)
+// ═══════════════════════════════════════════════════════════════
+// 工具函数
+// ═══════════════════════════════════════════════════════════════
+
+/** 判断 ShipConfig 是否有配置 */
+export function hasShipConfig(config: ShipConfig | null | undefined): boolean {
+  if (!config) return false
+  if (config.byEntirety === null) return false
+  if (config.byEntirety === true) return config.entirety !== null
+  return Object.keys(config.skus).length > 0
+}
+
+/** 获取 SKU 的配置（从 config.skus 中查找） */
+export function getSkuConfig(config: ShipConfig, skuid: number): ShipByVoucher | null {
+  return config.skus[skuid] ?? null
+}
+
+/** 格式化发布时间 — ISO 8601 字符串 → yyyy/MM/dd HH:mm */
+export function formatPublishTime(isoString: string | null): string {
+  if (!isoString) return "-"
+  const date = new Date(isoString)
+  if (isNaN(date.getTime())) return "-"
   return date.toLocaleString("zh-CN", {
     year: "numeric",
     month: "2-digit",
@@ -43,6 +66,7 @@ export function formatPublishTime(timestamp: string | null): string {
   })
 }
 
+/** 商品状态标签 */
 export function statusLabel(status: number): { text: string; color: string } {
   switch (status) {
     case 0:
