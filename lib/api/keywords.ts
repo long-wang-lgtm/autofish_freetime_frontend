@@ -92,7 +92,9 @@ export async function fetchPredefinedKeywords(): Promise<Record<string, string>>
 export async function fetchReplyRules(
   params: ReplyRuleListParams = {}
 ): Promise<ReplyRuleListResponse> {
-  return fetchApi<ReplyRuleListResponse>("/api/keywords", { params })
+  return fetchApi<ReplyRuleListResponse>("/api/keywords", {
+    params: params as Record<string, string | number>,
+  })
 }
 
 /** 创建规则（可同时绑定商品） */
@@ -215,5 +217,5 @@ export function parseKeywordInput(input: string): string[] {
     .split(/[,，]/)
     .map((s) => s.trim())
     .filter(Boolean)
-  return [...new Set(parts)]
+  return Array.from(new Set(parts))
 }

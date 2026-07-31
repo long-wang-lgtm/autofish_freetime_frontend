@@ -5,7 +5,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   type ReplyRule,
   type ReplyRuleCreate,
-  type ReplyRuleUpdate,
   createReplyRule,
   updateReplyRule,
   bindRuleItems,
@@ -62,7 +61,7 @@ export function RuleDrawer({ rule, open, onClose, onSuccess }: RuleDrawerProps) 
   }
 
   // 保存（含关联同步 — 批量操作）
-  const handleSave = async (data: ReplyRuleCreate | ReplyRuleUpdate) => {
+  const handleSave = async (data: ReplyRuleCreate) => {
     try {
       let savedRule: ReplyRule | null = null
 

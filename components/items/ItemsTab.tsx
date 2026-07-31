@@ -438,7 +438,7 @@ export function ItemsTab({
       {/* 编辑商品（后续适配） */}
       {editingItem && (
         <ItemEditDrawer
-          item={editingItem as any}
+          item={editingItem}
           open={!!editingItem}
           onClose={() => setEditingItem(null)}
           onSuccess={() => setEditingItem(null)}

@@ -8,7 +8,6 @@ import { useQuery } from "@tanstack/react-query"
 import {
   type ReplyRule,
   type ReplyRuleCreate,
-  type ReplyRuleUpdate,
   fetchPredefinedKeywords,
   parseKeywordInput,
 } from "@/lib/api/keywords"
@@ -35,7 +34,7 @@ export interface KeywordRuleFormProps {
   rule?: ReplyRule
   linkedItem?: { title?: string; price?: number; gid?: string }
   bindingWarning?: string
-  onSubmit: (data: ReplyRuleCreate | ReplyRuleUpdate) => Promise<void>
+  onSubmit: (data: ReplyRuleCreate) => Promise<void>
   onCancel: () => void
   onDestructiveAction?: { label: string; onAction: () => Promise<void> }
   onDirtyChange?: (dirty: boolean) => void

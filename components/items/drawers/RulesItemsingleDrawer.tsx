@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   type ReplyRule,
+  type ReplyRuleCreate,
   createReplyRule,
   updateReplyRule,
   unbindItemRules,
@@ -12,15 +13,15 @@ import {
   fetchPredefinedKeywords,
   formatRuleKeyword,
 } from "@/lib/api/keywords"
-import type { Item } from "@/lib/api/items"
+import type { ShopItem } from "@/lib/api/items"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { useToast } from '@/components/ui/Toaster'
 import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { useIsMobile } from "@/hooks/useIsMobile"
-import { KeywordRuleForm, type RuleFormData } from "../parts/KeywordRuleForm"
+import { KeywordRuleForm } from "../parts/KeywordRuleForm"
 
 interface KeywordDrawerProps {
-  item: Item
+  item: ShopItem
   open: boolean
   onClose: () => void
 }
@@ -43,8 +44,8 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
 
   // 获取当前商品关联的规则
   const { data: linkedRules = [], isLoading: linkedLoading } = useQuery({
-    queryKey: ["item-rules", item.gid],
-    queryFn: () => fetchItemRules(item.gid),
+    queryKey: ["item-rules", String(item.gid)],
+    queryFn: () => fetchItemRules(String(item.gid)),
   })
 
   // 绑定警告：编辑规则时，若已关联多个商品则提示
@@ -68,7 +69,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
   }
 
   // 保存规则
-  const handleSave = async (data: RuleFormData) => {
+  const handleSave = async (data: ReplyRuleCreate) => {
     setLoading(true)
     try {
       if (editingRule) {
@@ -92,7 +93,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
           enabled: data.enabled,
           fullShop: data.fullShop,
         })
-        await bindItemRules(item.gid, [savedRule.id])
+        await bindItemRules(String(item.gid), [savedRule.id])
         addToast({ title: "创建成功", description: "规则已创建并关联到此商品" })
       }
       queryClient.invalidateQueries({ queryKey: ["item-rules", item.gid] })
@@ -117,9 +118,9 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
     if (!confirm(`确定要解除规则"${keyword}"与此商品的绑定吗？`)) return
     setLoading(true)
     try {
-      await unbindItemRules(item.gid, [rule.id])
+      await unbindItemRules(String(item.gid), [rule.id])
       addToast({ title: "已解除绑定", description: "规则与此商品的关联已取消" })
-      queryClient.invalidateQueries({ queryKey: ["item-rules", item.gid] })
+      queryClient.invalidateQueries({ queryKey: ["item-rules", String(item.gid)] })
       queryClient.invalidateQueries({ queryKey: ["keywords"] })
       setShowCreateForm(false)
       setEditingRule(null)
@@ -213,7 +214,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
   const editView = (
     <KeywordRuleForm
       rule={editingRule ?? undefined}
-      linkedItem={item}
+      linkedItem={{ title: item.title, price: parseFloat(item.reservePrice) || undefined, gid: String(item.gid) }}
       bindingWarning={bindingWarning}
       onSubmit={handleSave}
       onCancel={() => {
@@ -246,7 +247,7 @@ export function KeywordDrawer({ item, open, onClose }: KeywordDrawerProps) {
           ) : (
             <KeywordRuleForm
               rule={editingRule ?? undefined}
-              linkedItem={item}
+              linkedItem={{ title: item.title, price: parseFloat(item.reservePrice) || undefined, gid: String(item.gid) }}
               bindingWarning={bindingWarning}
               onSubmit={handleSave}
               onCancel={() => {

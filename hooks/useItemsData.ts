@@ -42,8 +42,10 @@ export function useItemsData({ filters, page, pageSize }: UseItemsDataParams) {
     isLoading: keywordsLoading,
     error: keywordsError,
     stats: rulesStats,
-    itemKeywordCounts,
   } = useKeywords()
+
+  // 计算每个商品的规则数量（ReplyRule 无 gids 字段，暂用空对象；后续 Phase 补充）
+  const itemKeywordCounts: Record<string, number> = {}
 
   return {
     accountsData,

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Item, ItemUpdate, updateItem } from "@/lib/api/items"
+import { type ShopItem, type ShopItemUpdate, updateItem } from "@/lib/api/items"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { useToast } from '@/components/ui/Toaster'
 import { useQueryClient } from "@tanstack/react-query"
@@ -14,23 +14,17 @@ import { useIsMobile } from "@/hooks/useIsMobile"
 
 const itemSchema = z.object({
   title: z.string().optional(),
-  description: z.string().optional(),
-  remark: z.string().optional(),
   auto_reply: z.boolean().optional(),
   auto_ai_reply: z.boolean().optional(),
-  auto_delivery: z.boolean().optional(),
-  deliveryType: z.string().optional(),
-  deliveryContent: z.string().optional(),
-  receiptAfter: z.string().optional(),
-  positiveReviewAfter: z.string().optional(),
-  default_reply_content: z.string().optional(),
-  ai_reply_item_prompt: z.string().optional(),
+  auto_ship: z.boolean().optional(),
+  reply_default_content: z.string().optional(),
+  ai_prompt: z.string().optional(),
 })
 
 type FormData = z.infer<typeof itemSchema>
 
 interface ItemEditDrawerProps {
-  item: Item
+  item: ShopItem
   open: boolean
   onClose: () => void
   onSuccess: () => void
@@ -52,39 +46,27 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
     resolver: zodResolver(itemSchema),
     defaultValues: {
       title: item.title || "",
-      description: item.description || "",
-      remark: item.remark || "",
       auto_reply: item.auto_reply || false,
       auto_ai_reply: item.auto_ai_reply || false,
-      auto_delivery: item.auto_delivery || false,
-      deliveryType: item.deliveryType || "无卡",
-      deliveryContent: item.deliveryContent || "",
-      receiptAfter: item.receiptAfter || "",
-      positiveReviewAfter: item.positiveReviewAfter || "",
-      default_reply_content: item.default_reply_content || "",
-      ai_reply_item_prompt: item.ai_reply_item_prompt || "",
+      auto_ship: item.auto_ship || false,
+      reply_default_content: item.config?.reply_default_content || "",
+      ai_prompt: item.config?.ai_prompt || "",
     },
   })
 
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      const updateData: ItemUpdate = {}
+      const updateData: Record<string, unknown> = {}
       if (data.title !== undefined) updateData.title = data.title
-      if (data.description !== undefined) updateData.description = data.description
-      if (data.remark !== undefined) updateData.remark = data.remark
       if (data.auto_reply !== undefined) updateData.auto_reply = data.auto_reply
       if (data.auto_ai_reply !== undefined) updateData.auto_ai_reply = data.auto_ai_reply
-      if (data.auto_delivery !== undefined) updateData.auto_delivery = data.auto_delivery
-      if (data.deliveryType !== undefined) updateData.deliveryType = data.deliveryType
-      if (data.deliveryContent !== undefined) updateData.deliveryContent = data.deliveryContent
-      if (data.receiptAfter !== undefined) updateData.receiptAfter = data.receiptAfter
-      if (data.positiveReviewAfter !== undefined) updateData.positiveReviewAfter = data.positiveReviewAfter
-      if (data.default_reply_content !== undefined) updateData.default_reply_content = data.default_reply_content
-      if (data.ai_reply_item_prompt !== undefined) updateData.ai_reply_item_prompt = data.ai_reply_item_prompt
+      if (data.auto_ship !== undefined) updateData.auto_ship = data.auto_ship
+      if (data.reply_default_content !== undefined) updateData.reply_default_content = data.reply_default_content
+      if (data.ai_prompt !== undefined) updateData.ai_prompt = data.ai_prompt
 
       await updateItem(item.gid, updateData)
-      addToast({ title: "更新成功", description: `商品 ${data.title || item.gid} 已更新` })
+      addToast({ title: "更新成功", description: `商品 ${data.title || String(item.gid)} 已更新` })
       queryClient.invalidateQueries({ queryKey: ["items"] })
       onSuccess()
     } catch (e) {
@@ -110,7 +92,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
           </div>
           <div>
             <span className="text-gray-500">价格:</span>
-            <span className="ml-2 text-orange-600 font-medium">¥{item.price}</span>
+            <span className="ml-2 text-orange-600 font-medium">{item.reservePrice || '-'}</span>
           </div>
           <div>
             <span className="text-gray-500">状态:</span>
@@ -130,22 +112,14 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
             placeholder="商品标题"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
-          <input
-            {...register("remark")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            placeholder="可选备注信息"
-          />
-        </div>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">商品描述</label>
-        <TextEditor
-          {...register("description")}
+        <textarea
+          {...register("reply_default_content")}
           rows={3}
-          maxHeight="30vh"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
           placeholder="商品描述"
         />
       </div>
@@ -179,11 +153,11 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              {...register("auto_delivery")}
-              id="auto_delivery_drawer"
+              {...register("auto_ship")}
+              id="auto_ship_drawer"
               className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
             />
-            <label htmlFor="auto_delivery_drawer" className="text-sm text-gray-700">
+            <label htmlFor="auto_ship_drawer" className="text-sm text-gray-700">
               启用自动发货
             </label>
           </div>
@@ -193,10 +167,10 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
       {/* 默认回复内容 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">默认回复内容</label>
-        <TextEditor
-          {...register("default_reply_content")}
+        <textarea
+          {...register("reply_default_content")}
           rows={2}
-          maxHeight="30vh"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
           placeholder="未匹配关键词时的默认回复"
         />
       </div>
@@ -223,7 +197,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">商品提示词</label>
               <TextEditor
-                {...register("ai_reply_item_prompt")}
+                {...register("ai_prompt")}
                 rows={2}
                 maxHeight="30vh"
                 placeholder="AI回复的商品相关提示词"
@@ -252,44 +226,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
         </button>
         {showDeliveryConfig && (
           <div className="mt-3 space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">发货方式</label>
-              <select
-                {...register("deliveryType")}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="无卡">无卡</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                发货内容（按{"{分段符}"}拆分，每条一条）
-              </label>
-              <TextEditor
-                {...register("deliveryContent")}
-                rows={2}
-                maxHeight="30vh"
-                placeholder="例如: 亲，宝贝已发出哦~{分段符}请注意查收~"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">收货后赠送内容</label>
-              <TextEditor
-                {...register("receiptAfter")}
-                rows={2}
-                maxHeight="30vh"
-                placeholder="买家确认收货后自动发送"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">好评后赠送内容</label>
-              <TextEditor
-                {...register("positiveReviewAfter")}
-                rows={2}
-                maxHeight="30vh"
-                placeholder="买家好评后自动发送"
-              />
-            </div>
+            <p className="text-xs text-gray-400">发货配置请前往表格"付款后发货/收货后赠送/评价后赠送"列进行配置</p>
           </div>
         )}
       </div>
@@ -323,7 +260,7 @@ export function ItemEditDrawer({ item, open, onClose, onSuccess }: ItemEditDrawe
         open={open}
         onClose={onClose}
         title="编辑商品"
-        subtitle={item.title || item.gid}
+        subtitle={item.title || String(item.gid)}
         footer={footer}
         heightRatio={0.95}
       >
