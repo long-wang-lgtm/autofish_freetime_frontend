@@ -333,7 +333,7 @@ export function ShipConfigModal({
                   {sku.values}
                 </span>
                 <span className="text-xs text-orange-600 font-semibold flex-shrink-0 ml-2">
-                  {sku.price != null ? fmtPrice(sku.price) : '-'}
+                  {sku.price != null ? fmtPrice(sku.price / 100) : '-'}
                 </span>
               </div>
               <div className={`text-[10px] mt-0.5 ${sku.hasConfig ? 'text-green-600' : 'text-gray-400'}`}>
@@ -379,7 +379,7 @@ export function ShipConfigModal({
                 {sku.values}
               </div>
               <div className="text-[10px] text-orange-600 font-semibold">
-                {sku.price != null ? fmtPrice(sku.price) : '-'}
+                {sku.price != null ? fmtPrice(sku.price / 100) : '-'}
               </div>
               <div
                 className={`w-[6px] h-[6px] rounded-full mt-1 ${
@@ -394,8 +394,6 @@ export function ShipConfigModal({
     </div>
   )
 
-  // ── 弹窗尺寸：按SKU模式 xl，按商品模式 lg ──
-  const modalSize = hasMultiSku && !byEntirety ? 'xl' : 'lg'
 
   // ═══════════════════════════════════════════════════════════════
   // 移动端布局
@@ -403,7 +401,7 @@ export function ShipConfigModal({
   if (isMobile) {
     return (
       <>
-        <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size={modalSize} footer={footer}>
+        <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%]" footer={footer}>
           <div className="min-h-[360px]">
             {/* 商品信息 — 紧凑 */}
             <div className="text-xs text-gray-500 mb-3 truncate">
@@ -467,7 +465,7 @@ export function ShipConfigModal({
   // ═══════════════════════════════════════════════════════════════
   return (
     <>
-      <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size={modalSize} footer={footer}>
+      <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%]" footer={footer}>
         <div className="min-h-[410px]">
           {/* 商品信息条 */}
           <div className="mb-4 pb-4 border-b border-gray-100">

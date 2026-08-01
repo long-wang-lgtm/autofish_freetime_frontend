@@ -13,6 +13,8 @@ interface ModalProps {
   title?: string
   /** sm=384px | md=448px | lg=512px | xl=672px，默认 md */
   size?: 'sm' | 'md' | 'lg' | 'xl'
+  /** 覆盖弹窗容器 className（常用于自定义 max-w） */
+  className?: string
   children: ReactNode
   /** 底部操作区，传入后渲染 border-t 分隔的固定底部 */
   footer?: ReactNode
@@ -30,6 +32,7 @@ export function Modal({
   onClose,
   title,
   size = 'md',
+  className,
   children,
   footer,
 }: ModalProps) {
@@ -41,7 +44,7 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div
-        className={`bg-white rounded-xl shadow-xl w-full ${SIZE_CLASSES[size]} max-h-[90vh] flex flex-col`}
+        className={`bg-white rounded-xl shadow-xl w-full ${SIZE_CLASSES[size]} max-h-[90vh] flex flex-col ${className ?? ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 标题栏 */}
