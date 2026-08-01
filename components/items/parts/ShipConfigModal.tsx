@@ -401,7 +401,7 @@ export function ShipConfigModal({
   if (isMobile) {
     return (
       <>
-        <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%] !max-h-[60vh]" footer={footer}>
+        <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%] !max-h-[60%]" footer={footer}>
           <div className="min-h-[360px]">
             {/* 商品信息 — 紧凑 */}
             <div className="text-xs text-gray-500 mb-3 truncate">
@@ -465,7 +465,7 @@ export function ShipConfigModal({
   // ═══════════════════════════════════════════════════════════════
   return (
     <>
-      <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%] !max-h-[60vh]" footer={footer}>
+      <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%] !max-h-[60%]" footer={footer}>
         <div className="min-h-[410px]">
           {/* 商品信息条 */}
           <div className="mb-4 pb-4 border-b border-gray-100">
