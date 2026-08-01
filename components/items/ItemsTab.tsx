@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Bot, Truck, Upload } from "lucide-react"
-import type { ShopItem, ItemSKU, ShipConfig, ShipByVoucher } from "@/lib/api/items"
+import type { ShopItem, ShipByVoucher } from "@/lib/api/items"
 import { getVoucherKinds } from "@/lib/api/items"
 import type { ShipStage } from "@/components/items/config"
 import { hasShipConfig, formatPublishTime } from "@/components/items/config"
@@ -16,7 +16,6 @@ import { SendCodeEditor } from "@/components/items/parts/SendCodeEditor"
 import { ShelfActions } from "@/components/items/parts/ShelfActions"
 import { ConfigStatusCell } from "@/components/items/parts/ConfigStatusCell"
 import { ShipConfigModal } from "@/components/items/parts/ShipConfigModal"
-import { SkuConfigModal } from "@/components/items/parts/SkuConfigModal"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
@@ -56,11 +55,6 @@ interface ItemsTabProps {
   onSortChange: (field: string) => void
 }
 
-/** 判断是否为多规格商品 */
-function isMultiSku(item: ShopItem): boolean {
-  return item.skus !== null && item.skus.length > 1
-}
-
 export function ItemsTab({
   isMobile,
   data,
@@ -85,13 +79,9 @@ export function ItemsTab({
   const [editingItem, setEditingItem] = useState<ShopItem | null>(null)
   const [keywordItem, setKeywordItem] = useState<ShopItem | null>(null)
 
-  // ShipConfig 弹窗状态（单规格直接使用）
-  const [directStage, setDirectStage] = useState<ShipStage | null>(null)
-  const [directItem, setDirectItem] = useState<ShopItem | null>(null)
-
-  // SkuConfigModal 状态（多规格中间层）
-  const [skuModalStage, setSkuModalStage] = useState<ShipStage | null>(null)
-  const [skuModalItem, setSkuModalItem] = useState<ShopItem | null>(null)
+  // ShipConfigModal 状态（统一处理单规格和多规格）
+  const [configStage, setConfigStage] = useState<ShipStage | null>(null)
+  const [configItem, setConfigItem] = useState<ShopItem | null>(null)
 
   // 卡种列表
   const { data: voucherKinds = [] } = useQuery({
@@ -116,41 +106,18 @@ export function ItemsTab({
     }
   }
 
-  // 点击配置列 → 分支判断
+  // 点击配置列 → 直接打开 ShipConfigModal
   const handleConfigClick = (item: ShopItem, stage: ShipStage) => {
-    if (isMultiSku(item)) {
-      setSkuModalStage(stage)
-      setSkuModalItem(item)
-    } else {
-      setDirectStage(stage)
-      setDirectItem(item)
-    }
+    setConfigStage(stage)
+    setConfigItem(item)
   }
 
-  // SkuConfigModal → 保存 SKU 级配置
-  const handleSaveSkuConfig = async (skuData: ShipByVoucher): Promise<void> => {
-    if (!skuModalItem || !skuModalStage) return
+  // ShipConfigModal → 保存回调
+  const handleSaveConfig = async (voucher: ShipByVoucher, byEntirety: boolean) => {
+    if (!configItem || !configStage) return
     await shipConfigMutation.mutateAsync({
-      gid: skuModalItem.gid, stage: skuModalStage, byEntirety: false, voucher: skuData,
+      gid: configItem.gid, stage: configStage, byEntirety, voucher,
     })
-  }
-
-  // SkuConfigModal → 保存商品级配置
-  const handleSaveEntiretyConfig = async (skuData: ShipByVoucher): Promise<void> => {
-    if (!skuModalItem || !skuModalStage) return
-    await shipConfigMutation.mutateAsync({
-      gid: skuModalItem.gid, stage: skuModalStage, byEntirety: true, voucher: skuData,
-    })
-  }
-
-  // 单规格 → 直接保存
-  const handleSaveDirectConfig = async (skuData: ShipByVoucher): Promise<void> => {
-    if (!directItem || !directStage) return
-    await shipConfigMutation.mutateAsync({
-      gid: directItem.gid, stage: directStage, byEntirety: true, voucher: skuData,
-    })
-    setDirectStage(null)
-    setDirectItem(null)
   }
 
   // 构建表格列定义
@@ -393,45 +360,19 @@ export function ItemsTab({
 
       <Pagination page={page} total={totalItems} pageSize={pageSize} onChange={onPageChange} />
 
-      {/* 单规格 → 直接 ShipConfigModal */}
-      {directStage && directItem && (
+      {/* 发货配置弹窗（单规格 + 多规格统一） */}
+      {configStage && configItem && (
         <ShipConfigModal
           open
-          onClose={() => { setDirectStage(null); setDirectItem(null) }}
-          stage={directStage}
-          gid={directItem.gid}
-          title={directItem.title}
-          currentConfig={(() => {
-            const cfg = directItem.config?.[directStage]
-            if (!cfg || cfg.byEntirety !== true) return null
-            return cfg.entirety
-          })()}
-          byEntirety={true}
+          onClose={() => { setConfigStage(null); setConfigItem(null) }}
+          stage={configStage}
+          gid={configItem.gid}
+          title={configItem.title}
+          isMobile={isMobile}
+          skus={configItem.skus}
+          config={configItem.config?.[configStage] ?? null}
           voucherKinds={voucherKinds}
-          onSave={handleSaveDirectConfig}
-        />
-      )}
-
-      {/* 多规格 → SkuConfigModal */}
-      {skuModalStage && skuModalItem && (
-        <SkuConfigModal
-          open
-          onClose={() => { setSkuModalStage(null); setSkuModalItem(null) }}
-          gid={skuModalItem.gid}
-          title={skuModalItem.title}
-          stage={skuModalStage}
-          skus={skuModalItem.skus!}
-          config={skuModalItem.config?.[skuModalStage] ?? {
-            byEntirety: null,
-            entirety: null,
-            skus: {} as Record<number, ShipByVoucher>,
-          }}
-          voucherKinds={voucherKinds}
-          onSaveSku={handleSaveSkuConfig}
-          onSaveEntirety={handleSaveEntiretyConfig}
-          onConfigSaved={() => {
-            // shipConfigMutation.onSuccess 已触发 invalidateQueries
-          }}
+          onSave={handleSaveConfig}
         />
       )}
 
