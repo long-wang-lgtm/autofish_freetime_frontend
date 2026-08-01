@@ -1,22 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { RefreshCw, Plus } from 'lucide-react'
+import { RefreshCw, Search, X } from 'lucide-react'
 import type { AccountName } from '@/lib/api/accounts'
 import type { ItemsFilterState } from '@/hooks/useItemsFilters'
-import { SearchChip } from '@/components/items/parts/SearchChip'
-import type { SearchField } from '@/components/items/parts/SearchChip'
-
-// 暂留：芯片搜索标签映射（后续 Phase 随芯片 UI 一起移除）
-const SEARCH_FIELD_LABELS: Record<SearchField, string> = {
-  title: '商品标题',
-  gid: '商品ID',
-  deliveryContent: '付款后发货',
-  receiptAfter: '收货后赠送',
-  positiveReviewAfter: '评价后赠送',
-  aiReplyItemPrompt: 'AI提示词',
-  sendCode: '指令码',
-}
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 
 export interface ItemsFilterBarProps {
@@ -27,16 +13,6 @@ export interface ItemsFilterBarProps {
   isRefreshing: boolean
 }
 
-const ALL_SEARCH_FIELDS = [
-  'title',
-  'gid',
-  'deliveryContent',
-  'receiptAfter',
-  'positiveReviewAfter',
-  'aiReplyItemPrompt',
-  'sendCode',
-] as SearchField[]
-
 export function ItemsFilterBarDesktop({
   accounts,
   filterState,
@@ -44,51 +20,22 @@ export function ItemsFilterBarDesktop({
   onRefresh,
   isRefreshing,
 }: ItemsFilterBarProps) {
-  const [addMenuOpen, setAddMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  const { uid, status, chips } = filterState
-
-  // 点击外部关闭下拉
-  useEffect(() => {
-    if (!addMenuOpen) return
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setAddMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [addMenuOpen])
-
-  const usedFields = new Set(chips.map((c) => c.field))
+  const { uid, status, title, gid } = filterState
 
   const setUid = (v: string) =>
     onFilterChange((prev) => ({ ...prev, uid: v || undefined }))
   const setStatus = (v: number | undefined) =>
     onFilterChange((prev) => ({ ...prev, status: v }))
-  const addChip = (field: SearchField) => {
-    setAddMenuOpen(false)
-    onFilterChange((prev) => ({
-      ...prev,
-      chips: [...prev.chips, { field, value: '' }],
-    }))
-  }
-  const removeChip = (field: SearchField) =>
-    onFilterChange((prev) => ({
-      ...prev,
-      chips: prev.chips.filter((c) => c.field !== field),
-    }))
-  const updateChip = (field: SearchField, value: string) =>
-    onFilterChange((prev) => ({
-      ...prev,
-      chips: prev.chips.map((c) => (c.field === field ? { ...c, value } : c)),
-    }))
+  const setTitle = (v: string) =>
+    onFilterChange((prev) => ({ ...prev, title: v }))
+  const setGid = (v: string) =>
+    onFilterChange((prev) => ({ ...prev, gid: v }))
   const clearAll = () =>
     onFilterChange(() => ({
       uid: undefined,
       status: undefined,
-      chips: [],
+      title: '',
+      gid: '',
       orderBy: null,
       asc: false,
       page: 1,
@@ -117,7 +64,7 @@ export function ItemsFilterBarDesktop({
           {isRefreshing ? '刷新中...' : '刷新商品'}
         </button>
 
-        {/* 中区：筛选控件 + 搜索芯片 */}
+        {/* 中区：筛选控件 */}
         <div className="flex-1 flex items-center gap-2 flex-wrap min-w-0">
           {/* 账号下拉 */}
           <select
@@ -147,57 +94,45 @@ export function ItemsFilterBarDesktop({
             <option value="1">已售出</option>
           </select>
 
-          {/* +添加条件下拉 */}
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setAddMenuOpen(!addMenuOpen)}
-              disabled={usedFields.size >= ALL_SEARCH_FIELDS.length}
-              className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full border transition-colors ${
-                usedFields.size >= ALL_SEARCH_FIELDS.length
-                  ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
-                  : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
-              }`}
-            >
-              <Plus className="w-3 h-3" />
-              添加条件
-            </button>
-
-            {addMenuOpen && (
-              <div className="absolute top-full left-0 mt-1 z-20 w-44 bg-white border border-gray-200 rounded-xl shadow-md py-1">
-                {ALL_SEARCH_FIELDS.map((f) => {
-                  const disabled = usedFields.has(f)
-                  return (
-                    <button
-                      key={f}
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => !disabled && addChip(f)}
-                      className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                        disabled
-                          ? 'text-gray-300 cursor-not-allowed'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      {SEARCH_FIELD_LABELS[f]}
-                    </button>
-                  )
-                })}
-              </div>
+          {/* 商品标题搜索 */}
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="商品标题"
+              className="h-8 pl-7 pr-7 py-0 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-36"
+            />
+            {title && (
+              <button
+                onClick={() => setTitle('')}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-3 h-3" />
+              </button>
             )}
           </div>
 
-          {/* 已确认的芯片 */}
-          {chips.map((chip) => (
-            <SearchChip
-              key={chip.field}
-              field={chip.field}
-              value={chip.value}
-              label={SEARCH_FIELD_LABELS[chip.field]}
-              onRemove={() => removeChip(chip.field)}
-              onChange={(v) => updateChip(chip.field, v)}
+          {/* 商品ID搜索 */}
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <input
+              type="text"
+              value={gid}
+              onChange={(e) => setGid(e.target.value)}
+              placeholder="商品ID"
+              className="h-8 pl-7 pr-7 py-0 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-28"
             />
-          ))}
+            {gid && (
+              <button
+                onClick={() => setGid('')}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 右区：清空筛选 */}

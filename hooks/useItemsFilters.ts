@@ -3,21 +3,12 @@
 import { useState, useMemo, useEffect, useRef } from "react"
 import { useDebounce } from "@/hooks/useDebounce"
 import type { ItemFilters } from "@/lib/api/items"
-import type { SearchField } from "@/components/items/parts/SearchChip"
-
-// ═══════════════════════════════════════════════════════════════
-// 筛选状态（chips 字段暂留，后续 Phase 移除芯片搜索 UI）
-// ═══════════════════════════════════════════════════════════════
-
-interface SearchChipData {
-  field: SearchField
-  value: string
-}
 
 export interface ItemsFilterState {
   uid?: string
   status: number | undefined
-  chips: SearchChipData[]        // 暂留，后续 Phase 移除
+  title: string
+  gid: string
   orderBy: string | null
   asc: boolean
   page: number
@@ -29,7 +20,8 @@ export interface ItemsFilterState {
 export function useItemsFilters() {
   const [filterState, setFilterState] = useState<ItemsFilterState>({
     status: 0,
-    chips: [],
+    title: '',
+    gid: '',
     orderBy: null,
     asc: false,
     page: 1,
@@ -42,6 +34,8 @@ export function useItemsFilters() {
     return {
       uid: debouncedState.uid,
       status: debouncedState.status,
+      title: debouncedState.title || undefined,
+      gid: debouncedState.gid || undefined,
       order_by: debouncedState.orderBy ?? undefined,
       asc: debouncedState.asc,
     }
@@ -52,6 +46,8 @@ export function useItemsFilters() {
   const filterKey = JSON.stringify({
     uid: debouncedState.uid,
     status: debouncedState.status,
+    title: debouncedState.title,
+    gid: debouncedState.gid,
     orderBy: debouncedState.orderBy,
     asc: debouncedState.asc,
   })
