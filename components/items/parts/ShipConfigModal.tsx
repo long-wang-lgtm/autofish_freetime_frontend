@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState, useMemo } from "react"
+import { createPortal } from "react-dom"
 import { Modal } from "@/components/ui/overlay/Modal"
 import { ConfirmDialog } from "@/components/ui/overlay/ConfirmDialog"
 import type { ItemSKU, ShipConfig, ShipByVoucher, VoucherKind } from "@/lib/api/items"
@@ -43,7 +44,7 @@ export function ShipConfigModal({
   const hasMultiSku = skus != null && skus.length > 1
 
   // ── 编辑范围（内部状态） ──
-  const initialByEntirety = config?.byEntirety ?? (hasMultiSku ? false : true)
+  const initialByEntirety = hasMultiSku ? false : true
   const initialSku = hasMultiSku && skus ? skus[0] : null
   const [byEntirety, setByEntirety] = useState(initialByEntirety)
   const [selectedSku, setSelectedSku] = useState<ItemSKU | null>(initialSku)
@@ -294,7 +295,7 @@ export function ShipConfigModal({
   // ═══════════════════════════════════════════════════════════════
   // 确认对话框
   // ═══════════════════════════════════════════════════════════════
-  const confirmDialog = confirmAction && (
+  const confirmDialog = confirmAction && createPortal(
     <ConfirmDialog
       open
       onOpenChange={() => setConfirmAction(null)}
@@ -304,7 +305,8 @@ export function ShipConfigModal({
       cancelLabel="继续编辑"
       variant="danger"
       onConfirm={handleConfirmDiscard}
-    />
+    />,
+    document.body
   )
 
   // ═══════════════════════════════════════════════════════════════
@@ -401,7 +403,7 @@ export function ShipConfigModal({
   if (isMobile) {
     return (
       <>
-        <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%]" maxHeight="60vh" footer={footer}>
+        <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%]" footer={footer}>
           <div className="min-h-[360px]">
             {/* 商品信息 — 紧凑 */}
             <div className="text-xs text-gray-500 mb-3 truncate">
@@ -465,7 +467,7 @@ export function ShipConfigModal({
   // ═══════════════════════════════════════════════════════════════
   return (
     <>
-      <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%] !max-h-[100vh]" footer={footer}>
+      <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%]" footer={footer}>
         <div className="min-h-[410px]">
           {/* 商品信息条 */}
           <div className="mb-4 pb-4 border-b border-gray-100">
