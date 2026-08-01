@@ -15,6 +15,8 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
   /** 覆盖弹窗容器 className（常用于自定义 max-w） */
   className?: string
+  /** 覆盖默认 max-height，默认 90vh */
+  maxHeight?: string
   children: ReactNode
   /** 底部操作区，传入后渲染 border-t 分隔的固定底部 */
   footer?: ReactNode
@@ -33,6 +35,7 @@ export function Modal({
   title,
   size = 'md',
   className,
+  maxHeight = '90vh',
   children,
   footer,
 }: ModalProps) {
@@ -44,7 +47,8 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div
-        className={`bg-white rounded-xl shadow-xl w-full ${SIZE_CLASSES[size]} max-h-[90vh] flex flex-col ${className ?? ''}`}
+        className={`bg-white rounded-xl shadow-xl w-full ${SIZE_CLASSES[size]} flex flex-col ${className ?? ''}`}
+        style={{ maxHeight }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 标题栏 */}
