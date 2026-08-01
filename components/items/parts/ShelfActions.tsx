@@ -18,8 +18,8 @@ function getShelfState(item: ShopItem) {
   return {
     canShelve: !isPro && (item.status === -2 || item.status === 1),
     canOffline: !isPro && item.status === 0,
-    shelveDisabledReason: isPro ? "Pro 账号不支持上架" : undefined,
-    offlineDisabledReason: isPro ? "Pro 账号不支持下架" : undefined,
+    shelveDisabledReason: isPro ? "" : undefined,
+    offlineDisabledReason: isPro ? "" : undefined,
   }
 }
 

@@ -44,7 +44,7 @@ export function ShipConfigModal({
   const hasMultiSku = skus != null && skus.length > 1
 
   // ── 编辑范围（内部状态） ──
-  const initialByEntirety = hasMultiSku ? false : true
+  const initialByEntirety = config?.byEntirety ?? (hasMultiSku ? false : true)
   const initialSku = hasMultiSku && skus ? skus[0] : null
   const [byEntirety, setByEntirety] = useState(initialByEntirety)
   const [selectedSku, setSelectedSku] = useState<ItemSKU | null>(initialSku)
@@ -224,7 +224,7 @@ export function ShipConfigModal({
         <label className="w-16 flex-shrink-0 text-sm font-semibold text-gray-800 pt-1">使用说明</label>
         <div className="flex-1 min-w-0 flex flex-col">
           <div className="flex items-center gap-1.5 mb-2">
-            <span className="text-xs text-gray-400 flex-shrink-0">插入:</span>
+            {/* <span className="text-xs text-gray-400 flex-shrink-0">插入:</span> */}
             {PLACEHOLDERS.map((p) => (
               <button
                 key={p.value}
@@ -445,11 +445,11 @@ export function ShipConfigModal({
             {hasMultiSku && !byEntirety && renderSkuChipRow()}
 
             {/* 当前编辑提示 */}
-            {hasMultiSku && !byEntirety && selectedSku && (
+            {/* {hasMultiSku && !byEntirety && selectedSku && (
               <p className="text-[11px] text-gray-500 mt-3 mb-1">
                 当前编辑: <span className="font-medium text-gray-800">{selectedSkuLabel}</span>
               </p>
-            )}
+            )} */}
 
             {/* 配置表单 */}
             <div className={`flex flex-col gap-5 ${hasMultiSku ? 'mt-3' : 'mt-0'}`}>
@@ -504,11 +504,11 @@ export function ShipConfigModal({
             <div className="flex -mx-4">
               {renderSkuListPanel()}
               <div className="flex-1 min-w-0 px-4 flex flex-col gap-5">
-                {selectedSku && (
+                {/* {selectedSku && (
                   <p className="text-xs text-gray-500">
                     当前编辑: <span className="text-gray-700 font-medium">{selectedSkuLabel}</span>
                   </p>
-                )}
+                )} */}
                 {renderConfigForm()}
               </div>
             </div>
