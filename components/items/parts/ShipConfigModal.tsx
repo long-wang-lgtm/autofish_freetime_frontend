@@ -3,6 +3,7 @@
 import { useRef, useState, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { Modal } from "@/components/ui/overlay/Modal"
+import { BottomSheet } from "@/components/ui/overlay/Sheet"
 import { ConfirmDialog } from "@/components/ui/overlay/ConfirmDialog"
 import type { ItemSKU, ShipConfig, ShipByVoucher, VoucherKind } from "@/lib/api/items"
 import { fmtPrice } from "@/lib/utils/format"
@@ -171,7 +172,7 @@ export function ShipConfigModal({
   // 公共：按钮样式
   // ═══════════════════════════════════════════════════════════════
   const toggleBtnClass = (active: boolean) =>
-    `inline-flex ${isMobile ? 'flex-1 justify-center' : ''} px-4 h-9 text-sm rounded-lg border transition-colors font-medium items-center ${
+    `inline-flex whitespace-nowrap ${isMobile ? 'flex-1 justify-center' : ''} px-4 h-9 text-sm rounded-lg border transition-colors font-medium items-center ${
       active
         ? 'bg-blue-50 text-blue-700 border-blue-300 ring-1 ring-blue-200'
         : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
@@ -183,20 +184,20 @@ export function ShipConfigModal({
   const renderConfigForm = () => (
     <>
       {/* 发货方式 */}
-      <div className="flex gap-4">
-        <label className="w-16 flex-shrink-0 text-sm font-semibold text-gray-800 pt-1.5">发货方式</label>
+      <div className="flex items-center gap-4">
+        <label className="w-16 flex-shrink-0 text-sm font-semibold text-gray-800">发货方式</label>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => { setKind('DIRECT'); if (!isDirty) setIsDirty(true) }}
+              onClick={() => { setKind('DIRECT'); if (kind !== 'DIRECT') setIsDirty(true) }}
               className={toggleBtnClass(kind === 'DIRECT')}
             >
               无卡发货
             </button>
             <button
               type="button"
-              onClick={() => { setKind('VOUCHER'); if (!isDirty) setIsDirty(true) }}
+              onClick={() => { setKind('VOUCHER'); if (kind !== 'VOUCHER') setIsDirty(true) }}
               className={toggleBtnClass(kind === 'VOUCHER')}
             >
               卡密发货
@@ -206,7 +207,7 @@ export function ShipConfigModal({
             <div className="mt-2">
               <select
                 value={voucherkindid ?? ''}
-                onChange={(e) => { setVoucherkindid(e.target.value ? Number(e.target.value) : null); if (!isDirty) setIsDirty(true) }}
+                onChange={(e) => { const v = e.target.value ? Number(e.target.value) : null; setVoucherkindid(v); if (voucherkindid !== v) setIsDirty(true) }}
                 className={`${isMobile ? 'w-full' : 'w-full max-w-[260px]'} h-9 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white`}
               >
                 <option value="">选择卡种</option>
@@ -221,9 +222,9 @@ export function ShipConfigModal({
 
       {/* 使用说明 */}
       <div className="flex gap-4">
-        <label className="w-16 flex-shrink-0 text-sm font-semibold text-gray-800 pt-1">使用说明</label>
+        <label className="w-16 flex-shrink-0 text-sm font-semibold text-gray-800 pt-0.5">使用说明</label>
         <div className="flex-1 min-w-0 flex flex-col">
-          <div className="flex items-center gap-1.5 mb-2">
+          <div className="flex items-center gap-1.5 mb-3">
             {/* <span className="text-xs text-gray-400 flex-shrink-0">插入:</span> */}
             {PLACEHOLDERS.map((p) => (
               <button
@@ -247,7 +248,7 @@ export function ShipConfigModal({
             }`}
             placeholder="输入发货内容，点击上方按钮插入占位符…"
           />
-          <span className="text-xs text-gray-400 mt-1 self-end">{useinstructions.length} 字</span>
+          <span className="text-xs text-gray-400 mt-1.5 self-end">{useinstructions.length} 字</span>
         </div>
       </div>
     </>
@@ -403,10 +404,10 @@ export function ShipConfigModal({
   if (isMobile) {
     return (
       <>
-        <Modal open={open} onClose={handleClose} title={STAGE_LABELS[stage]} size="xl" className="max-w-[60%]" footer={footer}>
-          <div className="min-h-[360px]">
+        <BottomSheet open={open} onClose={handleClose} title={STAGE_LABELS[stage]} footer={footer}>
+          <div className="min-h-[360px] px-4 pt-1 pb-4">
             {/* 商品信息 — 紧凑 */}
-            <div className="text-xs text-gray-500 mb-3 truncate">
+            <div className="text-sm text-gray-500 mb-6 truncate">
               商品：<span className="font-medium text-gray-900">{title}</span>
             </div>
 
@@ -452,11 +453,11 @@ export function ShipConfigModal({
             )} */}
 
             {/* 配置表单 */}
-            <div className={`flex flex-col gap-5 ${hasMultiSku ? 'mt-3' : 'mt-0'}`}>
+            <div className={`flex flex-col gap-6 ${hasMultiSku ? 'mt-3' : 'mt-0'}`}>
               {renderConfigForm()}
             </div>
           </div>
-        </Modal>
+        </BottomSheet>
         {confirmDialog}
       </>
     )
