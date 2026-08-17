@@ -55,7 +55,7 @@ export function SpreadTab() {
 
   const handleOpportunityClick = (id: number) => {
     const params = new URLSearchParams(searchParams.toString())
-    params.set('tab', 'workbench')
+    params.set('tab', 'original')
     params.set('oid', String(id))
     router.push(`/dashboard/batch-publish?${params.toString()}`)
   }

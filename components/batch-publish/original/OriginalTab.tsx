@@ -39,7 +39,7 @@ export function OriginalTab() {
   // Back to overview → clear oid param
   const handleBackToOverview = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
-    params.set('tab', 'workbench')
+    params.set('tab', 'original')
     params.delete('oid')
     router.push(`/dashboard/batch-publish?${params.toString()}`, { scroll: false })
   }, [router, searchParams])
@@ -51,7 +51,7 @@ export function OriginalTab() {
       return
     }
     const params = new URLSearchParams(searchParams.toString())
-    params.set('tab', 'workbench')
+    params.set('tab', 'original')
     params.set('oid', String(oid))
     router.push(`/dashboard/batch-publish?${params.toString()}`, { scroll: false })
   }, [router, searchParams, page.selectedOid, handleBackToOverview])
