@@ -3,7 +3,6 @@
 import { useMemo } from 'react'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
-import { Pagination } from '@/components/ui/data/Pagination'
 import { ProgressActionCell } from '../original/ProgressActionCell'
 import { MATERIAL_STATUS_CONFIG } from '@/components/batch-publish/shared/constants'
 import { fmtDateTime, fmtPrice } from '@/lib/utils/format'
@@ -14,10 +13,11 @@ interface MaterialTableProps {
   isLoading: boolean
   error: unknown
   onRetry: () => void
-  page: number
-  total: number
-  pageSize: number
-  onPageChange: (p: number) => void
+  /** 已选素材 id（跨组多选） */
+  selectedIds: Set<number>
+  onToggleSelect: (id: number) => void
+  /** 表头全选——对当前表格数据生效 */
+  onToggleAll: () => void
   onOpportunityClick: (id: number) => void
   /** 行点击 → 打开编辑 Sheet */
   onOpenEditor: (id: number) => void
@@ -27,15 +27,37 @@ interface MaterialTableProps {
   isAnyLoading: boolean
 }
 
-const GRID_COLS = '1fr 2.5fr 0.7fr 0.7fr 0.8fr 0.7fr 1.8fr 0.7fr 0.8fr'
+const GRID_COLS = '32px 1fr 2.5fr 0.7fr 0.7fr 0.8fr 0.7fr 1.8fr 0.7fr 0.8fr'
 
 export function MaterialTable({
   data, isLoading, error, onRetry,
-  page, total, pageSize, onPageChange,
+  selectedIds, onToggleSelect, onToggleAll,
   onOpportunityClick, onOpenEditor,
   onTriggerWork, onPublish, isAnyLoading,
 }: MaterialTableProps) {
+  const allSelected = data.length > 0 && data.every((m) => selectedIds.has(m.id))
+
   const columns = useMemo<DataTableColumn<PublishMaterial>[]>(() => [
+    {
+      key: 'checkbox',
+      header: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          onChange={onToggleAll}
+          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+      ),
+      align: 'center',
+      render: (item) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.has(item.id)}
+          onChange={() => onToggleSelect(item.id)}
+          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+      ),
+    },
     {
       key: 'opportunity',
       header: '所属商机',
@@ -126,26 +148,20 @@ export function MaterialTable({
         </span>
       ),
     },
-  ], [onOpportunityClick, onTriggerWork, onPublish, isAnyLoading])
+  ], [allSelected, selectedIds, onToggleSelect, onToggleAll, onOpportunityClick, onTriggerWork, onPublish, isAnyLoading])
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex-1 min-h-0 overflow-auto">
-        <DataTable
-          columns={columns}
-          data={data}
-          keyExtractor={(item) => String(item.id)}
-          gridTemplateColumns={GRID_COLS}
-          isLoading={isLoading}
-          error={error}
-          onRetry={onRetry}
-          emptyTitle="暂无发布记录"
-          emptyDescription="在创作台完成素材发布后，记录将出现在这里"
-          stickyHeader
-          onRowClick={(item) => onOpenEditor(item.id)}
-        />
-      </div>
-      <Pagination page={page} total={total} pageSize={pageSize} onChange={onPageChange} />
-    </div>
+    <DataTable
+      columns={columns}
+      data={data}
+      keyExtractor={(item) => String(item.id)}
+      gridTemplateColumns={GRID_COLS}
+      isLoading={isLoading}
+      error={error}
+      onRetry={onRetry}
+      emptyTitle="暂无发布记录"
+      emptyDescription="在创作台完成素材发布后，记录将出现在这里"
+      onRowClick={(item) => onOpenEditor(item.id)}
+    />
   )
 }

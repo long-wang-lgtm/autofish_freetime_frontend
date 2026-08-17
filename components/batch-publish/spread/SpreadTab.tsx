@@ -1,42 +1,82 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSpreadPage } from '@/hooks/batch-publish/useSpreadPage'
 import { useOriginalMutations } from '@/hooks/batch-publish/useOriginalMutations'
 import { SearchToolbar } from '@/components/ui/data/SearchToolbar'
 import { MaterialTable } from './MaterialTable'
 import { MaterialCard } from './MaterialCard'
 import { MaterialEditSheet } from '../original/MaterialEditSheet'
+import { CreateMaterialModal, type CreateMaterialSource } from '../original/CreateMaterialModal'
+import { SourcePickerModal } from './SourcePickerModal'
+import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
+import { Modal } from '@/components/ui/overlay/Modal'
+import { BottomSheet } from '@/components/ui/overlay/Sheet'
 import { MATERIALS_STATUS_FILTER_OPTIONS } from '@/components/batch-publish/shared/constants'
 import { renderErrorGuard } from '@/components/batch-publish/shared/ErrorGuard'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
-import { useRouter, useSearchParams } from 'next/navigation'
-import type { RewriteStage } from '@/lib/api/batch-publish'
+import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
+import { useToast } from '@/components/ui/Toaster'
+import { getAccountNames, type AccountName } from '@/lib/api/accounts'
+import {
+  triggerWork, publishMaterial, editMaterial,
+  createMaterialsByOpp, createMaterialsByItem,
+  type RewriteStage, type PublishMaterial, type OpportunityItem, type MonitoredItem,
+} from '@/lib/api/batch-publish'
+
+type BatchOp = 'write' | 'genimageplan' | 'genimage' | 'publish' | 'assign'
+
+interface MaterialGroup {
+  key: string
+  title: string
+  materials: PublishMaterial[]
+  published: number
+}
 
 export function SpreadTab() {
-  const {
-    search, status, onFilterChange,
-    page, pageSize, total, setPage,
-    data, isLoading, error, refetch,
-    isMobile,
-  } = useSpreadPage()
+  const { search, status, onFilterChange, data, isLoading, error, refetch, isMobile } = useSpreadPage()
 
   const router = useRouter()
   const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
+  const toast = useToast()
 
-  // 无商机的二创素材处理草稿——复用 workbench 同款 mutation（invalidateAll 已前缀匹配，能刷新 all 列表）
+  // 单素材操作 mutation（批量操作用直接 API 调用，避免逐条触发 toast）
   const { triggerWorkMutation, publishMutation, editMaterialMutation, deleteMaterialMutation } =
     useOriginalMutations(undefined)
 
+  // ---- UI 状态 ----
+  const [sourcePickerOpen, setSourcePickerOpen] = useState(false)
+  const [pickerSelection, setPickerSelection] = useState<{ opps: OpportunityItem[]; items: MonitoredItem[] } | null>(null)
+  const [createSource, setCreateSource] = useState<CreateMaterialSource | null>(null)
+  const [createPending, setCreatePending] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [editingMaterialId, setEditingMaterialId] = useState<number | null>(null)
+  const [batchOp, setBatchOp] = useState<BatchOp | null>(null)
+  const [assignAccountOpen, setAssignAccountOpen] = useState(false)
+  const [assignToUid, setAssignToUid] = useState('')
+  const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
+
+  const groupRefs = useRef(new Map<string, HTMLDivElement>())
+  const appliedDeepLinkRef = useRef<string | null>(null)
+  const didScrollDeepLinkRef = useRef<string | null>(null)
+
+  // 发布账号列表（批量分配账号下拉）
+  const { data: accountNames = [] } = useQuery<AccountName[]>({
+    queryKey: ['batch-publish', 'account-names'],
+    queryFn: () => getAccountNames(),
+  })
 
   const isAnyLoading =
     triggerWorkMutation.isPending ||
     publishMutation.isPending ||
     editMaterialMutation.isPending ||
-    deleteMaterialMutation.isPending
+    deleteMaterialMutation.isPending ||
+    batchOp !== null
 
-  // ProgressActionCell 不捕获 reject，这里吞掉（错误 toast 已由 mutation 的 onError 处理）
+  // ---- 单素材操作 ----
   const handleTriggerWork = useCallback(async (materialId: number, stage: RewriteStage) => {
     try {
       await triggerWorkMutation.mutateAsync({ materialId, stage })
@@ -60,16 +100,307 @@ export function SpreadTab() {
     router.push(`/dashboard/batch-publish?${params.toString()}`)
   }
 
-  const errorGuard = renderErrorGuard({
-    error,
-    isLoading,
-    hasData: data.length > 0,
-    onRetry: () => refetch(),
-  })
+  // ---- 按源分组 ----
+  const groups = useMemo<MaterialGroup[]>(() => {
+    const map = new Map<string, { title: string; materials: PublishMaterial[] }>()
+    for (const m of data) {
+      if (m.opportunity?.id) {
+        const key = `opp-${m.opportunity.id}`
+        const title = m.opportunity.name ?? `商机 #${m.opportunity.id}`
+        const existing = map.get(key)
+        if (existing) existing.materials.push(m)
+        else map.set(key, { title, materials: [m] })
+      } else if (m.souItem?.gid) {
+        const key = `item-${m.souItem.gid}`
+        const title = m.souItem.title || m.souItem.gid
+        const existing = map.get(key)
+        if (existing) existing.materials.push(m)
+        else map.set(key, { title, materials: [m] })
+      } else {
+        const key = 'unassigned'
+        const existing = map.get(key)
+        if (existing) existing.materials.push(m)
+        else map.set(key, { title: '未分配账号', materials: [m] })
+      }
+    }
+    const list = Array.from(map.entries()).map(([key, v]) => ({
+      key,
+      title: v.title,
+      materials: v.materials,
+      published: v.materials.filter((x) => x.status === 'published_success').length,
+    }))
+    // 未分配组固定排最后
+    return list.sort((a, b) => (a.key === 'unassigned' ? 1 : 0) - (b.key === 'unassigned' ? 1 : 0))
+  }, [data])
+
+  const materialById = useMemo(() => new Map(data.map((m) => [m.id, m])), [data])
+
+  // ---- 深链：oid / item → 对应组展开且高亮，其余折叠 ----
+  const oidParam = searchParams.get('oid')
+  const itemParam = searchParams.get('item')
+  const deepLinkKey = oidParam ? `opp-${oidParam}` : itemParam ? `item-${itemParam}` : null
+
+  useEffect(() => {
+    if (groups.length === 0) return
+    if (appliedDeepLinkRef.current === deepLinkKey) return
+    appliedDeepLinkRef.current = deepLinkKey
+    if (deepLinkKey && groups.some((g) => g.key === deepLinkKey)) {
+      setCollapsedKeys(new Set(groups.map((g) => g.key).filter((k) => k !== deepLinkKey)))
+    } else {
+      setCollapsedKeys(new Set())
+    }
+  }, [groups, deepLinkKey])
+
+  // 深链组渲染后滚动到可见区域（仅首次生效）
+  useEffect(() => {
+    if (!deepLinkKey || didScrollDeepLinkRef.current === deepLinkKey) return
+    if (!groups.some((g) => g.key === deepLinkKey)) return
+    didScrollDeepLinkRef.current = deepLinkKey
+    const timer = setTimeout(() => {
+      groupRefs.current.get(deepLinkKey)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 60)
+    return () => clearTimeout(timer)
+  }, [deepLinkKey, groups])
+
+  const setGroupRef = useCallback((key: string) => (node: HTMLDivElement | null) => {
+    if (node) groupRefs.current.set(key, node)
+    else groupRefs.current.delete(key)
+  }, [])
+
+  const toggleGroup = useCallback((key: string) => {
+    setCollapsedKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key); else next.add(key)
+      return next
+    })
+  }, [])
+
+  // ---- 多选（跨组生效） ----
+  const onToggleSelect = useCallback((id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }, [])
+
+  const onToggleAll = useCallback((items: PublishMaterial[]) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      const allSelected = items.every((m) => next.has(m.id))
+      if (allSelected) items.forEach((m) => next.delete(m.id))
+      else items.forEach((m) => next.add(m.id))
+      return next
+    })
+  }, [])
+
+  const onClearSelection = useCallback(() => setSelectedIds(new Set()), [])
+
+  // ---- 批量操作 ----
+  const runBatch = useCallback(async (
+    op: BatchOp,
+    opLabel: string,
+    ids: number[],
+    fn: (id: number) => Promise<unknown>,
+  ) => {
+    setBatchOp(op)
+    const results = await Promise.allSettled(ids.map(fn))
+    setBatchOp(null)
+    queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
+    const ok = results.filter((r) => r.status === 'fulfilled').length
+    const fail = results.length - ok
+    toast.addToast({
+      title: fail > 0 ? `${opLabel}完成 ${ok} 条，失败 ${fail} 条` : `${opLabel}完成 ${ok} 条`,
+      variant: fail > 0 ? 'error' : 'success',
+    })
+  }, [queryClient, toast])
+
+  const handleBatchTrigger = useCallback(async (stage: RewriteStage) => {
+    if (batchOp) return
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    const label = stage === 'write' ? '改写' : stage === 'genimageplan' ? '封面' : '生图'
+    await runBatch(stage, label, ids, (id) => triggerWork(id, stage))
+  }, [batchOp, selectedIds, runBatch])
+
+  const handleBatchPublish = useCallback(async () => {
+    if (batchOp) return
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    // 跳过未分配账号的素材
+    const publishable: number[] = []
+    let skipped = 0
+    for (const id of ids) {
+      if (materialById.get(id)?.to_uid) publishable.push(id)
+      else skipped += 1
+    }
+    if (skipped > 0) toast.addToast({ title: `${skipped} 条未分配账号已跳过`, variant: 'warning' })
+    if (publishable.length === 0) return
+    await runBatch('publish', '发布', publishable, (id) => publishMaterial(id))
+    queryClient.invalidateQueries({ queryKey: ['batch-publish', 'monitored-items'] })
+  }, [batchOp, selectedIds, materialById, runBatch, toast, queryClient])
+
+  const handleBatchAssign = useCallback(async (toUid: string) => {
+    if (batchOp) return
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    setAssignAccountOpen(false)
+    await runBatch('assign', '分配账号', ids, (id) => editMaterial({ id, to_uid: toUid }))
+  }, [batchOp, selectedIds, runBatch])
+
+  // ---- 跨源批量创建 ----
+  const handlePickerConfirm = useCallback((opps: OpportunityItem[], items: MonitoredItem[]) => {
+    setPickerSelection({ opps, items })
+    setCreateSource({ type: 'batch', count: opps.length + items.length })
+    setSourcePickerOpen(false)
+  }, [])
+
+  const handleCloseCreate = useCallback(() => {
+    setCreateSource(null)
+    setPickerSelection(null)
+  }, [])
+
+  const handleBatchCreate = useCallback(async (num: number, toUid?: string) => {
+    if (!pickerSelection) return
+    const { opps, items } = pickerSelection
+    const totalSources = opps.length + items.length
+    if (totalSources === 0) return
+    setCreatePending(true)
+    let created = 0
+    let failed = 0
+    for (const opp of opps) {
+      try {
+        const res = await createMaterialsByOpp(num, opp, toUid)
+        created += res.length
+      } catch {
+        failed += 1
+      }
+    }
+    for (const item of items) {
+      try {
+        const res = await createMaterialsByItem(num, item.gid, toUid)
+        created += res.length
+      } catch {
+        failed += 1
+      }
+    }
+    setCreatePending(false)
+    setCreateSource(null)
+    setPickerSelection(null)
+    queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
+    queryClient.invalidateQueries({ queryKey: ['batch-publish', 'opportunities'] })
+    queryClient.invalidateQueries({ queryKey: ['batch-publish', 'monitored-items'] })
+
+    const allFailed = created === 0 && failed > 0
+    toast.addToast({
+      title: allFailed ? '创建失败，请稍后重试' : `已创建 ${created} 份素材`,
+      variant: allFailed ? 'error' : failed > 0 ? 'warning' : 'success',
+      ...(allFailed ? {} : {
+        action: {
+          label: '去创作',
+          onClick: () => {
+            const params = new URLSearchParams(searchParams.toString())
+            params.set('tab', 'spread')
+            if (totalSources === 1) {
+              if (opps.length === 1) {
+                params.set('oid', String(opps[0].id))
+                params.delete('item')
+              } else if (items.length === 1) {
+                params.set('item', items[0].gid)
+                params.delete('oid')
+              }
+            } else {
+              params.delete('oid')
+              params.delete('item')
+            }
+            router.push(`/dashboard/batch-publish?${params.toString()}`)
+          },
+        },
+      }),
+    })
+  }, [pickerSelection, queryClient, toast, searchParams, router])
+
+  // ---- 渲染 ----
+  const errorGuard = renderErrorGuard({ error, isLoading, hasData: data.length > 0, onRetry: () => refetch() })
   if (errorGuard) return errorGuard
+
+  const batchActions = [
+    { label: batchOp === 'write' ? '改写中...' : '批量改写', onClick: () => handleBatchTrigger('write'), variant: 'primary' as const },
+    { label: batchOp === 'genimageplan' ? '封面中...' : '批量封面', onClick: () => handleBatchTrigger('genimageplan'), variant: 'primary' as const },
+    { label: batchOp === 'genimage' ? '生图中...' : '批量生图', onClick: () => handleBatchTrigger('genimage'), variant: 'primary' as const },
+    { label: batchOp === 'publish' ? '发布中...' : '批量发布', onClick: handleBatchPublish, variant: 'primary' as const },
+    { label: batchOp === 'assign' ? '分配中...' : '批量分配账号', onClick: () => { setAssignToUid(''); setAssignAccountOpen(true) }, variant: 'secondary' as const },
+  ]
+
+  const renderGroupHeader = (g: MaterialGroup) => (
+    <button
+      onClick={() => toggleGroup(g.key)}
+      className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="text-sm font-semibold text-gray-900 truncate">{g.title}</span>
+        <span className="text-xs text-gray-500 flex-shrink-0">{g.materials.length} 份素材</span>
+        <span className="text-xs text-gray-400 flex-shrink-0">已发布 {g.published}/{g.materials.length}</span>
+      </div>
+      <svg
+        className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${collapsedKeys.has(g.key) ? '-rotate-90' : ''}`}
+        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  )
+
+  const accountPickerContent = (
+    <div className="space-y-4">
+      <div>
+        <label className="text-sm font-medium text-gray-700">分配账号</label>
+        <select
+          value={assignToUid}
+          onChange={(e) => setAssignToUid(e.target.value)}
+          className="mt-1 w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+        >
+          <option value="">请选择账号</option>
+          {accountNames.map((acc) => (
+            <option key={acc.uid} value={acc.uid}>{acc.name}</option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-400 mt-2">将把选中的 {selectedIds.size} 条素材的发布账号改为所选账号</p>
+      </div>
+    </div>
+  )
+
+  const accountPickerFooter = (
+    <div className="flex justify-end gap-2">
+      <button
+        onClick={() => setAssignAccountOpen(false)}
+        disabled={batchOp === 'assign'}
+        className="h-10 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        取消
+      </button>
+      <button
+        onClick={() => handleBatchAssign(assignToUid)}
+        disabled={!assignToUid || batchOp === 'assign'}
+        className="h-10 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+      >
+        {batchOp === 'assign' ? '分配中...' : '确定分配'}
+      </button>
+    </div>
+  )
 
   return (
     <div className="flex-1 flex flex-col min-h-0 gap-5">
+      {/* 顶部：跨源批量创建入口 */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setSourcePickerOpen(true)}
+          className="h-10 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          批量创建素材
+        </button>
+      </div>
+
       <SearchToolbar>
         <input
           type="text"
@@ -89,46 +420,114 @@ export function SpreadTab() {
         </select>
       </SearchToolbar>
 
-      {isMobile ? (
-        <div className="flex-1 overflow-y-auto space-y-3">
-          {data.length === 0 && !isLoading ? (
-            <EmptyState
-              size="sm"
-              title="暂无发布记录"
-              description="在创作台完成素材发布后，记录将出现在这里"
-            />
-          ) : (
-            data.map((item) => (
-              <MaterialCard
-                key={item.id}
-                item={item}
-                onOpportunityClick={handleOpportunityClick}
-                onOpenEditor={setEditingMaterialId}
-                onTriggerWork={handleTriggerWork}
-                onPublish={handlePublish}
-                isAnyLoading={isAnyLoading}
-              />
-            ))
-          )}
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <LoadingSpinner size="lg" />
         </div>
-      ) : (
-        <div className="flex-1 flex flex-col min-h-0">
-          <MaterialTable
-            data={data}
-            isLoading={isLoading}
-            error={error}
-            onRetry={() => refetch()}
-            page={page}
-            total={total}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onOpportunityClick={handleOpportunityClick}
-            onOpenEditor={setEditingMaterialId}
-            onTriggerWork={handleTriggerWork}
-            onPublish={handlePublish}
-            isAnyLoading={isAnyLoading}
+      ) : data.length === 0 ? (
+        <div className="flex-1 overflow-y-auto">
+          <EmptyState
+            size="sm"
+            title="暂无发布记录"
+            description="在创作台完成素材发布后，记录将出现在这里"
           />
         </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto space-y-4">
+          {groups.map((g) => (
+            <div
+              key={g.key}
+              ref={setGroupRef(g.key)}
+              className={`bg-white rounded-xl border shadow-sm overflow-hidden ${
+                deepLinkKey === g.key ? 'border-blue-400 ring-1 ring-blue-200' : 'border-gray-200'
+              }`}
+            >
+              {renderGroupHeader(g)}
+              {!collapsedKeys.has(g.key) && (isMobile ? (
+                <div className="px-3 pb-3 space-y-3">
+                  {g.materials.map((item) => (
+                    <MaterialCard
+                      key={item.id}
+                      item={item}
+                      isSelected={selectedIds.has(item.id)}
+                      onToggleSelect={onToggleSelect}
+                      onOpportunityClick={handleOpportunityClick}
+                      onOpenEditor={setEditingMaterialId}
+                      onTriggerWork={handleTriggerWork}
+                      onPublish={handlePublish}
+                      isAnyLoading={isAnyLoading}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <MaterialTable
+                    data={g.materials}
+                    isLoading={false}
+                    error={undefined}
+                    onRetry={refetch}
+                    selectedIds={selectedIds}
+                    onToggleSelect={onToggleSelect}
+                    onToggleAll={() => onToggleAll(g.materials)}
+                    onOpportunityClick={handleOpportunityClick}
+                    onOpenEditor={setEditingMaterialId}
+                    onTriggerWork={handleTriggerWork}
+                    onPublish={handlePublish}
+                    isAnyLoading={isAnyLoading}
+                  />
+                </div>
+              ))}
+            </div>
+          ))}
+
+          {selectedIds.size > 0 && (
+            <div className="sticky bottom-0 z-10 px-3 pb-3">
+              <BatchActionBar
+                selectedCount={selectedIds.size}
+                onClear={onClearSelection}
+                actions={batchActions}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 源选择弹窗 */}
+      <SourcePickerModal
+        open={sourcePickerOpen}
+        onClose={() => setSourcePickerOpen(false)}
+        onConfirm={handlePickerConfirm}
+      />
+
+      {/* 批量创建弹窗 */}
+      <CreateMaterialModal
+        open={createSource !== null}
+        onClose={handleCloseCreate}
+        source={createSource}
+        isPending={createPending}
+        onCreate={handleBatchCreate}
+      />
+
+      {/* 批量分配账号弹窗 */}
+      {isMobile ? (
+        <BottomSheet
+          open={assignAccountOpen}
+          onClose={() => setAssignAccountOpen(false)}
+          title="批量分配账号"
+          footer={accountPickerFooter}
+        >
+          <div className="p-4">{accountPickerContent}</div>
+        </BottomSheet>
+      ) : (
+        <Modal
+          open={assignAccountOpen}
+          onClose={() => setAssignAccountOpen(false)}
+          title="批量分配账号"
+          size="sm"
+          footer={accountPickerFooter}
+        >
+          {accountPickerContent}
+        </Modal>
       )}
 
       {/* 编辑素材 Sheet——行内直接处理二创素材的完整创作流程 */}

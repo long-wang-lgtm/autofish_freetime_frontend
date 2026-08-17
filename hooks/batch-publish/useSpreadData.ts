@@ -4,28 +4,26 @@ import { useQuery } from '@tanstack/react-query'
 import { listMaterials } from '@/lib/api/batch-publish'
 
 interface UseSpreadDataParams {
-  page: number
-  pageSize: number
   search: string
   status: string | undefined
-  opportunityId: number | undefined
 }
 
-export function useSpreadData({ page, pageSize, search, status, opportunityId }: UseSpreadDataParams) {
+/**
+ * 铺货工作台数据层 — 全量拉取（单次 100 条），前端按源分组。
+ * 分页已移除，搜索/状态仍走服务端过滤（debounced search 由 filters 提供）。
+ */
+export function useSpreadData({ search, status }: UseSpreadDataParams) {
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['batch-publish', 'materials', 'all', { page, pageSize, search, status, opportunityId }],
+    queryKey: ['batch-publish', 'materials', 'all', { search, status }],
     queryFn: () => listMaterials({
-      page,
-      page_size: pageSize,
+      page_size: 100,
       description: search || undefined,
       status: status || undefined,
-      oid: opportunityId,
     }),
   })
 
   return {
     data: data?.items ?? [],
-    total: data?.total ?? 0,
     isLoading,
     error,
     refetch,

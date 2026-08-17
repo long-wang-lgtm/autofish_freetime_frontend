@@ -8,6 +8,8 @@ import type { PublishMaterial, RewriteStage } from '@/lib/api/batch-publish'
 
 interface MaterialCardProps {
   item: PublishMaterial
+  isSelected: boolean
+  onToggleSelect: (id: number) => void
   onOpportunityClick: (id: number) => void
   /** 卡片点击 → 打开编辑 Sheet */
   onOpenEditor: (id: number) => void
@@ -18,16 +20,34 @@ interface MaterialCardProps {
 }
 
 export function MaterialCard({
-  item, onOpportunityClick, onOpenEditor,
+  item, isSelected, onToggleSelect, onOpportunityClick, onOpenEditor,
   onTriggerWork, onPublish, isAnyLoading,
 }: MaterialCardProps) {
   return (
     <div
-      className="bg-white border border-gray-200 rounded-xl p-3 space-y-2 cursor-pointer hover:border-blue-300 transition-colors"
+      className={`bg-white border rounded-xl p-3 space-y-2 cursor-pointer transition-colors ${
+        isSelected ? 'border-blue-600 bg-blue-50/50' : 'border-gray-200 hover:border-blue-300'
+      }`}
       onClick={() => onOpenEditor(item.id)}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-medium text-gray-800 line-clamp-2 flex-1">{item.description || '-'}</span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          {/* checkbox 独立于卡片点击——label h-11 保证 ≥44px 触控目标，点击不透传开 Sheet */}
+          <label
+            className="h-11 flex items-center shrink-0 cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onToggleSelect(item.id)}
+              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+          </label>
+          <span className="text-sm font-medium text-gray-800 line-clamp-2 leading-snug min-w-0 flex-1">
+            {item.description || '-'}
+          </span>
+        </div>
         <StatusBadge status={item.status} config={MATERIAL_STATUS_CONFIG} />
       </div>
       <div className="flex items-center gap-2 text-sm">

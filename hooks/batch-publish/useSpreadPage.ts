@@ -6,12 +6,11 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 
 export function useSpreadPage() {
   const isMobile = useIsMobile()
-  const { search, status, opportunityId, page, pageSize, setPage, filters, onFilterChange } = useSpreadFilters()
-  const { data, total, isLoading, error, refetch } = useSpreadData({ page, pageSize, ...filters })
+  const { search, status, filters, onFilterChange } = useSpreadFilters()
+  const { data, isLoading, error, refetch } = useSpreadData(filters)
 
   return {
-    search, status, opportunityId, onFilterChange,
-    page, pageSize, total, setPage,
+    search, status, onFilterChange,
     data, isLoading, error, refetch,
     isMobile,
   }

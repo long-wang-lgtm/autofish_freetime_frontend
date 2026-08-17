@@ -24,12 +24,14 @@ export interface ToastProps {
   title: string
   description?: string
   variant?: ToastVariant
+  /** sonner 原生操作按钮（如「去创作」跳转），可选 */
+  action?: { label: string; onClick: () => void }
 }
 
 export function useToast() {
   return {
     addToast: (props: ToastProps) => {
-      const { title, description, variant = 'default' } = props
+      const { title, description, variant = 'default', action } = props
       // toaster 颜色严格遵循 frontend-colors.md Section 6 toaster 颜色对照表
       const style = variant === 'error' ? { backgroundColor: '#fee2e2', borderColor: '#ef4444', color: '#991b1b' } :
                     variant === 'success' ? { backgroundColor: '#dcfce7', borderColor: '#22c55e', color: '#166534' } :
@@ -41,6 +43,7 @@ export function useToast() {
         description,
         style,
         duration: variant === 'error' ? 5000 : 3000,
+        ...(action ? { action } : {}),
       })
     },
   }
