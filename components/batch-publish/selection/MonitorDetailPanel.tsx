@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 import { MONITOR_STATUS_CONFIG } from '@/components/batch-publish/shared/constants'
 import { MonitorTrendCharts } from './MonitorTrendCharts'
+import { DistributionView } from '@/components/batch-publish/shared/DistributionView'
 import { fmtPrice } from '@/lib/utils/format'
 import { useState } from 'react'
 import type { MonitoredItem } from '@/lib/api/batch-publish'
@@ -94,8 +95,8 @@ export function MonitorDetailPanel({ item, onClose, onCreate, onDeleteItem }: Mo
           )}
         </div>
 
-        {/* Trend Charts */}
-        <div className="flex-1 min-h-0 p-4">
+        {/* Trend Charts + 分发进度 */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">
           {hasTrendData ? (
             <MonitorTrendCharts
               trendData={{
@@ -112,6 +113,9 @@ export function MonitorDetailPanel({ item, onClose, onCreate, onDeleteItem }: Mo
               description="持续监控后将自动生成趋势图表"
             />
           )}
+          <div className="mt-4">
+            <DistributionView sourceType="item" sourceId={item.gid} sourceName={item.title ?? undefined} />
+          </div>
         </div>
       </div>
 

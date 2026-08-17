@@ -5,6 +5,7 @@ import { Pagination } from '@/components/ui/data/Pagination'
 import { NativeTable } from '@/components/ui/data/NativeTable'
 import type { NativeTableColumn } from '@/components/ui/data/NativeTable'
 import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
+import { DistributionView } from '@/components/batch-publish/shared/DistributionView'
 import { MaterialTableRow } from './MaterialTableRow'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import { fmtPrice } from '@/lib/utils/format'
@@ -121,36 +122,47 @@ export function MaterialWorkspace({
         </div>
       </div>
 
-      {/* 素材表格 */}
-      <div className="flex-1 min-h-0">
-        <NativeTable
-          columns={MATERIAL_COLUMNS}
-          data={materials}
-          keyExtractor={(m) => String(m.id)}
-          isLoading={materialLoading}
-          error={materialError}
-          errorMessage="加载素材失败"
-          onRetry={materialRefetch}
-          emptyTitle="暂无素材"
-          emptyDescription="点击「批量创建」为该商机创建素材"
-          emptyAction={{ label: '批量创建', onClick: onCreateClick }}
-          stickyHeader
-          tableLayout="fixed"
-          RowComponent={RowWrapper}
-          onRowClick={(m) => onOpenEditor(m.id)}
-          className="h-full"
-        />
+      {/* 素材表格 + 分发进度 */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0">
+          <NativeTable
+            columns={MATERIAL_COLUMNS}
+            data={materials}
+            keyExtractor={(m) => String(m.id)}
+            isLoading={materialLoading}
+            error={materialError}
+            errorMessage="加载素材失败"
+            onRetry={materialRefetch}
+            emptyTitle="暂无素材"
+            emptyDescription="点击「批量创建」为该商机创建素材"
+            emptyAction={{ label: '批量创建', onClick: onCreateClick }}
+            stickyHeader
+            tableLayout="fixed"
+            RowComponent={RowWrapper}
+            onRowClick={(m) => onOpenEditor(m.id)}
+            className="h-full"
+          />
 
-        {/* 批量操作栏 */}
-        {selectedMaterialIds.size > 0 && (
-          <div className="sticky bottom-0 px-3 pb-3 z-10">
-            <BatchActionBar
-              selectedCount={selectedMaterialIds.size}
-              onClear={onClearSelection}
-              actions={[]}
-            />
-          </div>
-        )}
+          {/* 批量操作栏 */}
+          {selectedMaterialIds.size > 0 && (
+            <div className="sticky bottom-0 px-3 pb-3 z-10">
+              <BatchActionBar
+                selectedCount={selectedMaterialIds.size}
+                onClear={onClearSelection}
+                actions={[]}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 分发进度 — 素材表格下方，独立滚动区域，避免与表格操作冲突 */}
+        <div className="flex-shrink-0 border-t border-gray-100 px-4 py-4 max-h-[40%] overflow-y-auto">
+          <DistributionView
+            sourceType="opp"
+            sourceId={selectedOid ?? opportunity.id}
+            sourceName={opportunity.name}
+          />
+        </div>
       </div>
 
       {/* 分页 */}
