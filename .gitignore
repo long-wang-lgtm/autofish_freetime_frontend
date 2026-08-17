@@ -33,3 +33,7 @@ next-env.d.ts
 .vscode/
 .idea/
 .trae/
+
+# 浏览器实测登录 token（JWT 注入用，用完即删，严禁入库）
+public/_tok.txt
+/tmp/_tok.txt
