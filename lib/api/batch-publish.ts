@@ -256,6 +256,7 @@ export async function listMaterials(params?: {
   page?: number
   page_size?: number
   oid?: number
+  souItemId?: string
   name?: string
   description?: string
   category?: string
@@ -286,6 +287,16 @@ export async function createMaterialsByItem(num: number, souItemId: string): Pro
     credentials_: 'include',
     method: 'POST',
     params: { num, souItemId },
+  })
+}
+
+/** 复制素材 — POST /api/selection/material.copy */
+export async function copyMaterial(id: number): Promise<PublishMaterial> {
+  return fetchApi<PublishMaterial>('/material.copy', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+    method: 'POST',
+    params: { id },
   })
 }
 
