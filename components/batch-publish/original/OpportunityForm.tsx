@@ -3,14 +3,12 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { TEMPLATE_TYPE_LABELS } from '@/components/batch-publish/shared/constants'
 import type { OpportunityItem } from '@/lib/api/batch-publish'
 
 const opportunitySchema = z.object({
   name: z.string().min(1, '请输入商机名称').max(100, '名称最多 100 字'),
   description: z.string().optional(),
   price: z.coerce.number().min(0, '价格不能为负').optional(),
-  ai_context_template: z.enum(['only_opportunity', 'with_item']),
 })
 
 type OpportunityFormValues = z.infer<typeof opportunitySchema>
@@ -33,7 +31,6 @@ export function OpportunityForm({ defaultValues, onSubmit, isPending, submitLabe
       name: defaultValues?.name ?? '',
       description: defaultValues?.description ?? '',
       price: defaultValues?.price ?? 0,
-      ai_context_template: (defaultValues?.ai_context_template as 'only_opportunity' | 'with_item') ?? 'only_opportunity',
     },
   })
 
@@ -72,17 +69,6 @@ export function OpportunityForm({ defaultValues, onSubmit, isPending, submitLabe
           className="mt-1 w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
         />
         {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>}
-      </div>
-
-      <div>
-        <label className="text-sm font-medium text-gray-700">AI 上下文模板</label>
-        <select
-          {...register('ai_context_template')}
-          className="mt-1 w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-        >
-          <option value="only_opportunity">{TEMPLATE_TYPE_LABELS.only_opportunity}</option>
-          <option value="with_item">{TEMPLATE_TYPE_LABELS.with_item}</option>
-        </select>
       </div>
 
       <div className="flex justify-end pt-3 border-t border-gray-100">

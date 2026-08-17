@@ -270,23 +270,35 @@ export async function listMaterials(params?: {
 }
 
 /** 批量创建素材（按商机）— POST /api/selection/material.create.by.opp */
-export async function createMaterialsByOpp(num: number, opp: OpportunityItem): Promise<PublishMaterial[]> {
+export async function createMaterialsByOpp(
+  num: number,
+  opp: OpportunityItem,
+  toUid?: string,
+): Promise<PublishMaterial[]> {
+  const params: Record<string, string | number> = { num }
+  if (toUid) params.to_uid = toUid
   return fetchApi<PublishMaterial[]>('/material.create.by.opp', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    params: { num },
+    params,
     body: JSON.stringify(opp),
   })
 }
 
 /** 批量创建素材（按监控商品）— POST /api/selection/material.create.by.item */
-export async function createMaterialsByItem(num: number, souItemId: string): Promise<PublishMaterial[]> {
+export async function createMaterialsByItem(
+  num: number,
+  souItemId: string,
+  toUid?: string,
+): Promise<PublishMaterial[]> {
+  const params: Record<string, string | number> = { num, souItemId }
+  if (toUid) params.to_uid = toUid
   return fetchApi<PublishMaterial[]>('/material.create.by.item', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    params: { num, souItemId },
+    params,
   })
 }
 

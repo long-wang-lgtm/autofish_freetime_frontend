@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Modal } from '@/components/ui/overlay/Modal'
 import { BottomSheet } from '@/components/ui/overlay/Sheet'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { getAccountNames, type AccountName } from '@/lib/api/accounts'
 import type { OpportunityItem, MonitoredItem } from '@/lib/api/batch-publish'
 
 /**
@@ -21,7 +23,7 @@ interface CreateMaterialModalProps {
   open: boolean
   onClose: () => void
   isPending: boolean
-  onCreate: (num: number) => void
+  onCreate: (num: number, toUid?: string) => void
   /** 关闭状态下传 null，组件直接返回 null 不渲染 */
   source: CreateMaterialSource | null
 }
@@ -40,6 +42,13 @@ function resolveTitle(source: CreateMaterialSource): { title: string; subtitle: 
 export function CreateMaterialModal({ open, onClose, isPending, onCreate, source }: CreateMaterialModalProps) {
   const isMobile = useIsMobile()
   const [num, setNum] = useState(1)
+  const [toUid, setToUid] = useState('')
+
+  // 发布账号列表（uid → name），用于「发布账号（可选）」下拉
+  const { data: accountNames = [] } = useQuery<AccountName[]>({
+    queryKey: ['batch-publish', 'account-names'],
+    queryFn: () => getAccountNames(),
+  })
 
   if (!source) return null
 
@@ -61,6 +70,20 @@ export function CreateMaterialModal({ open, onClose, isPending, onCreate, source
           <span className="text-sm font-semibold text-gray-800 w-8 text-right tabular-nums">{num}</span>
         </div>
       </div>
+
+      <div>
+        <label className="text-sm font-medium text-gray-700">发布账号（可选）</label>
+        <select
+          value={toUid}
+          onChange={(e) => setToUid(e.target.value)}
+          className="mt-1 w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+        >
+          <option value="">暂不分配（草稿）</option>
+          {accountNames.map((acc) => (
+            <option key={acc.uid} value={acc.uid}>{acc.name}</option>
+          ))}
+        </select>
+      </div>
     </div>
   )
 
@@ -74,7 +97,7 @@ export function CreateMaterialModal({ open, onClose, isPending, onCreate, source
         取消
       </button>
       <button
-        onClick={() => onCreate(num)}
+        onClick={() => onCreate(num, toUid || undefined)}
         disabled={isPending}
         className="h-10 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
       >

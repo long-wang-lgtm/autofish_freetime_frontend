@@ -60,18 +60,18 @@ export function SelectionTab() {
     setCreateSource({ type: 'batch', count: selectedGids.size })
   }, [selectedGids.size])
 
-  const handleCreateConfirm = useCallback((num: number) => {
+  const handleCreateConfirm = useCallback((num: number, toUid?: string) => {
     if (!createSource) return
     if (createSource.type === 'item') {
       createByItemMutation.mutate(
-        { num, souItemId: createSource.item.gid },
+        { num, souItemId: createSource.item.gid, toUid },
         { onSuccess: () => setCreateSource(null) }
       )
     } else if (createSource.type === 'batch') {
       const gids = Array.from(selectedGids)
       if (gids.length === 0) return
       Promise.all(
-        gids.map((gid) => createByItemMutation.mutateAsync({ num, souItemId: gid }))
+        gids.map((gid) => createByItemMutation.mutateAsync({ num, souItemId: gid, toUid }))
       )
         .then(() => {
           setCreateSource(null)

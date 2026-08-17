@@ -49,8 +49,8 @@ export function useOriginalMutations(selectedOid: number | undefined) {
 
   // 批量创建素材
   const createMaterialsMutation = useMutation({
-    mutationFn: ({ num, opp }: { num: number; opp: OpportunityItem }) =>
-      createMaterialsByOpp(num, opp),
+    mutationFn: ({ num, opp, toUid }: { num: number; opp: OpportunityItem; toUid?: string }) =>
+      createMaterialsByOpp(num, opp, toUid),
     onSuccess: (data) => {
       toast.addToast({ title: `${data.length} 份素材创建成功`, variant: 'success' })
       invalidateAll()

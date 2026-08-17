@@ -5,7 +5,7 @@ import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { useQueryClient } from '@tanstack/react-query'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { uploadFileToFlare, imageDisplayUrl } from '@/lib/api/upload'
-import { editMaterial, triggerWork, publishMaterial } from '@/lib/api/batch-publish'
+import { editMaterial, triggerWork, publishMaterial, copyMaterial } from '@/lib/api/batch-publish'
 import { ProgressActionCell } from './ProgressActionCell'
 import { useToast } from '@/components/ui/Toaster'
 import type { MaterialImage, PublishMaterial, RewriteStage } from '@/lib/api/batch-publish'
@@ -132,6 +132,17 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
     }
   }
 
+  const handleCopy = async () => {
+    if (!material) return
+    try {
+      await copyMaterial(material.id)
+      toast.addToast({ title: '已复制，封面图已清空，请重新编辑', variant: 'success' })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
+    } catch (err) {
+      toast.addToast({ title: `复制失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })
+    }
+  }
+
   // Sheet 关闭时 flush 所有待保存内容
   const handleCloseWithFlush = useCallback(async () => {
     if (descTimerRef.current) { clearTimeout(descTimerRef.current); descTimerRef.current = undefined }
@@ -201,11 +212,19 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
 
   if (!material) return null
 
+  const isPublished = material?.status === 'published_success'
   const isAnySaving = descSavingRef.current || coverSavingRef.current
   const padding = isMobile ? 'p-4' : 'p-6'
 
   const formContent = (
     <div className={`flex-1 overflow-y-auto ${padding} space-y-6`}>
+      {/* 已发布锁定提示 */}
+      {isPublished && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <p className="text-sm text-amber-700">🔒 已发布素材已锁定，不可编辑，可复制后重新编辑</p>
+        </div>
+      )}
+
       {/* 商品图片 */}
       <section className="space-y-4">
         <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">商品图片</h4>
@@ -218,28 +237,30 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
                 className="w-[120px] h-[120px] object-cover rounded-lg border border-gray-200"
                 loading="lazy"
               />
-              <div className="absolute top-0 right-0 p-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => handleImageMoveUp(i)}
-                  disabled={i === 0}
-                  className="w-5 h-5 bg-white/90 rounded text-gray-600 text-xs disabled:opacity-30"
-                  title="上移"
-                >↑</button>
-                <button
-                  onClick={() => handleImageMoveDown(i)}
-                  disabled={i === images.length - 1}
-                  className="w-5 h-5 bg-white/90 rounded text-gray-600 text-xs disabled:opacity-30"
-                  title="下移"
-                >↓</button>
-                <button
-                  onClick={() => handleImageDelete(i)}
-                  className="w-5 h-5 bg-red-500 text-white rounded text-xs"
-                  title="删除"
-                >×</button>
-              </div>
+              {!isPublished && (
+                <div className="absolute top-0 right-0 p-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handleImageMoveUp(i)}
+                    disabled={i === 0}
+                    className="w-5 h-5 bg-white/90 rounded text-gray-600 text-xs disabled:opacity-30"
+                    title="上移"
+                  >↑</button>
+                  <button
+                    onClick={() => handleImageMoveDown(i)}
+                    disabled={i === images.length - 1}
+                    className="w-5 h-5 bg-white/90 rounded text-gray-600 text-xs disabled:opacity-30"
+                    title="下移"
+                  >↓</button>
+                  <button
+                    onClick={() => handleImageDelete(i)}
+                    className="w-5 h-5 bg-red-500 text-white rounded text-xs"
+                    title="删除"
+                  >×</button>
+                </div>
+              )}
             </div>
           ))}
-          {images.length < 8 && (
+          {!isPublished && images.length < 8 && (
             <label className="w-[120px] h-[120px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 cursor-pointer transition-colors">
               {uploadingIndex !== null ? (
                 <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -265,19 +286,21 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
         <p className="text-xs text-gray-400">最多 8 张，支持 JPG/PNG/WebP，单张不超过 10MB</p>
       </section>
 
-      {/* 创作进度 */}
-      <section className="space-y-4">
-        <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">创作进度</h4>
-        <div className="flex items-center gap-3">
-          <ProgressActionCell
-            status={material.status}
-            onTriggerWork={handleTriggerWork}
-            onPublish={handlePublish}
-            isAnyLoading={false}
-          />
-          <span className="text-xs text-gray-400">点击节点执行对应步骤</span>
-        </div>
-      </section>
+      {/* 创作进度 — 已发布素材只读，隐藏操作区 */}
+      {!isPublished && (
+        <section className="space-y-4">
+          <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">创作进度</h4>
+          <div className="flex items-center gap-3">
+            <ProgressActionCell
+              status={material.status}
+              onTriggerWork={handleTriggerWork}
+              onPublish={handlePublish}
+              isAnyLoading={false}
+            />
+            <span className="text-xs text-gray-400">点击节点执行对应步骤</span>
+          </div>
+        </section>
+      )}
 
       {/* 描述 */}
       <section className="space-y-4">
@@ -287,7 +310,8 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
           onChange={handleDescChange}
           onBlur={handleDescBlur}
           rows={8}
-          className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
+          disabled={isPublished}
+          className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical disabled:bg-gray-50 disabled:text-gray-400"
           style={{ minHeight: 200 }}
           placeholder="商品描述文案"
         />
@@ -301,12 +325,13 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
           onChange={handleCoverChange}
           onBlur={handleCoverBlur}
           rows={4}
-          className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
+          disabled={isPublished}
+          className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical disabled:bg-gray-50 disabled:text-gray-400"
           placeholder="例如：白色背景，柔和自然光，产品居中构图..."
         />
       </section>
 
-      {/* 底部 — 自动保存状态 + 关闭 */}
+      {/* 底部 — 自动保存状态 + 复制 + 关闭 */}
       <div className="flex gap-2 pt-3 border-t border-gray-100">
         <p className="flex-1 flex items-center gap-1.5 text-xs text-green-600">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -314,6 +339,13 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
           </svg>
           所有改动已自动保存
         </p>
+        <button
+          onClick={handleCopy}
+          disabled={isAnySaving}
+          className="h-10 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+        >
+          复制素材
+        </button>
         <button
           onClick={handleCloseWithFlush}
           disabled={isAnySaving}

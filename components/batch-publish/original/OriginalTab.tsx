@@ -63,10 +63,10 @@ export function OriginalTab() {
     }
   }, [handleSelectOid])
 
-  const handleCreateMaterials = useCallback((num: number) => {
+  const handleCreateMaterials = useCallback((num: number, toUid?: string) => {
     if (!page.selectedOpportunity) return
     page.createMaterialsMutation.mutate(
-      { num, opp: page.selectedOpportunity },
+      { num, opp: page.selectedOpportunity, toUid },
       { onSuccess: () => page.setShowCreateModal(false) }
     )
   }, [page])

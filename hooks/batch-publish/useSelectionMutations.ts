@@ -21,8 +21,8 @@ export function useSelectionMutations() {
 
   // 按监控商品创建素材
   const createByItemMutation = useMutation({
-    mutationFn: ({ num, souItemId }: { num: number; souItemId: string }) =>
-      createMaterialsByItem(num, souItemId),
+    mutationFn: ({ num, souItemId, toUid }: { num: number; souItemId: string; toUid?: string }) =>
+      createMaterialsByItem(num, souItemId, toUid),
     onSuccess: () => {
       toast.addToast({ title: '素材创建成功', variant: 'success' })
       queryClient.invalidateQueries({ queryKey: ['batch-publish', 'monitored-items'] })
