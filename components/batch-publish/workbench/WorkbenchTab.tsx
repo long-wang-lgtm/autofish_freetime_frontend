@@ -8,7 +8,6 @@ import { PendingOverviewPanel } from './PendingOverviewPanel'
 import { OpportunityListPanel } from './OpportunityListPanel'
 import { MaterialWorkspace } from './MaterialWorkspace'
 import { MaterialEditSheet } from './MaterialEditSheet'
-import { AIContextModal } from './AIContextModal'
 import { CreateMaterialModal } from './CreateMaterialModal'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import type { PublishMaterial, OpportunityParams } from '@/lib/api/batch-publish'
@@ -23,7 +22,6 @@ export function WorkbenchTab() {
   const searchParams = useSearchParams()
 
   const [leftWidth, setLeftWidth] = useState(LEFT_PANEL_DEFAULT_WIDTH)
-  const [contextMaterialId, setContextMaterialId] = useState<number | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem('bp-workbench-left-width')
@@ -128,7 +126,6 @@ export function WorkbenchTab() {
       onToggleSelect={page.toggleSelect}
       onClearSelection={page.clearSelection}
       onOpenEditor={page.openEditor}
-      onOpenContextModal={setContextMaterialId}
       onCreateClick={() => page.setShowCreateModal(true)}
       selectedOid={page.selectedOid}
       page={page.materialPage}
@@ -148,6 +145,7 @@ export function WorkbenchTab() {
       pageSize={PAGE_SIZE}
       onPageChange={page.setOverviewPage}
       onSelectMaterial={handleSelectFromOverview}
+      onOpenEditor={page.openEditor}
     />
   )
 
@@ -195,6 +193,7 @@ export function WorkbenchTab() {
                   pageSize={PAGE_SIZE}
                   onPageChange={page.setOverviewPage}
                   onSelectMaterial={handleSelectFromOverview}
+                  onOpenEditor={page.openEditor}
                 />
               ) : (
                 leftPanel
@@ -216,7 +215,6 @@ export function WorkbenchTab() {
               onToggleSelect={page.toggleSelect}
               onClearSelection={page.clearSelection}
               onOpenEditor={page.openEditor}
-              onOpenContextModal={setContextMaterialId}
               onCreateClick={() => page.setShowCreateModal(true)}
               selectedOid={page.selectedOid}
               page={page.materialPage}
@@ -234,24 +232,14 @@ export function WorkbenchTab() {
           selectedOid={page.selectedOid}
           open={page.editingMaterialId !== null}
           onClose={page.closeEditor}
-          materials={page.materials}
-        />
-
-        {/* AI 上下文弹窗 */}
-        <AIContextModal
-          materialId={contextMaterialId}
-          selectedOid={page.selectedOid}
-          open={contextMaterialId !== null}
-          onClose={() => setContextMaterialId(null)}
-          monitoredItems={page.monitoredItems}
-          materials={page.materials}
+          materials={page.selectedOid ? page.materials : page.overviewMaterials}
         />
 
         {/* 批量创建弹窗 */}
         <CreateMaterialModal
           open={page.showCreateModal}
           onClose={() => page.setShowCreateModal(false)}
-          opportunity={page.selectedOpportunity}
+          source={page.selectedOpportunity ? { type: 'opp', opportunity: page.selectedOpportunity } : null}
           onCreate={handleCreateMaterials}
           isPending={page.createMaterialsMutation.isPending}
         />
@@ -283,24 +271,14 @@ export function WorkbenchTab() {
         selectedOid={page.selectedOid}
         open={page.editingMaterialId !== null}
         onClose={page.closeEditor}
-        materials={page.materials}
-      />
-
-      {/* AI 上下文弹窗 */}
-      <AIContextModal
-        materialId={contextMaterialId}
-        selectedOid={page.selectedOid}
-        open={contextMaterialId !== null}
-        onClose={() => setContextMaterialId(null)}
-        monitoredItems={page.monitoredItems}
-        materials={page.materials}
+        materials={page.selectedOid ? page.materials : page.overviewMaterials}
       />
 
       {/* 批量创建弹窗 */}
       <CreateMaterialModal
         open={page.showCreateModal}
         onClose={() => page.setShowCreateModal(false)}
-        opportunity={page.selectedOpportunity}
+        source={page.selectedOpportunity ? { type: 'opp', opportunity: page.selectedOpportunity } : null}
         onCreate={handleCreateMaterials}
         isPending={page.createMaterialsMutation.isPending}
       />

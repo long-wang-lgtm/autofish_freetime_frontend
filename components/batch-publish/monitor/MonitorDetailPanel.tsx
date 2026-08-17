@@ -12,7 +12,7 @@ import type { MonitoredItem } from '@/lib/api/batch-publish'
 interface MonitorDetailPanelProps {
   item: MonitoredItem
   onClose: () => void
-  onSingleBind?: (gid: string) => void
+  onCreate?: (item: MonitoredItem) => void
   onDeleteItem?: (gid: string) => void
 }
 
@@ -22,7 +22,7 @@ const ITEM_STATUS_CONFIG: Record<number, { label: string; color: 'green' | 'red'
   2: { label: '售出', color: 'amber' },
 }
 
-export function MonitorDetailPanel({ item, onClose, onSingleBind, onDeleteItem }: MonitorDetailPanelProps) {
+export function MonitorDetailPanel({ item, onClose, onCreate, onDeleteItem }: MonitorDetailPanelProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const td = item.trendData as Record<string, unknown> | null | undefined
   const trendTime = td?.trendTime as { timestamp?: unknown } | undefined
@@ -30,7 +30,6 @@ export function MonitorDetailPanel({ item, onClose, onSingleBind, onDeleteItem }
   const fetchCount = td?.fetchCount as number | undefined
   const windows = td?.windows as number | undefined
   const lowConfidence = fetchCount != null && fetchCount < 6
-  const hasOpportunity = !!item.opportunity?.id
 
   return (
     <>
@@ -50,14 +49,14 @@ export function MonitorDetailPanel({ item, onClose, onSingleBind, onDeleteItem }
         </div>
 
         {/* Action Bar */}
-        {(onSingleBind || onDeleteItem) && (
+        {(onCreate || onDeleteItem) && (
           <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 flex-shrink-0">
-            {onSingleBind && !hasOpportunity && (
+            {onCreate && (
               <button
-                onClick={() => onSingleBind(item.gid)}
+                onClick={() => onCreate(item)}
                 className="h-8 px-3 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
               >
-                绑定商机
+                创建素材
               </button>
             )}
             {onDeleteItem && (

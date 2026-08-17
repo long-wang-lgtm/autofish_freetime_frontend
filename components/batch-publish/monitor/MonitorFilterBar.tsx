@@ -1,15 +1,11 @@
 'use client'
 
 import { SearchToolbar } from '@/components/ui/data/SearchToolbar'
-import {
-  MONITOR_STATUS_FILTER_OPTIONS,
-  BIND_STATUS_FILTER_OPTIONS,
-} from '@/components/batch-publish/shared/constants'
+import { MONITOR_STATUS_FILTER_OPTIONS } from '@/components/batch-publish/shared/constants'
 
 interface MonitorFilterBarProps {
   search: string
   monitorStatus: string
-  bindStatus: string
   onFilterChange: (key: string, value: string) => void
   onRefresh: () => void
 }
@@ -17,7 +13,6 @@ interface MonitorFilterBarProps {
 export function MonitorFilterBar({
   search,
   monitorStatus,
-  bindStatus,
   onFilterChange,
   onRefresh,
 }: MonitorFilterBarProps) {
@@ -37,16 +32,6 @@ export function MonitorFilterBar({
         className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
       >
         {MONITOR_STATUS_FILTER_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-
-      <select
-        value={bindStatus}
-        onChange={(e) => onFilterChange('bindStatus', e.target.value)}
-        className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-      >
-        {BIND_STATUS_FILTER_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>

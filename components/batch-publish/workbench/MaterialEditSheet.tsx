@@ -5,8 +5,10 @@ import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { useQueryClient } from '@tanstack/react-query'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { uploadFileToFlare, imageDisplayUrl } from '@/lib/api/upload'
-import { editMaterial, updateMaterialContext } from '@/lib/api/batch-publish'
-import type { MaterialImage, PublishMaterial } from '@/lib/api/batch-publish'
+import { editMaterial, triggerWork, publishMaterial } from '@/lib/api/batch-publish'
+import { ProgressActionCell } from './ProgressActionCell'
+import { useToast } from '@/components/ui/Toaster'
+import type { MaterialImage, PublishMaterial, RewriteStage } from '@/lib/api/batch-publish'
 import type { MaterialImage as UploadMaterialImage } from '@/lib/api/upload'
 
 interface MaterialEditSheetProps {
@@ -18,9 +20,10 @@ interface MaterialEditSheetProps {
   materials: PublishMaterial[]
 }
 
-export function MaterialEditSheet({ materialId, selectedOid, open, onClose, materials }: MaterialEditSheetProps) {
+export function MaterialEditSheet({ materialId, open, onClose, materials }: MaterialEditSheetProps) {
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
+  const toast = useToast()
 
   const material = materialId ? materials.find(m => m.id === materialId) : null
 
@@ -43,7 +46,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
   useEffect(() => {
     if (material) {
       setDescription(material.description ?? '')
-      setCoverprompt(material.ai_context?.coverprompt ?? '')
+      setCoverprompt(material.produceState?.coverprompt ?? '')
       setImages(material.images ?? [])
     }
   }, [material])
@@ -56,27 +59,27 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     try {
       await editMaterial({ id: material.id, description: value || undefined })
       descDirtyRef.current = false
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
     } catch {
       // 静默处理
     } finally {
       descSavingRef.current = false
     }
-  }, [material, selectedOid, queryClient])
+  }, [material, queryClient])
 
   const autoSaveCover = useCallback(async (value: string) => {
     if (!material || coverSavingRef.current) return
     coverSavingRef.current = true
     try {
-      await updateMaterialContext({ id: material.id, coverprompt: value || undefined })
+      await editMaterial({ id: material.id, produceState: { coverprompt: value || undefined } })
       coverDirtyRef.current = false
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
     } catch {
       // 静默处理
     } finally {
       coverSavingRef.current = false
     }
-  }, [material, selectedOid, queryClient])
+  }, [material, queryClient])
 
   const handleDescChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const v = e.target.value
@@ -104,6 +107,31 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     if (coverDirtyRef.current) autoSaveCover(coverprompt)
   }
 
+  // ---- 创作进度：改写→封面→生图→发布（无商机的二创素材处理草稿的唯一入口） ----
+
+  const handleTriggerWork = async (stage: RewriteStage) => {
+    if (!material) return
+    try {
+      await triggerWork(material.id, stage)
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
+      const stageLabel = stage === 'write' ? '改写' : stage === 'genimageplan' ? '封面规划' : '生图'
+      toast.addToast({ title: `${stageLabel}完成`, variant: 'success' })
+    } catch (err) {
+      toast.addToast({ title: `操作失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })
+    }
+  }
+
+  const handlePublish = async () => {
+    if (!material) return
+    try {
+      await publishMaterial(material.id)
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
+      toast.addToast({ title: '发布成功', variant: 'success' })
+    } catch (err) {
+      toast.addToast({ title: `发布失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })
+    }
+  }
+
   // Sheet 关闭时 flush 所有待保存内容
   const handleCloseWithFlush = useCallback(async () => {
     if (descTimerRef.current) { clearTimeout(descTimerRef.current); descTimerRef.current = undefined }
@@ -125,7 +153,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
       const nextImages = [...images, uploaded as MaterialImage]
       setImages(nextImages)
       await editMaterial({ id: material.id, images: nextImages })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
     } catch {
       // silent
     } finally {
@@ -139,7 +167,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     setImages(nextImages)
     try {
       await editMaterial({ id: material.id, images: nextImages.length > 0 ? nextImages : undefined })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
     } catch { /* silent */ }
   }
 
@@ -153,7 +181,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     setImages(nextImages)
     try {
       await editMaterial({ id: material.id, images: nextImages })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
     } catch { /* silent */ }
   }
 
@@ -167,7 +195,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     setImages(nextImages)
     try {
       await editMaterial({ id: material.id, images: nextImages })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
     } catch { /* silent */ }
   }
 
@@ -235,6 +263,20 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
           )}
         </div>
         <p className="text-xs text-gray-400">最多 8 张，支持 JPG/PNG/WebP，单张不超过 10MB</p>
+      </section>
+
+      {/* 创作进度 */}
+      <section className="space-y-4">
+        <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">创作进度</h4>
+        <div className="flex items-center gap-3">
+          <ProgressActionCell
+            status={material.status}
+            onTriggerWork={handleTriggerWork}
+            onPublish={handlePublish}
+            isAnyLoading={false}
+          />
+          <span className="text-xs text-gray-400">点击节点执行对应步骤</span>
+        </div>
       </section>
 
       {/* 描述 */}

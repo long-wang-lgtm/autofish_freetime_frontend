@@ -2,21 +2,20 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  triggerWork, publishMaterial, createMaterials, editMaterial,
-  updateMaterialContext, deleteMaterial, type RewriteStage,
-  type MaterialEditInput, type MaterialContextInput,
+  triggerWork, publishMaterial, createMaterialsByOpp, editMaterial,
+  deleteMaterial, type RewriteStage, type MaterialEditInput,
+  type OpportunityItem,
 } from '@/lib/api/batch-publish'
 import { useToast } from '@/components/ui/Toaster'
 
 export function useWorkbenchMutations(selectedOid: number | undefined) {
+  // selectedOid 仅保留签名兼容（工作台仍在传），invalidateAll 已改为前缀匹配，不依赖它
   const queryClient = useQueryClient()
   const toast = useToast()
 
   const invalidateAll = () => {
-    if (selectedOid) {
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
-    }
-    queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', 'overview'] })
+    // 前缀匹配覆盖 oid/overview/all 全部子 key（发布记录 Tab 的 [batch-publish, materials, all, ...] 也能命中）
+    queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
     queryClient.invalidateQueries({ queryKey: ['batch-publish', 'opportunities'] })
   }
 
@@ -50,21 +49,8 @@ export function useWorkbenchMutations(selectedOid: number | undefined) {
 
   // 批量创建素材
   const createMaterialsMutation = useMutation({
-    mutationFn: ({ num, opp }: {
-      num: number
-      opp: { id: number; name: string; description?: string | null; price?: number; status: string; ai_context_template?: string | null }
-    }) =>
-      createMaterials({
-        num,
-        opp: {
-          id: opp.id,
-          name: opp.name,
-          description: opp.description ?? undefined,
-          price: opp.price ?? undefined,
-          status: opp.status,
-          ai_context_template: (opp.ai_context_template as 'only_opportunity' | 'with_item') ?? undefined,
-        },
-      }),
+    mutationFn: ({ num, opp }: { num: number; opp: OpportunityItem }) =>
+      createMaterialsByOpp(num, opp),
     onSuccess: (data) => {
       toast.addToast({ title: `${data.length} 份素材创建成功`, variant: 'success' })
       invalidateAll()
@@ -86,18 +72,6 @@ export function useWorkbenchMutations(selectedOid: number | undefined) {
     },
   })
 
-  // 更新 AI 上下文
-  const updateContextMutation = useMutation({
-    mutationFn: (input: MaterialContextInput) => updateMaterialContext(input),
-    onSuccess: () => {
-      toast.addToast({ title: 'AI 上下文已保存', variant: 'success' })
-      invalidateAll()
-    },
-    onError: (err: Error) => {
-      toast.addToast({ title: `AI 上下文保存失败：${err?.message || '请稍后重试'}`, variant: 'error' })
-    },
-  })
-
   // 删除素材
   const deleteMaterialMutation = useMutation({
     mutationFn: (id: number) => deleteMaterial(id),
@@ -115,7 +89,6 @@ export function useWorkbenchMutations(selectedOid: number | undefined) {
     publishMutation,
     createMaterialsMutation,
     editMaterialMutation,
-    updateContextMutation,
     deleteMaterialMutation,
   }
 }

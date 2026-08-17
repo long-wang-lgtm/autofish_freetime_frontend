@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { listOpportunities, listMaterials, listMonitoredItems } from '@/lib/api/batch-publish'
+import { listOpportunities, listMaterials } from '@/lib/api/batch-publish'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 
 interface UseWorkbenchDataParams {
@@ -58,18 +58,6 @@ export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStat
     enabled: !!selectedOid,
   })
 
-  // 工作区 — 当前商机绑定的监控商品
-  const {
-    data: monitoredData,
-    isLoading: monitoredLoading,
-    error: monitoredError,
-    refetch: monitoredRefetch,
-  } = useQuery({
-    queryKey: ['batch-publish', 'monitored-items', 'workbench', selectedOid],
-    queryFn: () => listMonitoredItems({ oid: selectedOid, page_size: 10 }),
-    enabled: !!selectedOid,
-  })
-
   return {
     opportunities: oppData?.items ?? [],
     oppTotal: oppData?.total ?? 0,
@@ -88,11 +76,6 @@ export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStat
     materialLoading,
     materialError,
     materialRefetch,
-
-    monitoredItems: monitoredData?.items ?? [],
-    monitoredLoading,
-    monitoredError,
-    monitoredRefetch,
 
     selectedOpportunity: oppData?.items?.find(o => o.id === selectedOid) ?? null,
   }

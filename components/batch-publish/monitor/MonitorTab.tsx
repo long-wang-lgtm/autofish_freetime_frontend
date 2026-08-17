@@ -6,34 +6,28 @@ import { MonitorFilterBar } from './MonitorFilterBar'
 import { MonitorTable } from './MonitorTable'
 import { MonitorDetailPanel } from './MonitorDetailPanel'
 import { MonitorCard } from './MonitorCard'
-import { BindOpportunityModal } from './BindOpportunityModal'
 import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { renderErrorGuard } from '@/components/batch-publish/shared/ErrorGuard'
-import { useRouter } from 'next/navigation'
+import { CreateMaterialModal, type CreateMaterialSource } from '@/components/batch-publish/workbench/CreateMaterialModal'
 import type { MonitoredItem } from '@/lib/api/batch-publish'
 
 export function MonitorTab() {
   const {
-    search, monitorStatus, bindStatus, onFilterChange,
+    search, monitorStatus, onFilterChange,
     orderBy, asc, onSortChange,
     page, pageSize, total, setPage,
     data, isLoading, error, refetch,
-    bindMutation, unbindMutation, deleteMutation,
-    singleBindMutation, statusToggleMutation,
+    deleteMutation, createByItemMutation, statusToggleMutation,
     isMobile,
   } = useMonitorPage()
 
-  const router = useRouter()
-
   const [selectedGids, setSelectedGids] = useState<Set<string>>(new Set())
   const [selectionMode, setSelectionMode] = useState(false)
-  const [bindModalOpen, setBindModalOpen] = useState(false)
-  const [singleBindGid, setSingleBindGid] = useState<string | null>(null)
   const [detailItem, setDetailItem] = useState<MonitoredItem | null>(null)
-  const [unbindTarget, setUnbindTarget] = useState<MonitoredItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<MonitoredItem | null>(null)
+  const [createSource, setCreateSource] = useState<CreateMaterialSource | null>(null)
 
   const onToggleSelect = useCallback((gid: string) => {
     setSelectedGids((prev) => {
@@ -54,45 +48,40 @@ export function MonitorTab() {
   const onClearSelection = useCallback(() => {
     setSelectedGids(new Set())
     setSelectionMode(false)
-    setSingleBindGid(null)
-    setBindModalOpen(false)
   }, [])
 
-  // 批量绑定
-  const handleBatchBindConfirm = useCallback((opportunityId: number) => {
-    bindMutation.mutate(
-      { gids: Array.from(selectedGids), opportunityId },
-      { onSuccess: () => { setBindModalOpen(false); onClearSelection() } }
-    )
-  }, [selectedGids, bindMutation, onClearSelection])
-
-  // 单条绑定
-  const handleSingleBindConfirm = useCallback((opportunityId: number) => {
-    if (!singleBindGid) return
-    singleBindMutation.mutate(
-      { gid: singleBindGid, opportunityId },
-      { onSuccess: () => { setSingleBindGid(null); setBindModalOpen(false); onClearSelection() } }
-    )
-  }, [singleBindGid, singleBindMutation, onClearSelection])
-
-  const bindModalOnConfirm = singleBindGid ? handleSingleBindConfirm : handleBatchBindConfirm
-  const bindModalSelectedCount = singleBindGid ? 1 : selectedGids.size
-  const bindModalMode = singleBindGid ? 'single' as const : 'batch' as const
-  const bindModalIsPending = singleBindGid ? singleBindMutation.isPending : bindMutation.isPending
-
-  const handleOpenSingleBind = useCallback((gid: string) => {
-    setSingleBindGid(gid)
-    setBindModalOpen(true)
+  // 单个创作 — 按监控商品创建素材
+  const handleOpenCreate = useCallback((item: MonitoredItem) => {
+    setCreateSource({ type: 'item', item })
   }, [])
 
-  const handleOpenBatchBind = useCallback(() => {
-    setSingleBindGid(null)
-    setBindModalOpen(true)
-  }, [])
+  // 批量创作 — 按选中商品批量创建素材
+  const handleOpenBatchCreate = useCallback(() => {
+    setCreateSource({ type: 'batch', count: selectedGids.size })
+  }, [selectedGids.size])
 
-  const handleNavigateOpportunity = useCallback((oid: number) => {
-    router.push(`/dashboard/batch-publish?tab=workbench&oid=${oid}`)
-  }, [router])
+  const handleCreateConfirm = useCallback((num: number) => {
+    if (!createSource) return
+    if (createSource.type === 'item') {
+      createByItemMutation.mutate(
+        { num, souItemId: createSource.item.gid },
+        { onSuccess: () => setCreateSource(null) }
+      )
+    } else if (createSource.type === 'batch') {
+      const gids = Array.from(selectedGids)
+      if (gids.length === 0) return
+      Promise.all(
+        gids.map((gid) => createByItemMutation.mutateAsync({ num, souItemId: gid }))
+      )
+        .then(() => {
+          setCreateSource(null)
+          onClearSelection()
+        })
+        .catch(() => {
+          // 单个失败已由 mutation onError toast，保留弹窗供用户重试
+        })
+    }
+  }, [createSource, createByItemMutation, selectedGids, onClearSelection])
 
   const handleStatusToggle = useCallback((gid: string, currentStatus: number) => {
     const newStatus = currentStatus === 0 ? 1 : 0
@@ -114,7 +103,6 @@ export function MonitorTab() {
       <MonitorFilterBar
         search={search}
         monitorStatus={monitorStatus}
-        bindStatus={bindStatus}
         onFilterChange={onFilterChange}
         onRefresh={() => refetch()}
       />
@@ -126,7 +114,7 @@ export function MonitorTab() {
           onClear={onClearSelection}
           sticky={false}
           actions={[
-            { label: '绑定商机', onClick: handleOpenBatchBind, variant: 'primary' },
+            { label: '批量创建素材', onClick: handleOpenBatchCreate, variant: 'primary' },
           ]}
         />
       )}
@@ -149,6 +137,7 @@ export function MonitorTab() {
                 onOpenDetail={setDetailItem}
                 selectionMode={selectionMode}
                 onStatusToggle={handleStatusToggle}
+                onCreate={handleOpenCreate}
               />
             ))
           )}
@@ -157,7 +146,7 @@ export function MonitorTab() {
               selectedCount={selectedGids.size}
               onClear={onClearSelection}
               actions={[
-                { label: '绑定商机', onClick: handleOpenBatchBind, variant: 'primary' },
+                { label: '批量创建素材', onClick: handleOpenBatchCreate, variant: 'primary' },
                 { label: '退出选择', onClick: () => { setSelectionMode(false); onClearSelection() }, variant: 'secondary' },
               ]}
             />
@@ -177,8 +166,7 @@ export function MonitorTab() {
             onToggleSelect={onToggleSelect}
             onToggleAll={onToggleAll}
             onOpenDetail={setDetailItem}
-            onBindOpportunity={handleOpenSingleBind}
-            onNavigateOpportunity={handleNavigateOpportunity}
+            onCreate={handleOpenCreate}
             onStatusToggle={handleStatusToggle}
             page={page}
             total={total}
@@ -195,7 +183,7 @@ export function MonitorTab() {
           <MonitorDetailPanel
             item={detailItem}
             onClose={handleCloseDetail}
-            onSingleBind={handleOpenSingleBind}
+            onCreate={handleOpenCreate}
             onDeleteItem={(gid) => {
               const target = data.find((d) => d.gid === gid)
               if (target) setDeleteTarget(target)
@@ -204,29 +192,14 @@ export function MonitorTab() {
         </>
       )}
 
-      {/* Bind Modal */}
-      <BindOpportunityModal
-        open={bindModalOpen}
-        onClose={() => { setBindModalOpen(false); setSingleBindGid(null) }}
-        selectedCount={bindModalSelectedCount}
-        mode={bindModalMode}
-        onConfirm={bindModalOnConfirm}
-        isPending={bindModalIsPending}
+      {/* Create Material Modal */}
+      <CreateMaterialModal
+        open={createSource !== null}
+        onClose={() => setCreateSource(null)}
+        source={createSource}
+        isPending={createByItemMutation.isPending}
+        onCreate={handleCreateConfirm}
       />
-
-      {/* Unbind Confirm */}
-      {unbindTarget && (
-        <ConfirmDialog
-          open={!!unbindTarget}
-          onOpenChange={(open) => { if (!open) setUnbindTarget(null) }}
-          title="确认解绑"
-          description={`确定要解绑商品 "${unbindTarget.title || unbindTarget.gid}" 吗？`}
-          confirmLabel="解绑"
-          variant="danger"
-          loading={unbindMutation.isPending}
-          onConfirm={() => unbindMutation.mutate(unbindTarget.gid, { onSuccess: () => setUnbindTarget(null) })}
-        />
-      )}
 
       {/* Delete Confirm */}
       {deleteTarget && (

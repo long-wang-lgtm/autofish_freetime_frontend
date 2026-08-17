@@ -6,7 +6,6 @@ import { useDebounce } from '@/hooks/useDebounce'
 export function useMonitorFilters() {
   const [search, setSearch] = useState('')
   const [monitorStatus, setMonitorStatus] = useState('')
-  const [bindStatus, setBindStatus] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize] = useState(20)
   const [orderBy, setOrderBy] = useState<string | null>('wantSlope')
@@ -17,13 +16,11 @@ export function useMonitorFilters() {
   const filters = {
     search: debouncedSearch,
     monitorStatus: monitorStatus || undefined,
-    bindStatus: bindStatus || undefined,
   }
 
   const onFilterChange = useCallback((key: string, value: string) => {
     if (key === 'search') setSearch(value)
     if (key === 'monitorStatus') { setMonitorStatus(value); setPage(1) }
-    if (key === 'bindStatus') { setBindStatus(value); setPage(1) }
   }, [])
 
   const onSortChange = useCallback((field: string | null) => {
@@ -35,7 +32,6 @@ export function useMonitorFilters() {
   return {
     search,
     monitorStatus,
-    bindStatus,
     page,
     pageSize,
     setPage,

@@ -15,10 +15,9 @@ interface MaterialCardProps {
   materialId: number
   selectedOid: number | undefined
   onOpenSheet: (id: number) => void
-  onOpenContextModal: (id: number) => void
 }
 
-export function MaterialCard({ materialId, selectedOid, onOpenSheet, onOpenContextModal }: MaterialCardProps) {
+export function MaterialCard({ materialId, selectedOid, onOpenSheet }: MaterialCardProps) {
   const queryClient = useQueryClient()
   const toast = useToast()
   const [showDelete, setShowDelete] = useState(false)
@@ -120,7 +119,7 @@ export function MaterialCard({ materialId, selectedOid, onOpenSheet, onOpenConte
 
         {/* 🎨 封面提示词 */}
         <p className="text-xs text-gray-500 truncate">
-          {material.ai_context?.coverprompt || '（未设置封面提示词）'}
+          {material.produceState?.coverprompt || '（未设置封面提示词）'}
         </p>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -162,17 +161,6 @@ export function MaterialCard({ materialId, selectedOid, onOpenSheet, onOpenConte
             )}
           </select>
 
-          {/* 🤖 AI 上下文 */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onOpenContextModal(materialId) }}
-            className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
-          >
-            {material.ai_context?.template === 'with_item'
-              ? `商机 + ${(material.ai_context?.items?.length ?? 0)} 商品`
-              : material.ai_context?.template === 'only_opportunity'
-                ? '仅商机'
-                : '未配置'}
-          </button>
         </div>
 
         <div className="flex items-center justify-between">

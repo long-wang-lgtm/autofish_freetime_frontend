@@ -21,7 +21,6 @@ interface MaterialWorkspaceProps {
   onToggleSelect: (id: number) => void
   onClearSelection: () => void
   onOpenEditor: (id: number) => void
-  onOpenContextModal: (id: number) => void
   onCreateClick: () => void
   selectedOid: number | undefined
   page: number
@@ -40,7 +39,6 @@ const MATERIAL_COLUMNS: NativeTableColumn<PublishMaterial>[] = [
   { key: 'price',     width: '7%',  align: 'center', header: '价格' },
   { key: 'account',   width: '9%',  align: 'center', header: '账号' },
   { key: 'category',  width: '9%',  align: 'center', header: '类目' },
-  { key: 'aiContext', width: '7%',  align: 'center', header: 'AI上下文' },
   { key: 'progress',  width: '10%', align: 'center', header: '进度/操作' },
   { key: 'delete',    width: '4%',  align: 'center', header: '删除' },
 ]
@@ -48,7 +46,7 @@ const MATERIAL_COLUMNS: NativeTableColumn<PublishMaterial>[] = [
 export function MaterialWorkspace({
   opportunity, materials, materialLoading, materialError, materialRefetch,
   selectedMaterialIds, onToggleSelect, onClearSelection, onOpenEditor,
-  onOpenContextModal, onCreateClick, selectedOid,
+  onCreateClick, selectedOid,
   page, total, onPageChange,
   onBackToOverview, materialPage,
 }: MaterialWorkspaceProps) {
@@ -64,12 +62,11 @@ export function MaterialWorkspace({
         isSelected={selectedMaterialIds.has(item.id)}
         onToggleSelect={onToggleSelect}
         onOpenEditor={onOpenEditor}
-        onOpenContextModal={onOpenContextModal}
         selectedOid={selectedOid}
         materialPage={materialPage}
       />
     ),
-    [selectedMaterialIds, onToggleSelect, onOpenEditor, onOpenContextModal, selectedOid, materialPage]
+    [selectedMaterialIds, onToggleSelect, onOpenEditor, selectedOid, materialPage]
   )
 
   if (!opportunity) {

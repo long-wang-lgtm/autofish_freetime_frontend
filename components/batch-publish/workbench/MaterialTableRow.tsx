@@ -22,14 +22,13 @@ export interface MaterialTableRowProps {
   isSelected: boolean
   onToggleSelect: (id: number) => void
   onOpenEditor: (id: number) => void
-  onOpenContextModal: (id: number) => void
   selectedOid: number | undefined
   materialPage: number
 }
 
 export function MaterialTableRow({
   item: material, index: _index, columns, isSelected, onToggleSelect, onOpenEditor,
-  onOpenContextModal, selectedOid, materialPage,
+  selectedOid, materialPage,
 }: MaterialTableRowProps) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -168,7 +167,7 @@ export function MaterialTableRow({
         return (
           <td key={col.key} className={tdClass}>
             <span className="text-sm text-gray-800 leading-snug line-clamp-2 dark:text-gray-200">
-              {material.ai_context?.coverprompt || <span className="text-gray-400">（未设置）</span>}
+              {material.produceState?.coverprompt || <span className="text-gray-400">（未设置）</span>}
             </span>
           </td>
         )
@@ -224,22 +223,6 @@ export function MaterialTableRow({
                 ))
               )}
             </select>
-          </td>
-        )
-
-      case 'aiContext':
-        return (
-          <td key={col.key} className={tdClass} onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => onOpenContextModal(material.id)}
-              className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer whitespace-nowrap dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
-            >
-              {material.ai_context?.template === 'with_item'
-                ? `商机 + ${(material.ai_context?.items?.length ?? 0)} 商品`
-                : material.ai_context?.template === 'only_opportunity'
-                  ? '仅商机'
-                  : '未配置'}
-            </button>
           </td>
         )
 

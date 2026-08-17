@@ -12,6 +12,7 @@ interface MonitorCardProps {
   onOpenDetail: (item: MonitoredItem) => void
   selectionMode: boolean
   onStatusToggle: (gid: string, currentStatus: number) => void
+  onCreate: (item: MonitoredItem) => void
 }
 
 const ITEM_STATUS_CONFIG: Record<number, { label: string; color: 'green' | 'red' | 'amber' | 'gray' }> = {
@@ -20,7 +21,7 @@ const ITEM_STATUS_CONFIG: Record<number, { label: string; color: 'green' | 'red'
   2: { label: '售出', color: 'amber' },
 }
 
-export function MonitorCard({ item, isSelected, onToggleSelect, onOpenDetail, selectionMode, onStatusToggle }: MonitorCardProps) {
+export function MonitorCard({ item, isSelected, onToggleSelect, onOpenDetail, selectionMode, onStatusToggle, onCreate }: MonitorCardProps) {
   const td = item.trendData as Record<string, unknown> | null | undefined
   const fc = td?.fetchCount as number | undefined
   const windows = td?.windows as number | undefined
@@ -76,7 +77,16 @@ export function MonitorCard({ item, isSelected, onToggleSelect, onOpenDetail, se
         {item.itemStatus != null && (
           <StatusBadge status={item.itemStatus} config={ITEM_STATUS_CONFIG} />
         )}
-        <span className={`w-2 h-2 rounded-full ${item.opportunity?.id ? 'bg-green-500' : 'bg-gray-300'}`} />
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onCreate(item)
+          }}
+          className="h-11 px-3 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors flex-shrink-0 ml-auto"
+        >
+          创作
+        </button>
       </div>
 
       {/* 指标行 */}

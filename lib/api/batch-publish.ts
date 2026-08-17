@@ -31,7 +31,6 @@ export type TemplateType = 'only_opportunity' | 'with_item'
 /** 素材 AI 上下文 */
 export interface MaterialAIContext {
   template?: TemplateType
-  images?: string[]
   items?: string[]
   coverprompt?: string
 }
@@ -97,6 +96,9 @@ export interface PublishMaterial {
   to_uid?: string | null
   to_gid?: string | null
   opportunity?: OpportunityItem | null
+  userId?: string
+  produceState?: { coverprompt?: string | null } | null
+  souItem?: MonitoredItem | null
   created_at?: string | null
   updated_at?: string | null
 }
@@ -110,12 +112,6 @@ export interface MaterialImage {
   size?: number | null
 }
 
-/** 素材创建入参 */
-export interface MaterialCreateParams {
-  num: number
-  opp: OpportunityItem
-}
-
 /** 素材编辑入参 */
 export interface MaterialEditInput {
   id: number
@@ -124,23 +120,11 @@ export interface MaterialEditInput {
   category?: string
   to_uid?: string
   images?: MaterialImage[]
-}
-
-/** AI 上下文更新入参 */
-export interface MaterialContextInput {
-  id: number
-  templateType?: TemplateType
-  gids?: string[]
-  coverprompt?: string
+  produceState?: { coverprompt?: string | null }
 }
 
 /** AI 工作阶段 */
 export type RewriteStage = 'write' | 'genimageplan' | 'genimage'
-
-/** AI 工作请求 */
-export interface RewriteWorkRequest {
-  stage: RewriteStage
-}
 
 /** 发布类目项 */
 export interface ChannelItemResponse {
@@ -188,52 +172,6 @@ export async function listMonitoredItems(params?: {
     baseUrl: BP_BASE,
     credentials_: 'include',
     params: params as Record<string, string | number>,
-  })
-}
-
-/** 批量绑定商品到商机 — POST /api/selection/monitor.batch.bind.opportunity */
-export async function batchBindOpportunity(gids: string[], opportunityId: number): Promise<MonitorItemListResponse> {
-  return fetchApi<MonitorItemListResponse>('/monitor.batch.bind.opportunity', {
-    baseUrl: BP_BASE,
-    credentials_: 'include',
-    method: 'POST',
-    params: { opportunity_id: opportunityId },
-    body: JSON.stringify({ gids }),
-  })
-}
-
-/** 单个商品绑定到商机 — POST /api/selection/monitor.bind.opportunity */
-export async function bindOpportunity(gid: string, opportunityId: number): Promise<MonitoredItem> {
-  return fetchApi<MonitoredItem>('/monitor.bind.opportunity', {
-    baseUrl: BP_BASE,
-    credentials_: 'include',
-    method: 'POST',
-    params: { gid, opportunity_id: opportunityId },
-  })
-}
-
-/** 绑定商品并同时创建商机 — POST /api/selection/monitor.bind.opportunity.create */
-export async function bindOpportunityAndCreate(
-  gid: string,
-  name: string,
-  description: string,
-  ai_context_template: TemplateType,
-): Promise<MonitoredItem> {
-  return fetchApi<MonitoredItem>('/monitor.bind.opportunity.create', {
-    baseUrl: BP_BASE,
-    credentials_: 'include',
-    method: 'POST',
-    params: { gid, name, description, ai_context_template },
-  })
-}
-
-/** 解绑商品 — POST /api/selection/monitor.unbind.opportunity */
-export async function unbindOpportunity(gid: string): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>('/monitor.unbind.opportunity', {
-    baseUrl: BP_BASE,
-    credentials_: 'include',
-    method: 'POST',
-    params: { gid },
   })
 }
 
@@ -330,14 +268,24 @@ export async function listMaterials(params?: {
   })
 }
 
-/** 批量创建素材 — POST /api/selection/material.create */
-export async function createMaterials(params: MaterialCreateParams): Promise<PublishMaterial[]> {
-  return fetchApi<PublishMaterial[]>('/material.create', {
+/** 批量创建素材（按商机）— POST /api/selection/material.create.by.opp */
+export async function createMaterialsByOpp(num: number, opp: OpportunityItem): Promise<PublishMaterial[]> {
+  return fetchApi<PublishMaterial[]>('/material.create.by.opp', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    params: { num: params.num },
-    body: JSON.stringify(params.opp),
+    params: { num },
+    body: JSON.stringify(opp),
+  })
+}
+
+/** 批量创建素材（按监控商品）— POST /api/selection/material.create.by.item */
+export async function createMaterialsByItem(num: number, souItemId: string): Promise<PublishMaterial[]> {
+  return fetchApi<PublishMaterial[]>('/material.create.by.item', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+    method: 'POST',
+    params: { num, souItemId },
   })
 }
 
@@ -353,21 +301,6 @@ export async function editMaterial(input: MaterialEditInput): Promise<PublishMat
   })
 }
 
-/** 更新 AI 上下文 — POST /api/selection/material.context */
-export async function updateMaterialContext(input: MaterialContextInput): Promise<PublishMaterial> {
-  const { id, templateType, gids, coverprompt } = input
-  const sp = new URLSearchParams()
-  sp.set('id', String(id))
-  if (templateType) sp.set('templateType', templateType)
-  if (coverprompt !== undefined) sp.set('coverprompt', coverprompt)
-  return fetchApi<PublishMaterial>(`/material.context?${sp.toString()}`, {
-    baseUrl: BP_BASE,
-    credentials_: 'include',
-    method: 'POST',
-    body: JSON.stringify(gids),
-  })
-}
-
 /** 触发 AI 工作 — POST /api/selection/material.rewrite.work */
 export async function triggerWork(materialId: number, stage: RewriteStage): Promise<PublishMaterial> {
   return fetchApi<PublishMaterial>('/material.rewrite.work', {
@@ -375,7 +308,7 @@ export async function triggerWork(materialId: number, stage: RewriteStage): Prom
     credentials_: 'include',
     method: 'POST',
     params: { id: materialId },
-    body: JSON.stringify({ stage }),
+    body: JSON.stringify(stage),
   })
 }
 
@@ -406,13 +339,5 @@ export async function deleteMaterial(id: number): Promise<OperationResponse> {
     credentials_: 'include',
     method: 'POST',
     params: { id },
-  })
-}
-
-/** 获取可用的 AI 上下文模板类型列表 — GET /api/selection/opportunity.context.templateType */
-export async function getContextTemplateTypes(): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>('/opportunity.context.templateType', {
-    baseUrl: BP_BASE,
-    credentials_: 'include',
   })
 }

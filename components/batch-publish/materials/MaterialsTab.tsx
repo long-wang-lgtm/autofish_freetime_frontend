@@ -1,13 +1,17 @@
 'use client'
 
+import { useState, useCallback } from 'react'
 import { useMaterialsPage } from '@/hooks/batch-publish/useMaterialsPage'
+import { useWorkbenchMutations } from '@/hooks/batch-publish/useWorkbenchMutations'
 import { SearchToolbar } from '@/components/ui/data/SearchToolbar'
 import { MaterialTable } from './MaterialTable'
 import { MaterialCard } from './MaterialCard'
+import { MaterialEditSheet } from '../workbench/MaterialEditSheet'
 import { MATERIALS_STATUS_FILTER_OPTIONS } from '@/components/batch-publish/shared/constants'
 import { renderErrorGuard } from '@/components/batch-publish/shared/ErrorGuard'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { useRouter, useSearchParams } from 'next/navigation'
+import type { RewriteStage } from '@/lib/api/batch-publish'
 
 export function MaterialsTab() {
   const {
@@ -19,6 +23,35 @@ export function MaterialsTab() {
 
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  // 无商机的二创素材处理草稿——复用 workbench 同款 mutation（invalidateAll 已前缀匹配，能刷新 all 列表）
+  const { triggerWorkMutation, publishMutation, editMaterialMutation, deleteMaterialMutation } =
+    useWorkbenchMutations(undefined)
+
+  const [editingMaterialId, setEditingMaterialId] = useState<number | null>(null)
+
+  const isAnyLoading =
+    triggerWorkMutation.isPending ||
+    publishMutation.isPending ||
+    editMaterialMutation.isPending ||
+    deleteMaterialMutation.isPending
+
+  // ProgressActionCell 不捕获 reject，这里吞掉（错误 toast 已由 mutation 的 onError 处理）
+  const handleTriggerWork = useCallback(async (materialId: number, stage: RewriteStage) => {
+    try {
+      await triggerWorkMutation.mutateAsync({ materialId, stage })
+    } catch {
+      /* 静默——mutation onError 已提示 */
+    }
+  }, [triggerWorkMutation])
+
+  const handlePublish = useCallback(async (materialId: number) => {
+    try {
+      await publishMutation.mutateAsync(materialId)
+    } catch {
+      /* 静默——mutation onError 已提示 */
+    }
+  }, [publishMutation])
 
   const handleOpportunityClick = (id: number) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -70,6 +103,10 @@ export function MaterialsTab() {
                 key={item.id}
                 item={item}
                 onOpportunityClick={handleOpportunityClick}
+                onOpenEditor={setEditingMaterialId}
+                onTriggerWork={handleTriggerWork}
+                onPublish={handlePublish}
+                isAnyLoading={isAnyLoading}
               />
             ))
           )}
@@ -86,9 +123,22 @@ export function MaterialsTab() {
             pageSize={pageSize}
             onPageChange={setPage}
             onOpportunityClick={handleOpportunityClick}
+            onOpenEditor={setEditingMaterialId}
+            onTriggerWork={handleTriggerWork}
+            onPublish={handlePublish}
+            isAnyLoading={isAnyLoading}
           />
         </div>
       )}
+
+      {/* 编辑素材 Sheet——行内直接处理二创素材的完整创作流程 */}
+      <MaterialEditSheet
+        materialId={editingMaterialId}
+        selectedOid={undefined}
+        open={editingMaterialId !== null}
+        onClose={() => setEditingMaterialId(null)}
+        materials={data}
+      />
     </div>
   )
 }

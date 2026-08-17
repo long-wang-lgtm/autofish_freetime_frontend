@@ -32,7 +32,7 @@ type TabName = 'monitor' | 'workbench' | 'materials'
 
 const BATCH_PUBLISH_TABS: { key: TabName; label: string; icon: React.ReactNode }[] = [
   { key: 'workbench', label: '商品发布', icon: <PenTool className="w-4 h-4" /> },
-  { key: 'materials', label: '发布记录', icon: <FileText className="w-4 h-4" /> },
+  { key: 'materials', label: '素材工作台', icon: <FileText className="w-4 h-4" /> },
   { key: 'monitor', label: '商品监控', icon: <Search className="w-4 h-4" /> },
 ]
 

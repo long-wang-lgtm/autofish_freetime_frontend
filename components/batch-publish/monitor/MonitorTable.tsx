@@ -20,8 +20,7 @@ interface MonitorTableProps {
   onToggleSelect: (gid: string) => void
   onToggleAll: () => void
   onOpenDetail: (item: MonitoredItem) => void
-  onBindOpportunity: (gid: string) => void
-  onNavigateOpportunity: (oid: number) => void
+  onCreate: (item: MonitoredItem) => void
   onStatusToggle: (gid: string, currentStatus: number) => void
   page: number
   total: number
@@ -49,8 +48,7 @@ export function MonitorTable({
   onToggleSelect,
   onToggleAll,
   onOpenDetail,
-  onBindOpportunity,
-  onNavigateOpportunity,
+  onCreate,
   onStatusToggle,
   page,
   total,
@@ -174,29 +172,17 @@ export function MonitorTable({
       },
     },
     {
-      key: 'opportunity',
-      header: '绑定商机',
+      key: 'create',
+      header: '创作',
       align: 'center',
-      render: (item) => {
-        if (item.opportunity?.id) {
-          return (
-            <button
-              onClick={() => onNavigateOpportunity(item.opportunity!.id)}
-              className="text-sm text-blue-600 hover:underline transition-colors"
-            >
-              {item.opportunity.name ?? `商机 #${item.opportunity.id}`}
-            </button>
-          )
-        }
-        return (
-          <button
-            onClick={() => onBindOpportunity(item.gid)}
-            className="text-sm text-gray-500 hover:text-blue-600 transition-colors"
-          >
-            未绑定
-          </button>
-        )
-      },
+      render: (item) => (
+        <button
+          onClick={() => onCreate(item)}
+          className="text-sm text-gray-500 hover:text-blue-600 transition-colors"
+        >
+          创作
+        </button>
+      ),
     },
     {
       key: 'created_at',
@@ -221,7 +207,7 @@ export function MonitorTable({
       ),
     },
 
-  ], [selectedGids, data.length, onToggleSelect, onToggleAll, onBindOpportunity, onNavigateOpportunity, onStatusToggle])
+  ], [selectedGids, data.length, onToggleSelect, onToggleAll, onCreate, onStatusToggle])
 
   return (
     <div className="flex-1 flex flex-col min-h-0">

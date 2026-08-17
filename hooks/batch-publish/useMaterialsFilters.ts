@@ -5,7 +5,8 @@ import { useDebounce } from '@/hooks/useDebounce'
 
 export function useMaterialsFilters() {
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('published_success,publish_failed')
+  // 素材工作台默认展示全部素材（含进行中的草稿，二创素材创建后立即可见）
+  const [status, setStatus] = useState('')
   const [opportunityId, setOpportunityId] = useState<number | undefined>(undefined)
   const [page, setPage] = useState(1)
   const [pageSize] = useState(20)

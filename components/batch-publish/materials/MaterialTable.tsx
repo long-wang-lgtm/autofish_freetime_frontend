@@ -4,9 +4,10 @@ import { useMemo } from 'react'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
 import { Pagination } from '@/components/ui/data/Pagination'
+import { ProgressActionCell } from '../workbench/ProgressActionCell'
 import { MATERIAL_STATUS_CONFIG } from '@/components/batch-publish/shared/constants'
 import { fmtDateTime, fmtPrice } from '@/lib/utils/format'
-import type { PublishMaterial } from '@/lib/api/batch-publish'
+import type { PublishMaterial, RewriteStage } from '@/lib/api/batch-publish'
 
 interface MaterialTableProps {
   data: PublishMaterial[]
@@ -18,14 +19,21 @@ interface MaterialTableProps {
   pageSize: number
   onPageChange: (p: number) => void
   onOpportunityClick: (id: number) => void
+  /** 行点击 → 打开编辑 Sheet */
+  onOpenEditor: (id: number) => void
+  /** 触发 AI 工作——由父组件包装 mutation，行内闭包传入 materialId */
+  onTriggerWork: (materialId: number, stage: RewriteStage) => Promise<void>
+  onPublish: (materialId: number) => Promise<void>
+  isAnyLoading: boolean
 }
 
-const GRID_COLS = '1fr 2.5fr 0.7fr 0.7fr 0.8fr 0.7fr 0.7fr 0.8fr'
+const GRID_COLS = '1fr 2.5fr 0.7fr 0.7fr 0.8fr 0.7fr 1.8fr 0.7fr 0.8fr'
 
 export function MaterialTable({
   data, isLoading, error, onRetry,
   page, total, pageSize, onPageChange,
-  onOpportunityClick,
+  onOpportunityClick, onOpenEditor,
+  onTriggerWork, onPublish, isAnyLoading,
 }: MaterialTableProps) {
   const columns = useMemo<DataTableColumn<PublishMaterial>[]>(() => [
     {
@@ -43,7 +51,7 @@ export function MaterialTable({
             </button>
           )
         }
-        return <span className="text-sm text-gray-400">—</span>
+        return <span className="text-sm text-gray-400">{item.souItem?.title || item.souItem?.gid || '—'}</span>
       },
     },
     {
@@ -88,6 +96,19 @@ export function MaterialTable({
       ),
     },
     {
+      key: 'progress',
+      header: '进度/操作',
+      align: 'center',
+      render: (item) => (
+        <ProgressActionCell
+          status={item.status}
+          onTriggerWork={(stage) => onTriggerWork(item.id, stage)}
+          onPublish={() => onPublish(item.id)}
+          isAnyLoading={isAnyLoading}
+        />
+      ),
+    },
+    {
       key: 'to_gid',
       header: '商品ID',
       align: 'center',
@@ -105,7 +126,7 @@ export function MaterialTable({
         </span>
       ),
     },
-  ], [onOpportunityClick])
+  ], [onOpportunityClick, onTriggerWork, onPublish, isAnyLoading])
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -121,6 +142,7 @@ export function MaterialTable({
           emptyTitle="暂无发布记录"
           emptyDescription="在创作台完成素材发布后，记录将出现在这里"
           stickyHeader
+          onRowClick={(item) => onOpenEditor(item.id)}
         />
       </div>
       <Pagination page={page} total={total} pageSize={pageSize} onChange={onPageChange} />

@@ -11,7 +11,6 @@ export function useMonitorPage() {
   const {
     search,
     monitorStatus,
-    bindStatus,
     page,
     pageSize,
     setPage,
@@ -31,11 +30,8 @@ export function useMonitorPage() {
   } = useMonitorData({ page, pageSize, ...filters, orderBy, asc })
 
   const {
-    bindMutation,
-    unbindMutation,
     deleteMutation,
-    singleBindMutation,
-    bindAndCreateMutation,
+    createByItemMutation,
     statusToggleMutation,
   } = useMonitorMutations()
 
@@ -43,7 +39,6 @@ export function useMonitorPage() {
     // 筛选
     search,
     monitorStatus,
-    bindStatus,
     onFilterChange,
     // 排序 & 分页
     orderBy,
@@ -59,11 +54,8 @@ export function useMonitorPage() {
     error,
     refetch,
     // 操作
-    bindMutation,
-    unbindMutation,
     deleteMutation,
-    singleBindMutation,
-    bindAndCreateMutation,
+    createByItemMutation,
     statusToggleMutation,
     isMobile,
   }

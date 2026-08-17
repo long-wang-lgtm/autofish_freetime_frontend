@@ -8,20 +8,18 @@ interface UseMonitorDataParams {
   pageSize: number
   search: string
   monitorStatus: string | undefined
-  bindStatus: string | undefined
   orderBy: string | null
   asc: boolean
 }
 
-export function useMonitorData({ page, pageSize, search, monitorStatus, bindStatus, orderBy, asc }: UseMonitorDataParams) {
+export function useMonitorData({ page, pageSize, search, monitorStatus, orderBy, asc }: UseMonitorDataParams) {
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['batch-publish', 'monitored-items', { page, pageSize, search, monitorStatus, bindStatus, orderBy, asc }],
+    queryKey: ['batch-publish', 'monitored-items', { page, pageSize, search, monitorStatus, orderBy, asc }],
     queryFn: () => listMonitoredItems({
       page,
       page_size: pageSize,
       title: search || undefined,
       monitorStatus: monitorStatus ? Number(monitorStatus) : undefined,
-      oid: bindStatus === 'bound' ? undefined : bindStatus === 'unbound' ? 0 : undefined,
       order_by: orderBy ?? undefined,
       asc,
     }),

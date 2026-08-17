@@ -25,7 +25,7 @@ const COLUMNS: DataTableColumn<PublishMaterial>[] = [
     header: '商机',
     render: (m) => (
       <span className="text-xs text-gray-400 truncate">
-        {m.opportunity?.name ?? `#${m.opportunity?.id ?? '未知'}`}
+        {m.opportunity?.name ?? (m.opportunity?.id ? `商机 #${m.opportunity.id}` : (m.souItem?.title || m.souItem?.gid || '未知'))}
       </span>
     ),
   },
@@ -64,13 +64,15 @@ interface PendingOverviewPanelProps {
   pageSize: number
   onPageChange: (p: number) => void
   onSelectMaterial: (material: PublishMaterial) => void
+  /** 无商机（二创素材）点击行时打开编辑 Sheet */
+  onOpenEditor?: (materialId: number) => void
 }
 
 // ---- 组件 ----
 
 export function PendingOverviewPanel({
   materials, total, isLoading, error, onRetry,
-  page, pageSize, onPageChange, onSelectMaterial,
+  page, pageSize, onPageChange, onSelectMaterial, onOpenEditor,
 }: PendingOverviewPanelProps) {
 
   // 排序：发布失败优先，再按更新时间倒序
@@ -99,7 +101,13 @@ export function PendingOverviewPanel({
           onRetry={onRetry}
           emptyTitle="暂无待处理素材"
           emptyDescription="所有素材已完成发布。去监控页面创建新的素材。"
-          onRowClick={onSelectMaterial}
+          onRowClick={(m) => {
+            if (m.opportunity?.id) {
+              onSelectMaterial(m)
+            } else {
+              onOpenEditor?.(m.id)
+            }
+          }}
         />
       </div>
 

@@ -36,6 +36,8 @@ export function useWorkbenchPage() {
     materialPage,
   })
 
+  const workbenchData = data
+
   const mutations = useWorkbenchMutations(filters.selectedOid)
 
   // 全局账号列表 — 挂载时获取，长期缓存
@@ -52,7 +54,7 @@ export function useWorkbenchPage() {
 
   return {
     ...filters,
-    ...data,
+    ...workbenchData,
     ...mutations,
     isMobile,
     accounts,
