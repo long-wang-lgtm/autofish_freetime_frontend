@@ -8,7 +8,7 @@ import {
 } from '@/lib/api/batch-publish'
 import { useToast } from '@/components/ui/Toaster'
 
-export function useWorkbenchMutations(selectedOid: number | undefined) {
+export function useOriginalMutations(selectedOid: number | undefined) {
   // selectedOid 仅保留签名兼容（工作台仍在传），invalidateAll 已改为前缀匹配，不依赖它
   const queryClient = useQueryClient()
   const toast = useToast()

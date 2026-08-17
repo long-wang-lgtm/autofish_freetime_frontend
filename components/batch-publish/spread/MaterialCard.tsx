@@ -1,7 +1,7 @@
 'use client'
 
 import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
-import { ProgressActionCell } from '../workbench/ProgressActionCell'
+import { ProgressActionCell } from '../original/ProgressActionCell'
 import { MATERIAL_STATUS_CONFIG } from '@/components/batch-publish/shared/constants'
 import { fmtPrice, fmtDateTime } from '@/lib/utils/format'
 import type { PublishMaterial, RewriteStage } from '@/lib/api/batch-publish'

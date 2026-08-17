@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { deleteMonitoredItem, createMaterialsByItem, updateMonitorItemStatus, type MonitorItemListResponse } from '@/lib/api/batch-publish'
 import { useToast } from '@/components/ui/Toaster'
 
-export function useMonitorMutations() {
+export function useSelectionMutations() {
   const queryClient = useQueryClient()
   const toast = useToast()
 

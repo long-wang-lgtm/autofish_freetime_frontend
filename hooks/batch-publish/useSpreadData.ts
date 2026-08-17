@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { listMaterials } from '@/lib/api/batch-publish'
 
-interface UseMaterialsDataParams {
+interface UseSpreadDataParams {
   page: number
   pageSize: number
   search: string
@@ -11,7 +11,7 @@ interface UseMaterialsDataParams {
   opportunityId: number | undefined
 }
 
-export function useMaterialsData({ page, pageSize, search, status, opportunityId }: UseMaterialsDataParams) {
+export function useSpreadData({ page, pageSize, search, status, opportunityId }: UseSpreadDataParams) {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['batch-publish', 'materials', 'all', { page, pageSize, search, status, opportunityId }],
     queryFn: () => listMaterials({

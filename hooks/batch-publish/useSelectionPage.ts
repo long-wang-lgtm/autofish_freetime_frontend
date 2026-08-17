@@ -1,11 +1,11 @@
 'use client'
 
-import { useMonitorFilters } from './useMonitorFilters'
-import { useMonitorData } from './useMonitorData'
-import { useMonitorMutations } from './useMonitorMutations'
+import { useSelectionFilters } from './useSelectionFilters'
+import { useSelectionData } from './useSelectionData'
+import { useSelectionMutations } from './useSelectionMutations'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
-export function useMonitorPage() {
+export function useSelectionPage() {
   const isMobile = useIsMobile()
 
   const {
@@ -19,7 +19,7 @@ export function useMonitorPage() {
     onSortChange,
     filters,
     onFilterChange,
-  } = useMonitorFilters()
+  } = useSelectionFilters()
 
   const {
     data,
@@ -27,13 +27,13 @@ export function useMonitorPage() {
     isLoading,
     error,
     refetch,
-  } = useMonitorData({ page, pageSize, ...filters, orderBy, asc })
+  } = useSelectionData({ page, pageSize, ...filters, orderBy, asc })
 
   const {
     deleteMutation,
     createByItemMutation,
     statusToggleMutation,
-  } = useMonitorMutations()
+  } = useSelectionMutations()
 
   return {
     // 筛选

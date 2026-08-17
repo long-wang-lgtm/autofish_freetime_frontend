@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-export function useWorkbenchFilters() {
+export function useOriginalFilters() {
   const searchParams = useSearchParams()
   const oidParam = searchParams.get('oid')
   const selectedOid = oidParam ? Number(oidParam) : undefined

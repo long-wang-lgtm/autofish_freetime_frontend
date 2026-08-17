@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useWorkbenchPage } from '@/hooks/batch-publish/useWorkbenchPage'
+import { useOriginalPage } from '@/hooks/batch-publish/useOriginalPage'
 import { ResizableDivider } from '@/components/ui/ResizableDivider'
 import { PendingOverviewPanel } from './PendingOverviewPanel'
 import { OpportunityListPanel } from './OpportunityListPanel'
@@ -16,8 +16,8 @@ const LEFT_PANEL_DEFAULT_WIDTH = 320
 const LEFT_PANEL_MIN_WIDTH = 260
 const LEFT_PANEL_MAX_WIDTH = 480
 
-export function WorkbenchTab() {
-  const page = useWorkbenchPage()
+export function OriginalTab() {
+  const page = useOriginalPage()
   const router = useRouter()
   const searchParams = useSearchParams()
 

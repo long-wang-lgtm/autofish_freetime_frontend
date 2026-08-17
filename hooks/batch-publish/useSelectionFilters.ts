@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
 
-export function useMonitorFilters() {
+export function useSelectionFilters() {
   const [search, setSearch] = useState('')
   const [monitorStatus, setMonitorStatus] = useState('')
   const [page, setPage] = useState(1)

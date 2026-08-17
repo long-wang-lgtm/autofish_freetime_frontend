@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { listMonitoredItems } from '@/lib/api/batch-publish'
 
-interface UseMonitorDataParams {
+interface UseSelectionDataParams {
   page: number
   pageSize: number
   search: string
@@ -12,7 +12,7 @@ interface UseMonitorDataParams {
   asc: boolean
 }
 
-export function useMonitorData({ page, pageSize, search, monitorStatus, orderBy, asc }: UseMonitorDataParams) {
+export function useSelectionData({ page, pageSize, search, monitorStatus, orderBy, asc }: UseSelectionDataParams) {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['batch-publish', 'monitored-items', { page, pageSize, search, monitorStatus, orderBy, asc }],
     queryFn: () => listMonitoredItems({

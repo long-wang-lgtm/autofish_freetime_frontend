@@ -3,16 +3,16 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useDebounce } from '@/hooks/useDebounce'
-import { useWorkbenchFilters } from './useWorkbenchFilters'
-import { useWorkbenchData } from './useWorkbenchData'
-import { useWorkbenchMutations } from './useWorkbenchMutations'
+import { useOriginalFilters } from './useOriginalFilters'
+import { useOriginalData } from './useOriginalData'
+import { useOriginalMutations } from './useOriginalMutations'
 import { useOpportunityMutations } from './useOpportunityMutations'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { listAccounts, type Account } from '@/lib/api/accounts'
 
-export function useWorkbenchPage() {
+export function useOriginalPage() {
   const isMobile = useIsMobile()
-  const filters = useWorkbenchFilters()
+  const filters = useOriginalFilters()
   const opportunityMutations = useOpportunityMutations()
 
   // 左侧商机列表的筛选
@@ -27,7 +27,7 @@ export function useWorkbenchPage() {
   // 素材表格分页
   const [materialPage, setMaterialPage] = useState(1)
 
-  const data = useWorkbenchData({
+  const data = useOriginalData({
     selectedOid: filters.selectedOid,
     overviewPage,
     oppSearch: debouncedOppSearch,
@@ -38,7 +38,7 @@ export function useWorkbenchPage() {
 
   const workbenchData = data
 
-  const mutations = useWorkbenchMutations(filters.selectedOid)
+  const mutations = useOriginalMutations(filters.selectedOid)
 
   // 全局账号列表 — 挂载时获取，长期缓存
   const { data: accounts = [] } = useQuery<Account[]>({

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { listOpportunities, listMaterials } from '@/lib/api/batch-publish'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 
-interface UseWorkbenchDataParams {
+interface UseOriginalDataParams {
   selectedOid: number | undefined
   overviewPage: number
   oppSearch: string
@@ -13,7 +13,7 @@ interface UseWorkbenchDataParams {
   materialPage: number
 }
 
-export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStatus, oppPage, materialPage }: UseWorkbenchDataParams) {
+export function useOriginalData({ selectedOid, overviewPage, oppSearch, oppStatus, oppPage, materialPage }: UseOriginalDataParams) {
   // 左侧商机列表
   const {
     data: oppData,

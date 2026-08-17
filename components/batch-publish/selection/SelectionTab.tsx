@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useMonitorPage } from '@/hooks/batch-publish/useMonitorPage'
+import { useSelectionPage } from '@/hooks/batch-publish/useSelectionPage'
 import { MonitorFilterBar } from './MonitorFilterBar'
 import { MonitorTable } from './MonitorTable'
 import { MonitorDetailPanel } from './MonitorDetailPanel'
@@ -10,10 +10,10 @@ import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { renderErrorGuard } from '@/components/batch-publish/shared/ErrorGuard'
-import { CreateMaterialModal, type CreateMaterialSource } from '@/components/batch-publish/workbench/CreateMaterialModal'
+import { CreateMaterialModal, type CreateMaterialSource } from '@/components/batch-publish/original/CreateMaterialModal'
 import type { MonitoredItem } from '@/lib/api/batch-publish'
 
-export function MonitorTab() {
+export function SelectionTab() {
   const {
     search, monitorStatus, onFilterChange,
     orderBy, asc, onSortChange,
@@ -21,7 +21,7 @@ export function MonitorTab() {
     data, isLoading, error, refetch,
     deleteMutation, createByItemMutation, statusToggleMutation,
     isMobile,
-  } = useMonitorPage()
+  } = useSelectionPage()
 
   const [selectedGids, setSelectedGids] = useState<Set<string>>(new Set())
   const [selectionMode, setSelectionMode] = useState(false)

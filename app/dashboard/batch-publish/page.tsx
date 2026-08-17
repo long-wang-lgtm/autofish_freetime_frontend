@@ -3,21 +3,21 @@
 import { Suspense } from 'react'
 import { TabBar } from '@/components/ui/navigation/TabBar'
 import { useTabRouting } from '@/hooks/useTabRouting'
-import { Search, PenTool, FileText } from 'lucide-react'
+import { Package, FileText, Search } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 // 非首屏组件懒加载（遵循 frontend-performance.md）
-const MonitorTab = dynamic(
-  () => import('@/components/batch-publish/monitor/MonitorTab').then(m => ({ default: m.MonitorTab })),
-  { loading: () => <TabPlaceholder text="商品监控加载中..." /> }
+const SpreadTab = dynamic(
+  () => import('@/components/batch-publish/spread/SpreadTab').then(m => ({ default: m.SpreadTab })),
+  { loading: () => <TabPlaceholder text="批量铺货加载中..." /> }
 )
-const MaterialsTab = dynamic(
-  () => import('@/components/batch-publish/materials/MaterialsTab').then(m => ({ default: m.MaterialsTab })),
-  { loading: () => <TabPlaceholder text="发布记录加载中..." /> }
+const OriginalTab = dynamic(
+  () => import('@/components/batch-publish/original/OriginalTab').then(m => ({ default: m.OriginalTab })),
+  { loading: () => <TabPlaceholder text="原创素材加载中..." /> }
 )
-const WorkbenchTab = dynamic(
-  () => import('@/components/batch-publish/workbench/WorkbenchTab').then(m => ({ default: m.WorkbenchTab })),
-  { loading: () => <TabPlaceholder text="创作台加载中..." /> }
+const SelectionTab = dynamic(
+  () => import('@/components/batch-publish/selection/SelectionTab').then(m => ({ default: m.SelectionTab })),
+  { loading: () => <TabPlaceholder text="选品中心加载中..." /> }
 )
 
 function TabPlaceholder({ text }: { text: string }) {
@@ -28,18 +28,18 @@ function TabPlaceholder({ text }: { text: string }) {
   )
 }
 
-type TabName = 'monitor' | 'workbench' | 'materials'
+type TabName = 'spread' | 'original' | 'selection'
 
 const BATCH_PUBLISH_TABS: { key: TabName; label: string; icon: React.ReactNode }[] = [
-  { key: 'workbench', label: '商品发布', icon: <PenTool className="w-4 h-4" /> },
-  { key: 'materials', label: '素材工作台', icon: <FileText className="w-4 h-4" /> },
-  { key: 'monitor', label: '商品监控', icon: <Search className="w-4 h-4" /> },
+  { key: 'spread', label: '批量铺货', icon: <Package className="w-4 h-4" /> },
+  { key: 'original', label: '原创素材', icon: <FileText className="w-4 h-4" /> },
+  { key: 'selection', label: '选品中心', icon: <Search className="w-4 h-4" /> },
 ]
 
 function PageContent() {
   const [activeTab, setTab] = useTabRouting<TabName>(
-    ['monitor', 'workbench', 'materials'],
-    'workbench'
+    ['spread', 'original', 'selection'],
+    'spread'
   )
 
   return (
@@ -51,9 +51,9 @@ function PageContent() {
         variant="overline"
       />
 
-      {activeTab === 'monitor' && <MonitorTab />}
-      {activeTab === 'workbench' && <WorkbenchTab />}
-      {activeTab === 'materials' && <MaterialsTab />}
+      {activeTab === 'spread' && <SpreadTab />}
+      {activeTab === 'original' && <OriginalTab />}
+      {activeTab === 'selection' && <SelectionTab />}
     </div>
   )
 }

@@ -14,7 +14,7 @@ interface ErrorGuardParams {
  * 列表页错误守卫——当 error 存在、非 loading 态、且无数据时，
  * 返回 ErrorBanner（banner 变体）。其余情况返回 null。
  *
- * 消除 MaterialsTab / MonitorTab 中复制的 8 行 ErrorBanner 守卫代码。
+ * 消除 SpreadTab / SelectionTab 中复制的 8 行 ErrorBanner 守卫代码。
  *
  * 用法：
  *   const guard = renderErrorGuard({ error, isLoading, hasData: data.length > 0, onRetry: () => refetch() })

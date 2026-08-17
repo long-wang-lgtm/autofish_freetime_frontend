@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
 
-export function useMaterialsFilters() {
+export function useSpreadFilters() {
   const [search, setSearch] = useState('')
   // 素材工作台默认展示全部素材（含进行中的草稿，二创素材创建后立即可见）
   const [status, setStatus] = useState('')
