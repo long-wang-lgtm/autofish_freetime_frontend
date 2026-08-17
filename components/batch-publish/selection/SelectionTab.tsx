@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useSelectionPage } from '@/hooks/batch-publish/useSelectionPage'
+import { listMaterials } from '@/lib/api/batch-publish'
 import { MonitorFilterBar } from './MonitorFilterBar'
 import { MonitorTable } from './MonitorTable'
 import { MonitorDetailPanel } from './MonitorDetailPanel'
@@ -22,6 +24,31 @@ export function SelectionTab() {
     deleteMutation, createByItemMutation, statusToggleMutation,
     isMobile,
   } = useSelectionPage()
+
+  // 分发进度 — 全量拉取素材（单次 100 条），按源商品 gid 统计已发布素材覆盖的不同账号数（to_uid 去重）
+  const { data: allMaterials } = useQuery({
+    queryKey: ['batch-publish', 'materials', 'all'],
+    queryFn: () => listMaterials({ page_size: 100 }),
+  })
+
+  const coverageMap = useMemo<Record<string, number>>(() => {
+    // gid → 已发布素材覆盖的账号 uid（Set 去重，仅用 size 计数）
+    const byGid = new Map<string, Set<string>>()
+    for (const m of allMaterials?.items ?? []) {
+      if (m.status !== 'published_success') continue
+      const gid = m.souItem?.gid
+      const uid = m.to_uid
+      if (!gid || !uid) continue
+      const uids = byGid.get(gid) ?? new Set<string>()
+      uids.add(uid)
+      byGid.set(gid, uids)
+    }
+    const map: Record<string, number> = {}
+    Array.from(byGid.entries()).forEach(([gid, uids]) => {
+      map[gid] = uids.size
+    })
+    return map
+  }, [allMaterials])
 
   const [selectedGids, setSelectedGids] = useState<Set<string>>(new Set())
   const [selectionMode, setSelectionMode] = useState(false)
@@ -132,6 +159,7 @@ export function SelectionTab() {
               <MonitorCard
                 key={item.gid}
                 item={item}
+                coverage={coverageMap[item.gid] ?? 0}
                 isSelected={selectedGids.has(item.gid)}
                 onToggleSelect={onToggleSelect}
                 onOpenDetail={setDetailItem}
@@ -168,6 +196,7 @@ export function SelectionTab() {
             onOpenDetail={setDetailItem}
             onCreate={handleOpenCreate}
             onStatusToggle={handleStatusToggle}
+            coverageMap={coverageMap}
             page={page}
             total={total}
             pageSize={pageSize}

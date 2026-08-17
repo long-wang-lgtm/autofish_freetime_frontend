@@ -7,6 +7,8 @@ import type { MonitoredItem } from '@/lib/api/batch-publish'
 
 interface MonitorCardProps {
   item: MonitoredItem
+  /** 分发进度 — 已发布素材覆盖的不同账号数 */
+  coverage: number
   isSelected: boolean
   onToggleSelect: (gid: string) => void
   onOpenDetail: (item: MonitoredItem) => void
@@ -21,7 +23,7 @@ const ITEM_STATUS_CONFIG: Record<number, { label: string; color: 'green' | 'red'
   2: { label: '售出', color: 'amber' },
 }
 
-export function MonitorCard({ item, isSelected, onToggleSelect, onOpenDetail, selectionMode, onStatusToggle, onCreate }: MonitorCardProps) {
+export function MonitorCard({ item, coverage, isSelected, onToggleSelect, onOpenDetail, selectionMode, onStatusToggle, onCreate }: MonitorCardProps) {
   const td = item.trendData as Record<string, unknown> | null | undefined
   const fc = td?.fetchCount as number | undefined
   const windows = td?.windows as number | undefined
@@ -96,6 +98,9 @@ export function MonitorCard({ item, isSelected, onToggleSelect, onOpenDetail, se
         </span>
         <span className="text-gray-700">{fmtNumber(item.wantAvg ?? 0)}</span>
         <span className="text-gray-500">{fmtPercent(item.convertRate ?? null)}</span>
+        <span className={`ml-auto text-sm tabular-nums ${coverage > 0 ? 'text-gray-700' : 'text-gray-400'}`}>
+          {coverage > 0 ? `已覆盖 ${coverage} 个账号` : '0 个账号'}
+        </span>
       </div>
 
       {/* 数据窗口 */}

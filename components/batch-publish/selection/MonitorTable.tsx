@@ -22,13 +22,15 @@ interface MonitorTableProps {
   onOpenDetail: (item: MonitoredItem) => void
   onCreate: (item: MonitoredItem) => void
   onStatusToggle: (gid: string, currentStatus: number) => void
+  /** 分发进度 — gid → 已发布素材覆盖的不同账号数 */
+  coverageMap: Record<string, number>
   page: number
   total: number
   pageSize: number
   onPageChange: (p: number) => void
 }
 
-const GRID_COLS = '32px 2fr 0.7fr 0.8fr 0.8fr 0.7fr 0.6fr 0.6fr 0.8fr 0.8fr 0.8fr'
+const GRID_COLS = '32px 2fr 0.7fr 0.8fr 0.8fr 0.7fr 0.6fr 0.6fr 0.8fr 0.8fr 0.8fr 0.8fr'
 
 const ITEM_STATUS_CONFIG: Record<number, { label: string; color: 'green' | 'red' | 'amber' | 'gray' }> = {
   0: { label: '在售', color: 'green' },
@@ -50,6 +52,7 @@ export function MonitorTable({
   onOpenDetail,
   onCreate,
   onStatusToggle,
+  coverageMap,
   page,
   total,
   pageSize,
@@ -172,6 +175,19 @@ export function MonitorTable({
       },
     },
     {
+      key: 'coverage',
+      header: '分发进度',
+      align: 'center',
+      render: (item) => {
+        const count = coverageMap[item.gid] ?? 0
+        return (
+          <span className={`text-sm tabular-nums ${count > 0 ? 'text-gray-700' : 'text-gray-400'}`}>
+            {count > 0 ? `已覆盖 ${count} 个账号` : '0 个账号'}
+          </span>
+        )
+      },
+    },
+    {
       key: 'create',
       header: '创作',
       align: 'center',
@@ -207,7 +223,7 @@ export function MonitorTable({
       ),
     },
 
-  ], [selectedGids, data.length, onToggleSelect, onToggleAll, onCreate, onStatusToggle])
+  ], [selectedGids, data.length, onToggleSelect, onToggleAll, onCreate, onStatusToggle, coverageMap])
 
   return (
     <div className="flex-1 flex flex-col min-h-0">

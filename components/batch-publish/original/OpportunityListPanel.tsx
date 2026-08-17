@@ -7,8 +7,10 @@ import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
-import { Sheet } from '@/components/ui/overlay/Sheet'
+import { Modal } from '@/components/ui/overlay/Modal'
+import { BottomSheet } from '@/components/ui/overlay/Sheet'
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { OPPORTUNITY_STATUS_CONFIG, OPPORTUNITY_STATUS_FILTER_OPTIONS } from '@/components/batch-publish/shared/constants'
 import { OpportunityForm } from './OpportunityForm'
 import { fmtPrice } from '@/lib/utils/format'
@@ -42,6 +44,7 @@ export function OpportunityListPanel({
   onCreateOpportunity, onUpdateOpportunity, onDeleteOpportunity,
   isMutating,
 }: OpportunityListPanelProps) {
+  const isMobile = useIsMobile()
   const [editingItem, setEditingItem] = useState<OpportunityItem | null>(null)
   const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -58,6 +61,24 @@ export function OpportunityListPanel({
     setSheetMode('create')
     setSheetOpen(true)
   }
+
+  const editorTitle = sheetMode === 'create' ? '新建商机' : '编辑商机'
+
+  const formContent = (
+    <OpportunityForm
+      defaultValues={editingItem ?? undefined}
+      onSubmit={(values) => {
+        if (sheetMode === 'create') {
+          onCreateOpportunity(values)
+        } else if (editingItem) {
+          onUpdateOpportunity(editingItem.id, values)
+        }
+        setSheetOpen(false)
+      }}
+      isPending={isMutating}
+      submitLabel={sheetMode === 'create' ? '创建商机' : '保存修改'}
+    />
+  )
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -167,29 +188,25 @@ export function OpportunityListPanel({
         <Pagination page={page} total={total} pageSize={20} onChange={onPageChange} />
       </div>
 
-      {/* 新建/编辑 Sheet */}
-      <Sheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        title={sheetMode === 'create' ? '新建商机' : '编辑商机'}
-        width="500px"
-      >
-        <div className="p-6">
-          <OpportunityForm
-            defaultValues={editingItem ?? undefined}
-            onSubmit={(values) => {
-              if (sheetMode === 'create') {
-                onCreateOpportunity(values)
-              } else if (editingItem) {
-                onUpdateOpportunity(editingItem.id, values)
-              }
-              setSheetOpen(false)
-            }}
-            isPending={isMutating}
-            submitLabel={sheetMode === 'create' ? '创建商机' : '保存修改'}
-          />
-        </div>
-      </Sheet>
+      {/* 新建/编辑商机 — PC 居中 Modal，移动端 BottomSheet */}
+      {isMobile ? (
+        <BottomSheet
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          title={editorTitle}
+        >
+          <div className="p-4">{formContent}</div>
+        </BottomSheet>
+      ) : (
+        <Modal
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          title={editorTitle}
+          size="md"
+        >
+          {formContent}
+        </Modal>
+      )}
 
       {/* 删除确认 */}
       <ConfirmDialog
