@@ -486,3 +486,56 @@ export async function deleteMaterial(id: number): Promise<OperationResponse> {
     params: { id },
   })
 }
+
+// ============================================================
+// 创作模板 API
+// ============================================================
+
+/** 创作模板 prompt_key 白名单 — 与后端白名单一致 */
+export type CreativePromptKey = 'Rewrite' | 'CoverPlan'
+
+/** 创作模板来源 — custom=用户自定义 / default=使用默认模板（content 为 yaml 内容） */
+export type CreativePromptSource = 'custom' | 'default'
+
+/** 创作模板 */
+export interface CreativePrompt {
+  prompt_key: CreativePromptKey
+  content: string
+  source: CreativePromptSource
+}
+
+/** 创作模板列表响应 — GET /api/selection/creative.prompt.all */
+export interface CreativePromptListResponse {
+  items: CreativePrompt[]
+}
+
+/** 列出创作模板 — GET /api/selection/creative.prompt.all */
+export async function listCreativePrompts(): Promise<CreativePromptListResponse> {
+  return fetchApi<CreativePromptListResponse>('/creative.prompt.all', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+  })
+}
+
+/** 保存创作模板 — POST /api/selection/creative.prompt.save */
+export async function saveCreativePrompt(
+  promptKey: CreativePromptKey,
+  content: string,
+): Promise<OperationResponse> {
+  return fetchApi<OperationResponse>('/creative.prompt.save', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+    method: 'POST',
+    body: JSON.stringify({ prompt_key: promptKey, content }),
+  })
+}
+
+/** 恢复默认创作模板 — POST /api/selection/creative.prompt.reset（未配置自定义时 404） */
+export async function resetCreativePrompt(promptKey: CreativePromptKey): Promise<OperationResponse> {
+  return fetchApi<OperationResponse>('/creative.prompt.reset', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+    method: 'POST',
+    body: JSON.stringify({ prompt_key: promptKey }),
+  })
+}

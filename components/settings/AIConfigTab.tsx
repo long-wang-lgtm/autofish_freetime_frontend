@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { AIConfigFormFields } from '@/components/ai-config/form-fields'
+import { CreativePromptBlock } from '@/components/settings/CreativePromptBlock'
 import {
   listAIConfigs,
   deleteAIConfig,
@@ -401,6 +402,9 @@ export function AIConfigTab({ isMobile }: AIConfigTabProps) {
           </table>
         )}
       </div>
+
+      {/* 创作模板管理块 */}
+      <CreativePromptBlock isMobile={isMobile} />
 
       {/* 抽屉 — 桌面侧边 / 移动端底部 */}
       {isMobile ? (
