@@ -86,7 +86,7 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
     setDescription(v)
     descDirtyRef.current = true
     if (descTimerRef.current) clearTimeout(descTimerRef.current)
-    descTimerRef.current = setTimeout(() => autoSaveDesc(v), 1000)
+    descTimerRef.current = setTimeout(() => autoSaveDesc(v), 2000)
   }
 
   const handleDescBlur = () => {
@@ -99,7 +99,7 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
     setCoverprompt(v)
     coverDirtyRef.current = true
     if (coverTimerRef.current) clearTimeout(coverTimerRef.current)
-    coverTimerRef.current = setTimeout(() => autoSaveCover(v), 1000)
+    coverTimerRef.current = setTimeout(() => autoSaveCover(v), 2000)
   }
 
   const handleCoverBlur = () => {
