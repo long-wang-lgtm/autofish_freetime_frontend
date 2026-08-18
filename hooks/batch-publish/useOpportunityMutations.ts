@@ -9,7 +9,8 @@ export function useOpportunityMutations() {
   const toast = useToast()
 
   const createMutation = useMutation({
-    mutationFn: (opp: OpportunityParams) => createOpportunity(opp),
+    mutationFn: ({ opp, draftId }: { opp: OpportunityParams; draftId?: number }) =>
+      createOpportunity(opp, draftId),
     onSuccess: () => {
       toast.addToast({ title: '商机创建成功', variant: 'success' })
       queryClient.invalidateQueries({ queryKey: ['batch-publish', 'opportunities'] })
@@ -20,8 +21,8 @@ export function useOpportunityMutations() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ oid, opp }: { oid: number; opp: Partial<OpportunityParams> }) =>
-      updateOpportunity(oid, opp),
+    mutationFn: ({ oid, opp, draftId }: { oid: number; opp: Partial<OpportunityParams>; draftId?: number }) =>
+      updateOpportunity(oid, opp, draftId),
     onSuccess: () => {
       toast.addToast({ title: '商机已更新', variant: 'success' })
       queryClient.invalidateQueries({ queryKey: ['batch-publish', 'opportunities'] })

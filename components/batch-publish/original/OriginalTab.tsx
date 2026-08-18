@@ -72,13 +72,16 @@ export function OriginalTab() {
   }, [page])
 
   // ---- Opportunity CRUD callbacks (passed to left panel) ----
-  const handleCreateOpportunity = useCallback((values: OpportunityParams) => {
-    page.createOpportunity.mutate(values)
+  const handleCreateOpportunity = useCallback((values: OpportunityParams & { draft_id?: number }) => {
+    page.createOpportunity.mutate({ opp: values, draftId: values.draft_id })
   }, [page.createOpportunity])
 
-  const handleUpdateOpportunity = useCallback((oid: number, values: Partial<OpportunityParams>) => {
-    page.updateOpportunity.mutate({ oid, opp: values })
-  }, [page.updateOpportunity])
+  const handleUpdateOpportunity = useCallback(
+    (oid: number, values: Partial<OpportunityParams> & { draft_id?: number }) => {
+      page.updateOpportunity.mutate({ oid, opp: values, draftId: values.draft_id })
+    },
+    [page.updateOpportunity]
+  )
 
   const handleDeleteOpportunity = useCallback((oid: number) => {
     page.deleteOpportunity.mutate(oid)

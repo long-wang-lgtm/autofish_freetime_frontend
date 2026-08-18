@@ -64,7 +64,9 @@ export function OpportunityListPanel({
 
   const editorTitle = sheetMode === 'create' ? '新建商机' : '编辑商机'
 
-  const formContent = (
+  // 弹窗打开时才挂载表单：确保 OpportunityForm 的「刷新恢复草稿」检查在每次打开时触发
+  // （常驻渲染时 useEffect([]) 只在页面加载执行一次，打开弹窗不会重新查草稿）
+  const formContent = sheetOpen ? (
     <OpportunityForm
       defaultValues={editingItem ?? undefined}
       onSubmit={(values) => {
@@ -78,7 +80,7 @@ export function OpportunityListPanel({
       isPending={isMutating}
       submitLabel={sheetMode === 'create' ? '创建商机' : '保存修改'}
     />
-  )
+  ) : null
 
   return (
     <div className="flex flex-col h-full bg-white">

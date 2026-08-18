@@ -6,6 +6,7 @@
  */
 
 import { fetchApi, API_BASE_URL, type OperationResponse } from '@/lib/utils/api'
+import { getAccessToken } from '@/lib/utils/auth'
 
 const BP_BASE = `${API_BASE_URL}/api/selection`
 
@@ -60,6 +61,21 @@ export interface MonitoredItem {
   updated_at?: string | null
 }
 
+/** 商机提炼结果 — 与后端 OpportunitySummary pydantic BaseModel 对齐 */
+export interface OpportunitySummary {
+  article: string
+  keywords: string[]
+}
+
+/** 商机提炼草稿（opportunity_draft） */
+export interface OpportunityDraft {
+  draft_id: number
+  source_type: 'url' | 'file' | 'text'
+  source_url?: string | null
+  summary: OpportunitySummary
+  created_at?: string | null
+}
+
 /** 商机 */
 export interface OpportunityItem {
   id: number
@@ -68,6 +84,10 @@ export interface OpportunityItem {
   price?: number
   status: string
   ai_context_template?: TemplateType
+  summary?: OpportunitySummary | null
+  summary_status?: string
+  summary_note?: string | null
+  source_url?: string | null
   monitoredItemCount?: number
   materialCount?: number
   userId?: string | null
@@ -82,6 +102,10 @@ export interface OpportunityParams {
   price?: number
   status?: string
   ai_context_template?: TemplateType
+  summary?: OpportunitySummary | null
+  summary_status?: string
+  summary_note?: string | null
+  source_url?: string | null
 }
 
 /** 素材 */
@@ -216,24 +240,96 @@ export async function listOpportunities(params?: {
   })
 }
 
-/** 创建商机 — POST /api/selection/opportunity.create */
-export async function createOpportunity(opp: OpportunityParams): Promise<OpportunityItem> {
+/** 创建商机 — POST /api/selection/opportunity.create；可选 draftId 表示确认提炼草稿（成功后后端删 draft） */
+export async function createOpportunity(opp: OpportunityParams, draftId?: number): Promise<OpportunityItem> {
+  const params: Record<string, string | number> = {}
+  if (draftId != null) params.draft_id = draftId
   return fetchApi<OpportunityItem>('/opportunity.create', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    body: JSON.stringify( opp ),
+    params,
+    body: JSON.stringify(opp),
   })
 }
 
-/** 更新商机 — POST /api/selection/opportunity.update */
-export async function updateOpportunity(oid: number, opp: Partial<OpportunityParams>): Promise<OpportunityItem> {
+/** 更新商机 — POST /api/selection/opportunity.update；可选 draftId 表示确认提炼草稿（成功后后端删 draft） */
+export async function updateOpportunity(oid: number, opp: Partial<OpportunityParams>, draftId?: number): Promise<OpportunityItem> {
+  const params: Record<string, string | number> = { oid }
+  if (draftId != null) params.draft_id = draftId
   return fetchApi<OpportunityItem>('/opportunity.update', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    params: { oid } as Record<string, string | number>,
-    body: JSON.stringify( opp ),
+    params,
+    body: JSON.stringify(opp),
+  })
+}
+
+// ============================================================
+// 商机提炼 API
+// ============================================================
+
+/** 提炼入参 — 三种来源按 source_type 各带一个对应字段 */
+export interface OpportunityExtractPayload {
+  source_url?: string
+  content?: string
+  file?: File
+}
+
+/** 提炼草稿列表响应 — GET /api/selection/opportunity.draft.list（当前用户未确认草稿，按时间倒序） */
+export interface OpportunityDraftListResponse {
+  drafts: OpportunityDraft[]
+}
+
+/**
+ * 提炼商机资料 — POST /api/selection/opportunity.extract（multipart/form-data）
+ *
+ * ⚠️ fetchApi 默认强制 Content-Type: application/json 会破坏 FormData 的 multipart boundary，
+ * 因此本接口用原生 fetch，手动带 Authorization 头，让浏览器自动设置 multipart Content-Type。
+ */
+export async function opportunityExtract(
+  sourceType: 'url' | 'file' | 'text',
+  payload: OpportunityExtractPayload,
+): Promise<{ draft_id: number; summary: OpportunitySummary }> {
+  const formData = new FormData()
+  formData.append('source_type', sourceType)
+  if (sourceType === 'url') formData.append('source_url', payload.source_url ?? '')
+  if (sourceType === 'file' && payload.file) formData.append('file', payload.file)
+  if (sourceType === 'text') formData.append('content', payload.content ?? '')
+
+  const token = getAccessToken()
+  const response = await fetch(`${BP_BASE}/opportunity.extract`, {
+    method: 'POST',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.detail || error.error || `HTTP ${response.status}`)
+  }
+
+  return response.json()
+}
+
+/** 列出当前用户未确认草稿 — GET /api/selection/opportunity.draft.list */
+export async function opportunityDraftList(): Promise<OpportunityDraftListResponse> {
+  return fetchApi<OpportunityDraftListResponse>('/opportunity.draft.list', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+  })
+}
+
+/** 删除提炼草稿（放弃提炼）— POST /api/selection/opportunity.draft.delete?draft_id=N */
+export async function opportunityDraftDelete(draftId: number): Promise<OperationResponse> {
+  return fetchApi<OperationResponse>('/opportunity.draft.delete', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+    method: 'POST',
+    params: { draft_id: draftId },
   })
 }
 
