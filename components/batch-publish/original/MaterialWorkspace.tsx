@@ -1,15 +1,20 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { NativeTable } from '@/components/ui/data/NativeTable'
 import type { NativeTableColumn } from '@/components/ui/data/NativeTable'
 import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
 import { DistributionView } from '@/components/batch-publish/shared/DistributionView'
 import { MaterialTableRow } from './MaterialTableRow'
+import { OpportunitySummaryCard } from './OpportunitySummaryCard'
+import { SummaryReExtractModal, type ReExtractSubmitValues } from './SummaryReExtractModal'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import { fmtPrice } from '@/lib/utils/format'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useToast } from '@/components/ui/Toaster'
+import { opportunitySummaryReview, updateOpportunity } from '@/lib/api/batch-publish'
 import type { OpportunityItem, PublishMaterial } from '@/lib/api/batch-publish'
 
 interface MaterialWorkspaceProps {
@@ -52,6 +57,52 @@ export function MaterialWorkspace({
   onBackToOverview, materialPage,
 }: MaterialWorkspaceProps) {
   const isMobile = useIsMobile()
+  const queryClient = useQueryClient()
+  const toast = useToast()
+
+  // ---- 商机提炼质量判定（opportunity.summary.review）----
+  const reviewMutation = useMutation({
+    mutationFn: ({ oid, status }: { oid: number; status: 'operator_verified' | 'rejected' }) =>
+      opportunitySummaryReview(oid, status),
+    onSuccess: (data) => {
+      toast.addToast({
+        title: data.summary_status === 'rejected' ? '已标记为不合格' : '已确认提炼准确',
+        variant: 'success',
+      })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'opportunities'] })
+    },
+    onError: (err: Error) => {
+      toast.addToast({ title: `判定失败：${err?.message || '请稍后重试'}`, variant: 'error' })
+    },
+  })
+
+  // ---- 重新提炼弹窗（extract → draft → 确认覆盖 summary）----
+  const [reExtractOpen, setReExtractOpen] = useState(false)
+  const [reExtractSubmitting, setReExtractSubmitting] = useState(false)
+
+  // 切换商机时关闭重新提炼弹窗
+  useEffect(() => {
+    setReExtractOpen(false)
+  }, [opportunity?.id])
+
+  const handleReExtractSubmit = useCallback(async (values: ReExtractSubmitValues) => {
+    if (!opportunity) return
+    setReExtractSubmitting(true)
+    try {
+      await updateOpportunity(
+        opportunity.id,
+        { name: values.name, summary: values.summary, source_url: values.source_url },
+        values.draft_id
+      )
+      toast.addToast({ title: '提炼结果已更新', variant: 'success' })
+      setReExtractOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'opportunities'] })
+    } catch (err) {
+      toast.addToast({ title: `更新失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })
+    } finally {
+      setReExtractSubmitting(false)
+    }
+  }, [opportunity, toast, queryClient])
 
   // 行组件包装器——闭包捕获 workspace props 注入到 MaterialTableRow
   const RowWrapper = useCallback(
@@ -122,6 +173,16 @@ export function MaterialWorkspace({
         </div>
       </div>
 
+      {/* 商机资料卡 — summary 非空才渲染 */}
+      {opportunity.summary && (
+        <OpportunitySummaryCard
+          opportunity={opportunity}
+          reviewPending={reviewMutation.isPending}
+          onReview={(status) => reviewMutation.mutate({ oid: opportunity.id, status })}
+          onReExtract={() => setReExtractOpen(true)}
+        />
+      )}
+
       {/* 素材表格 + 分发进度 */}
       <div className="flex-1 min-h-0 flex flex-col">
         <div className="flex-1 min-h-0">
@@ -169,6 +230,17 @@ export function MaterialWorkspace({
       <div className="border-t border-gray-100 flex-shrink-0">
         <Pagination page={page} total={total} pageSize={PAGE_SIZE} onChange={onPageChange} />
       </div>
+
+      {/* 重新提炼弹窗 — 打开时才挂载 */}
+      {reExtractOpen && (
+        <SummaryReExtractModal
+          open={reExtractOpen}
+          onClose={() => setReExtractOpen(false)}
+          opportunity={opportunity}
+          isPending={reExtractSubmitting}
+          onSubmit={handleReExtractSubmit}
+        />
+      )}
     </div>
   )
 }

@@ -121,7 +121,7 @@ export interface PublishMaterial {
   to_gid?: string | null
   opportunity?: OpportunityItem | null
   userId?: string
-  produceState?: { coverprompt?: string | null } | null
+  produceState?: { coverprompt?: string | null; brief?: string | null } | null
   souItem?: MonitoredItem | null
   created_at?: string | null
   updated_at?: string | null
@@ -144,7 +144,7 @@ export interface MaterialEditInput {
   category?: string
   to_uid?: string
   images?: MaterialImage[]
-  produceState?: { coverprompt?: string | null }
+  produceState?: { coverprompt?: string | null; brief?: string | null }
 }
 
 /** AI 工作阶段 */
@@ -266,6 +266,23 @@ export async function updateOpportunity(oid: number, opp: Partial<OpportunityPar
   })
 }
 
+/** 提炼质量判定 — POST /api/selection/opportunity.summary.review（oid 走 query，status 走 body，note 走 query 裸参数） */
+export async function opportunitySummaryReview(
+  oid: number,
+  status: 'operator_verified' | 'rejected',
+  note?: string,
+): Promise<OpportunityItem> {
+  const params: Record<string, string | number> = { oid }
+  if (note) params.note = note
+  return fetchApi<OpportunityItem>('/opportunity.summary.review', {
+    baseUrl: BP_BASE,
+    credentials_: 'include',
+    method: 'POST',
+    params,
+    body: JSON.stringify({ status }),
+  })
+}
+
 // ============================================================
 // 商机提炼 API
 // ============================================================
@@ -370,14 +387,16 @@ export async function listMaterials(params?: {
   })
 }
 
-/** 批量创建素材（按商机）— POST /api/selection/material.create.by.opp */
+/** 批量创建素材（按商机）— POST /api/selection/material.create.by.opp；brief 为现场决策的策略简报（可选），非空时后端锁定 num=1 */
 export async function createMaterialsByOpp(
   num: number,
   opp: OpportunityItem,
   toUid?: string,
+  brief?: string,
 ): Promise<PublishMaterial[]> {
   const params: Record<string, string | number> = { num }
   if (toUid) params.to_uid = toUid
+  if (brief) params.brief = brief
   return fetchApi<PublishMaterial[]>('/material.create.by.opp', {
     baseUrl: BP_BASE,
     credentials_: 'include',
@@ -387,14 +406,16 @@ export async function createMaterialsByOpp(
   })
 }
 
-/** 批量创建素材（按监控商品）— POST /api/selection/material.create.by.item */
+/** 批量创建素材（按监控商品）— POST /api/selection/material.create.by.item；brief 为现场决策的策略简报（可选），非空时后端锁定 num=1 */
 export async function createMaterialsByItem(
   num: number,
   souItemId: string,
   toUid?: string,
+  brief?: string,
 ): Promise<PublishMaterial[]> {
   const params: Record<string, string | number> = { num, souItemId }
   if (toUid) params.to_uid = toUid
+  if (brief) params.brief = brief
   return fetchApi<PublishMaterial[]>('/material.create.by.item', {
     baseUrl: BP_BASE,
     credentials_: 'include',

@@ -20,6 +20,14 @@ interface MaterialEditSheetProps {
   materials: PublishMaterial[]
 }
 
+/** produceState 合并语义由后端做；前端显式带现有 coverprompt + 新 brief，清空 brief 传 null */
+function buildProduceState(coverprompt: string, brief: string): { coverprompt?: string | null; brief?: string | null } {
+  return {
+    coverprompt: coverprompt || undefined,
+    brief: brief || null,
+  }
+}
+
 export function MaterialEditSheet({ materialId, open, onClose, materials }: MaterialEditSheetProps) {
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
@@ -30,6 +38,7 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
   // ---- 表单字段 ----
   const [description, setDescription] = useState('')
   const [coverprompt, setCoverprompt] = useState('')
+  const [brief, setBrief] = useState('')
   const [images, setImages] = useState<MaterialImage[]>([])
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
 
@@ -42,11 +51,16 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
   const coverTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const coverSavingRef = useRef(false)
 
+  const briefDirtyRef = useRef(false)
+  const briefTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const briefSavingRef = useRef(false)
+
   // 初始化表单
   useEffect(() => {
     if (material) {
       setDescription(material.description ?? '')
       setCoverprompt(material.produceState?.coverprompt ?? '')
+      setBrief(material.produceState?.brief ?? '')
       setImages(material.images ?? [])
     }
   }, [material])
@@ -71,7 +85,7 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
     if (!material || coverSavingRef.current) return
     coverSavingRef.current = true
     try {
-      await editMaterial({ id: material.id, produceState: { coverprompt: value || undefined } })
+      await editMaterial({ id: material.id, produceState: buildProduceState(value, brief) })
       coverDirtyRef.current = false
       queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
     } catch {
@@ -79,7 +93,27 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
     } finally {
       coverSavingRef.current = false
     }
-  }, [material, queryClient])
+  }, [material, brief, queryClient])
+
+  // 策略简报自动保存——已加工素材（非 pending/write_failed）修改 brief 后提示需重新加工
+  const autoSaveBrief = useCallback(async (value: string) => {
+    if (!material || briefSavingRef.current) return
+    briefSavingRef.current = true
+    const prevBrief = material.produceState?.brief ?? null
+    const isProcessed = material.status !== 'pending' && material.status !== 'write_failed'
+    try {
+      await editMaterial({ id: material.id, produceState: buildProduceState(coverprompt, value) })
+      briefDirtyRef.current = false
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials'] })
+      if (isProcessed && prevBrief !== (value || null)) {
+        toast.addToast({ title: '策略已变更，需重新加工', variant: 'warning' })
+      }
+    } catch {
+      // 静默处理
+    } finally {
+      briefSavingRef.current = false
+    }
+  }, [material, coverprompt, queryClient, toast])
 
   const handleDescChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const v = e.target.value
@@ -105,6 +139,19 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
   const handleCoverBlur = () => {
     if (coverTimerRef.current) { clearTimeout(coverTimerRef.current); coverTimerRef.current = undefined }
     if (coverDirtyRef.current) autoSaveCover(coverprompt)
+  }
+
+  const handleBriefChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value
+    setBrief(v)
+    briefDirtyRef.current = true
+    if (briefTimerRef.current) clearTimeout(briefTimerRef.current)
+    briefTimerRef.current = setTimeout(() => autoSaveBrief(v), 2000)
+  }
+
+  const handleBriefBlur = () => {
+    if (briefTimerRef.current) { clearTimeout(briefTimerRef.current); briefTimerRef.current = undefined }
+    if (briefDirtyRef.current) autoSaveBrief(brief)
   }
 
   // ---- 创作进度：改写→封面→生图→发布（无商机的二创素材处理草稿的唯一入口） ----
@@ -147,12 +194,14 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
   const handleCloseWithFlush = useCallback(async () => {
     if (descTimerRef.current) { clearTimeout(descTimerRef.current); descTimerRef.current = undefined }
     if (coverTimerRef.current) { clearTimeout(coverTimerRef.current); coverTimerRef.current = undefined }
+    if (briefTimerRef.current) { clearTimeout(briefTimerRef.current); briefTimerRef.current = undefined }
     const promises: Promise<void>[] = []
     if (descDirtyRef.current) promises.push(autoSaveDesc(description))
     if (coverDirtyRef.current) promises.push(autoSaveCover(coverprompt))
+    if (briefDirtyRef.current) promises.push(autoSaveBrief(brief))
     await Promise.race([Promise.all(promises), new Promise<void>(r => setTimeout(r, 3000))])
     onClose()
-  }, [description, coverprompt, autoSaveDesc, autoSaveCover, onClose])
+  }, [description, coverprompt, brief, autoSaveDesc, autoSaveCover, autoSaveBrief, onClose])
 
   // ---- Image management (auto-save on change) ----
 
@@ -213,7 +262,7 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
   if (!material) return null
 
   const isPublished = material?.status === 'published_success'
-  const isAnySaving = descSavingRef.current || coverSavingRef.current
+  const isAnySaving = descSavingRef.current || coverSavingRef.current || briefSavingRef.current
   const padding = isMobile ? 'p-4' : 'p-6'
 
   const formContent = (
@@ -329,6 +378,21 @@ export function MaterialEditSheet({ materialId, open, onClose, materials }: Mate
           className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical disabled:bg-gray-50 disabled:text-gray-400"
           placeholder="例如：白色背景，柔和自然光，产品居中构图..."
         />
+      </section>
+
+      {/* 创作策略简报（produceState.brief）— 创建后补/改/清空策略 */}
+      <section className="space-y-4">
+        <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">创作策略简报</h4>
+        <textarea
+          value={brief}
+          onChange={handleBriefChange}
+          onBlur={handleBriefBlur}
+          rows={4}
+          disabled={isPublished}
+          className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical disabled:bg-gray-50 disabled:text-gray-400"
+          placeholder="写给 AI 的创作指令（卖点/人群/场景等营销判断）；留空则无策略，加工只喂描述兜底"
+        />
+        <p className="text-xs text-gray-400">策略自包含，供改写/封面规划直接消费；清空即移除策略</p>
       </section>
 
       {/* 底部 — 自动保存状态 + 复制 + 关闭 */}

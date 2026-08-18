@@ -36,6 +36,34 @@ interface OpportunityListPanelProps {
   isMutating: boolean
 }
 
+/** article = 「标题行 + 正文」，列表行取首行为文章标题 */
+function getArticleTitle(article: string): string {
+  return article.trim().split('\n')[0]?.trim() ?? ''
+}
+
+/** summary_status 角标（user_confirmed 为默认态，不显示角标） */
+function renderSummaryBadge(item: OpportunityItem, onSelectOid: (oid: number) => void): React.ReactNode | null {
+  if (!item.summary) return null
+  switch (item.summary_status) {
+    case 'operator_verified':
+      return <span className="text-xs font-medium text-green-700 flex-shrink-0">已验证</span>
+    case 'rejected':
+      return (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSelectOid(item.id) }}
+          className="text-xs font-medium text-red-600 hover:underline flex-shrink-0"
+          title="该提炼被判为不合格，点击打开资料卡判定区重新提炼"
+        >
+          待重提炼
+        </button>
+      )
+    case 'ai_draft':
+      return <span className="text-xs text-gray-500 flex-shrink-0">AI 提炼</span>
+    default:
+      return null
+  }
+}
+
 export function OpportunityListPanel({
   opportunities, total, isLoading, error, onRetry,
   page, onPageChange,
@@ -144,10 +172,18 @@ export function OpportunityListPanel({
                     <p className={`text-sm font-medium line-clamp-1 ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
                       {item.name || '未命名商机'}
                     </p>
+                    {item.summary && (
+                      <p className="text-xs text-gray-500 line-clamp-1 mt-0.5" title={item.summary.article}>
+                        {getArticleTitle(item.summary.article)}
+                      </p>
+                    )}
                   </div>
-                  {isSelected && (
-                    <span className="text-blue-600 text-xs flex-shrink-0">✓</span>
-                  )}
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {renderSummaryBadge(item, onSelectOid)}
+                    {isSelected && (
+                      <span className="text-blue-600 text-xs">✓</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* 底部信息 + 操作按钮 */}

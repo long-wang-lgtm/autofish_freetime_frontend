@@ -47,10 +47,10 @@ export function useOriginalMutations(selectedOid: number | undefined) {
     },
   })
 
-  // 批量创建素材
+  // 批量创建素材（brief 为现场决策的策略简报，可选）
   const createMaterialsMutation = useMutation({
-    mutationFn: ({ num, opp, toUid }: { num: number; opp: OpportunityItem; toUid?: string }) =>
-      createMaterialsByOpp(num, opp, toUid),
+    mutationFn: ({ num, opp, toUid, brief }: { num: number; opp: OpportunityItem; toUid?: string; brief?: string }) =>
+      createMaterialsByOpp(num, opp, toUid, brief),
     onSuccess: (data) => {
       toast.addToast({ title: `${data.length} 份素材创建成功`, variant: 'success' })
       invalidateAll()
