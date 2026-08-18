@@ -9,7 +9,9 @@ export function useSelectionPage() {
   const isMobile = useIsMobile()
 
   const {
-    search,
+    title,
+    uid,
+    gid,
     monitorStatus,
     page,
     pageSize,
@@ -37,7 +39,9 @@ export function useSelectionPage() {
 
   return {
     // 筛选
-    search,
+    title,
+    uid,
+    gid,
     monitorStatus,
     onFilterChange,
     // 排序 & 分页

@@ -17,7 +17,7 @@ import type { MonitoredItem } from '@/lib/api/batch-publish'
 
 export function SelectionTab() {
   const {
-    search, monitorStatus, onFilterChange,
+    title, uid, gid, monitorStatus, onFilterChange,
     orderBy, asc, onSortChange,
     page, pageSize, total, setPage,
     data, isLoading, error, refetch,
@@ -128,7 +128,9 @@ export function SelectionTab() {
   return (
     <div className="flex-1 flex flex-col min-h-0 gap-5">
       <MonitorFilterBar
-        search={search}
+        title={title}
+        uid={uid}
+        gid={gid}
         monitorStatus={monitorStatus}
         onFilterChange={onFilterChange}
         onRefresh={() => refetch()}

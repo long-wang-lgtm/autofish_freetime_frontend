@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSpreadPage } from '@/hooks/batch-publish/useSpreadPage'
 import { useOriginalMutations } from '@/hooks/batch-publish/useOriginalMutations'
 import { SearchToolbar } from '@/components/ui/data/SearchToolbar'
+import { Pagination } from '@/components/ui/data/Pagination'
 import { MaterialTable } from './MaterialTable'
 import { MaterialCard } from './MaterialCard'
 import { MaterialEditSheet } from '../original/MaterialEditSheet'
@@ -35,8 +36,12 @@ interface MaterialGroup {
   published: number
 }
 
+/** 双层分页：组列表每页 20 组，组内素材每页 10 条 */
+const GROUP_PAGE_SIZE = 20
+const MATERIAL_PAGE_SIZE = 10
+
 export function SpreadTab() {
-  const { search, status, onFilterChange, data, isLoading, error, refetch, isMobile } = useSpreadPage()
+  const { filters, onFilterChange, data, isLoading, error, refetch, isMobile } = useSpreadPage()
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -58,6 +63,9 @@ export function SpreadTab() {
   const [assignAccountOpen, setAssignAccountOpen] = useState(false)
   const [assignToUid, setAssignToUid] = useState('')
   const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
+  // 双层分页：组列表页码 + 组内素材页码（按组记录）
+  const [groupPage, setGroupPage] = useState(1)
+  const [groupMatPages, setGroupMatPages] = useState<Record<string, number>>({})
 
   const groupRefs = useRef(new Map<string, HTMLDivElement>())
   const appliedDeepLinkRef = useRef<string | null>(null)
@@ -135,7 +143,22 @@ export function SpreadTab() {
 
   const materialById = useMemo(() => new Map(data.map((m) => [m.id, m])), [data])
 
-  // ---- 深链：oid / item → 对应组展开且高亮，其余折叠 ----
+  // 组列表分页：每页 20 组（页码越界时钳制到最后一页）
+  const totalGroupPages = Math.max(1, Math.ceil(groups.length / GROUP_PAGE_SIZE))
+  const clampedGroupPage = Math.min(groupPage, totalGroupPages)
+  const pagedGroups = useMemo(() => {
+    const start = (clampedGroupPage - 1) * GROUP_PAGE_SIZE
+    return groups.slice(start, start + GROUP_PAGE_SIZE)
+  }, [groups, clampedGroupPage])
+
+  // 组集合变化（增删组/切换筛选）时回到第 1 页；单组内素材内容变化不重置页码
+  const groupKeySignature = useMemo(() => groups.map((g) => g.key).join('|'), [groups])
+  useEffect(() => {
+    setGroupPage(1)
+    setGroupMatPages({})
+  }, [groupKeySignature])
+
+  // ---- 深链：oid / item → 切到对应组所在页、展开且高亮，其余折叠 ----
   const oidParam = searchParams.get('oid')
   const itemParam = searchParams.get('item')
   const deepLinkKey = oidParam ? `opp-${oidParam}` : itemParam ? `item-${itemParam}` : null
@@ -144,23 +167,31 @@ export function SpreadTab() {
     if (groups.length === 0) return
     if (appliedDeepLinkRef.current === deepLinkKey) return
     appliedDeepLinkRef.current = deepLinkKey
-    if (deepLinkKey && groups.some((g) => g.key === deepLinkKey)) {
-      setCollapsedKeys(new Set(groups.map((g) => g.key).filter((k) => k !== deepLinkKey)))
+    if (deepLinkKey) {
+      const idx = groups.findIndex((g) => g.key === deepLinkKey)
+      if (idx >= 0) {
+        // 先算目标组所在页码并切页，滚动效果等该组渲染到当页后再执行
+        setGroupPage(Math.floor(idx / GROUP_PAGE_SIZE) + 1)
+        setCollapsedKeys(new Set(groups.map((g) => g.key).filter((k) => k !== deepLinkKey)))
+      } else {
+        setCollapsedKeys(new Set())
+      }
     } else {
       setCollapsedKeys(new Set())
     }
   }, [groups, deepLinkKey])
 
-  // 深链组渲染后滚动到可见区域（仅首次生效）
+  // 深链组渲染后滚动到可见区域（仅首次生效；跨页深链等待 groupPage 切换完成）
   useEffect(() => {
     if (!deepLinkKey || didScrollDeepLinkRef.current === deepLinkKey) return
     if (!groups.some((g) => g.key === deepLinkKey)) return
+    if (!groupRefs.current.has(deepLinkKey)) return
     didScrollDeepLinkRef.current = deepLinkKey
     const timer = setTimeout(() => {
       groupRefs.current.get(deepLinkKey)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 60)
     return () => clearTimeout(timer)
-  }, [deepLinkKey, groups])
+  }, [deepLinkKey, groups, groupPage])
 
   const setGroupRef = useCallback((key: string) => (node: HTMLDivElement | null) => {
     if (node) groupRefs.current.set(key, node)
@@ -332,23 +363,38 @@ export function SpreadTab() {
     { label: batchOp === 'assign' ? '分配中...' : '批量分配账号', onClick: () => { setAssignToUid(''); setAssignAccountOpen(true) }, variant: 'secondary' as const },
   ]
 
-  const renderGroupHeader = (g: MaterialGroup) => (
-    <button
-      onClick={() => toggleGroup(g.key)}
-      className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-    >
-      <div className="flex items-center gap-3 min-w-0">
+  const renderGroupHeader = (g: MaterialGroup, matPage: number, maxMatPages: number) => (
+    <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+      <button
+        onClick={() => toggleGroup(g.key)}
+        className="flex items-center gap-3 min-w-0 text-left min-h-11 py-1"
+      >
         <span className="text-sm font-semibold text-gray-900 truncate">{g.title}</span>
         <span className="text-xs text-gray-500 flex-shrink-0">{g.materials.length} 份素材</span>
         <span className="text-xs text-gray-400 flex-shrink-0">已发布 {g.published}/{g.materials.length}</span>
+      </button>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {maxMatPages > 1 && (
+          <Pagination
+            page={matPage}
+            total={g.materials.length}
+            pageSize={MATERIAL_PAGE_SIZE}
+            onChange={(p) => setGroupMatPages((prev) => ({ ...prev, [g.key]: p }))}
+          />
+        )}
+        <button
+          onClick={() => toggleGroup(g.key)}
+          className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${collapsedKeys.has(g.key) ? '-rotate-90' : ''}`}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
-      <svg
-        className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${collapsedKeys.has(g.key) ? '-rotate-90' : ''}`}
-        fill="none" stroke="currentColor" viewBox="0 0 24 24"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-      </svg>
-    </button>
+    </div>
   )
 
   const accountPickerContent = (
@@ -391,33 +437,63 @@ export function SpreadTab() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 gap-5">
-      {/* 顶部：跨源批量创建入口 */}
-      <div className="flex justify-end">
-        <button
-          onClick={() => setSourcePickerOpen(true)}
-          className="h-10 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          批量创建素材
-        </button>
-      </div>
-
+      {/* 工具行：五个独立搜索框 + 状态筛选 + 批量创建（PC 一行 / 移动端纵向） */}
       <SearchToolbar>
-        <input
-          type="text"
-          placeholder="搜索描述..."
-          value={search}
-          onChange={(e) => onFilterChange('search', e.target.value)}
-          className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 flex-1 min-w-0 max-w-xs"
-        />
-        <select
-          value={status}
-          onChange={(e) => onFilterChange('status', e.target.value)}
-          className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-        >
-          {MATERIALS_STATUS_FILTER_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+        <div className={isMobile ? 'w-full flex flex-col gap-2' : 'flex flex-1 items-center gap-3 flex-wrap'}>
+          <input
+            type="text"
+            placeholder="描述..."
+            value={filters.description ?? ''}
+            onChange={(e) => onFilterChange('description', e.target.value)}
+            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 ${isMobile ? 'w-full' : 'flex-1 max-w-[160px]'}`}
+          />
+          <input
+            type="text"
+            placeholder="商机名..."
+            value={filters.oppName ?? ''}
+            onChange={(e) => onFilterChange('oppName', e.target.value)}
+            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 ${isMobile ? 'w-full' : 'flex-1 max-w-[160px]'}`}
+          />
+          <input
+            type="text"
+            placeholder="选品标题..."
+            value={filters.itemTitle ?? ''}
+            onChange={(e) => onFilterChange('itemTitle', e.target.value)}
+            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 ${isMobile ? 'w-full' : 'flex-1 max-w-[160px]'}`}
+          />
+          <input
+            type="text"
+            placeholder="商品ID"
+            inputMode="numeric"
+            value={filters.souItemId ?? ''}
+            onChange={(e) => onFilterChange('souItemId', e.target.value)}
+            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 ${isMobile ? 'w-full' : 'flex-1 max-w-[140px]'}`}
+          />
+          <input
+            type="text"
+            placeholder="账号ID"
+            inputMode="numeric"
+            value={filters.toUid ?? ''}
+            onChange={(e) => onFilterChange('toUid', e.target.value)}
+            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 ${isMobile ? 'w-full' : 'flex-1 max-w-[140px]'}`}
+          />
+          <select
+            value={filters.status ?? ''}
+            onChange={(e) => onFilterChange('status', e.target.value)}
+            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white ${isMobile ? 'w-full' : 'w-28 flex-none'}`}
+          >
+            {MATERIALS_STATUS_FILTER_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <div className={isMobile ? 'hidden' : 'flex-1'} />
+          <button
+            onClick={() => setSourcePickerOpen(true)}
+            className={`px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${isMobile ? 'w-full h-11' : 'h-10 flex-none'}`}
+          >
+            批量创建素材
+          </button>
+        </div>
       </SearchToolbar>
 
       {isLoading ? (
@@ -434,51 +510,69 @@ export function SpreadTab() {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto space-y-4">
-          {groups.map((g) => (
-            <div
-              key={g.key}
-              ref={setGroupRef(g.key)}
-              className={`bg-white rounded-xl border shadow-sm overflow-hidden ${
-                deepLinkKey === g.key ? 'border-blue-400 ring-1 ring-blue-200' : 'border-gray-200'
-              }`}
-            >
-              {renderGroupHeader(g)}
-              {!collapsedKeys.has(g.key) && (isMobile ? (
-                <div className="px-3 pb-3 space-y-3">
-                  {g.materials.map((item) => (
-                    <MaterialCard
-                      key={item.id}
-                      item={item}
-                      isSelected={selectedIds.has(item.id)}
+          {pagedGroups.map((g) => {
+            // 组内素材分页：每页 10 条，页码钳制避免越界
+            const maxMatPages = Math.max(1, Math.ceil(g.materials.length / MATERIAL_PAGE_SIZE))
+            const matPage = Math.min(groupMatPages[g.key] ?? 1, maxMatPages)
+            const pagedMaterials = g.materials.slice((matPage - 1) * MATERIAL_PAGE_SIZE, matPage * MATERIAL_PAGE_SIZE)
+            return (
+              <div
+                key={g.key}
+                ref={setGroupRef(g.key)}
+                className={`bg-white rounded-xl border shadow-sm overflow-hidden ${
+                  deepLinkKey === g.key ? 'border-blue-400 ring-1 ring-blue-200' : 'border-gray-200'
+                }`}
+              >
+                {renderGroupHeader(g, matPage, maxMatPages)}
+                {!collapsedKeys.has(g.key) && (isMobile ? (
+                  <div className="px-3 pb-3 space-y-3">
+                    {pagedMaterials.map((item) => (
+                      <MaterialCard
+                        key={item.id}
+                        item={item}
+                        isSelected={selectedIds.has(item.id)}
+                        onToggleSelect={onToggleSelect}
+                        onOpportunityClick={handleOpportunityClick}
+                        onOpenEditor={setEditingMaterialId}
+                        onTriggerWork={handleTriggerWork}
+                        onPublish={handlePublish}
+                        isAnyLoading={isAnyLoading}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <MaterialTable
+                      data={pagedMaterials}
+                      isLoading={false}
+                      error={undefined}
+                      onRetry={refetch}
+                      selectedIds={selectedIds}
                       onToggleSelect={onToggleSelect}
+                      onToggleAll={() => onToggleAll(pagedMaterials)}
                       onOpportunityClick={handleOpportunityClick}
                       onOpenEditor={setEditingMaterialId}
                       onTriggerWork={handleTriggerWork}
                       onPublish={handlePublish}
                       isAnyLoading={isAnyLoading}
                     />
-                  ))}
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <MaterialTable
-                    data={g.materials}
-                    isLoading={false}
-                    error={undefined}
-                    onRetry={refetch}
-                    selectedIds={selectedIds}
-                    onToggleSelect={onToggleSelect}
-                    onToggleAll={() => onToggleAll(g.materials)}
-                    onOpportunityClick={handleOpportunityClick}
-                    onOpenEditor={setEditingMaterialId}
-                    onTriggerWork={handleTriggerWork}
-                    onPublish={handlePublish}
-                    isAnyLoading={isAnyLoading}
-                  />
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
+            )
+          })}
+
+          {/* 组列表分页：每页 20 组（底部页码条） */}
+          {totalGroupPages > 1 && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <Pagination
+                page={clampedGroupPage}
+                total={groups.length}
+                pageSize={GROUP_PAGE_SIZE}
+                onChange={setGroupPage}
+              />
             </div>
-          ))}
+          )}
 
           {selectedIds.size > 0 && (
             <div className="sticky bottom-0 z-10 px-3 pb-3">
