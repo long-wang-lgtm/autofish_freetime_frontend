@@ -562,9 +562,9 @@ export function SpreadTab() {
             )
           })}
 
-          {/* 组列表分页：每页 20 组（底部页码条） */}
+          {/* 组列表分页：每页 20 组（底部页码条，sticky 始终可见） */}
           {totalGroupPages > 1 && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="sticky bottom-0 z-10 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               <Pagination
                 page={clampedGroupPage}
                 total={groups.length}
