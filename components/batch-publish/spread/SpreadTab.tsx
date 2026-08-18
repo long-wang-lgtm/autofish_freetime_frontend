@@ -40,6 +40,46 @@ interface MaterialGroup {
 const GROUP_PAGE_SIZE = 20
 const MATERIAL_PAGE_SIZE = 10
 
+/** 单字段搜索框 — 一框一字段，右侧清除按钮清空该框（移动端筛选栏专用，就地复制避免抽公共组件） */
+function SearchField({
+  value,
+  onChange,
+  placeholder,
+  inputMode,
+  className,
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder: string
+  inputMode?: 'numeric'
+  className?: string
+}) {
+  return (
+    <div className={`relative min-w-0 ${className ?? ''}`}>
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        inputMode={inputMode}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-10 w-full pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+      />
+      {value !== '' && (
+        <button
+          type="button"
+          aria-label={`清除${placeholder}`}
+          onClick={() => onChange('')}
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
+    </div>
+  )
+}
+
 export function SpreadTab() {
   const { filters, onFilterChange, data, isLoading, error, refetch, isMobile } = useSpreadPage()
 
@@ -63,6 +103,8 @@ export function SpreadTab() {
   const [assignAccountOpen, setAssignAccountOpen] = useState(false)
   const [assignToUid, setAssignToUid] = useState('')
   const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
+  // 移动端筛选栏：条件筛选行（选品标题/商品ID/账号ID）展开状态，默认收起
+  const [filterExpanded, setFilterExpanded] = useState(false)
   // 双层分页：组列表页码 + 组内素材页码（按组记录）
   const [groupPage, setGroupPage] = useState(1)
   const [groupMatPages, setGroupMatPages] = useState<Record<string, number>>({})
@@ -355,6 +397,9 @@ export function SpreadTab() {
   const errorGuard = renderErrorGuard({ error, isLoading, hasData: data.length > 0, onRetry: () => refetch() })
   if (errorGuard) return errorGuard
 
+  // 移动端筛选按钮激活计数：展开区三个字段（选品标题/商品ID/账号ID）非空个数
+  const expandedFilterCount = [filters.itemTitle, filters.souItemId, filters.toUid].filter(Boolean).length
+
   const batchActions = [
     { label: batchOp === 'write' ? '改写中...' : '批量改写', onClick: () => handleBatchTrigger('write'), variant: 'primary' as const },
     { label: batchOp === 'genimageplan' ? '封面中...' : '批量封面', onClick: () => handleBatchTrigger('genimageplan'), variant: 'primary' as const },
@@ -439,61 +484,145 @@ export function SpreadTab() {
     <div className="flex-1 flex flex-col min-h-0 gap-5">
       {/* 工具行：五个独立搜索框 + 状态筛选 + 批量创建（PC 一行 / 移动端纵向） */}
       <SearchToolbar>
-        <div className={isMobile ? 'w-full flex flex-col gap-2' : 'flex flex-1 items-center gap-3 flex-wrap'}>
-          <input
-            type="text"
-            placeholder="描述..."
-            value={filters.description ?? ''}
-            onChange={(e) => onFilterChange('description', e.target.value)}
-            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 ${isMobile ? 'w-full' : 'flex-1 max-w-[160px]'}`}
-          />
-          <input
-            type="text"
-            placeholder="商机名..."
-            value={filters.oppName ?? ''}
-            onChange={(e) => onFilterChange('oppName', e.target.value)}
-            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 ${isMobile ? 'w-full' : 'flex-1 max-w-[160px]'}`}
-          />
-          <input
-            type="text"
-            placeholder="选品标题..."
-            value={filters.itemTitle ?? ''}
-            onChange={(e) => onFilterChange('itemTitle', e.target.value)}
-            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 ${isMobile ? 'w-full' : 'flex-1 max-w-[160px]'}`}
-          />
-          <input
-            type="text"
-            placeholder="商品ID"
-            inputMode="numeric"
-            value={filters.souItemId ?? ''}
-            onChange={(e) => onFilterChange('souItemId', e.target.value)}
-            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 ${isMobile ? 'w-full' : 'flex-1 max-w-[140px]'}`}
-          />
-          <input
-            type="text"
-            placeholder="账号ID"
-            inputMode="numeric"
-            value={filters.toUid ?? ''}
-            onChange={(e) => onFilterChange('toUid', e.target.value)}
-            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 ${isMobile ? 'w-full' : 'flex-1 max-w-[140px]'}`}
-          />
-          <select
-            value={filters.status ?? ''}
-            onChange={(e) => onFilterChange('status', e.target.value)}
-            className={`h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white ${isMobile ? 'w-full' : 'w-28 flex-none'}`}
-          >
-            {MATERIALS_STATUS_FILTER_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-          <div className={isMobile ? 'hidden' : 'flex-1'} />
-          <button
-            onClick={() => setSourcePickerOpen(true)}
-            className={`px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${isMobile ? 'w-full h-11' : 'h-10 flex-none'}`}
-          >
-            批量创建素材
-          </button>
-        </div>
+        {isMobile ? (
+          <div className="w-full flex flex-col gap-2">
+            {/* Row1：商机名 + 描述 并排（最常用两字段常驻） */}
+            <div className="flex items-center gap-2">
+              <SearchField
+                value={filters.oppName ?? ''}
+                onChange={(v) => onFilterChange('oppName', v)}
+                placeholder="商机名..."
+                className="flex-1 min-w-0"
+              />
+              <SearchField
+                value={filters.description ?? ''}
+                onChange={(v) => onFilterChange('description', v)}
+                placeholder="描述..."
+                className="flex-1 min-w-0"
+              />
+            </div>
+            {/* Row2：筛选按钮（带激活计数）+ 状态下拉 + 批量创建（紧凑 h-10 去全宽） */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFilterExpanded((prev) => !prev)}
+                aria-expanded={filterExpanded}
+                className={`h-10 px-3 flex-none inline-flex items-center gap-1 text-sm font-medium rounded-lg border transition-colors ${
+                  expandedFilterCount > 0
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                }`}
+              >
+                筛选{expandedFilterCount > 0 ? ` ${expandedFilterCount}` : ''}
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform ${filterExpanded ? 'rotate-180' : ''}`}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <select
+                value={filters.status ?? ''}
+                onChange={(e) => onFilterChange('status', e.target.value)}
+                className="h-10 w-28 flex-none px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                {MATERIALS_STATUS_FILTER_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <div className="flex-1" />
+              <button
+                onClick={() => setSourcePickerOpen(true)}
+                className="h-10 px-3 flex-none text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                批量创建素材
+              </button>
+            </div>
+            {/* Row3：展开区（默认收起，就地展开）——选品标题整行 + 商品ID/账号ID 并排 */}
+            {filterExpanded && (
+              <div className="flex flex-col gap-2">
+                <SearchField
+                  value={filters.itemTitle ?? ''}
+                  onChange={(v) => onFilterChange('itemTitle', v)}
+                  placeholder="选品标题..."
+                  className="w-full"
+                />
+                <div className="flex items-center gap-2">
+                  <SearchField
+                    value={filters.souItemId ?? ''}
+                    onChange={(v) => onFilterChange('souItemId', v)}
+                    placeholder="商品ID"
+                    inputMode="numeric"
+                    className="flex-1 min-w-0"
+                  />
+                  <SearchField
+                    value={filters.toUid ?? ''}
+                    onChange={(v) => onFilterChange('toUid', v)}
+                    placeholder="账号ID"
+                    inputMode="numeric"
+                    className="flex-1 min-w-0"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-1 items-center gap-3 flex-wrap">
+            <input
+              type="text"
+              placeholder="描述..."
+              value={filters.description ?? ''}
+              onChange={(e) => onFilterChange('description', e.target.value)}
+              className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 flex-1 max-w-[160px]"
+            />
+            <input
+              type="text"
+              placeholder="商机名..."
+              value={filters.oppName ?? ''}
+              onChange={(e) => onFilterChange('oppName', e.target.value)}
+              className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 flex-1 max-w-[160px]"
+            />
+            <input
+              type="text"
+              placeholder="选品标题..."
+              value={filters.itemTitle ?? ''}
+              onChange={(e) => onFilterChange('itemTitle', e.target.value)}
+              className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 flex-1 max-w-[160px]"
+            />
+            <input
+              type="text"
+              placeholder="商品ID"
+              inputMode="numeric"
+              value={filters.souItemId ?? ''}
+              onChange={(e) => onFilterChange('souItemId', e.target.value)}
+              className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 flex-1 max-w-[140px]"
+            />
+            <input
+              type="text"
+              placeholder="账号ID"
+              inputMode="numeric"
+              value={filters.toUid ?? ''}
+              onChange={(e) => onFilterChange('toUid', e.target.value)}
+              className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-0 flex-1 max-w-[140px]"
+            />
+            <select
+              value={filters.status ?? ''}
+              onChange={(e) => onFilterChange('status', e.target.value)}
+              className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white w-28 flex-none"
+            >
+              {MATERIALS_STATUS_FILTER_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <div className="flex-1" />
+            <button
+              onClick={() => setSourcePickerOpen(true)}
+              className="h-10 flex-none px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              批量创建素材
+            </button>
+          </div>
+        )}
       </SearchToolbar>
 
       {isLoading ? (

@@ -44,7 +44,7 @@ export function MaterialCard({
               className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
           </label>
-          <span className="text-sm font-medium text-gray-800 line-clamp-2 leading-snug min-w-0 flex-1">
+          <span className="text-sm font-medium text-gray-800 line-clamp-1 leading-snug min-w-0 flex-1">
             {item.description || '-'}
           </span>
         </div>
