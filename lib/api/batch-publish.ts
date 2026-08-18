@@ -257,15 +257,20 @@ export async function listMaterials(params?: {
   page_size?: number
   oid?: number
   souItemId?: string
-  name?: string
+  oppName?: string
+  itemTitle?: string
+  toUid?: string
   description?: string
   category?: string
   status?: string
 }): Promise<MaterialListResponse> {
+  const { toUid, ...rest } = params ?? {}
+  const query: Record<string, string | number> = { ...(rest as Record<string, string | number>) }
+  if (toUid) query.to_uid = toUid
   return fetchApi<MaterialListResponse>('/material.list', {
     baseUrl: BP_BASE,
     credentials_: 'include',
-    params: params as Record<string, string | number>,
+    params: query,
   })
 }
 
