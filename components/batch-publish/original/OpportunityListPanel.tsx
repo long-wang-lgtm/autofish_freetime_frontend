@@ -182,20 +182,21 @@ export function OpportunityListPanel({
       header: '商机描述',
       align: 'left',
       render: (item) => (
-        <div className="min-w-0">
-          {/* 提炼状态徽章 — 商机描述附属信息 */}
-          <div className="mb-0.5">
+        <div className="min-w-0 flex items-start gap-1.5">
+          {/* 提炼状态徽章 — 附属信息，作为描述开头同行展示 */}
+          <span className="flex-shrink-0">
             {renderSummaryBadge(item, () => {
               if (onFocusReview) onFocusReview(item.id)
               else handleRowClick(item)
             })}
-          </div>
-          {item.summary ? (
-            <span className="block text-xs text-gray-500 line-clamp-2 break-words" title={item.summary.article}>
-              {item.summary.article.slice(0, 60)}
-            </span>
-          ) : (
-            <span className="block text-xs text-gray-400">尚未提炼，点击提炼</span>
+          </span>
+          {item.summary && (
+            <>
+              <span className="text-gray-300 flex-shrink-0 text-xs leading-5" aria-hidden="true">|</span>
+              <span className="block text-xs text-gray-500 line-clamp-2 break-words min-w-0 flex-1" title={item.summary.article}>
+                {item.summary.article.slice(0, 60)}
+              </span>
+            </>
           )}
         </div>
       ),
@@ -240,12 +241,13 @@ export function OpportunityListPanel({
     })
   }
 
-  // 列宽比例（gridTemplateColumns）：前三个字段（商机线索/商机描述/分发进度）紧凑，时间最窄
-  // manage：1.2fr 1.5fr 1.2fr 0.6fr 0.4fr
-  // picker：1.2fr 1.5fr 1.2fr 0.6fr
+  // 列宽比例（gridTemplateColumns）整体分配：描述是信息主体最宽，线索/分发紧凑，更新时间/操作最短
+  // 线索 1.2fr（单行截断）· 描述 1.5fr（60字两行主体）· 分发 1.1fr（数字+条）· 时间 0.5fr（相对时间短文本）· 操作 0.3fr（单图标）
+  // manage：1.2fr 1.5fr 1.1fr 0.5fr 0.3fr
+  // picker：1.2fr 1.5fr 1.1fr 0.5fr
   const gridTemplateColumns = isPicker
-    ? '1.2fr 1.5fr 1.2fr 0.6fr'
-    : '1.2fr 1.5fr 1.2fr 0.6fr 0.4fr'
+    ? '1.2fr 1.5fr 1.1fr 0.5fr'
+    : '1.2fr 1.5fr 1.1fr 0.5fr 0.3fr'
 
   // 弹窗打开时才挂载表单：确保 OpportunityForm 的「刷新恢复草稿」检查在每次打开时触发
   // （常驻渲染时 useEffect([]) 只在页面加载执行一次，打开弹窗不会重新查草稿）
