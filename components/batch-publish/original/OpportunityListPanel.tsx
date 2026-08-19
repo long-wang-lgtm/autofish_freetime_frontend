@@ -45,11 +45,6 @@ interface OpportunityListPanelProps {
   onFocusReview?: (oid: number) => void
 }
 
-/** article = 「标题行 + 正文」，列表行取首行为文章标题 */
-function getArticleTitle(article: string): string {
-  return article.trim().split('\n')[0]?.trim() ?? ''
-}
-
 /** summary_status 角标 — 四态常驻：未提炼（summary 空）/ user_confirmed / operator_verified / rejected */
 function renderSummaryBadge(item: OpportunityItem, onRejected: () => void): React.ReactNode {
   if (!item.summary) {
@@ -151,20 +146,10 @@ export function OpportunityListPanel({
   const isMobile = useIsMobile()
   const isPicker = variant === 'picker'
 
-  const [editingItem, setEditingItem] = useState<OpportunityItem | null>(null)
-  const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
   const [sheetOpen, setSheetOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<OpportunityItem | null>(null)
 
-  const handleEdit = (item: OpportunityItem) => {
-    setEditingItem(item)
-    setSheetMode('edit')
-    setSheetOpen(true)
-  }
-
   const handleCreate = () => {
-    setEditingItem(null)
-    setSheetMode('create')
     setSheetOpen(true)
   }
 
@@ -177,14 +162,14 @@ export function OpportunityListPanel({
     }
   }
 
-  const editorTitle = sheetMode === 'create' ? '新建商机' : '编辑商机'
+  const editorTitle = '新建商机'
 
   // ---- 表格列定义 — manage 与 picker 共用列结构，picker 隐藏操作列 ----
   // 用项目标准 DataTable（gridTemplateColumns 定义列宽比例，不硬编码 px）
   const columns: DataTableColumn<OpportunityItem>[] = [
     {
       key: 'name',
-      header: '商机名称',
+      header: '商机线索',
       align: 'left',
       render: (item) => (
         <span className={`text-sm font-medium line-clamp-1 ${item.id === selectedOid ? 'text-blue-700' : 'text-gray-800'}`}>
@@ -193,26 +178,27 @@ export function OpportunityListPanel({
       ),
     },
     {
-      key: 'summaryStatus',
-      header: '提炼状态',
+      key: 'description',
+      header: '商机描述',
       align: 'left',
-      render: (item) => renderSummaryBadge(item, () => {
-        if (onFocusReview) onFocusReview(item.id)
-        else handleRowClick(item)
-      }),
-    },
-    {
-      key: 'articleTitle',
-      header: '文章标题',
-      align: 'left',
-      render: (item) =>
-        item.summary ? (
-          <span className="block text-xs text-gray-500 truncate" title={item.summary.article}>
-            {getArticleTitle(item.summary.article)}
-          </span>
-        ) : (
-          <span className="block text-xs text-gray-400">尚未提炼，点击提炼</span>
-        ),
+      render: (item) => (
+        <div className="min-w-0">
+          {/* 提炼状态徽章 — 商机描述附属信息 */}
+          <div className="mb-0.5">
+            {renderSummaryBadge(item, () => {
+              if (onFocusReview) onFocusReview(item.id)
+              else handleRowClick(item)
+            })}
+          </div>
+          {item.summary ? (
+            <span className="block text-xs text-gray-500 line-clamp-2 break-words" title={item.summary.article}>
+              {item.summary.article.slice(0, 60)}
+            </span>
+          ) : (
+            <span className="block text-xs text-gray-400">尚未提炼，点击提炼</span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'distribution',
@@ -232,7 +218,7 @@ export function OpportunityListPanel({
     },
   ]
 
-  // 操作列（manage 模式）：编辑 + 删除（picker 模式隐藏整列）
+  // 操作列（manage 模式）：仅删除（编辑入口在详情页左栏常驻编辑；picker 模式隐藏整列）
   if (!isPicker) {
     columns.push({
       key: 'actions',
@@ -240,15 +226,6 @@ export function OpportunityListPanel({
       align: 'right',
       render: (item) => (
         <div className="flex items-center justify-end gap-0.5">
-          <button
-            onClick={() => handleEdit(item)}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
-            title="编辑"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-          </button>
           <button
             onClick={() => setDeleteTarget(item)}
             className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-600 transition-colors"
@@ -263,28 +240,23 @@ export function OpportunityListPanel({
     })
   }
 
-  // 列宽比例（gridTemplateColumns）：名称占大头，标题次之，分发进度给足宽度（1.2fr），时间紧凑，操作最窄
-  // manage：2fr 0.7fr 1.5fr 1.2fr 0.7fr 0.45fr
-  // picker：2fr 0.7fr 1.5fr 1.2fr 0.7fr
+  // 列宽比例（gridTemplateColumns）：前三个字段（商机线索/商机描述/分发进度）紧凑，时间最窄
+  // manage：1.2fr 1.5fr 1.2fr 0.6fr 0.4fr
+  // picker：1.2fr 1.5fr 1.2fr 0.6fr
   const gridTemplateColumns = isPicker
-    ? '2fr 0.7fr 1.5fr 1.2fr 0.7fr'
-    : '2fr 0.7fr 1.5fr 1.2fr 0.7fr 0.45fr'
+    ? '1.2fr 1.5fr 1.2fr 0.6fr'
+    : '1.2fr 1.5fr 1.2fr 0.6fr 0.4fr'
 
   // 弹窗打开时才挂载表单：确保 OpportunityForm 的「刷新恢复草稿」检查在每次打开时触发
   // （常驻渲染时 useEffect([]) 只在页面加载执行一次，打开弹窗不会重新查草稿）
   const formContent = sheetOpen ? (
     <OpportunityForm
-      defaultValues={editingItem ?? undefined}
       onSubmit={(values) => {
-        if (sheetMode === 'create') {
-          onCreateOpportunity(values)
-        } else if (editingItem) {
-          onUpdateOpportunity(editingItem.id, values)
-        }
+        onCreateOpportunity(values)
         setSheetOpen(false)
       }}
       isPending={isMutating}
-      submitLabel={sheetMode === 'create' ? '创建商机' : '保存修改'}
+      submitLabel="创建商机"
     />
   ) : null
 
