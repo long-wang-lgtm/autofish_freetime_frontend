@@ -241,13 +241,13 @@ export function OpportunityListPanel({
     })
   }
 
-  // 列宽比例（gridTemplateColumns）整体分配：描述是信息主体最宽，线索/分发紧凑，更新时间/操作最短
-  // 线索 1.2fr（单行截断）· 描述 1.5fr（60字两行主体）· 分发 1.1fr（数字+条）· 时间 0.5fr（相对时间短文本）· 操作 0.3fr（单图标）
-  // manage：1.2fr 1.5fr 1.1fr 0.5fr 0.3fr
-  // picker：1.2fr 1.5fr 1.1fr 0.5fr
+  // 列宽比例（gridTemplateColumns）：五列均配 1fr 起步，描述是主体略宽（1.5fr），前后列不再克扣
+  // 线索 1fr · 描述 1.5fr · 分发 1fr · 时间 1fr · 操作 1fr
+  // manage：1fr 1.5fr 1fr 1fr 1fr
+  // picker：1fr 1.5fr 1fr 1fr
   const gridTemplateColumns = isPicker
-    ? '1.2fr 1.5fr 1.1fr 0.5fr'
-    : '1.2fr 1.5fr 1.1fr 0.5fr 0.3fr'
+    ? '1fr 1.5fr 1fr 1fr'
+    : '1fr 1.5fr 1fr 1fr 1fr'
 
   // 弹窗打开时才挂载表单：确保 OpportunityForm 的「刷新恢复草稿」检查在每次打开时触发
   // （常驻渲染时 useEffect([]) 只在页面加载执行一次，打开弹窗不会重新查草稿）
