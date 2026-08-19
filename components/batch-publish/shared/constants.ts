@@ -142,7 +142,6 @@ export const queryKeys = {
   opportunities: (params: Record<string, unknown>) => ['batch-publish', 'opportunities', params] as const,
   materials: {
     byOid: (oid: number | undefined, page: number) => ['batch-publish', 'materials', oid, { page }] as const,
-    overview: (page: number) => ['batch-publish', 'materials', 'overview', { page }] as const,
   },
   channel: (materialId: number) => ['batch-publish', 'channel', materialId] as const,
   monitoredItems: (oid: number | undefined) => ['batch-publish', 'monitored-items', 'workbench', oid] as const,

@@ -6,7 +6,6 @@ import { PAGE_SIZE, toSummaryStatusQuery } from '@/components/batch-publish/shar
 
 interface UseOriginalDataParams {
   selectedOid: number | undefined
-  overviewPage: number
   oppSearch: string
   oppStatus: string
   oppPage: number
@@ -15,8 +14,8 @@ interface UseOriginalDataParams {
   oppSummaryStatus: string
 }
 
-export function useOriginalData({ selectedOid, overviewPage, oppSearch, oppStatus, oppPage, materialPage, oppSummaryStatus }: UseOriginalDataParams) {
-  // 左侧商机列表
+export function useOriginalData({ selectedOid, oppSearch, oppStatus, oppPage, materialPage, oppSummaryStatus }: UseOriginalDataParams) {
+  // 商机列表
   const summaryStatus = toSummaryStatusQuery(oppSummaryStatus)
   const {
     data: oppData,
@@ -32,22 +31,6 @@ export function useOriginalData({ selectedOid, overviewPage, oppSearch, oppStatu
       status: oppStatus || undefined,
       summary_status: summaryStatus,
     }),
-  })
-
-  // 概览视图 — 跨商机获取未完成素材
-  const {
-    data: overviewData,
-    isLoading: overviewLoading,
-    error: overviewError,
-    refetch: overviewRefetch,
-  } = useQuery({
-    queryKey: ['batch-publish', 'materials', 'overview', { page: overviewPage }],
-    queryFn: () => listMaterials({
-      page: overviewPage,
-      page_size: 20,
-      status: 'pending,write_success,write_failed,genimageplan_success,genimageplan_failed,genimage_success,genimage_failed,publish_failed',
-    }),
-    enabled: !selectedOid,
   })
 
   // 工作区 — 当前商机下的素材
@@ -68,12 +51,6 @@ export function useOriginalData({ selectedOid, overviewPage, oppSearch, oppStatu
     oppLoading,
     oppError,
     oppRefetch,
-
-    overviewMaterials: overviewData?.items ?? [],
-    overviewTotal: overviewData?.total ?? 0,
-    overviewLoading,
-    overviewError,
-    overviewRefetch,
 
     materials: materialData?.items ?? [],
     materialTotal: materialData?.total ?? 0,

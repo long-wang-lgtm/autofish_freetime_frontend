@@ -3,21 +3,19 @@
 import { useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useOriginalPage } from '@/hooks/batch-publish/useOriginalPage'
-import { PendingOverviewPanel } from './PendingOverviewPanel'
 import { OpportunityListPanel } from './OpportunityListPanel'
 import { MaterialWorkspace } from './MaterialWorkspace'
 import { MaterialEditSheet } from './MaterialEditSheet'
 import { CreateMaterialModal } from './CreateMaterialModal'
 import { OpportunitySwitchModal } from './OpportunitySwitchModal'
-import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
-import type { PublishMaterial, OpportunityParams } from '@/lib/api/batch-publish'
+import type { OpportunityParams } from '@/lib/api/batch-publish'
 
 /**
- * 原创素材 Tab — v6 去左右分栏
+ * 原创素材 Tab — v7 修正（商机列表表格化 + 待办概览移除）
  *
- * - 无选中商机：全屏总览（segment：商机列表 | 待办概览）
+ * - 无选中商机：全屏商机表格（OpportunityListPanel manage，单行工具条 + NativeTable）
  * - 有选中商机：全屏详情（MaterialWorkspace，详情头部可切换商机）
- * - 移动端：双视图切换 + Push/Pop 保留
+ * - 移动端：无 oid = 全屏商机表格；有 oid = Push 详情
  */
 
 export function OriginalTab() {
@@ -44,13 +42,6 @@ export function OriginalTab() {
     params.set('oid', String(oid))
     router.push(`/dashboard/batch-publish?${params.toString()}`, { scroll: false })
   }, [router, searchParams, page.selectedOid, handleBackToOverview])
-
-  // From PendingOverviewPanel: click material row → select its opportunity
-  const handleSelectFromOverview = useCallback((material: PublishMaterial) => {
-    if (material.opportunity?.id) {
-      handleSelectOid(material.opportunity.id)
-    }
-  }, [handleSelectOid])
 
   // rejected 徽章点击 → 选中商机 + 聚焦判定区（弹窗 pick 场景先关弹窗再滚动）
   const handleFocusReview = useCallback((oid: number) => {
@@ -128,22 +119,6 @@ export function OriginalTab() {
     />
   )
 
-  // ---- 待办概览 ----
-  const overviewPanel = (
-    <PendingOverviewPanel
-      materials={page.overviewMaterials}
-      total={page.overviewTotal}
-      isLoading={page.overviewLoading}
-      error={page.overviewError}
-      onRetry={page.overviewRefetch}
-      page={page.overviewPage}
-      pageSize={PAGE_SIZE}
-      onPageChange={page.setOverviewPage}
-      onSelectMaterial={handleSelectFromOverview}
-      onOpenEditor={page.openEditor}
-    />
-  )
-
   // ---- 详情工作区（PC/移动共用内容，容器外层各自包卡片） ----
   const workspaceContent = (
     <MaterialWorkspace
@@ -168,71 +143,11 @@ export function OriginalTab() {
     />
   )
 
-  // ---- segment 切换（无选中商机时的全屏总览；PC 与移动端共用样式） ----
-  // PC：商机列表在前；移动端沿用旧双视图顺序（待办概览在前，默认激活）
-  const segmentOptions: { key: 'list' | 'overview'; label: string }[] = page.isMobile
-    ? [
-        { key: 'overview', label: '待办概览' },
-        { key: 'list', label: '商机列表' },
-      ]
-    : [
-        { key: 'list', label: '商机列表' },
-        { key: 'overview', label: '待办概览' },
-      ]
-
-  const segmentBar = (
-    <div className="flex items-center border-b border-gray-100 flex-shrink-0">
-      {segmentOptions.map((opt) => {
-        const active = page.isMobile
-          ? (opt.key === 'overview' ? page.mobileView === 'overview' : page.mobileView === 'opportunities')
-          : page.pcView === opt.key
-        return (
-          <button
-            key={opt.key}
-            onClick={() => {
-              if (page.isMobile) {
-                page.setMobileView(opt.key === 'overview' ? 'overview' : 'opportunities')
-              } else {
-                page.setPcView(opt.key)
-              }
-            }}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-              active
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {opt.label}
-          </button>
-        )
-      })}
-    </div>
-  )
-
-  // ---- 无选中商机：全屏总览（segment 切换） ----
-  const overviewContainer = (
-    <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      {segmentBar}
-      <div className="flex-1 overflow-hidden">
-        {page.isMobile ? (
-          page.mobileView === 'overview' ? overviewPanel : listPanel
-        ) : (
-          page.pcView === 'list' ? listPanel : overviewPanel
-        )}
-      </div>
-    </div>
-  )
-
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      {page.selectedOid ? (
-        /* 有选中商机：全屏详情工作区（PC + 移动 Push） */
-        <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          {workspaceContent}
-        </div>
-      ) : (
-        overviewContainer
-      )}
+      <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        {page.selectedOid ? workspaceContent : listPanel}
+      </div>
 
       {/* Sheet 编辑器 */}
       <MaterialEditSheet
@@ -240,7 +155,7 @@ export function OriginalTab() {
         selectedOid={page.selectedOid}
         open={page.editingMaterialId !== null}
         onClose={page.closeEditor}
-        materials={page.selectedOid ? page.materials : page.overviewMaterials}
+        materials={page.materials}
       />
 
       {/* 批量创建弹窗 */}

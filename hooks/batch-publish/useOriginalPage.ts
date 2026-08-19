@@ -7,11 +7,9 @@ import { useOriginalFilters } from './useOriginalFilters'
 import { useOriginalData } from './useOriginalData'
 import { useOriginalMutations } from './useOriginalMutations'
 import { useOpportunityMutations } from './useOpportunityMutations'
-import { useIsMobile } from '@/hooks/useIsMobile'
 import { listAccounts, type Account } from '@/lib/api/accounts'
 
 export function useOriginalPage() {
-  const isMobile = useIsMobile()
   const filters = useOriginalFilters()
   const opportunityMutations = useOpportunityMutations()
 
@@ -22,15 +20,11 @@ export function useOriginalPage() {
   const [oppPage, setOppPage] = useState(1)
   const debouncedOppSearch = useDebounce(oppSearch, 300)
 
-  // 概览视图分页
-  const [overviewPage, setOverviewPage] = useState(1)
-
   // 素材表格分页
   const [materialPage, setMaterialPage] = useState(1)
 
   const data = useOriginalData({
     selectedOid: filters.selectedOid,
-    overviewPage,
     oppSearch: debouncedOppSearch,
     oppStatus,
     oppSummaryStatus,
@@ -50,14 +44,6 @@ export function useOriginalPage() {
     gcTime: 30 * 60 * 1000,
   })
 
-  // 移动端顶层视图切换（仅控制无选中商机时显示概览还是商机列表）
-  type MobileView = 'overview' | 'opportunities'
-  const [mobileView, setMobileView] = useState<MobileView>('overview')
-
-  // PC 端无选中商机时的 segment 视图（内存态，不入 URL）：商机列表 | 待办概览
-  type PcView = 'list' | 'overview'
-  const [pcView, setPcView] = useState<PcView>('list')
-
   // 切换商机弹窗
   const [switchOpen, setSwitchOpen] = useState(false)
 
@@ -68,14 +54,10 @@ export function useOriginalPage() {
     ...filters,
     ...workbenchData,
     ...mutations,
-    isMobile,
     accounts,
     oppSearch, oppStatus, oppSummaryStatus, oppPage,
     setOppSearch, setOppStatus, setOppSummaryStatus, setOppPage,
-    overviewPage, setOverviewPage,
     materialPage, setMaterialPage,
-    mobileView, setMobileView,
-    pcView, setPcView,
     switchOpen, setSwitchOpen,
     reviewFocusToken, setReviewFocusToken,
     // 商机 CRUD（来自 useOpportunityMutations，注意不与 ...mutations 中 deleteMaterialMutation 冲突）

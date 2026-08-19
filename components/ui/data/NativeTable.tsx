@@ -193,6 +193,7 @@ export function NativeTable<T>({
                   stickyHeader && 'sticky top-0 z-10',
                   col.align === 'center' && 'text-center',
                   col.align === 'right' && 'text-right',
+                  col.align !== 'center' && col.align !== 'right' && 'text-left',
                   col.className,
                 )}
               >

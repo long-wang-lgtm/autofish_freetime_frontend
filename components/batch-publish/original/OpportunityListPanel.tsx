@@ -1,17 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
-import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
-import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { Pagination } from '@/components/ui/data/Pagination'
-import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
+import { DataTable } from '@/components/ui/data/DataTable'
+import type { DataTableColumn } from '@/components/ui/data/DataTable'
 import { Modal } from '@/components/ui/overlay/Modal'
 import { BottomSheet } from '@/components/ui/overlay/Sheet'
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { fmtRelative } from '@/lib/utils/format'
 import {
-  OPPORTUNITY_STATUS_CONFIG,
   OPPORTUNITY_STATUS_FILTER_OPTIONS,
   OPPORTUNITY_SUMMARY_STATUS_FILTER_OPTIONS,
 } from '@/components/batch-publish/shared/constants'
@@ -55,25 +53,25 @@ function getArticleTitle(article: string): string {
 /** summary_status 角标 — 四态常驻：未提炼（summary 空）/ user_confirmed / operator_verified / rejected */
 function renderSummaryBadge(item: OpportunityItem, onRejected: () => void): React.ReactNode {
   if (!item.summary) {
-    return <span className="text-xs font-medium text-gray-400 flex-shrink-0">未提炼</span>
+    return <span className="text-xs font-medium text-gray-400">未提炼</span>
   }
   switch (item.summary_status) {
     case 'operator_verified':
-      return <span className="text-xs font-medium text-green-700 flex-shrink-0">已验证</span>
+      return <span className="text-xs font-medium text-green-700">已验证</span>
     case 'user_confirmed':
-      return <span className="text-xs font-medium text-green-600 flex-shrink-0">用户已确认</span>
+      return <span className="text-xs font-medium text-green-600">用户已确认</span>
     case 'rejected':
       return (
         <button
           onClick={(e) => { e.stopPropagation(); onRejected() }}
-          className="text-xs font-medium text-red-600 hover:underline flex-shrink-0"
+          className="text-xs font-medium text-red-600 hover:underline"
           title="该提炼被判为不合格，点击打开资料卡判定区重新提炼"
         >
           待重提炼
         </button>
       )
     case 'ai_draft':
-      return <span className="text-xs text-gray-500 flex-shrink-0">AI 提炼</span>
+      return <span className="text-xs text-gray-500">AI 提炼</span>
     default:
       return null
   }
@@ -119,6 +117,119 @@ export function OpportunityListPanel({
 
   const editorTitle = sheetMode === 'create' ? '新建商机' : '编辑商机'
 
+  // ---- 表格列定义 — manage 与 picker 共用列结构，picker 隐藏操作列 ----
+  // 用项目标准 DataTable（gridTemplateColumns 定义列宽比例，不硬编码 px）
+  const columns: DataTableColumn<OpportunityItem>[] = [
+    {
+      key: 'name',
+      header: '商机名称',
+      align: 'left',
+      render: (item) => (
+        <span className={`text-sm font-medium line-clamp-1 ${item.id === selectedOid ? 'text-blue-700' : 'text-gray-800'}`}>
+          {item.name || '未命名商机'}
+        </span>
+      ),
+    },
+    {
+      key: 'summaryStatus',
+      header: '提炼状态',
+      align: 'left',
+      render: (item) => renderSummaryBadge(item, () => {
+        if (onFocusReview) onFocusReview(item.id)
+        else handleRowClick(item)
+      }),
+    },
+    {
+      key: 'articleTitle',
+      header: '文章标题',
+      align: 'left',
+      render: (item) =>
+        item.summary ? (
+          <span className="block text-xs text-gray-500 truncate" title={item.summary.article}>
+            {getArticleTitle(item.summary.article)}
+          </span>
+        ) : (
+          <span className="block text-xs text-gray-400">尚未提炼，点击提炼</span>
+        ),
+    },
+    {
+      key: 'materialCount',
+      header: '素材',
+      align: 'center',
+      render: (item) => <span className="text-sm text-gray-700">📝 {item.materialCount ?? 0}</span>,
+    },
+    {
+      key: 'published',
+      header: '已发布',
+      align: 'center',
+      render: (item) =>
+        (item.publishedCount ?? 0) > 0 ? (
+          <span className="text-sm text-green-600 tabular-nums">{item.publishedCount}</span>
+        ) : (
+          <span className="text-sm text-gray-300">-</span>
+        ),
+    },
+    {
+      key: 'unassigned',
+      header: '未分配',
+      align: 'center',
+      render: (item) =>
+        (item.unassignedCount ?? 0) > 0 ? (
+          <span className="text-sm text-amber-600 tabular-nums">{item.unassignedCount}</span>
+        ) : (
+          <span className="text-sm text-gray-300">-</span>
+        ),
+    },
+    {
+      key: 'updatedAt',
+      header: '更新时间',
+      align: 'right',
+      render: (item) => (
+        <span className="text-xs text-gray-400 tabular-nums whitespace-nowrap">
+          {item.updated_at ? fmtRelative(item.updated_at) : '-'}
+        </span>
+      ),
+    },
+  ]
+
+  // 操作列（manage 模式）：编辑 + 删除（picker 模式隐藏整列）
+  if (!isPicker) {
+    columns.push({
+      key: 'actions',
+      header: '操作',
+      align: 'right',
+      render: (item) => (
+        <div className="flex items-center justify-end gap-0.5">
+          <button
+            onClick={() => handleEdit(item)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
+            title="编辑"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setDeleteTarget(item)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-600 transition-colors"
+            title="删除"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      ),
+    })
+  }
+
+  // 列宽比例（gridTemplateColumns）：名称占大头，标题次之，数字/时间紧凑，操作最窄
+  // manage：2fr 0.7fr 1.5fr 0.5fr 0.5fr 0.5fr 0.7fr 0.45fr
+  // picker：2fr 0.7fr 1.5fr 0.5fr 0.5fr 0.5fr 0.7fr
+  const gridTemplateColumns = isPicker
+    ? '2fr 0.7fr 1.5fr 0.5fr 0.5fr 0.5fr 0.7fr'
+    : '2fr 0.7fr 1.5fr 0.5fr 0.5fr 0.5fr 0.7fr 0.45fr'
+
   // 弹窗打开时才挂载表单：确保 OpportunityForm 的「刷新恢复草稿」检查在每次打开时触发
   // （常驻渲染时 useEffect([]) 只在页面加载执行一次，打开弹窗不会重新查草稿）
   const formContent = sheetOpen ? (
@@ -138,148 +249,82 @@ export function OpportunityListPanel({
   ) : null
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* 搜索 + 筛选 + 新建 */}
-      <div className="p-3 space-y-2 border-b border-gray-100 flex-shrink-0">
-        <input
-          type="text"
-          placeholder="搜索商机..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-        />
-        <div className="flex items-center justify-between gap-1">
-          <div className="flex flex-wrap gap-1">
-            {OPPORTUNITY_STATUS_FILTER_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => onStatusChange(opt.value)}
-                className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
-                  status === opt.value
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+    <div className="flex flex-col h-full min-h-0 bg-white">
+      {/* 工具条（单行）：搜索 + 启用状态下拉 + 提炼状态下拉 + 新建 */}
+      <div className="p-3 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-0">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="搜索商机名"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full h-10 pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
           </div>
+
+          {/* 启用状态筛选 */}
+          <label className="flex items-center gap-1 h-10 pl-2.5 pr-1 border border-gray-200 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 flex-shrink-0 cursor-pointer">
+            <span className="hidden sm:inline text-xs text-gray-500 whitespace-nowrap">启用状态</span>
+            <select
+              value={status}
+              onChange={(e) => onStatusChange(e.target.value)}
+              className="h-full bg-transparent text-sm text-gray-700 outline-none cursor-pointer"
+            >
+              {OPPORTUNITY_STATUS_FILTER_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </label>
+
+          {/* 提炼状态筛选 */}
+          <label className="flex items-center gap-1 h-10 pl-2.5 pr-1 border border-gray-200 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 flex-shrink-0 cursor-pointer">
+            <span className="hidden sm:inline text-xs text-gray-500 whitespace-nowrap">提炼状态</span>
+            <select
+              value={summaryStatus}
+              onChange={(e) => onSummaryStatusChange(e.target.value)}
+              className="h-full bg-transparent text-sm text-gray-700 outline-none cursor-pointer"
+            >
+              {OPPORTUNITY_SUMMARY_STATUS_FILTER_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </label>
+
+          {/* 新建商机 — picker 模式隐藏 */}
           {!isPicker && (
             <button
               onClick={handleCreate}
-              className="h-8 px-3 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
+              className="h-10 px-3.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
             >
-              + 新建
+              + 新建商机
             </button>
           )}
         </div>
-        {/* 提炼状态筛选维度 */}
-        <div className="flex flex-wrap gap-1">
-          {OPPORTUNITY_SUMMARY_STATUS_FILTER_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => onSummaryStatusChange(opt.value)}
-              className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
-                summaryStatus === opt.value
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* 列表 */}
-      <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <LoadingSpinner size="md" />
-          </div>
-        ) : error ? (
-          <ErrorBanner variant="inline" message="加载失败" onRetry={onRetry} />
-        ) : opportunities.length === 0 ? (
-          <EmptyState
-            size="sm"
-            title="暂无商机"
-            description={isPicker ? '没有符合条件的商机' : '点击「+ 新建」创建第一个商机'}
-          />
-        ) : (
-          opportunities.map((item) => {
-            const isSelected = item.id === selectedOid
-            return (
-              <div
-                key={item.id}
-                onClick={() => handleRowClick(item)}
-                className={`px-3 py-3 border-b border-gray-100 transition-colors hover:bg-gray-50 cursor-pointer ${
-                  isSelected ? 'border-l-2 border-l-blue-600 bg-blue-50/50' : ''
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium line-clamp-1 ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
-                      {item.name || '未命名商机'}
-                    </p>
-                    {item.summary ? (
-                      <p className="text-xs text-gray-500 line-clamp-1 mt-0.5" title={item.summary.article}>
-                        {getArticleTitle(item.summary.article)}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-400 mt-0.5">尚未提炼，点击提炼</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {renderSummaryBadge(item, () => {
-                      if (onFocusReview) onFocusReview(item.id)
-                      else handleRowClick(item)
-                    })}
-                    {isSelected && (
-                      <span className="text-blue-600 text-xs">✓</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* 底部信息 + 操作按钮 */}
-                <div className="flex items-center justify-between mt-1.5">
-                  <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
-                    <span>📦 {item.monitoredItemCount ?? 0}</span>
-                    <span>📝 {item.materialCount ?? 0}</span>
-                    {(item.publishedCount ?? 0) > 0 && (
-                      <span className="text-green-600">已发布 {item.publishedCount}</span>
-                    )}
-                    {(item.unassignedCount ?? 0) > 0 && (
-                      <span className="text-amber-600">未分配 {item.unassignedCount}</span>
-                    )}
-                    <StatusBadge status={item.status} config={OPPORTUNITY_STATUS_CONFIG} />
-                  </div>
-                  {!isPicker && (
-                    <div className="flex items-center gap-0.5 flex-shrink-0">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleEdit(item) }}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
-                        title="编辑"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(item) }}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-600 transition-colors"
-                        title="删除"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })
-        )}
+      {/* 商机表格（DataTable，grid 布局） */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={opportunities}
+          keyExtractor={(item) => String(item.id)}
+          gridTemplateColumns={gridTemplateColumns}
+          isLoading={isLoading}
+          error={error}
+          errorMessage="加载失败"
+          onRetry={onRetry}
+          emptyTitle="暂无商机"
+          emptyDescription={isPicker ? '没有符合条件的商机' : '点击「+ 新建商机」创建第一个商机'}
+          emptyAction={!isPicker ? { label: '新建商机', onClick: handleCreate } : undefined}
+          onRowClick={(item) => handleRowClick(item)}
+          rowClassName={(item) => (item.id === selectedOid ? 'bg-blue-50/50' : '')}
+          stickyHeader
+          className="h-full"
+        />
       </div>
 
       {/* 分页 */}
