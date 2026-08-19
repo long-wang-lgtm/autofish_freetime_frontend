@@ -6,12 +6,15 @@ import { Pagination } from '@/components/ui/data/Pagination'
 import { NativeTable } from '@/components/ui/data/NativeTable'
 import type { NativeTableColumn } from '@/components/ui/data/NativeTable'
 import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
-import { DistributionView } from '@/components/batch-publish/shared/DistributionView'
+import {
+  DistributionView,
+  DistributionSummaryBar,
+  DistributionAssignModal,
+} from '@/components/batch-publish/shared/DistributionView'
 import { MaterialTableRow } from './MaterialTableRow'
 import { OpportunitySummaryCard } from './OpportunitySummaryCard'
 import { SummaryReExtractModal, type ReExtractSubmitValues } from './SummaryReExtractModal'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
-import { fmtPrice } from '@/lib/utils/format'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useToast } from '@/components/ui/Toaster'
 import { opportunitySummaryReview, updateOpportunity } from '@/lib/api/batch-publish'
@@ -33,6 +36,10 @@ interface MaterialWorkspaceProps {
   total: number
   onPageChange: (p: number) => void
   onBackToOverview: () => void
+  /** 打开「切换商机」弹窗（详情头部 [切换商机▾]） */
+  onSwitchClick: () => void
+  /** rejected 徽章点击后的判定区聚焦信号（递增 token） */
+  reviewFocusToken?: number
   materialPage: number
 }
 
@@ -54,7 +61,7 @@ export function MaterialWorkspace({
   selectedMaterialIds, onToggleSelect, onClearSelection, onOpenEditor,
   onCreateClick, selectedOid,
   page, total, onPageChange,
-  onBackToOverview, materialPage,
+  onBackToOverview, onSwitchClick, reviewFocusToken, materialPage,
 }: MaterialWorkspaceProps) {
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
@@ -104,6 +111,13 @@ export function MaterialWorkspace({
     }
   }, [opportunity, toast, queryClient])
 
+  // ---- 批量分配弹窗（分发摘要条 / 分发视图触发）----
+  const [assignTarget, setAssignTarget] = useState<PublishMaterial[] | null>(null)
+  // 切换商机时关闭分配弹窗
+  useEffect(() => {
+    setAssignTarget(null)
+  }, [selectedOid])
+
   // 行组件包装器——闭包捕获 workspace props 注入到 MaterialTableRow
   const RowWrapper = useCallback(
     ({ item, index }: { item: PublishMaterial; index: number }) => (
@@ -124,23 +138,25 @@ export function MaterialWorkspace({
   if (!opportunity) {
     return (
       <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-        请从左侧选择一个商机
+        请选择一个商机
       </div>
     )
   }
 
+  const distributionSourceId = selectedOid ?? opportunity.id
+
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* 商机头部 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0 bg-white">
-        <div className="flex items-center gap-3 min-w-0">
+      {/* 商机头部：返回 + 切换商机 + 商机名 + 创建素材 */}
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 flex-shrink-0 bg-white">
+        <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={onBackToOverview}
             aria-label="返回概览"
             className={
               isMobile
-                ? 'h-9 w-9 inline-flex items-center justify-center text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0 dark:text-gray-300 dark:bg-gray-900 dark:border-gray-700 dark:hover:bg-gray-800'
-                : 'h-9 px-3.5 inline-flex items-center gap-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0 dark:text-gray-300 dark:bg-gray-900 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:border-gray-600'
+                ? 'h-9 w-9 inline-flex items-center justify-center text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0'
+                : 'h-9 px-3.5 inline-flex items-center gap-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0'
             }
           >
             <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,81 +165,98 @@ export function MaterialWorkspace({
             {!isMobile && <span>返回</span>}
           </button>
           <button
-            onClick={onCreateClick}
-            aria-label="创建素材"
+            onClick={onSwitchClick}
+            aria-label="切换商机"
             className={
               isMobile
-                ? 'h-9 w-9 inline-flex items-center justify-center text-base font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0 dark:bg-blue-500 dark:hover:bg-blue-600'
-                : 'h-9 px-3.5 inline-flex items-center gap-1.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0 dark:bg-blue-500 dark:hover:bg-blue-600'
+                ? 'h-9 px-2.5 inline-flex items-center gap-1 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0'
+                : 'h-9 px-3.5 inline-flex items-center gap-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0'
             }
           >
+            切换商机
             <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14M5 12h14" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
-            {!isMobile && <span>创建素材</span>}
           </button>
 
           <h3 className="text-base font-semibold text-gray-900 truncate">{opportunity.name}</h3>
-          {(opportunity.price ?? 0) > 0 && (
-            <span className="text-sm text-gray-600 flex-shrink-0">{fmtPrice(opportunity.price!)}</span>
-          )}
           <span className="text-xs text-gray-400 flex-shrink-0">
             📦{opportunity.monitoredItemCount ?? 0} · 📝{opportunity.materialCount ?? 0}
           </span>
         </div>
+
+        <button
+          onClick={onCreateClick}
+          aria-label="创建素材"
+          className={
+            isMobile
+              ? 'h-9 w-9 inline-flex items-center justify-center text-base font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0'
+              : 'h-9 px-3.5 inline-flex items-center gap-1.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors flex-shrink-0'
+          }
+        >
+          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14M5 12h14" />
+          </svg>
+          {!isMobile && <span>创建素材</span>}
+        </button>
       </div>
 
-      {/* 商机资料卡 — summary 非空才渲染 */}
-      {opportunity.summary && (
-        <OpportunitySummaryCard
-          opportunity={opportunity}
-          reviewPending={reviewMutation.isPending}
-          onReview={(status) => reviewMutation.mutate({ oid: opportunity.id, status })}
-          onReExtract={() => setReExtractOpen(true)}
+      {/* 商机资料卡 — 常驻（summary 有无都渲染） */}
+      <OpportunitySummaryCard
+        opportunity={opportunity}
+        reviewPending={reviewMutation.isPending}
+        onReview={(status) => reviewMutation.mutate({ oid: opportunity.id, status })}
+        onReExtract={() => setReExtractOpen(true)}
+        focusReviewKey={reviewFocusToken}
+      />
+
+      {/* 分发摘要条 — 资料卡下方常驻一行（v6 6.2） */}
+      <DistributionSummaryBar
+        sourceType="opp"
+        sourceId={distributionSourceId}
+        onAssignClick={(materials) => setAssignTarget(materials)}
+      />
+
+      {/* 素材表格 */}
+      <div className="flex-1 min-h-0">
+        <NativeTable
+          columns={MATERIAL_COLUMNS}
+          data={materials}
+          keyExtractor={(m) => String(m.id)}
+          isLoading={materialLoading}
+          error={materialError}
+          errorMessage="加载素材失败"
+          onRetry={materialRefetch}
+          emptyTitle="暂无素材"
+          emptyDescription="点击「批量创建」为该商机创建素材"
+          emptyAction={{ label: '批量创建', onClick: onCreateClick }}
+          stickyHeader
+          tableLayout="fixed"
+          RowComponent={RowWrapper}
+          onRowClick={(m) => onOpenEditor(m.id)}
+          className="h-full"
         />
-      )}
 
-      {/* 素材表格 + 分发进度 */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        <div className="flex-1 min-h-0">
-          <NativeTable
-            columns={MATERIAL_COLUMNS}
-            data={materials}
-            keyExtractor={(m) => String(m.id)}
-            isLoading={materialLoading}
-            error={materialError}
-            errorMessage="加载素材失败"
-            onRetry={materialRefetch}
-            emptyTitle="暂无素材"
-            emptyDescription="点击「批量创建」为该商机创建素材"
-            emptyAction={{ label: '批量创建', onClick: onCreateClick }}
-            stickyHeader
-            tableLayout="fixed"
-            RowComponent={RowWrapper}
-            onRowClick={(m) => onOpenEditor(m.id)}
-            className="h-full"
-          />
+        {/* 批量操作栏 */}
+        {selectedMaterialIds.size > 0 && (
+          <div className="sticky bottom-0 px-3 pb-3 z-10">
+            <BatchActionBar
+              selectedCount={selectedMaterialIds.size}
+              onClear={onClearSelection}
+              actions={[]}
+            />
+          </div>
+        )}
+      </div>
 
-          {/* 批量操作栏 */}
-          {selectedMaterialIds.size > 0 && (
-            <div className="sticky bottom-0 px-3 pb-3 z-10">
-              <BatchActionBar
-                selectedCount={selectedMaterialIds.size}
-                onClear={onClearSelection}
-                actions={[]}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* 分发进度 — 素材表格下方，独立滚动区域，避免与表格操作冲突 */}
-        <div className="flex-shrink-0 border-t border-gray-100 px-4 py-4 max-h-[40%] overflow-y-auto">
-          <DistributionView
-            sourceType="opp"
-            sourceId={selectedOid ?? opportunity.id}
-            sourceName={opportunity.name}
-          />
-        </div>
+      {/* 分发完整视图 — 可折叠常驻区块（v6 6.3，不再 max-h 压缩滚动） */}
+      <div className="flex-shrink-0 border-t border-gray-100 px-4 py-3">
+        <DistributionView
+          sourceType="opp"
+          sourceId={distributionSourceId}
+          sourceName={opportunity.name}
+          onAssign={(materials) => setAssignTarget(materials)}
+        />
       </div>
 
       {/* 分页 */}
@@ -241,6 +274,14 @@ export function MaterialWorkspace({
           onSubmit={handleReExtractSubmit}
         />
       )}
+
+      {/* 批量分配弹窗（常驻，assignTarget 控制 open） */}
+      <DistributionAssignModal
+        open={assignTarget !== null}
+        onClose={() => setAssignTarget(null)}
+        materials={assignTarget ?? []}
+        sourceName={opportunity.name}
+      />
     </div>
   )
 }

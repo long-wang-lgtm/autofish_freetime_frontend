@@ -90,6 +90,10 @@ export interface OpportunityItem {
   source_url?: string | null
   monitoredItemCount?: number
   materialCount?: number
+  /** 已发布素材数（opportunity.list 聚合返回） */
+  publishedCount?: number
+  /** 未分配素材数（opportunity.list 聚合返回，to_uid 为空） */
+  unassignedCount?: number
   userId?: string | null
   created_at?: string | null
   updated_at?: string | null
@@ -232,6 +236,8 @@ export async function listOpportunities(params?: {
   description?: string
   status?: string
   ai_context_template?: string
+  /** 提炼状态筛选：空串=未提炼（summary 为空）；其余按 summary_status 精确匹配；不传=全部 */
+  summary_status?: string
 }): Promise<OpportunityListResponse> {
   return fetchApi<OpportunityListResponse>('/opportunity.list', {
     baseUrl: BP_BASE,

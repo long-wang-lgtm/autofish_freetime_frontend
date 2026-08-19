@@ -15,9 +15,10 @@ export function useOriginalPage() {
   const filters = useOriginalFilters()
   const opportunityMutations = useOpportunityMutations()
 
-  // 左侧商机列表的筛选
+  // 商机列表的筛选
   const [oppSearch, setOppSearch] = useState('')
   const [oppStatus, setOppStatus] = useState('')
+  const [oppSummaryStatus, setOppSummaryStatus] = useState('') // 提炼状态筛选（见 OPPORTUNITY_SUMMARY_STATUS_FILTER_OPTIONS）
   const [oppPage, setOppPage] = useState(1)
   const debouncedOppSearch = useDebounce(oppSearch, 300)
 
@@ -32,6 +33,7 @@ export function useOriginalPage() {
     overviewPage,
     oppSearch: debouncedOppSearch,
     oppStatus,
+    oppSummaryStatus,
     oppPage,
     materialPage,
   })
@@ -52,17 +54,30 @@ export function useOriginalPage() {
   type MobileView = 'overview' | 'opportunities'
   const [mobileView, setMobileView] = useState<MobileView>('overview')
 
+  // PC 端无选中商机时的 segment 视图（内存态，不入 URL）：商机列表 | 待办概览
+  type PcView = 'list' | 'overview'
+  const [pcView, setPcView] = useState<PcView>('list')
+
+  // 切换商机弹窗
+  const [switchOpen, setSwitchOpen] = useState(false)
+
+  // rejected 徽章点击 → 详情判定区聚焦信号（递增 token，MaterialWorkspace 挂载后滚动）
+  const [reviewFocusToken, setReviewFocusToken] = useState(0)
+
   return {
     ...filters,
     ...workbenchData,
     ...mutations,
     isMobile,
     accounts,
-    oppSearch, oppStatus, oppPage,
-    setOppSearch, setOppStatus, setOppPage,
+    oppSearch, oppStatus, oppSummaryStatus, oppPage,
+    setOppSearch, setOppStatus, setOppSummaryStatus, setOppPage,
     overviewPage, setOverviewPage,
     materialPage, setMaterialPage,
     mobileView, setMobileView,
+    pcView, setPcView,
+    switchOpen, setSwitchOpen,
+    reviewFocusToken, setReviewFocusToken,
     // 商机 CRUD（来自 useOpportunityMutations，注意不与 ...mutations 中 deleteMaterialMutation 冲突）
     createOpportunity: opportunityMutations.createMutation,
     updateOpportunity: opportunityMutations.updateMutation,

@@ -159,6 +159,57 @@ export const OPPORTUNITY_STATUS_FILTER_OPTIONS: { value: string; label: string }
 ]
 
 // ============================================================
+// 商机提炼状态筛选选项
+// ============================================================
+// value 语义：''=全部（不传 summary_status）；'__unrefined__'=未提炼（传空串）；
+// 其余与后端 SummaryStatus 枚举对齐，按 summary_status 精确匹配。
+
+export const OPPORTUNITY_SUMMARY_STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: '全部' },
+  { value: '__unrefined__', label: '未提炼' },
+  { value: 'user_confirmed', label: '已提炼' },
+  { value: 'rejected', label: '待重提炼' },
+  { value: 'operator_verified', label: '已验证' },
+]
+
+/** 将筛选选项 value 映射为 listOpportunities 的 summary_status 参数 */
+export function toSummaryStatusQuery(value: string): string | undefined {
+  if (value === '' || value === undefined) return undefined // 全部
+  if (value === '__unrefined__') return '' // 未提炼
+  return value
+}
+
+// ============================================================
+// 商机提炼状态徽章（资料卡 / 详情头部共用）
+// ============================================================
+
+export interface SummaryStatusBadgeConfig {
+  label: string
+  cls: string
+  dotCls: string
+}
+
+export const SUMMARY_STATUS_BADGES: Record<string, SummaryStatusBadgeConfig> = {
+  ai_draft:          { label: 'AI 提炼，未过目',   cls: 'bg-gray-100 text-gray-500',   dotCls: 'bg-gray-400' },
+  user_confirmed:    { label: '用户已确认',       cls: 'bg-green-50 text-green-600',  dotCls: 'bg-green-500' },
+  operator_verified: { label: '已验证',           cls: 'bg-green-100 text-green-800', dotCls: 'bg-green-700' },
+  rejected:          { label: '不合格，需重提炼', cls: 'bg-red-50 text-red-600',      dotCls: 'bg-red-500' },
+}
+
+/** 无 summary 时的「未提炼」徽章配置 */
+export const UNREFINED_BADGE: SummaryStatusBadgeConfig = {
+  label: '未提炼',
+  cls: 'bg-gray-100 text-gray-500',
+  dotCls: 'bg-gray-400',
+}
+
+/** 解析商机当前提炼状态徽章：summary 为空 → 未提炼；否则按 summary_status */
+export function resolveSummaryBadge(opportunity: { summary?: { article?: string } | null; summary_status?: string | null }): SummaryStatusBadgeConfig {
+  if (!opportunity.summary?.article) return UNREFINED_BADGE
+  return SUMMARY_STATUS_BADGES[opportunity.summary_status ?? 'user_confirmed'] ?? SUMMARY_STATUS_BADGES.user_confirmed
+}
+
+// ============================================================
 // 分页
 // ============================================================
 

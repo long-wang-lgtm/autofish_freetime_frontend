@@ -158,9 +158,25 @@ export function CreateMaterialModal({ open, onClose, isPending, onCreate, source
   const briefLocked = brief.trim().length > 0
 
   // ---- 策略决策区（原创/二创双源渲染） ----
+  // 无角度可选（仅「综合」）时的三类空态文案（v6 3.5）
+  const strategyEmptyHint = (() => {
+    if (strategyOptions.length > 1) return null
+    switch (source.type) {
+      case 'opp':
+        return '该商机尚未提炼，暂无文章角度可选；可先提炼商机后再决策策略'
+      case 'item':
+        return '该监控商品暂无标题与描述信息，暂无文章角度可选，建议按「综合」自定义策略'
+      case 'batch':
+        return '批量创建无单一源信息，仅支持「综合」策略，可自定义 brief'
+    }
+  })()
+
   const strategySection = (
     <div>
       <label className="text-sm font-medium text-gray-700">创作策略（现场决策，动态参数）</label>
+      {strategyEmptyHint && (
+        <p className="mt-1.5 text-xs text-gray-400 leading-relaxed">{strategyEmptyHint}</p>
+      )}
       <div className="mt-2 flex flex-wrap gap-2">
         {strategyOptions.map((opt) => (
           <button

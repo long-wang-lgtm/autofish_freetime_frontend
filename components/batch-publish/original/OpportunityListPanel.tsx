@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
@@ -11,9 +10,12 @@ import { Modal } from '@/components/ui/overlay/Modal'
 import { BottomSheet } from '@/components/ui/overlay/Sheet'
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { OPPORTUNITY_STATUS_CONFIG, OPPORTUNITY_STATUS_FILTER_OPTIONS } from '@/components/batch-publish/shared/constants'
+import {
+  OPPORTUNITY_STATUS_CONFIG,
+  OPPORTUNITY_STATUS_FILTER_OPTIONS,
+  OPPORTUNITY_SUMMARY_STATUS_FILTER_OPTIONS,
+} from '@/components/batch-publish/shared/constants'
 import { OpportunityForm } from './OpportunityForm'
-import { fmtPrice } from '@/lib/utils/format'
 import type { OpportunityItem, OpportunityParams } from '@/lib/api/batch-publish'
 
 interface OpportunityListPanelProps {
@@ -28,12 +30,21 @@ interface OpportunityListPanelProps {
   onSearchChange: (v: string) => void
   status: string
   onStatusChange: (v: string) => void
+  /** 提炼状态筛选（见 OPPORTUNITY_SUMMARY_STATUS_FILTER_OPTIONS） */
+  summaryStatus: string
+  onSummaryStatusChange: (v: string) => void
   selectedOid: number | undefined
   onSelectOid: (oid: number) => void
   onCreateOpportunity: (values: OpportunityParams) => void
   onUpdateOpportunity: (oid: number, values: Partial<OpportunityParams>) => void
   onDeleteOpportunity: (oid: number) => void
   isMutating: boolean
+  /** manage=全宽管理列表（含新建/编辑/删除）；picker=纯选择器（隐藏管理操作，行点击调 onPick） */
+  variant?: 'manage' | 'picker'
+  /** picker 模式行点击（选中即切换） */
+  onPick?: (oid: number) => void
+  /** rejected「待重提炼」徽章点击 → 选中商机 + 聚焦判定区 */
+  onFocusReview?: (oid: number) => void
 }
 
 /** article = 「标题行 + 正文」，列表行取首行为文章标题 */
@@ -41,16 +52,20 @@ function getArticleTitle(article: string): string {
   return article.trim().split('\n')[0]?.trim() ?? ''
 }
 
-/** summary_status 角标（user_confirmed 为默认态，不显示角标） */
-function renderSummaryBadge(item: OpportunityItem, onSelectOid: (oid: number) => void): React.ReactNode | null {
-  if (!item.summary) return null
+/** summary_status 角标 — 四态常驻：未提炼（summary 空）/ user_confirmed / operator_verified / rejected */
+function renderSummaryBadge(item: OpportunityItem, onRejected: () => void): React.ReactNode {
+  if (!item.summary) {
+    return <span className="text-xs font-medium text-gray-400 flex-shrink-0">未提炼</span>
+  }
   switch (item.summary_status) {
     case 'operator_verified':
       return <span className="text-xs font-medium text-green-700 flex-shrink-0">已验证</span>
+    case 'user_confirmed':
+      return <span className="text-xs font-medium text-green-600 flex-shrink-0">用户已确认</span>
     case 'rejected':
       return (
         <button
-          onClick={(e) => { e.stopPropagation(); onSelectOid(item.id) }}
+          onClick={(e) => { e.stopPropagation(); onRejected() }}
           className="text-xs font-medium text-red-600 hover:underline flex-shrink-0"
           title="该提炼被判为不合格，点击打开资料卡判定区重新提炼"
         >
@@ -67,12 +82,15 @@ function renderSummaryBadge(item: OpportunityItem, onSelectOid: (oid: number) =>
 export function OpportunityListPanel({
   opportunities, total, isLoading, error, onRetry,
   page, onPageChange,
-  search, onSearchChange, status, onStatusChange,
+  search, onSearchChange, status, onStatusChange, summaryStatus, onSummaryStatusChange,
   selectedOid, onSelectOid,
   onCreateOpportunity, onUpdateOpportunity, onDeleteOpportunity,
   isMutating,
+  variant = 'manage', onPick, onFocusReview,
 }: OpportunityListPanelProps) {
   const isMobile = useIsMobile()
+  const isPicker = variant === 'picker'
+
   const [editingItem, setEditingItem] = useState<OpportunityItem | null>(null)
   const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -88,6 +106,15 @@ export function OpportunityListPanel({
     setEditingItem(null)
     setSheetMode('create')
     setSheetOpen(true)
+  }
+
+  /** 行点击：picker 走 onPick，manage 走 onSelectOid */
+  const handleRowClick = (item: OpportunityItem) => {
+    if (isPicker) {
+      onPick?.(item.id)
+    } else {
+      onSelectOid(item.id)
+    }
   }
 
   const editorTitle = sheetMode === 'create' ? '新建商机' : '编辑商机'
@@ -122,7 +149,7 @@ export function OpportunityListPanel({
           className="w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
         />
         <div className="flex items-center justify-between gap-1">
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             {OPPORTUNITY_STATUS_FILTER_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -137,12 +164,30 @@ export function OpportunityListPanel({
               </button>
             ))}
           </div>
-          <button
-            onClick={handleCreate}
-            className="h-8 px-3 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
-          >
-            + 新建
-          </button>
+          {!isPicker && (
+            <button
+              onClick={handleCreate}
+              className="h-8 px-3 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
+            >
+              + 新建
+            </button>
+          )}
+        </div>
+        {/* 提炼状态筛选维度 */}
+        <div className="flex flex-wrap gap-1">
+          {OPPORTUNITY_SUMMARY_STATUS_FILTER_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => onSummaryStatusChange(opt.value)}
+              className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
+                summaryStatus === opt.value
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-500 hover:bg-gray-100'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -155,14 +200,18 @@ export function OpportunityListPanel({
         ) : error ? (
           <ErrorBanner variant="inline" message="加载失败" onRetry={onRetry} />
         ) : opportunities.length === 0 ? (
-          <EmptyState size="sm" title="暂无商机" description="点击「+ 新建」创建第一个商机" />
+          <EmptyState
+            size="sm"
+            title="暂无商机"
+            description={isPicker ? '没有符合条件的商机' : '点击「+ 新建」创建第一个商机'}
+          />
         ) : (
           opportunities.map((item) => {
             const isSelected = item.id === selectedOid
             return (
               <div
                 key={item.id}
-                onClick={() => onSelectOid(item.id)}
+                onClick={() => handleRowClick(item)}
                 className={`px-3 py-3 border-b border-gray-100 transition-colors hover:bg-gray-50 cursor-pointer ${
                   isSelected ? 'border-l-2 border-l-blue-600 bg-blue-50/50' : ''
                 }`}
@@ -172,14 +221,19 @@ export function OpportunityListPanel({
                     <p className={`text-sm font-medium line-clamp-1 ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
                       {item.name || '未命名商机'}
                     </p>
-                    {item.summary && (
+                    {item.summary ? (
                       <p className="text-xs text-gray-500 line-clamp-1 mt-0.5" title={item.summary.article}>
                         {getArticleTitle(item.summary.article)}
                       </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-0.5">尚未提炼，点击提炼</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {renderSummaryBadge(item, onSelectOid)}
+                    {renderSummaryBadge(item, () => {
+                      if (onFocusReview) onFocusReview(item.id)
+                      else handleRowClick(item)
+                    })}
                     {isSelected && (
                       <span className="text-blue-600 text-xs">✓</span>
                     )}
@@ -191,29 +245,36 @@ export function OpportunityListPanel({
                   <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
                     <span>📦 {item.monitoredItemCount ?? 0}</span>
                     <span>📝 {item.materialCount ?? 0}</span>
-                    {(item.price ?? 0) > 0 && <span>{fmtPrice(item.price!)}</span>}
+                    {(item.publishedCount ?? 0) > 0 && (
+                      <span className="text-green-600">已发布 {item.publishedCount}</span>
+                    )}
+                    {(item.unassignedCount ?? 0) > 0 && (
+                      <span className="text-amber-600">未分配 {item.unassignedCount}</span>
+                    )}
                     <StatusBadge status={item.status} config={OPPORTUNITY_STATUS_CONFIG} />
                   </div>
-                  <div className="flex items-center gap-0.5 flex-shrink-0">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleEdit(item) }}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
-                      title="编辑"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setDeleteTarget(item) }}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-600 transition-colors"
-                      title="删除"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+                  {!isPicker && (
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEdit(item) }}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
+                        title="编辑"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(item) }}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-600 transition-colors"
+                        title="删除"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )
@@ -226,46 +287,50 @@ export function OpportunityListPanel({
         <Pagination page={page} total={total} pageSize={20} onChange={onPageChange} />
       </div>
 
-      {/* 新建/编辑商机 — PC 居中 Modal，移动端 BottomSheet */}
-      {isMobile ? (
-        <BottomSheet
-          open={sheetOpen}
-          onClose={() => setSheetOpen(false)}
-          title={editorTitle}
-        >
-          <div className="p-4">{formContent}</div>
-        </BottomSheet>
-      ) : (
-        <Modal
-          open={sheetOpen}
-          onClose={() => setSheetOpen(false)}
-          title={editorTitle}
-          size="md"
-        >
-          {formContent}
-        </Modal>
-      )}
+      {/* 新建/编辑商机 — 仅 manage 模式；PC 居中 Modal，移动端 BottomSheet */}
+      {!isPicker && (
+        <>
+          {isMobile ? (
+            <BottomSheet
+              open={sheetOpen}
+              onClose={() => setSheetOpen(false)}
+              title={editorTitle}
+            >
+              <div className="p-4">{formContent}</div>
+            </BottomSheet>
+          ) : (
+            <Modal
+              open={sheetOpen}
+              onClose={() => setSheetOpen(false)}
+              title={editorTitle}
+              size="md"
+            >
+              {formContent}
+            </Modal>
+          )}
 
-      {/* 删除确认 */}
-      <ConfirmDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
-        title="删除商机"
-        description={
-          (deleteTarget?.materialCount ?? 0) > 0
-            ? `该商机下有 ${deleteTarget!.materialCount} 份素材将被一并删除，确定删除吗？`
-            : `确定要删除商机「${deleteTarget?.name ?? ''}」吗？`
-        }
-        confirmLabel="删除"
-        variant="danger"
-        loading={isMutating}
-        onConfirm={() => {
-          if (deleteTarget) {
-            onDeleteOpportunity(deleteTarget.id)
-            setDeleteTarget(null)
-          }
-        }}
-      />
+          {/* 删除确认 */}
+          <ConfirmDialog
+            open={deleteTarget !== null}
+            onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
+            title="删除商机"
+            description={
+              (deleteTarget?.materialCount ?? 0) > 0
+                ? `该商机下有 ${deleteTarget!.materialCount} 份素材将被一并删除，确定删除吗？`
+                : `确定要删除商机「${deleteTarget?.name ?? ''}」吗？`
+            }
+            confirmLabel="删除"
+            variant="danger"
+            loading={isMutating}
+            onConfirm={() => {
+              if (deleteTarget) {
+                onDeleteOpportunity(deleteTarget.id)
+                setDeleteTarget(null)
+              }
+            }}
+          />
+        </>
+      )}
     </div>
   )
 }

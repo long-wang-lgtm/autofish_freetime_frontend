@@ -18,8 +18,6 @@ import {
 
 const opportunitySchema = z.object({
   name: z.string().min(1, '请输入商机名称').max(100, '名称最多 100 字'),
-  description: z.string().optional(),
-  price: z.coerce.number().min(0, '价格不能为负').optional(),
 })
 
 type OpportunityFormValues = z.infer<typeof opportunitySchema>
@@ -42,19 +40,6 @@ const SOURCE_TABS: { key: SourceType; label: string }[] = [
   { key: 'file', label: '文档上传' },
 ]
 
-/** article = 「标题行 + 正文」，表单拆成两个字段展示/编辑 */
-function splitArticle(article: string): { title: string; body: string } {
-  const lines = article.trim().split('\n')
-  return { title: lines[0]?.trim() ?? '', body: lines.slice(1).join('\n').trim() }
-}
-
-function joinArticle(title: string, body: string): string {
-  const t = title.trim()
-  const b = body.trim()
-  if (t && b) return `${t}\n${b}`
-  return t || b
-}
-
 interface OpportunityFormProps {
   defaultValues?: Partial<OpportunityItem> | null
   onSubmit: (values: OpportunitySubmitValues) => void
@@ -76,8 +61,6 @@ export function OpportunityForm({ defaultValues, onSubmit, isPending, submitLabe
     resolver: zodResolver(opportunitySchema),
     defaultValues: {
       name: defaultValues?.name ?? '',
-      description: defaultValues?.description ?? '',
-      price: defaultValues?.price ?? 0,
     },
   })
 
@@ -96,9 +79,8 @@ export function OpportunityForm({ defaultValues, onSubmit, isPending, submitLabe
   const [sourceUrl, setSourceUrl] = useState<string | null>(null)
   const [sourceFile, setSourceFile] = useState<string | null>(null)
 
-  // ---- 文章标题 / 正文 / 关键词（提炼结果与手工编辑共用） ----
-  const [articleTitle, setArticleTitle] = useState('')
-  const [articleBody, setArticleBody] = useState('')
+  // ---- 文章 / 关键词（提炼结果与手工编辑共用；文章为单个字段，首行=标题） ----
+  const [article, setArticle] = useState('')
   const [keywords, setKeywords] = useState<string[]>([])
   const [keywordInput, setKeywordInput] = useState('')
 
@@ -118,12 +100,10 @@ export function OpportunityForm({ defaultValues, onSubmit, isPending, submitLabe
     }
   }, [])
 
-  // 编辑已有商机时，从 defaultValues 预填文章标题/正文/关键词与原始资料链接
+  // 编辑已有商机时，从 defaultValues 预填文章/关键词与原始资料链接
   useEffect(() => {
-    if (defaultValues?.summary) {
-      const { title, body } = splitArticle(defaultValues.summary.article)
-      setArticleTitle(title)
-      setArticleBody(body)
+    if (defaultValues?.summary?.article) {
+      setArticle(defaultValues.summary.article)
       setKeywords(defaultValues.summary.keywords ?? [])
     }
     if (defaultValues?.source_url) {
@@ -145,8 +125,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isPending, submitLabe
     }
     setDraftId(null)
     setSummary(null)
-    setArticleTitle('')
-    setArticleBody('')
+    setArticle('')
     setKeywords([])
     setSourceUrl(null)
     setSourceFile(null)
@@ -156,16 +135,15 @@ export function OpportunityForm({ defaultValues, onSubmit, isPending, submitLabe
   /** 提炼完成后把结果填进编辑区 */
   const applySummary = useCallback(
     (resultSummary: OpportunitySummary, newDraftId: number, srcUrl: string | null, fileName: string | null) => {
-      const { title, body } = splitArticle(resultSummary.article)
       setDraftId(newDraftId)
       setSummary(resultSummary)
-      setArticleTitle(title)
-      setArticleBody(body)
+      setArticle(resultSummary.article)
       setKeywords(resultSummary.keywords ?? [])
       setSourceUrl(srcUrl)
       setSourceFile(fileName)
       // 商机名称默认取 article 首行标题（可改）
-      setValue('name', title || resultSummary.article)
+      const firstLine = resultSummary.article.trim().split('\n')[0]?.trim() ?? ''
+      setValue('name', firstLine || resultSummary.article)
     },
     [setValue]
   )
@@ -294,12 +272,12 @@ export function OpportunityForm({ defaultValues, onSubmit, isPending, submitLabe
     }
   }, [applySummary, toast])
 
-  // ---- 提交：三字段 + 提炼字段 ----
+  // ---- 提交：名称 + 提炼字段 ----
   const handleFormSubmit = handleSubmit((values) => {
-    const hasSummary = articleTitle.trim() || articleBody.trim() || keywords.length > 0
+    const hasSummary = article.trim() || keywords.length > 0
     onSubmit({
       ...values,
-      summary: hasSummary ? { article: joinArticle(articleTitle, articleBody), keywords } : null,
+      summary: hasSummary ? { article: article.trim(), keywords } : null,
       source_url: sourceUrl,
       draft_id: draftId ?? undefined,
     })
@@ -326,54 +304,31 @@ export function OpportunityForm({ defaultValues, onSubmit, isPending, submitLabe
     </div>
   )
 
-  const descriptionField = (
+  /** 原始资料链接 — 编辑已有商机时展示可编辑 input（新建态在提炼结果区仅展示） */
+  const sourceUrlField = isEditMode && (
     <div>
-      <label className="text-sm font-medium text-gray-700">描述</label>
-      <textarea
-        {...register('description')}
-        rows={3}
-        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
-        placeholder="选填"
-      />
-    </div>
-  )
-
-  const priceField = (
-    <div>
-      <label className="text-sm font-medium text-gray-700">参考价格</label>
+      <label className="text-sm font-medium text-gray-700">原始资料链接</label>
       <input
-        {...register('price')}
-        type="number"
-        min={0}
-        step={0.01}
+        value={sourceUrl ?? ''}
+        onChange={(e) => setSourceUrl(e.target.value || null)}
+        placeholder="粘贴原始资料链接（选填）"
         className="mt-1 w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
       />
-      {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>}
     </div>
   )
 
   const summaryFields = (
     <>
       <div>
-        <label className="text-sm font-medium text-gray-700">文章标题</label>
-        <input
-          value={articleTitle}
-          onChange={(e) => setArticleTitle(e.target.value)}
-          maxLength={100}
-          className="mt-1 w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-          placeholder="这是什么，一句话"
-        />
-      </div>
-
-      <div>
-        <label className="text-sm font-medium text-gray-700">正文</label>
+        <label className="text-sm font-medium text-gray-700">文章</label>
         <textarea
-          value={articleBody}
-          onChange={(e) => setArticleBody(e.target.value)}
-          rows={5}
+          value={article}
+          onChange={(e) => setArticle(e.target.value)}
+          rows={6}
           className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
-          placeholder="把事实说清楚：功能、怎么使用等"
+          placeholder="第一行是标题，下面是正文：把事实说清楚——这是什么、怎么使用等"
         />
+        <p className="text-xs text-gray-400 mt-1">第一行为标题，正文紧随其后（summary 整体一个字段）</p>
       </div>
 
       <div>
@@ -542,8 +497,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isPending, submitLabe
       ) : showManualFields ? (
         <div className="space-y-4">
           {nameField}
-          {descriptionField}
-          {priceField}
+          {sourceUrlField}
           {summaryFields}
         </div>
       ) : null}

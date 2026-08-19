@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { listOpportunities, listMaterials } from '@/lib/api/batch-publish'
-import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
+import { PAGE_SIZE, toSummaryStatusQuery } from '@/components/batch-publish/shared/constants'
 
 interface UseOriginalDataParams {
   selectedOid: number | undefined
@@ -11,22 +11,26 @@ interface UseOriginalDataParams {
   oppStatus: string
   oppPage: number
   materialPage: number
+  /** 提炼状态筛选选项 value（见 OPPORTUNITY_SUMMARY_STATUS_FILTER_OPTIONS） */
+  oppSummaryStatus: string
 }
 
-export function useOriginalData({ selectedOid, overviewPage, oppSearch, oppStatus, oppPage, materialPage }: UseOriginalDataParams) {
+export function useOriginalData({ selectedOid, overviewPage, oppSearch, oppStatus, oppPage, materialPage, oppSummaryStatus }: UseOriginalDataParams) {
   // 左侧商机列表
+  const summaryStatus = toSummaryStatusQuery(oppSummaryStatus)
   const {
     data: oppData,
     isLoading: oppLoading,
     error: oppError,
     refetch: oppRefetch,
   } = useQuery({
-    queryKey: ['batch-publish', 'opportunities', { page: oppPage, pageSize: PAGE_SIZE, search: oppSearch, status: oppStatus }],
+    queryKey: ['batch-publish', 'opportunities', { page: oppPage, pageSize: PAGE_SIZE, search: oppSearch, status: oppStatus, summaryStatus }],
     queryFn: () => listOpportunities({
       page: oppPage,
       page_size: PAGE_SIZE,
       name: oppSearch || undefined,
       status: oppStatus || undefined,
+      summary_status: summaryStatus,
     }),
   })
 

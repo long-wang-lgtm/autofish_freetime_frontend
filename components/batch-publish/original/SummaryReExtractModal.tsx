@@ -66,6 +66,9 @@ export function SummaryReExtractModal({ open, onClose, opportunity, isPending, o
   const isMobile = useIsMobile()
   const toast = useToast()
 
+  // v6 3.3：标题按 summary 有无显示「去提炼 / 重新提炼」
+  const modalTitle = opportunity.summary?.article ? '重新提炼' : '去提炼'
+
   // 初始值预填：名称、现有 summary 拆分的文章/关键词、现有来源链接
   const initialSplit = opportunity.summary ? splitArticle(opportunity.summary.article) : { title: '', body: '' }
 
@@ -439,14 +442,14 @@ export function SummaryReExtractModal({ open, onClose, opportunity, isPending, o
 
   if (isMobile) {
     return (
-      <BottomSheet open={open} onClose={onClose} title="重新提炼" subtitle={opportunity.name} footer={footer}>
+      <BottomSheet open={open} onClose={onClose} title={modalTitle} subtitle={opportunity.name} footer={footer}>
         <div className="p-4">{content}</div>
       </BottomSheet>
     )
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="重新提炼" size="lg" footer={footer}>
+    <Modal open={open} onClose={onClose} title={modalTitle} size="lg" footer={footer}>
       <p className="text-sm text-gray-500 mb-4">{opportunity.name}</p>
       {content}
     </Modal>
