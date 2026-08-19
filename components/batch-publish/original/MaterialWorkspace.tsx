@@ -7,7 +7,6 @@ import { NativeTable } from '@/components/ui/data/NativeTable'
 import type { NativeTableColumn } from '@/components/ui/data/NativeTable'
 import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
 import {
-  DistributionView,
   DistributionSummaryBar,
   DistributionAssignModal,
 } from '@/components/batch-publish/shared/DistributionView'
@@ -145,6 +144,64 @@ export function MaterialWorkspace({
 
   const distributionSourceId = selectedOid ?? opportunity.id
 
+  // ---- 左右分栏 / 移动端堆叠共用的区块 ----
+  const summaryCard = (
+    <OpportunitySummaryCard
+      opportunity={opportunity}
+      reviewPending={reviewMutation.isPending}
+      onReview={(status) => reviewMutation.mutate({ oid: opportunity.id, status })}
+      onReExtract={() => setReExtractOpen(true)}
+      focusReviewKey={reviewFocusToken}
+    />
+  )
+
+  const summaryBar = (
+    <DistributionSummaryBar
+      sourceType="opp"
+      sourceId={distributionSourceId}
+      onAssignClick={(materials) => setAssignTarget(materials)}
+    />
+  )
+
+  const materialTable = (
+    <div className="flex-1 min-h-0">
+      <NativeTable
+        columns={MATERIAL_COLUMNS}
+        data={materials}
+        keyExtractor={(m) => String(m.id)}
+        isLoading={materialLoading}
+        error={materialError}
+        errorMessage="加载素材失败"
+        onRetry={materialRefetch}
+        emptyTitle="暂无素材"
+        emptyDescription="点击「批量创建」为该商机创建素材"
+        emptyAction={{ label: '批量创建', onClick: onCreateClick }}
+        stickyHeader
+        tableLayout="fixed"
+        RowComponent={RowWrapper}
+        onRowClick={(m) => onOpenEditor(m.id)}
+        className="h-full"
+      />
+
+      {/* 批量操作栏 */}
+      {selectedMaterialIds.size > 0 && (
+        <div className="sticky bottom-0 px-3 pb-3 z-10">
+          <BatchActionBar
+            selectedCount={selectedMaterialIds.size}
+            onClear={onClearSelection}
+            actions={[]}
+          />
+        </div>
+      )}
+    </div>
+  )
+
+  const pagination = (
+    <div className="border-t border-gray-100 flex-shrink-0">
+      <Pagination page={page} total={total} pageSize={PAGE_SIZE} onChange={onPageChange} />
+    </div>
+  )
+
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* 商机头部：返回 + 切换商机 + 商机名 + 创建素材 */}
@@ -201,68 +258,28 @@ export function MaterialWorkspace({
         </button>
       </div>
 
-      {/* 商机资料卡 — 常驻（summary 有无都渲染） */}
-      <OpportunitySummaryCard
-        opportunity={opportunity}
-        reviewPending={reviewMutation.isPending}
-        onReview={(status) => reviewMutation.mutate({ oid: opportunity.id, status })}
-        onReExtract={() => setReExtractOpen(true)}
-        focusReviewKey={reviewFocusToken}
-      />
-
-      {/* 分发摘要条 — 资料卡下方常驻一行（v6 6.2） */}
-      <DistributionSummaryBar
-        sourceType="opp"
-        sourceId={distributionSourceId}
-        onAssignClick={(materials) => setAssignTarget(materials)}
-      />
-
-      {/* 素材表格 */}
-      <div className="flex-1 min-h-0">
-        <NativeTable
-          columns={MATERIAL_COLUMNS}
-          data={materials}
-          keyExtractor={(m) => String(m.id)}
-          isLoading={materialLoading}
-          error={materialError}
-          errorMessage="加载素材失败"
-          onRetry={materialRefetch}
-          emptyTitle="暂无素材"
-          emptyDescription="点击「批量创建」为该商机创建素材"
-          emptyAction={{ label: '批量创建', onClick: onCreateClick }}
-          stickyHeader
-          tableLayout="fixed"
-          RowComponent={RowWrapper}
-          onRowClick={(m) => onOpenEditor(m.id)}
-          className="h-full"
-        />
-
-        {/* 批量操作栏 */}
-        {selectedMaterialIds.size > 0 && (
-          <div className="sticky bottom-0 px-3 pb-3 z-10">
-            <BatchActionBar
-              selectedCount={selectedMaterialIds.size}
-              onClear={onClearSelection}
-              actions={[]}
-            />
+      {/* PC 左右分栏：左=商机详情面板（固定宽 + 内部滚动），右=摘要条+素材表格+分页；移动端上下堆叠 */}
+      {isMobile ? (
+        <>
+          {summaryCard}
+          {summaryBar}
+          {materialTable}
+          {pagination}
+        </>
+      ) : (
+        <div className="flex flex-1 min-h-0">
+          {/* 左栏：商机详情面板（w-[280px] 固定，编辑态面板内滚动，右栏不位移） */}
+          <div className="w-[280px] flex-shrink-0 border-r border-gray-200 overflow-y-auto">
+            {summaryCard}
           </div>
-        )}
-      </div>
-
-      {/* 分发完整视图 — 可折叠常驻区块（v6 6.3，不再 max-h 压缩滚动） */}
-      <div className="flex-shrink-0 border-t border-gray-100 px-4 py-3">
-        <DistributionView
-          sourceType="opp"
-          sourceId={distributionSourceId}
-          sourceName={opportunity.name}
-          onAssign={(materials) => setAssignTarget(materials)}
-        />
-      </div>
-
-      {/* 分页 */}
-      <div className="border-t border-gray-100 flex-shrink-0">
-        <Pagination page={page} total={total} pageSize={PAGE_SIZE} onChange={onPageChange} />
-      </div>
+          {/* 右栏：分发摘要条 + 素材表格 + 分页 */}
+          <div className="flex-1 min-w-0 flex flex-col min-h-0">
+            {summaryBar}
+            {materialTable}
+            {pagination}
+          </div>
+        </div>
+      )}
 
       {/* 重新提炼弹窗 — 打开时才挂载 */}
       {reExtractOpen && (
