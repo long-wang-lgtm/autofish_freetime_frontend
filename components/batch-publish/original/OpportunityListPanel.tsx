@@ -77,6 +77,68 @@ function renderSummaryBadge(item: OpportunityItem, onRejected: () => void): Reac
   }
 }
 
+/**
+ * 分发进度列 — 两行微布局：第一行总数 + 色点数字，第二行分段条。
+ * 处理中 = boundCount − publishedCount − failedCount（已绑定但未到终态，可能为 0）。
+ */
+function renderDistributionProgress(item: OpportunityItem): React.ReactNode {
+  const total = item.materialCount ?? 0
+  const bound = item.boundCount ?? 0
+  const published = item.publishedCount ?? 0
+  const failed = item.failedCount ?? 0
+  const unassigned = item.unassignedCount ?? 0
+  const processing = bound - published - failed
+
+  // 总数 0：整列灰色「-」，不放条、不放数字
+  if (total <= 0) {
+    return <span className="text-sm text-gray-300" title="素材 0">-</span>
+  }
+
+  // hover title 全称（0 值项不出现）
+  const titleParts = [
+    `素材 ${total}`,
+    ...(bound > 0 ? [`已绑定 ${bound}`] : []),
+    ...(published > 0 ? [`已发布 ${published}`] : []),
+    ...(failed > 0 ? [`发布失败 ${failed}`] : []),
+    ...(unassigned > 0 ? [`未绑定 ${unassigned}`] : []),
+    ...(processing > 0 ? [`处理中 ${processing}`] : []),
+  ].join(' · ')
+
+  return (
+    <div className="min-w-0" title={titleParts}>
+      {/* 第一行：总数 + 色点数字（已发布=绿 / 发布失败=红 / 未绑定=灰，0 值不渲染） */}
+      <div className="flex items-center gap-1.5 whitespace-nowrap">
+        <span className="text-sm text-gray-700 tabular-nums">{total}</span>
+        {published > 0 && (
+          <span className="inline-flex items-center gap-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true" />
+            <span className="text-xs text-green-600 tabular-nums">{published}</span>
+          </span>
+        )}
+        {failed > 0 && (
+          <span className="inline-flex items-center gap-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500" aria-hidden="true" />
+            <span className="text-xs text-red-600 tabular-nums">{failed}</span>
+          </span>
+        )}
+        {unassigned > 0 && (
+          <span className="inline-flex items-center gap-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-gray-300" aria-hidden="true" />
+            <span className="text-xs text-gray-500 tabular-nums">{unassigned}</span>
+          </span>
+        )}
+      </div>
+      {/* 第二行：分段条（绿=已发布 / 红=发布失败 / 蓝=处理中 / 灰=未绑定，0 值不渲染段） */}
+      <div className="mt-1 h-1.5 rounded-full overflow-hidden flex">
+        {published > 0 && <div className="bg-green-500" style={{ flexGrow: published }} />}
+        {failed > 0 && <div className="bg-red-500" style={{ flexGrow: failed }} />}
+        {processing > 0 && <div className="bg-blue-400" style={{ flexGrow: processing }} />}
+        {unassigned > 0 && <div className="bg-gray-300" style={{ flexGrow: unassigned }} />}
+      </div>
+    </div>
+  )
+}
+
 export function OpportunityListPanel({
   opportunities, total, isLoading, error, onRetry,
   page, onPageChange,
@@ -153,32 +215,10 @@ export function OpportunityListPanel({
         ),
     },
     {
-      key: 'materialCount',
-      header: '素材',
-      align: 'center',
-      render: (item) => <span className="text-sm text-gray-700">📝 {item.materialCount ?? 0}</span>,
-    },
-    {
-      key: 'published',
-      header: '已发布',
-      align: 'center',
-      render: (item) =>
-        (item.publishedCount ?? 0) > 0 ? (
-          <span className="text-sm text-green-600 tabular-nums">{item.publishedCount}</span>
-        ) : (
-          <span className="text-sm text-gray-300">-</span>
-        ),
-    },
-    {
-      key: 'unassigned',
-      header: '未分配',
-      align: 'center',
-      render: (item) =>
-        (item.unassignedCount ?? 0) > 0 ? (
-          <span className="text-sm text-amber-600 tabular-nums">{item.unassignedCount}</span>
-        ) : (
-          <span className="text-sm text-gray-300">-</span>
-        ),
+      key: 'distribution',
+      header: '分发进度',
+      align: 'left',
+      render: (item) => renderDistributionProgress(item),
     },
     {
       key: 'updatedAt',
@@ -223,12 +263,12 @@ export function OpportunityListPanel({
     })
   }
 
-  // 列宽比例（gridTemplateColumns）：名称占大头，标题次之，数字/时间紧凑，操作最窄
-  // manage：2fr 0.7fr 1.5fr 0.5fr 0.5fr 0.5fr 0.7fr 0.45fr
-  // picker：2fr 0.7fr 1.5fr 0.5fr 0.5fr 0.5fr 0.7fr
+  // 列宽比例（gridTemplateColumns）：名称占大头，标题次之，分发进度给足宽度（1.2fr），时间紧凑，操作最窄
+  // manage：2fr 0.7fr 1.5fr 1.2fr 0.7fr 0.45fr
+  // picker：2fr 0.7fr 1.5fr 1.2fr 0.7fr
   const gridTemplateColumns = isPicker
-    ? '2fr 0.7fr 1.5fr 0.5fr 0.5fr 0.5fr 0.7fr'
-    : '2fr 0.7fr 1.5fr 0.5fr 0.5fr 0.5fr 0.7fr 0.45fr'
+    ? '2fr 0.7fr 1.5fr 1.2fr 0.7fr'
+    : '2fr 0.7fr 1.5fr 1.2fr 0.7fr 0.45fr'
 
   // 弹窗打开时才挂载表单：确保 OpportunityForm 的「刷新恢复草稿」检查在每次打开时触发
   // （常驻渲染时 useEffect([]) 只在页面加载执行一次，打开弹窗不会重新查草稿）

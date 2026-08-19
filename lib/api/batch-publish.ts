@@ -90,8 +90,12 @@ export interface OpportunityItem {
   source_url?: string | null
   monitoredItemCount?: number
   materialCount?: number
+  /** 已绑定素材数（opportunity.list 聚合返回，to_uid 非空） */
+  boundCount?: number
   /** 已发布素材数（opportunity.list 聚合返回） */
   publishedCount?: number
+  /** 发布失败素材数（opportunity.list 聚合返回，status=publish_failed） */
+  failedCount?: number
   /** 未分配素材数（opportunity.list 聚合返回，to_uid 为空） */
   unassignedCount?: number
   userId?: string | null
