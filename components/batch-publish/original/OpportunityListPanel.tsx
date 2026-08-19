@@ -100,9 +100,9 @@ function renderDistributionProgress(item: OpportunityItem): React.ReactNode {
   ].join(' · ')
 
   return (
-    <div className="min-w-0" title={titleParts}>
+    <div className="min-w-0 w-full" title={titleParts}>
       {/* 第一行：总数 + 色点数字（已发布=绿 / 发布失败=红 / 未绑定=灰，0 值不渲染） */}
-      <div className="flex items-center gap-1.5 whitespace-nowrap">
+      <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
         <span className="text-sm text-gray-700 tabular-nums">{total}</span>
         {published > 0 && (
           <span className="inline-flex items-center gap-0.5">
@@ -204,13 +204,13 @@ export function OpportunityListPanel({
     {
       key: 'distribution',
       header: '分发进度',
-      align: 'left',
+      align: 'center',
       render: (item) => renderDistributionProgress(item),
     },
     {
       key: 'updatedAt',
       header: '更新时间',
-      align: 'right',
+      align: 'center',
       render: (item) => (
         <span className="text-xs text-gray-400 tabular-nums whitespace-nowrap">
           {item.updated_at ? fmtRelative(item.updated_at) : '-'}
@@ -224,9 +224,9 @@ export function OpportunityListPanel({
     columns.push({
       key: 'actions',
       header: '操作',
-      align: 'right',
+      align: 'center',
       render: (item) => (
-        <div className="flex items-center justify-end gap-0.5">
+        <div className="flex items-center justify-center gap-0.5">
           <button
             onClick={() => setDeleteTarget(item)}
             className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-600 transition-colors"
