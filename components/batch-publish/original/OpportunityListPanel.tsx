@@ -246,8 +246,8 @@ export function OpportunityListPanel({
   // manage：1fr 1.5fr 1fr 1fr 1fr
   // picker：1fr 1.5fr 1fr 1fr
   const gridTemplateColumns = isPicker
-    ? '1fr 1.5fr 1fr 1fr'
-    : '1fr 1.5fr 1fr 1fr 1fr'
+    ? '1fr 1fr 1fr 1fr'
+    : '1fr 1fr 1fr 1fr 1fr'
 
   // 弹窗打开时才挂载表单：确保 OpportunityForm 的「刷新恢复草稿」检查在每次打开时触发
   // （常驻渲染时 useEffect([]) 只在页面加载执行一次，打开弹窗不会重新查草稿）
