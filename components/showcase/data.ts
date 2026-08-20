@@ -144,8 +144,8 @@ export interface AccountOverview {
 }
 
 export const overviewRows: AccountOverview[] = [
-  { name: '账号A', type: '鱼小铺', totalSales: '500+', sellThrough: '40%+', onShelf: '未满', phase: '平稳期', focus: '稳定监测' },
-  { name: '账号C', type: '普通', totalSales: '20+', sellThrough: '10%+', onShelf: '已满', phase: '平稳期', focus: '重点运营' },
+  { name: '账号A', type: '鱼小铺', totalSales: '500+', sellThrough: '40%+', onShelf: '233/300', phase: '平稳期', focus: '稳定监测' },
+  { name: '账号C', type: '普通', totalSales: '200+', sellThrough: '10%+', onShelf: '45/50', phase: '平稳期', focus: '重点运营' },
 ]
 
 export interface TopItem {
