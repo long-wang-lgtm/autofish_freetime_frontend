@@ -11,7 +11,7 @@ export const chatQAs: ChatQA[] = [
   {
     keywords: ['重点', '运营', '今天', '今日', '重心'],
     answer:
-      '今日运营重心如下：\n- **账号C**（普通）：动销率双位数偏低，在售已满 → 重点运营，先淘汰滞销腾名额再上新\n- **账号D**（鱼小铺）：动销率偏低，在售未满 → 重点运营，高频测品\n- **账号E**（普通）：动销率极低，总销量个位数 → 重点运营，需高频测品\n- 领头羊 **账号B**（总销量领先）与 **账号A**（紧随其后）出单稳定 → 稳定监测，减少干预',
+      '今日运营重心如下：\n- **账号C**（普通）：动销率双位数偏低，在售已满 → 重点运营，先淘汰滞销腾名额再上新\n- **账号A**（鱼小铺）：出单稳定，动销率健康 → 稳定监测，减少干预',
   },
   {
     keywords: ['爆单', '爆款', '突增'],
@@ -136,7 +136,7 @@ export const workflowLines = [
 export interface AccountOverview {
   name: string
   type: '鱼小铺' | '普通'
-  totalSales: number
+  totalSales: string
   sellThrough: string
   onShelf: string
   phase: string
@@ -144,18 +144,15 @@ export interface AccountOverview {
 }
 
 export const overviewRows: AccountOverview[] = [
-  { name: '账号A', type: '鱼小铺', totalSales: 560, sellThrough: '44.2%', onShelf: '76/300', phase: '平稳期', focus: '稳定监测' },
-  { name: '账号B', type: '鱼小铺', totalSales: 610, sellThrough: '42.8%', onShelf: '95/300', phase: '上升期', focus: '稳定监测' },
-  { name: '账号C', type: '普通', totalSales: 22, sellThrough: '13.6%', onShelf: '50/50', phase: '平稳期', focus: '重点运营' },
-  { name: '账号D', type: '鱼小铺', totalSales: 132, sellThrough: '28.4%', onShelf: '64/300', phase: '平稳期', focus: '重点运营' },
-  { name: '账号E', type: '普通', totalSales: 4, sellThrough: '5.2%', onShelf: '47/50', phase: '数据不足', focus: '重点运营' },
+  { name: '账号A', type: '鱼小铺', totalSales: '500+', sellThrough: '40%+', onShelf: '未满', phase: '平稳期', focus: '稳定监测' },
+  { name: '账号C', type: '普通', totalSales: '20+', sellThrough: '10%+', onShelf: '已满', phase: '平稳期', focus: '重点运营' },
 ]
 
 export interface TopItem {
   title: string
-  sales: number
-  days: number
-  daily: number
+  sales: string
+  days: string
+  daily: string
 }
 
 export interface AccountDetail {
@@ -176,90 +173,39 @@ export const accountDetails: AccountDetail[] = [
     name: '账号A',
     type: '鱼小铺',
     phase: '平稳期',
-    phaseReason: '近3天日均 74.0 / 前4天日均 75.6 = 0.979（0.8~1.2）',
-    burst: '无（前4天日均 75.6，近3天无突增）',
-    decline: '无（最后3天 76→65→81，未连续下滑）',
+    phaseReason: '近3天日均与前4天日均基本持平（比值落 0.8~1.2 区间）',
+    burst: '无（前4天日均作基准，近3天无突增）',
+    decline: '无（最后3天销量未连续下滑）',
     focus: '稳定监测',
-    focusReason: '动销率 44.2%、总销量 560，出单稳定，减少干预，持续监测衰退迹象',
+    focusReason: '动销率健康、总销量领先，出单稳定，减少干预，持续监测衰退迹象',
     topItems: [
-      { title: 'AI 办公效率课程合集', sales: 208, days: 8, daily: 26.0 },
-      { title: '设计排版模板精选', sales: 84, days: 8, daily: 10.5 },
-      { title: '考证蓝皮书资料包', sales: 44, days: 8, daily: 5.5 },
+      { title: 'AI 办公效率课程合集', sales: '200+', days: '7+', daily: '25+' },
+      { title: '设计排版模板精选', sales: '80+', days: '7+', daily: '10+' },
+      { title: '考证蓝皮书资料包', sales: '40+', days: '7+', daily: '5+' },
     ],
     candidates: [
-      '<商品ID>（曝光 5，转化 无转化数据，支付 0单，上架 36天）',
-      '<商品ID>（曝光 10，转化 0.00%，支付 0单，上架 47天）',
-      '<商品ID>（曝光 6，转化 0.00%，支付 0单，上架 38天）',
-    ],
-  },
-  {
-    name: '账号B',
-    type: '鱼小铺',
-    phase: '上升期',
-    phaseReason: '近3天日均 84.0 / 前4天日均 70.0 = 1.200（≥1.2 贴线判定）',
-    burst: '无（前4天日均 70.0，近3天无突增）',
-    decline: '无（最后3天 86→96→71，未连续下滑）',
-    focus: '稳定监测',
-    focusReason: '动销率 42.8%、总销量 610，当前领头羊账号，保持节奏',
-    topItems: [
-      { title: '自媒体运营实战手册', sales: 190, days: 8, daily: 23.75 },
-      { title: '短视频剪辑教程合集', sales: 88, days: 8, daily: 11.0 },
-      { title: '网盘资源导航站', sales: 49, days: 7, daily: 7.0 },
-    ],
-    candidates: [
-      '<商品ID>（曝光 8，转化 0.00%，支付 0单，上架 52天）',
-      '<商品ID>（曝光 5，转化 无转化数据，支付 0单，上架 31天）',
+      '<商品ID>（曝光 <200，转化 无转化数据，支付 0单，上架 1个多月）',
+      '<商品ID>（曝光 <200，转化 0.00%，支付 0单，上架 约2个月）',
+      '<商品ID>（曝光 <200，转化 0.00%，支付 0单，上架 1个多月）',
     ],
   },
   {
     name: '账号C',
     type: '普通',
     phase: '平稳期',
-    phaseReason: '近3天日均 2.8 / 前4天日均 3.2 = 0.875（0.8~1.2）',
-    burst: '无（前4天日均 3.2，近3天无突增）',
-    decline: '无（最后3天 2→4→1，未连续下滑）',
+    phaseReason: '近3天日均与前4天日均基本持平（比值落 0.8~1.2 区间）',
+    burst: '无（前4天日均作基准，近3天无突增）',
+    decline: '无（最后3天销量未连续下滑）',
     focus: '重点运营',
-    focusReason: '动销率 13.6% 低、总销量 22 少（在售已满，先淘汰滞销腾名额再上新）',
+    focusReason: '动销率双位数偏低、总销量少（在售已满，先淘汰滞销腾名额再上新）',
     topItems: [
-      { title: 'Excel 函数速查手册', sales: 11, days: 5, daily: 2.2 },
-      { title: '简历模板合集', sales: 7, days: 5, daily: 1.4 },
+      { title: 'Excel 函数速查手册', sales: '10+', days: '7+', daily: '2+' },
+      { title: '简历模板合集', sales: '5+', days: '7+', daily: '1+' },
     ],
     candidates: [
-      '<商品ID>（曝光 3，转化 0.00%，支付 0单，上架 60天）强制',
-      '<商品ID>（曝光 7，转化 0.00%，支付 0单，上架 55天）',
-      '<商品ID>（曝光 3，转化 无转化数据，支付 0单，上架 43天）',
-    ],
-  },
-  {
-    name: '账号D',
-    type: '鱼小铺',
-    phase: '平稳期',
-    phaseReason: '近3天日均 19.0 / 前4天日均 17.2 = 1.105（0.8~1.2）',
-    burst: '无（前4天日均 17.2，近3天无突增）',
-    decline: '无（最后3天 16→19→21，未连续下滑）',
-    focus: '重点运营',
-    focusReason: '动销率 28.4% 低、总销量 132 少（在售 64/300 未满），需高频测品提升出单',
-    topItems: [
-      { title: 'Python 入门到实战', sales: 32, days: 7, daily: 4.57 },
-      { title: '副业项目拆解合集', sales: 20, days: 6, daily: 3.33 },
-    ],
-    candidates: [
-      '<商品ID>（曝光 5，转化 0.00%，支付 0单，上架 44天）',
-      '<商品ID>（曝光 9，转化 0.00%，支付 0单，上架 34天）',
-    ],
-  },
-  {
-    name: '账号E',
-    type: '普通',
-    phase: '数据不足',
-    phaseReason: '前4天日均仅 0.6 单（<2），极小样本下阶段判断无意义，趋势为估算',
-    burst: '无（前4天日均 0.6，近3天无突增）',
-    decline: '无（最后3天 0→0→0，未连续下滑）',
-    focus: '重点运营',
-    focusReason: '动销率 5.2% 低、总销量 4 少（在售 47/50 未满），需高频测品提升出单',
-    topItems: [{ title: '考研资料包', sales: 1, days: 1, daily: 1.0 }],
-    candidates: [
-      '<商品ID>（曝光 2，转化 无转化数据，支付 0单，上架 26天）新品观察期',
+      '<商品ID>（曝光 <200，转化 0.00%，支付 0单，上架 2个月）强制',
+      '<商品ID>（曝光 <200，转化 0.00%，支付 0单，上架 约2个月）',
+      '<商品ID>（曝光 <200，转化 无转化数据，支付 0单，上架 1个多月）',
     ],
   },
 ]
@@ -316,12 +262,12 @@ export const actionRows: ActionRow[] = [
   { account: '账号C', action: '下架', target: '<商品ID> 等 N 个', note: '上架>60天无出单（强制）+ 低转化（若干）' },
   { account: '账号A', action: '下架', target: '<商品ID> 等 N 个', note: '曝光<200 且 0 单，本周配额内' },
   { account: '账号C', action: '调价', target: '<商品ID> 等 N 个', note: '7天销量≤1、价格≥0.2，建议降 8%' },
-  { account: '账号E', action: '上新', target: '优先补「考研资料」类', note: '在售未满，基于账号画像选品' },
+  { account: '账号A', action: '上新', target: '优先补「设计模板」类', note: '在售未满，基于账号画像选品' },
 ]
 
 export const anomalies = [
-  '账号E：官方采集经营数据缺失（普通账号无官方采集），销售额/客单价维度已降级',
-  '商品级 API 对账号C 单次返回异常，已重试成功，无数据缺失',
+  '账号C：官方采集经营数据缺失（普通账号无官方采集），销售额/客单价维度已降级',
+  '商品级 API 对账号A 单次返回异常，已重试成功，无数据缺失',
 ]
 
 /** 样例数据模糊化声明（特殊标记：让阅读者知道数值已被修改） */
