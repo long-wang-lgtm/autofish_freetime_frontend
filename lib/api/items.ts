@@ -140,6 +140,33 @@ export interface VoucherKind {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// 待发货订单
+// ═══════════════════════════════════════════════════════════════
+
+/** 待发货订单（ItemOrder 模型，orderStatus='待发货'，字段 snake_case 对齐后端） */
+export interface PendingOrder {
+  orderId: string
+  orderStatus: string
+  buyerId: string
+  buyername: string | null
+  buyNum: number
+  totalPrice: number
+  sku: ItemSKU[] | null
+  payment_at: string | null       // 可能为 null，展示用 created_at 兜底
+  created_at: string
+  account: AccountName
+  item: ShopItem                  // 完整商品对象，直接喂 ShipConfigModal
+}
+
+/** 待发货订单分页响应 */
+export interface PendingOrdersResponse {
+  total: number
+  page: number
+  size: number
+  items: PendingOrder[]
+}
+
+// ═══════════════════════════════════════════════════════════════
 // API 函数
 // ═══════════════════════════════════════════════════════════════
 
@@ -202,4 +229,22 @@ export async function refreshItems(uid: string): Promise<OperationResponse> {
 /** 获取卡种列表 — GET /api/items/voucher.list */
 export async function getVoucherKinds(): Promise<VoucherKind[]> {
   return fetchApi<VoucherKind[]>("/api/items/voucher.list")
+}
+
+/** 待发货订单数量 — GET /api/items/orders.pending.count */
+export async function fetchPendingOrderCount(): Promise<{ total: number }> {
+  return fetchApi<{ total: number }>("/api/items/orders.pending.count")
+}
+
+/** 待发货订单列表 — GET /api/items/orders.pending.list */
+export async function fetchPendingOrders(params: {
+  uid?: string
+  page?: number
+  size?: number
+  order_by?: string
+  asc?: boolean
+}): Promise<PendingOrdersResponse> {
+  return fetchApi<PendingOrdersResponse>("/api/items/orders.pending.list", {
+    params: params as Record<string, string | number>,
+  })
 }

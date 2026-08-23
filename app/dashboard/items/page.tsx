@@ -6,6 +6,7 @@ import { TabBar } from '@/components/ui/navigation/TabBar'
 import { ItemsTab } from "@/components/items/ItemsTab"
 import { ItemsFilterBar } from "@/components/items/ItemsFilterBar"
 import { RulesTab } from "@/components/items/RulesTab"
+import { PendingOrdersTab } from "@/components/items/PendingOrdersTab"
 import { useItemsPage } from "@/hooks/useItemsPage"
 
 function ItemsPageContent() {
@@ -32,7 +33,7 @@ function ItemsPageContent() {
     isMobile,
   } = useItemsPage()
 
-  const [activeTab, setActiveTab] = useTabRouting(['items', 'rules'] as const, 'items')
+  const [activeTab, setActiveTab] = useTabRouting(['items', 'rules', 'orders'] as const, 'items')
 
   return (
     <div className="flex flex-col gap-2 h-full">
@@ -41,9 +42,10 @@ function ItemsPageContent() {
         tabs={[
           { key: "items", label: "配置管理" },
           { key: "rules", label: "回复规则" },
+          { key: "orders", label: "待发货订单" },
         ]}
         activeTab={activeTab}
-        onTabChange={(key) => setActiveTab(key as "items" | "rules")}
+        onTabChange={(key) => setActiveTab(key as "items" | "rules" | "orders")}
         variant="overline"
       />
 
@@ -104,6 +106,13 @@ function ItemsPageContent() {
           rulesStats={rulesStats}
           keywordsLoading={keywordsLoading}
           keywordsError={keywordsError}
+        />
+      )}
+
+      {activeTab === "orders" && (
+        <PendingOrdersTab
+          isMobile={isMobile}
+          accounts={accountsData || []}
         />
       )}
     </div>

@@ -6,7 +6,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { fmtNumber, fmtDate } from '@/lib/utils/format'
-import { Flame } from 'lucide-react'
+import { Flame, Truck } from 'lucide-react'
+import { usePendingOrderCount } from './usePendingOrderCount'
 
 const TIER_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'VIP0', color: 'gray' },
@@ -28,6 +29,7 @@ export function Header({ children, onMenuClick }: HeaderProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const { total: pendingOrderCount } = usePendingOrderCount()
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -90,9 +92,25 @@ export function Header({ children, onMenuClick }: HeaderProps) {
           <span className="text-sm font-semibold text-gray-900">闲逸通</span>
         </div>
 
-        {/* 中间：可扩展区域 */}
-        <div className="flex-1 flex items-center justify-center px-3 lg:px-4 max-lg:[@media(max-height:500px)]:px-1.5">
+        {/* 中间：可扩展区域（待发货提醒挂在此区右端，不挤右侧功能区） */}
+        <div className="flex-1 flex items-center justify-center px-3 lg:px-4 max-lg:[@media(max-height:500px)]:px-1.5 relative">
           {children}
+
+          {/* 待发货订单提醒 — 图标+数字，无文字；total 为 0 时整个入口隐藏 */}
+          {pendingOrderCount > 0 && (
+            <button
+              onClick={() => router.push('/dashboard/items?tab=orders')}
+              className="absolute right-0 lg:right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+              title={`${pendingOrderCount} 个待发货订单`}
+            >
+              <span className="relative flex-shrink-0">
+                <Truck className="w-[18px] h-[18px] text-gray-600 -scale-x-100" />
+                <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center leading-none">
+                  {pendingOrderCount > 99 ? '99+' : pendingOrderCount}
+                </span>
+              </span>
+            </button>
+          )}
         </div>
 
         {/* 管理员入口 */}

@@ -28,9 +28,11 @@ function readFilterFromParams(params: URLSearchParams): ItemsFilterState {
   }
 }
 
-/** 将筛选状态写入 URLSearchParams（仅写入非默认值，保持 URL 简洁） */
-function writeFilterToParams(state: ItemsFilterState): URLSearchParams {
-  const params = new URLSearchParams()
+/** 将筛选状态写入 URLSearchParams（基于 base 参数保留 tab 等其他参数，仅写入非默认值，保持 URL 简洁） */
+function writeFilterToParams(state: ItemsFilterState, base?: URLSearchParams): URLSearchParams {
+  const params = base ? new URLSearchParams(base.toString()) : new URLSearchParams()
+  // 先清掉本 hook 管理的筛选字段，再写当前值（避免旧值残留）
+  for (const key of ['uid', 'status', 'title', 'gid', 'orderBy', 'asc', 'page']) params.delete(key)
   if (state.uid) params.set('uid', state.uid)
   if (state.status !== undefined) params.set('status', String(state.status))
   if (state.title) params.set('title', state.title)
@@ -57,14 +59,18 @@ export function useItemsFilters() {
   const pageSize = 20
 
   const debouncedState = useDebounce(filterState, 400)
+  // 上次写入的完整 URL（防 searchParams 变化触发 effect 重跑时重复 replace / 参数顺序抖动）
+  const lastUrlRef = useRef<string | null>(null)
 
-  // 筛选条件 → URL（debounced，避免输入时频繁更新）
+  // 筛选条件 → URL（debounced，避免输入时频繁更新；基于当前 searchParams 保留 tab 等其他参数）
   useEffect(() => {
-    const params = writeFilterToParams(debouncedState)
+    const params = writeFilterToParams(debouncedState, searchParams)
     const qs = params.toString()
     const url = qs ? `${pathname}?${qs}` : pathname
+    if (url === lastUrlRef.current) return
+    lastUrlRef.current = url
     router.replace(url, { scroll: false })
-  }, [debouncedState, router, pathname])
+  }, [debouncedState, router, pathname, searchParams])
 
   const filters: ItemFilters = useMemo(() => {
     return {
