@@ -99,7 +99,7 @@ export async function fetchReplyRules(
 
 /** 创建规则（可同时绑定商品） */
 export async function createReplyRule(data: ReplyRuleCreate): Promise<ReplyRule> {
-  return fetchApi<ReplyRule>("/api/keywords", {
+  return fetchApi<ReplyRule>("/api/keywords/rules.create", {
     method: "POST",
     body: JSON.stringify(data),
   })
