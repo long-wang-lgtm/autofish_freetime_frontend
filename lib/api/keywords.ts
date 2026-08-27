@@ -99,9 +99,11 @@ export async function fetchReplyRules(
 
 /** 创建规则（可同时绑定商品） */
 export async function createReplyRule(data: ReplyRuleCreate): Promise<ReplyRule> {
+  // 后端 create_keyword(rule, gids) 为两个 body 参数，请求体需 { rule, gids } 双层结构
+  const { gids, ...rule } = data
   return fetchApi<ReplyRule>("/api/keywords/rules.create", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify({ rule, gids }),
   })
 }
 
