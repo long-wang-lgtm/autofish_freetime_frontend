@@ -120,7 +120,7 @@ export async function updateReplyRule(
 
 /** 删除规则 */
 export async function deleteReplyRule(id: number): Promise<OperationResult> {
-  return fetchApi<OperationResult>(`/api/keywords/?rid=${id}`, { method: "DELETE" })
+  return fetchApi<OperationResult>(`/api/keywords/delete.rule?rid=${id}`, { method: "DELETE" })
 }
 
 /** 获取可绑定的商品列表 */
