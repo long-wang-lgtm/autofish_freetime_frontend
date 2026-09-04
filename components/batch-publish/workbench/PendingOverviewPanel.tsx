@@ -21,11 +21,11 @@ const COLUMNS: DataTableColumn<PublishMaterial>[] = [
     ),
   },
   {
-    key: 'opportunity',
-    header: '商机',
+    key: 'souItem',
+    header: '源商品',
     render: (m) => (
       <span className="text-xs text-gray-400 truncate">
-        {m.opportunity?.name ?? `#${m.opportunity?.id ?? '未知'}`}
+        {m.souItem?.title ?? `#${m.souItem?.gid?.slice(0, 8) ?? m.id}`}
       </span>
     ),
   },

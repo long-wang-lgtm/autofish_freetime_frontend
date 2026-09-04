@@ -8,10 +8,9 @@ import { PendingOverviewPanel } from './PendingOverviewPanel'
 import { OpportunityListPanel } from './OpportunityListPanel'
 import { MaterialWorkspace } from './MaterialWorkspace'
 import { MaterialEditSheet } from './MaterialEditSheet'
-import { AIContextModal } from './AIContextModal'
 import { CreateMaterialModal } from './CreateMaterialModal'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
-import type { PublishMaterial, OpportunityParams } from '@/lib/api/batch-publish'
+import type { PublishMaterial } from '@/lib/api/batch-publish'
 
 const LEFT_PANEL_DEFAULT_WIDTH = 320
 const LEFT_PANEL_MIN_WIDTH = 260
@@ -23,7 +22,6 @@ export function WorkbenchTab() {
   const searchParams = useSearchParams()
 
   const [leftWidth, setLeftWidth] = useState(LEFT_PANEL_DEFAULT_WIDTH)
-  const [contextMaterialId, setContextMaterialId] = useState<number | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem('bp-workbench-left-width')
@@ -38,58 +36,40 @@ export function WorkbenchTab() {
     })
   }, [])
 
-  // Back to overview → clear oid param
+  // Back to overview → clear gid param
   const handleBackToOverview = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
     params.set('tab', 'workbench')
-    params.delete('oid')
+    params.delete('gid')
     router.push(`/dashboard/batch-publish?${params.toString()}`, { scroll: false })
   }, [router, searchParams])
 
-  // Select opportunity → set URL param → right panel switches to workspace
-  const handleSelectOid = useCallback((oid: number) => {
-    if (oid === page.selectedOid) {
+  // Select monitored item → set URL gid param → right panel switches to workspace
+  const handleSelectGid = useCallback((gid: string) => {
+    if (gid === page.selectedGid) {
       handleBackToOverview()
       return
     }
     const params = new URLSearchParams(searchParams.toString())
     params.set('tab', 'workbench')
-    params.set('oid', String(oid))
+    params.set('gid', gid)
     router.push(`/dashboard/batch-publish?${params.toString()}`, { scroll: false })
-  }, [router, searchParams, page.selectedOid, handleBackToOverview])
+  }, [router, searchParams, page.selectedGid, handleBackToOverview])
 
-  // From PendingOverviewPanel: click material row → select its opportunity
+  // From PendingOverviewPanel: click material row → select its source item (souItem.gid)
   const handleSelectFromOverview = useCallback((material: PublishMaterial) => {
-    if (material.opportunity?.id) {
-      handleSelectOid(material.opportunity.id)
+    if (material.souItem?.gid) {
+      handleSelectGid(material.souItem.gid)
     }
-  }, [handleSelectOid])
+  }, [handleSelectGid])
 
   const handleCreateMaterials = useCallback((num: number) => {
-    if (!page.selectedOpportunity) return
+    if (!page.selectedItem) return
     page.createMaterialsMutation.mutate(
-      { num, opp: page.selectedOpportunity },
+      { num, souItemId: page.selectedItem.gid },
       { onSuccess: () => page.setShowCreateModal(false) }
     )
   }, [page])
-
-  // ---- Opportunity CRUD callbacks (passed to left panel) ----
-  const handleCreateOpportunity = useCallback((values: OpportunityParams) => {
-    page.createOpportunity.mutate(values)
-  }, [page.createOpportunity])
-
-  const handleUpdateOpportunity = useCallback((oid: number, values: Partial<OpportunityParams>) => {
-    page.updateOpportunity.mutate({ oid, opp: values })
-  }, [page.updateOpportunity])
-
-  const handleDeleteOpportunity = useCallback((oid: number) => {
-    page.deleteOpportunity.mutate(oid)
-  }, [page.deleteOpportunity])
-
-  const isOppMutating =
-    page.createOpportunity.isPending ||
-    page.updateOpportunity.isPending ||
-    page.deleteOpportunity.isPending
 
   // ---- Common left panel component ----
   const leftPanel = (
@@ -104,22 +84,16 @@ export function WorkbenchTab() {
         onPageChange={page.setOppPage}
         search={page.oppSearch}
         onSearchChange={page.setOppSearch}
-        status={page.oppStatus}
-        onStatusChange={page.setOppStatus}
-        selectedOid={page.selectedOid}
-        onSelectOid={handleSelectOid}
-        onCreateOpportunity={handleCreateOpportunity}
-        onUpdateOpportunity={handleUpdateOpportunity}
-        onDeleteOpportunity={handleDeleteOpportunity}
-        isMutating={isOppMutating}
+        selectedGid={page.selectedGid}
+        onSelectGid={handleSelectGid}
       />
     </div>
   )
 
   // ---- Right panel content (PC: switches between overview ↔ workspace) ----
-  const rightPanelContent = page.selectedOid ? (
+  const rightPanelContent = page.selectedGid ? (
     <MaterialWorkspace
-      opportunity={page.selectedOpportunity}
+      item={page.selectedItem}
       materials={page.materials}
       materialLoading={page.materialLoading}
       materialError={page.materialError}
@@ -128,9 +102,8 @@ export function WorkbenchTab() {
       onToggleSelect={page.toggleSelect}
       onClearSelection={page.clearSelection}
       onOpenEditor={page.openEditor}
-      onOpenContextModal={setContextMaterialId}
       onCreateClick={() => page.setShowCreateModal(true)}
-      selectedOid={page.selectedOid}
+      selectedGid={page.selectedGid}
       page={page.materialPage}
       total={page.materialTotal}
       onPageChange={page.setMaterialPage}
@@ -155,8 +128,8 @@ export function WorkbenchTab() {
   if (page.isMobile) {
     return (
       <div className="flex-1 flex flex-col min-h-0">
-        {/* 无选中商机：双视图切换 */}
-        {!page.selectedOid && (
+        {/* 无选中商品：双视图切换 */}
+        {!page.selectedGid && (
           <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             {/* 视图切换按钮 */}
             <div className="flex items-center border-b border-gray-100 flex-shrink-0">
@@ -171,14 +144,14 @@ export function WorkbenchTab() {
                 待办概览
               </button>
               <button
-                onClick={() => page.setMobileView('opportunities')}
+                onClick={() => page.setMobileView('items')}
                 className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                  page.mobileView === 'opportunities'
+                  page.mobileView === 'items'
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                商机列表
+                商品列表
               </button>
             </div>
 
@@ -203,11 +176,11 @@ export function WorkbenchTab() {
           </div>
         )}
 
-        {/* 选中商机：Push 工作区（header 由 MaterialWorkspace 自己渲染） */}
-        {!!page.selectedOid && (
+        {/* 选中商品：Push 工作区（header 由 MaterialWorkspace 自己渲染） */}
+        {!!page.selectedGid && (
           <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <MaterialWorkspace
-              opportunity={page.selectedOpportunity}
+              item={page.selectedItem}
               materials={page.materials}
               materialLoading={page.materialLoading}
               materialError={page.materialError}
@@ -216,9 +189,8 @@ export function WorkbenchTab() {
               onToggleSelect={page.toggleSelect}
               onClearSelection={page.clearSelection}
               onOpenEditor={page.openEditor}
-              onOpenContextModal={setContextMaterialId}
               onCreateClick={() => page.setShowCreateModal(true)}
-              selectedOid={page.selectedOid}
+              selectedGid={page.selectedGid}
               page={page.materialPage}
               total={page.materialTotal}
               onPageChange={page.setMaterialPage}
@@ -231,19 +203,9 @@ export function WorkbenchTab() {
         {/* Sheet 编辑器 */}
         <MaterialEditSheet
           materialId={page.editingMaterialId}
-          selectedOid={page.selectedOid}
+          selectedGid={page.selectedGid}
           open={page.editingMaterialId !== null}
           onClose={page.closeEditor}
-          materials={page.materials}
-        />
-
-        {/* AI 上下文弹窗 */}
-        <AIContextModal
-          materialId={contextMaterialId}
-          selectedOid={page.selectedOid}
-          open={contextMaterialId !== null}
-          onClose={() => setContextMaterialId(null)}
-          monitoredItems={page.monitoredItems}
           materials={page.materials}
         />
 
@@ -251,7 +213,7 @@ export function WorkbenchTab() {
         <CreateMaterialModal
           open={page.showCreateModal}
           onClose={() => page.setShowCreateModal(false)}
-          opportunity={page.selectedOpportunity}
+          item={page.selectedItem}
           onCreate={handleCreateMaterials}
           isPending={page.createMaterialsMutation.isPending}
         />
@@ -262,7 +224,7 @@ export function WorkbenchTab() {
   // ---- PC: left-right split ----
   return (
     <div className="flex-1 flex min-h-0">
-      {/* 左侧：商机列表（持久可见） */}
+      {/* 左侧：商品列表（持久可见） */}
       <div style={{ width: leftWidth }} className="flex-shrink-0">
         {leftPanel}
       </div>
@@ -280,19 +242,9 @@ export function WorkbenchTab() {
       {/* Sheet 编辑器 */}
       <MaterialEditSheet
         materialId={page.editingMaterialId}
-        selectedOid={page.selectedOid}
+        selectedGid={page.selectedGid}
         open={page.editingMaterialId !== null}
         onClose={page.closeEditor}
-        materials={page.materials}
-      />
-
-      {/* AI 上下文弹窗 */}
-      <AIContextModal
-        materialId={contextMaterialId}
-        selectedOid={page.selectedOid}
-        open={contextMaterialId !== null}
-        onClose={() => setContextMaterialId(null)}
-        monitoredItems={page.monitoredItems}
         materials={page.materials}
       />
 
@@ -300,7 +252,7 @@ export function WorkbenchTab() {
       <CreateMaterialModal
         open={page.showCreateModal}
         onClose={() => page.setShowCreateModal(false)}
-        opportunity={page.selectedOpportunity}
+        item={page.selectedItem}
         onCreate={handleCreateMaterials}
         isPending={page.createMaterialsMutation.isPending}
       />

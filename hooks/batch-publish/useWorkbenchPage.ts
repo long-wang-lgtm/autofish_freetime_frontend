@@ -6,18 +6,15 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useWorkbenchFilters } from './useWorkbenchFilters'
 import { useWorkbenchData } from './useWorkbenchData'
 import { useWorkbenchMutations } from './useWorkbenchMutations'
-import { useOpportunityMutations } from './useOpportunityMutations'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { listAccounts, type Account } from '@/lib/api/accounts'
 
 export function useWorkbenchPage() {
   const isMobile = useIsMobile()
   const filters = useWorkbenchFilters()
-  const opportunityMutations = useOpportunityMutations()
 
-  // 左侧商机列表的筛选
+  // 左侧监控商品列表的筛选
   const [oppSearch, setOppSearch] = useState('')
-  const [oppStatus, setOppStatus] = useState('')
   const [oppPage, setOppPage] = useState(1)
   const debouncedOppSearch = useDebounce(oppSearch, 300)
 
@@ -28,15 +25,14 @@ export function useWorkbenchPage() {
   const [materialPage, setMaterialPage] = useState(1)
 
   const data = useWorkbenchData({
-    selectedOid: filters.selectedOid,
+    selectedGid: filters.selectedGid,
     overviewPage,
     oppSearch: debouncedOppSearch,
-    oppStatus,
     oppPage,
     materialPage,
   })
 
-  const mutations = useWorkbenchMutations(filters.selectedOid)
+  const mutations = useWorkbenchMutations(filters.selectedGid)
 
   // 全局账号列表 — 挂载时获取，长期缓存
   const { data: accounts = [] } = useQuery<Account[]>({
@@ -46,8 +42,8 @@ export function useWorkbenchPage() {
     gcTime: 30 * 60 * 1000,
   })
 
-  // 移动端顶层视图切换（仅控制无选中商机时显示概览还是商机列表）
-  type MobileView = 'overview' | 'opportunities'
+  // 移动端顶层视图切换（仅控制无选中商品时显示概览还是商品列表）
+  type MobileView = 'overview' | 'items'
   const [mobileView, setMobileView] = useState<MobileView>('overview')
 
   return {
@@ -56,14 +52,10 @@ export function useWorkbenchPage() {
     ...mutations,
     isMobile,
     accounts,
-    oppSearch, oppStatus, oppPage,
-    setOppSearch, setOppStatus, setOppPage,
+    oppSearch, oppPage,
+    setOppSearch, setOppPage,
     overviewPage, setOverviewPage,
     materialPage, setMaterialPage,
     mobileView, setMobileView,
-    // 商机 CRUD（来自 useOpportunityMutations，注意不与 ...mutations 中 deleteMaterialMutation 冲突）
-    createOpportunity: opportunityMutations.createMutation,
-    updateOpportunity: opportunityMutations.updateMutation,
-    deleteOpportunity: opportunityMutations.deleteMutation,
   }
 }

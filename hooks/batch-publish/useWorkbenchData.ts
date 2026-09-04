@@ -1,36 +1,40 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { listOpportunities, listMaterials, listMonitoredItems } from '@/lib/api/batch-publish'
+import { listMaterials, listMonitoredItems } from '@/lib/api/batch-publish'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 
 interface UseWorkbenchDataParams {
-  selectedOid: number | undefined
+  selectedGid: string | undefined
   overviewPage: number
   oppSearch: string
-  oppStatus: string
   oppPage: number
   materialPage: number
 }
 
-export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStatus, oppPage, materialPage }: UseWorkbenchDataParams) {
-  // 左侧商机列表
+/**
+ * 工作台数据源（去商机化）：
+ * - 左侧列表 = 监控商品（原商机列表数据源，listOpportunities → listMonitoredItems）
+ * - 素材工作区按选中监控商品 souItemId 拉取（listMaterials({ souItemId })）
+ * - AI 上下文候选 = 当前选中的监控商品自身
+ */
+export function useWorkbenchData({ selectedGid, overviewPage, oppSearch, oppPage, materialPage }: UseWorkbenchDataParams) {
+  // 左侧监控商品列表（queryKey 保留原 'opportunities' 前缀，避免散落的 invalidate 失效）
   const {
     data: oppData,
     isLoading: oppLoading,
     error: oppError,
     refetch: oppRefetch,
   } = useQuery({
-    queryKey: ['batch-publish', 'opportunities', { page: oppPage, pageSize: PAGE_SIZE, search: oppSearch, status: oppStatus }],
-    queryFn: () => listOpportunities({
+    queryKey: ['batch-publish', 'opportunities', { page: oppPage, pageSize: PAGE_SIZE, search: oppSearch }],
+    queryFn: () => listMonitoredItems({
       page: oppPage,
       page_size: PAGE_SIZE,
-      name: oppSearch || undefined,
-      status: oppStatus || undefined,
+      title: oppSearch || undefined,
     }),
   })
 
-  // 概览视图 — 跨商机获取未完成素材
+  // 概览视图 — 跨商品获取未完成素材
   const {
     data: overviewData,
     isLoading: overviewLoading,
@@ -43,34 +47,26 @@ export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStat
       page_size: 20,
       status: 'pending,write_success,write_failed,genimageplan_success,genimageplan_failed,genimage_success,genimage_failed,publish_failed',
     }),
-    enabled: !selectedOid,
+    enabled: !selectedGid,
   })
 
-  // 工作区 — 当前商机下的素材
+  // 工作区 — 当前监控商品(gid)下的素材
   const {
     data: materialData,
     isLoading: materialLoading,
     error: materialError,
     refetch: materialRefetch,
   } = useQuery({
-    queryKey: ['batch-publish', 'materials', selectedOid, { page: materialPage }],
-    queryFn: () => listMaterials({ oid: selectedOid, page: materialPage, page_size: 20 }),
-    enabled: !!selectedOid,
+    queryKey: ['batch-publish', 'materials', selectedGid, { page: materialPage }],
+    queryFn: () => listMaterials({ souItemId: selectedGid, page: materialPage, page_size: 20 }),
+    enabled: !!selectedGid,
   })
 
-  // 工作区 — 当前商机绑定的监控商品
-  const {
-    data: monitoredData,
-    isLoading: monitoredLoading,
-    error: monitoredError,
-    refetch: monitoredRefetch,
-  } = useQuery({
-    queryKey: ['batch-publish', 'monitored-items', 'workbench', selectedOid],
-    queryFn: () => listMonitoredItems({ oid: selectedOid, page_size: 10 }),
-    enabled: !!selectedOid,
-  })
+  // 当前选中的监控商品（左栏列表中反查）
+  const selectedItem = oppData?.items?.find(o => o.gid === selectedGid) ?? null
 
   return {
+    // 左侧列表（监控商品）
     opportunities: oppData?.items ?? [],
     oppTotal: oppData?.total ?? 0,
     oppLoading,
@@ -89,11 +85,9 @@ export function useWorkbenchData({ selectedOid, overviewPage, oppSearch, oppStat
     materialError,
     materialRefetch,
 
-    monitoredItems: monitoredData?.items ?? [],
-    monitoredLoading,
-    monitoredError,
-    monitoredRefetch,
+    // AI 上下文候选 = 当前选中的监控商品自身（原「商机绑定商品」语义收敛为单商品）
+    monitoredItems: selectedItem ? [selectedItem] : [],
 
-    selectedOpportunity: oppData?.items?.find(o => o.id === selectedOid) ?? null,
+    selectedItem,
   }
 }

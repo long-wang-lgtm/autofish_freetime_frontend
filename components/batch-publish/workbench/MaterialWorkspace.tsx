@@ -9,10 +9,11 @@ import { MaterialTableRow } from './MaterialTableRow'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import { fmtPrice } from '@/lib/utils/format'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import type { OpportunityItem, PublishMaterial } from '@/lib/api/batch-publish'
+import type { MonitoredItem, PublishMaterial } from '@/lib/api/batch-publish'
 
 interface MaterialWorkspaceProps {
-  opportunity: OpportunityItem | null
+  /** 当前选中的监控商品（素材创作对象） */
+  item: MonitoredItem | null
   materials: PublishMaterial[]
   materialLoading: boolean
   materialError: unknown
@@ -21,9 +22,8 @@ interface MaterialWorkspaceProps {
   onToggleSelect: (id: number) => void
   onClearSelection: () => void
   onOpenEditor: (id: number) => void
-  onOpenContextModal: (id: number) => void
   onCreateClick: () => void
-  selectedOid: number | undefined
+  selectedGid: string | undefined
   page: number
   total: number
   onPageChange: (p: number) => void
@@ -40,15 +40,14 @@ const MATERIAL_COLUMNS: NativeTableColumn<PublishMaterial>[] = [
   { key: 'price',     width: '7%',  align: 'center', header: '价格' },
   { key: 'account',   width: '9%',  align: 'center', header: '账号' },
   { key: 'category',  width: '9%',  align: 'center', header: '类目' },
-  { key: 'aiContext', width: '7%',  align: 'center', header: 'AI上下文' },
   { key: 'progress',  width: '10%', align: 'center', header: '进度/操作' },
   { key: 'delete',    width: '4%',  align: 'center', header: '删除' },
 ]
 
 export function MaterialWorkspace({
-  opportunity, materials, materialLoading, materialError, materialRefetch,
+  item, materials, materialLoading, materialError, materialRefetch,
   selectedMaterialIds, onToggleSelect, onClearSelection, onOpenEditor,
-  onOpenContextModal, onCreateClick, selectedOid,
+  onCreateClick, selectedGid,
   page, total, onPageChange,
   onBackToOverview, materialPage,
 }: MaterialWorkspaceProps) {
@@ -64,25 +63,24 @@ export function MaterialWorkspace({
         isSelected={selectedMaterialIds.has(item.id)}
         onToggleSelect={onToggleSelect}
         onOpenEditor={onOpenEditor}
-        onOpenContextModal={onOpenContextModal}
-        selectedOid={selectedOid}
+        selectedGid={selectedGid}
         materialPage={materialPage}
       />
     ),
-    [selectedMaterialIds, onToggleSelect, onOpenEditor, onOpenContextModal, selectedOid, materialPage]
+    [selectedMaterialIds, onToggleSelect, onOpenEditor, selectedGid, materialPage]
   )
 
-  if (!opportunity) {
+  if (!item) {
     return (
       <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-        请从左侧选择一个商机
+        请从左侧选择一个监控商品
       </div>
     )
   }
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* 商机头部 */}
+      {/* 监控商品头部 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0 bg-white">
         <div className="flex items-center gap-3 min-w-0">
           <button
@@ -114,13 +112,13 @@ export function MaterialWorkspace({
             {!isMobile && <span>创建素材</span>}
           </button>
 
-          <h3 className="text-base font-semibold text-gray-900 truncate">{opportunity.name}</h3>
-          {(opportunity.price ?? 0) > 0 && (
-            <span className="text-sm text-gray-600 flex-shrink-0">{fmtPrice(opportunity.price!)}</span>
+          <h3 className="text-base font-semibold text-gray-900 truncate">{item.title || '未命名'}</h3>
+          {(item.price ?? 0) > 0 && (
+            <span className="text-sm text-gray-600 flex-shrink-0">{fmtPrice(item.price!)}</span>
           )}
-          <span className="text-xs text-gray-400 flex-shrink-0">
-            📦{opportunity.monitoredItemCount ?? 0} · 📝{opportunity.materialCount ?? 0}
-          </span>
+          {(item.wantCount ?? 0) > 0 && (
+            <span className="text-xs text-gray-400 flex-shrink-0">想要 {item.wantCount}</span>
+          )}
         </div>
       </div>
 
@@ -135,7 +133,7 @@ export function MaterialWorkspace({
           errorMessage="加载素材失败"
           onRetry={materialRefetch}
           emptyTitle="暂无素材"
-          emptyDescription="点击「批量创建」为该商机创建素材"
+          emptyDescription="点击「批量创建」为该商品创建素材"
           emptyAction={{ label: '批量创建', onClick: onCreateClick }}
           stickyHeader
           tableLayout="fixed"

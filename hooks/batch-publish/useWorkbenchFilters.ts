@@ -5,8 +5,8 @@ import { useSearchParams } from 'next/navigation'
 
 export function useWorkbenchFilters() {
   const searchParams = useSearchParams()
-  const oidParam = searchParams.get('oid')
-  const selectedOid = oidParam ? Number(oidParam) : undefined
+  // 选中对象 = 监控商品 gid（去商机化：URL 参数由 oid 改为 gid）
+  const selectedGid = searchParams.get('gid') ?? undefined
 
   const [editingMaterialId, setEditingMaterialId] = useState<number | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -34,7 +34,7 @@ export function useWorkbenchFilters() {
   }, [])
 
   return {
-    selectedOid,
+    selectedGid,
     editingMaterialId,
     showCreateModal,
     selectedMaterialIds,

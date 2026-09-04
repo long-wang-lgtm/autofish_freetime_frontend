@@ -28,14 +28,6 @@ export type MaterialStatus =
 /** AI 上下文模板类型 */
 export type TemplateType = 'only_opportunity' | 'with_item'
 
-/** 素材 AI 上下文 */
-export interface MaterialAIContext {
-  template?: TemplateType
-  images?: string[]
-  items?: string[]
-  coverprompt?: string
-}
-
 /** 监控商品 */
 export interface MonitoredItem {
   gid: string
@@ -85,6 +77,10 @@ export interface OpportunityParams {
   ai_context_template?: TemplateType
 }
 
+export interface ProduceState {
+  coverprompt?: string
+}
+
 /** 素材 */
 export interface PublishMaterial {
   id: number
@@ -93,10 +89,11 @@ export interface PublishMaterial {
   category?: string | null
   status: MaterialStatus
   images?: MaterialImage[]
-  ai_context?: MaterialAIContext
+  produceState?: ProduceState
   to_uid?: string | null
   to_gid?: string | null
   opportunity?: OpportunityItem | null
+  souItem?: MonitoredItem | null
   created_at?: string | null
   updated_at?: string | null
 }
@@ -110,10 +107,14 @@ export interface MaterialImage {
   size?: number | null
 }
 
-/** 素材创建入参 */
+/** 素材创建入参 — 以源监控商品(souItemId)为创作对象（POST /material.create.by.item，query 参数） */
 export interface MaterialCreateParams {
   num: number
-  opp: OpportunityItem
+  souItemId: string
+  /** 发布账号（可选，不传则未分配草稿） */
+  to_uid?: string
+  /** 创作策略简报（可选；带策略时 num 锁定 1，写入 produceState.brief） */
+  brief?: string
 }
 
 /** 素材编辑入参 */
@@ -124,13 +125,7 @@ export interface MaterialEditInput {
   category?: string
   to_uid?: string
   images?: MaterialImage[]
-}
-
-/** AI 上下文更新入参 */
-export interface MaterialContextInput {
-  id: number
-  templateType?: TemplateType
-  gids?: string[]
+  /** 封面规划提示词（写入 produceState.coverprompt） */
   coverprompt?: string
 }
 
@@ -318,10 +313,15 @@ export async function listMaterials(params?: {
   page?: number
   page_size?: number
   oid?: number
-  name?: string
+  oppName?: string
+  souItemId?: string
+  souItemTitle?: string
+  to_uid?: string
   description?: string
   category?: string
   status?: string
+  order_by?: string
+  asc?: boolean
 }): Promise<MaterialListResponse> {
   return fetchApi<MaterialListResponse>('/material.list', {
     baseUrl: BP_BASE,
@@ -330,14 +330,16 @@ export async function listMaterials(params?: {
   })
 }
 
-/** 批量创建素材 — POST /api/selection/material.create */
+/** 按源商品创建素材 — POST /api/selection/material.create.by.item */
 export async function createMaterials(params: MaterialCreateParams): Promise<PublishMaterial[]> {
-  return fetchApi<PublishMaterial[]>('/material.create', {
+  const query: Record<string, string | number> = { num: params.num, souItemId: params.souItemId }
+  if (params.to_uid !== undefined) query.to_uid = params.to_uid
+  if (params.brief !== undefined) query.brief = params.brief
+  return fetchApi<PublishMaterial[]>('/material.create.by.item', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
-    params: { num: params.num },
-    body: JSON.stringify(params.opp),
+    params: query,
   })
 }
 
@@ -353,29 +355,14 @@ export async function editMaterial(input: MaterialEditInput): Promise<PublishMat
   })
 }
 
-/** 更新 AI 上下文 — POST /api/selection/material.context */
-export async function updateMaterialContext(input: MaterialContextInput): Promise<PublishMaterial> {
-  const { id, templateType, gids, coverprompt } = input
-  const sp = new URLSearchParams()
-  sp.set('id', String(id))
-  if (templateType) sp.set('templateType', templateType)
-  if (coverprompt !== undefined) sp.set('coverprompt', coverprompt)
-  return fetchApi<PublishMaterial>(`/material.context?${sp.toString()}`, {
-    baseUrl: BP_BASE,
-    credentials_: 'include',
-    method: 'POST',
-    body: JSON.stringify(gids),
-  })
-}
-
-/** 触发 AI 工作 — POST /api/selection/material.rewrite.work */
+/** 触发 AI 工作 — POST /api/selection/material.rewrite.work（body 为裸工作名，如 "write"） */
 export async function triggerWork(materialId: number, stage: RewriteStage): Promise<PublishMaterial> {
   return fetchApi<PublishMaterial>('/material.rewrite.work', {
     baseUrl: BP_BASE,
     credentials_: 'include',
     method: 'POST',
     params: { id: materialId },
-    body: JSON.stringify({ stage }),
+    body: JSON.stringify({'work': stage}),
   })
 }
 

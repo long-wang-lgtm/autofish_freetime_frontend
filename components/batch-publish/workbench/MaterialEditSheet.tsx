@@ -5,20 +5,21 @@ import { Sheet, BottomSheet } from '@/components/ui/overlay/Sheet'
 import { useQueryClient } from '@tanstack/react-query'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { uploadFileToFlare, imageDisplayUrl } from '@/lib/api/upload'
-import { editMaterial, updateMaterialContext } from '@/lib/api/batch-publish'
+import { editMaterial } from '@/lib/api/batch-publish'
 import type { MaterialImage, PublishMaterial } from '@/lib/api/batch-publish'
 import type { MaterialImage as UploadMaterialImage } from '@/lib/api/upload'
 
 interface MaterialEditSheetProps {
   materialId: number | null
-  selectedOid: number | undefined
+  /** 当前选中的监控商品 gid（素材缓存 key 维度） */
+  selectedGid: string | undefined
   open: boolean
   onClose: () => void
   /** 素材列表——从父组件传入，避免缓存 key 不匹配导致读不到数据 */
   materials: PublishMaterial[]
 }
 
-export function MaterialEditSheet({ materialId, selectedOid, open, onClose, materials }: MaterialEditSheetProps) {
+export function MaterialEditSheet({ materialId, selectedGid, open, onClose, materials }: MaterialEditSheetProps) {
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
 
@@ -30,25 +31,23 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
   const [images, setImages] = useState<MaterialImage[]>([])
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
 
-  // ---- 自动保存状态 ----
+  // ---- 自动保存状态（保存时机 = 侧边栏关闭时，仅 dirty 触发） ----
   const descDirtyRef = useRef(false)
-  const descTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const descSavingRef = useRef(false)
 
   const coverDirtyRef = useRef(false)
-  const coverTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const coverSavingRef = useRef(false)
 
   // 初始化表单
   useEffect(() => {
     if (material) {
       setDescription(material.description ?? '')
-      setCoverprompt(material.ai_context?.coverprompt ?? '')
+      setCoverprompt(material.produceState?.coverprompt ?? '')
       setImages(material.images ?? [])
     }
   }, [material])
 
-  // ---- 自动保存函数（必须在 if (!material) return null 之前） ----
+  // ---- 保存函数（必须在 if (!material) return null 之前） ----
 
   const autoSaveDesc = useCallback(async (value: string) => {
     if (!material || descSavingRef.current) return
@@ -56,58 +55,42 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     try {
       await editMaterial({ id: material.id, description: value || undefined })
       descDirtyRef.current = false
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
     } catch {
       // 静默处理
     } finally {
       descSavingRef.current = false
     }
-  }, [material, selectedOid, queryClient])
+  }, [material, selectedGid, queryClient])
 
+  // 封面提示词走编辑接口（material.edit），随 produceState 存储
   const autoSaveCover = useCallback(async (value: string) => {
     if (!material || coverSavingRef.current) return
     coverSavingRef.current = true
     try {
-      await updateMaterialContext({ id: material.id, coverprompt: value || undefined })
+      await editMaterial({ id: material.id, coverprompt: value || undefined })
       coverDirtyRef.current = false
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
     } catch {
       // 静默处理
     } finally {
       coverSavingRef.current = false
     }
-  }, [material, selectedOid, queryClient])
+  }, [material, selectedGid, queryClient])
 
+  // 输入仅更新本地状态 + 脏标记，不实时保存
   const handleDescChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const v = e.target.value
-    setDescription(v)
+    setDescription(e.target.value)
     descDirtyRef.current = true
-    if (descTimerRef.current) clearTimeout(descTimerRef.current)
-    descTimerRef.current = setTimeout(() => autoSaveDesc(v), 1000)
-  }
-
-  const handleDescBlur = () => {
-    if (descTimerRef.current) { clearTimeout(descTimerRef.current); descTimerRef.current = undefined }
-    if (descDirtyRef.current) autoSaveDesc(description)
   }
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const v = e.target.value
-    setCoverprompt(v)
+    setCoverprompt(e.target.value)
     coverDirtyRef.current = true
-    if (coverTimerRef.current) clearTimeout(coverTimerRef.current)
-    coverTimerRef.current = setTimeout(() => autoSaveCover(v), 1000)
   }
 
-  const handleCoverBlur = () => {
-    if (coverTimerRef.current) { clearTimeout(coverTimerRef.current); coverTimerRef.current = undefined }
-    if (coverDirtyRef.current) autoSaveCover(coverprompt)
-  }
-
-  // Sheet 关闭时 flush 所有待保存内容
+  // Sheet 关闭时保存所有脏字段（未修改则不触发）
   const handleCloseWithFlush = useCallback(async () => {
-    if (descTimerRef.current) { clearTimeout(descTimerRef.current); descTimerRef.current = undefined }
-    if (coverTimerRef.current) { clearTimeout(coverTimerRef.current); coverTimerRef.current = undefined }
     const promises: Promise<void>[] = []
     if (descDirtyRef.current) promises.push(autoSaveDesc(description))
     if (coverDirtyRef.current) promises.push(autoSaveCover(coverprompt))
@@ -125,7 +108,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
       const nextImages = [...images, uploaded as MaterialImage]
       setImages(nextImages)
       await editMaterial({ id: material.id, images: nextImages })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
     } catch {
       // silent
     } finally {
@@ -139,7 +122,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     setImages(nextImages)
     try {
       await editMaterial({ id: material.id, images: nextImages.length > 0 ? nextImages : undefined })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
     } catch { /* silent */ }
   }
 
@@ -153,7 +136,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     setImages(nextImages)
     try {
       await editMaterial({ id: material.id, images: nextImages })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
     } catch { /* silent */ }
   }
 
@@ -167,7 +150,7 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
     setImages(nextImages)
     try {
       await editMaterial({ id: material.id, images: nextImages })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
     } catch { /* silent */ }
   }
 
@@ -243,7 +226,6 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
         <textarea
           value={description}
           onChange={handleDescChange}
-          onBlur={handleDescBlur}
           rows={8}
           className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
           style={{ minHeight: 200 }}
@@ -257,7 +239,6 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
         <textarea
           value={coverprompt}
           onChange={handleCoverChange}
-          onBlur={handleCoverBlur}
           rows={4}
           className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-vertical"
           placeholder="例如：白色背景，柔和自然光，产品居中构图..."
@@ -266,11 +247,11 @@ export function MaterialEditSheet({ materialId, selectedOid, open, onClose, mate
 
       {/* 底部 — 自动保存状态 + 关闭 */}
       <div className="flex gap-2 pt-3 border-t border-gray-100">
-        <p className="flex-1 flex items-center gap-1.5 text-xs text-green-600">
+        <p className="flex-1 flex items-center gap-1.5 text-xs text-gray-500">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          所有改动已自动保存
+          修改将在关闭侧边栏时自动保存
         </p>
         <button
           onClick={handleCloseWithFlush}

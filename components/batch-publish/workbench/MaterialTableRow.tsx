@@ -22,14 +22,14 @@ export interface MaterialTableRowProps {
   isSelected: boolean
   onToggleSelect: (id: number) => void
   onOpenEditor: (id: number) => void
-  onOpenContextModal: (id: number) => void
-  selectedOid: number | undefined
+  /** 当前选中的监控商品 gid（素材缓存 key 维度） */
+  selectedGid: string | undefined
   materialPage: number
 }
 
 export function MaterialTableRow({
   item: material, index: _index, columns, isSelected, onToggleSelect, onOpenEditor,
-  onOpenContextModal, selectedOid, materialPage,
+  selectedGid, materialPage,
 }: MaterialTableRowProps) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -53,7 +53,7 @@ export function MaterialTableRow({
 
   const optimisticUpdate = (field: string, value: unknown) => {
     queryClient.setQueryData<MaterialListResponse>(
-      ['batch-publish', 'materials', selectedOid, { page: materialPage }],
+      ['batch-publish', 'materials', selectedGid, { page: materialPage }],
       (old) => old ? {
         ...old,
         items: old.items.map(m => m.id === material.id ? { ...m, [field]: value } : m)
@@ -70,11 +70,11 @@ export function MaterialTableRow({
     try {
       await editMaterial({ id: material.id, [field]: value } as Parameters<typeof editMaterial>[0])
       if (field === 'to_uid') {
-        queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+        queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
         queryClient.invalidateQueries({ queryKey: ['batch-publish', 'channel', material.id] })
       }
     } catch (err) {
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
       toast.addToast({ title: `保存失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })
     } finally {
       setSavingField(null)
@@ -88,7 +88,7 @@ export function MaterialTableRow({
   const handleTriggerWork = async (stage: RewriteStage) => {
     try {
       await triggerWork(material.id, stage)
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
       const stageLabel = stage === 'write' ? '改写' : stage === 'genimageplan' ? '封面规划' : '生图'
       toast.addToast({ title: `${stageLabel}完成`, variant: 'success' })
     } catch (err) {
@@ -99,7 +99,7 @@ export function MaterialTableRow({
   const handlePublish = async () => {
     try {
       await publishMaterial(material.id)
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
       toast.addToast({ title: '发布成功', variant: 'success' })
     } catch (err) {
       toast.addToast({ title: `发布失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })
@@ -110,7 +110,7 @@ export function MaterialTableRow({
     setSavingField('delete')
     try {
       await deleteMaterial(material.id)
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedOid] })
+      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
       toast.addToast({ title: '素材已删除', variant: 'success' })
     } catch (err) {
       toast.addToast({ title: `删除失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })
@@ -168,7 +168,7 @@ export function MaterialTableRow({
         return (
           <td key={col.key} className={tdClass}>
             <span className="text-sm text-gray-800 leading-snug line-clamp-2 dark:text-gray-200">
-              {material.ai_context?.coverprompt || <span className="text-gray-400">（未设置）</span>}
+              {material.produceState?.coverprompt || <span className="text-gray-400">（未设置）</span>}
             </span>
           </td>
         )
@@ -224,22 +224,6 @@ export function MaterialTableRow({
                 ))
               )}
             </select>
-          </td>
-        )
-
-      case 'aiContext':
-        return (
-          <td key={col.key} className={tdClass} onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => onOpenContextModal(material.id)}
-              className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer whitespace-nowrap dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
-            >
-              {material.ai_context?.template === 'with_item'
-                ? `商机 + ${(material.ai_context?.items?.length ?? 0)} 商品`
-                : material.ai_context?.template === 'only_opportunity'
-                  ? '仅商机'
-                  : '未配置'}
-            </button>
           </td>
         )
 

@@ -1,20 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import type { OpportunityItem } from '@/lib/api/batch-publish'
+import type { MonitoredItem } from '@/lib/api/batch-publish'
 
 interface CreateMaterialModalProps {
   open: boolean
   onClose: () => void
-  opportunity: OpportunityItem | null
+  item: MonitoredItem | null
   onCreate: (num: number) => void
   isPending: boolean
 }
 
-export function CreateMaterialModal({ open, onClose, opportunity, onCreate, isPending }: CreateMaterialModalProps) {
+export function CreateMaterialModal({ open, onClose, item, onCreate, isPending }: CreateMaterialModalProps) {
   const [num, setNum] = useState(1)
 
-  if (!open || !opportunity) return null
+  if (!open || !item) return null
 
   return (
     <>
@@ -28,7 +28,7 @@ export function CreateMaterialModal({ open, onClose, opportunity, onCreate, isPe
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-2xl shadow-lg p-6 w-[360px]">
         <h3 className="text-base font-semibold text-gray-900 mb-1">批量创建素材</h3>
         <p className="text-sm text-gray-500 mb-4">
-          商机：{opportunity.name}
+          商品：{item.title || '未命名'}
         </p>
 
         <div className="space-y-3">

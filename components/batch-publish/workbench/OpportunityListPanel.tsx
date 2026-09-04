@@ -1,21 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { Pagination } from '@/components/ui/data/Pagination'
-import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
-import { Sheet } from '@/components/ui/overlay/Sheet'
-import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
-import { OPPORTUNITY_STATUS_CONFIG, OPPORTUNITY_STATUS_FILTER_OPTIONS } from '@/components/batch-publish/shared/constants'
-import { OpportunityForm } from './OpportunityForm'
 import { fmtPrice } from '@/lib/utils/format'
-import type { OpportunityItem, OpportunityParams } from '@/lib/api/batch-publish'
+import type { MonitoredItem } from '@/lib/api/batch-publish'
 
 interface OpportunityListPanelProps {
-  opportunities: OpportunityItem[]
+  /** 监控商品列表（数据源：monitor.item.list，原商机列表去商机化） */
+  opportunities: MonitoredItem[]
   total: number
   isLoading: boolean
   error: unknown
@@ -24,76 +18,28 @@ interface OpportunityListPanelProps {
   onPageChange: (p: number) => void
   search: string
   onSearchChange: (v: string) => void
-  status: string
-  onStatusChange: (v: string) => void
-  selectedOid: number | undefined
-  onSelectOid: (oid: number) => void
-  onCreateOpportunity: (values: OpportunityParams) => void
-  onUpdateOpportunity: (oid: number, values: Partial<OpportunityParams>) => void
-  onDeleteOpportunity: (oid: number) => void
-  isMutating: boolean
+  selectedGid: string | undefined
+  onSelectGid: (gid: string) => void
 }
 
 export function OpportunityListPanel({
   opportunities, total, isLoading, error, onRetry,
   page, onPageChange,
-  search, onSearchChange, status, onStatusChange,
-  selectedOid, onSelectOid,
-  onCreateOpportunity, onUpdateOpportunity, onDeleteOpportunity,
-  isMutating,
+  search, onSearchChange,
+  selectedGid, onSelectGid,
 }: OpportunityListPanelProps) {
-  const [editingItem, setEditingItem] = useState<OpportunityItem | null>(null)
-  const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<OpportunityItem | null>(null)
-
-  const handleEdit = (item: OpportunityItem) => {
-    setEditingItem(item)
-    setSheetMode('edit')
-    setSheetOpen(true)
-  }
-
-  const handleCreate = () => {
-    setEditingItem(null)
-    setSheetMode('create')
-    setSheetOpen(true)
-  }
-
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* 搜索 + 筛选 + 新建 */}
+      {/* 搜索（按商品标题）+ 筛选 */}
       <div className="p-3 space-y-2 border-b border-gray-100 flex-shrink-0">
         <input
           type="text"
-          placeholder="搜索..."
+          placeholder="搜索商品标题..."
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
         />
         {/* 原 商机筛选pill 和 新建按钮，弃用 */}
-        {/* <div className="flex items-center justify-between gap-1">
-          <div className="flex gap-1">
-            {OPPORTUNITY_STATUS_FILTER_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => onStatusChange(opt.value)}
-                className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
-                  status === opt.value
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={handleCreate}
-            className="h-8 px-3 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
-          >
-            + 新建
-          </button>
-        </div> */}
       </div>
 
       {/* 列表 */}
@@ -105,14 +51,14 @@ export function OpportunityListPanel({
         ) : error ? (
           <ErrorBanner variant="inline" message="加载失败" onRetry={onRetry} />
         ) : opportunities.length === 0 ? (
-          <EmptyState size="sm" title="暂无" description="点击「+ 新建」创建" />
+          <EmptyState size="sm" title="暂无" description="去监控页添加监控商品" />
         ) : (
           opportunities.map((item) => {
-            const isSelected = item.id === selectedOid
+            const isSelected = item.gid === selectedGid
             return (
               <div
-                key={item.id}
-                onClick={() => onSelectOid(item.id)}
+                key={item.gid}
+                onClick={() => onSelectGid(item.gid)}
                 className={`px-3 py-3 border-b border-gray-100 transition-colors hover:bg-gray-50 cursor-pointer ${
                   isSelected ? 'border-l-2 border-l-blue-600 bg-blue-50/50' : ''
                 }`}
@@ -120,7 +66,7 @@ export function OpportunityListPanel({
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium line-clamp-1 ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
-                      {item.name || '未命名'}
+                      {item.title || '未命名'}
                     </p>
                   </div>
                   {isSelected && (
@@ -131,14 +77,13 @@ export function OpportunityListPanel({
                 {/* 底部信息 + 操作按钮 */}
                 <div className="flex items-center justify-between mt-1.5">
                   <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
-                    {/* <span>📦 {item.monitoredItemCount ?? 0}</span> */}
-                    <span>📝 {item.materialCount ?? 0}</span>
+                    {/* 📝 素材数（原商机维度字段，监控商品无此数据，弃用占位） */}
+                    {(item.wantCount ?? 0) > 0 && <span>想要 {item.wantCount}</span>}
                     {(item.price ?? 0) > 0 && <span>{fmtPrice(item.price!)}</span>}
-                    {/* <StatusBadge status={item.status} config={OPPORTUNITY_STATUS_CONFIG} /> */}
                   </div>
                   <div className="flex items-center gap-0.5 flex-shrink-0">
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleEdit(item) }}
+                      onClick={(e) => { e.stopPropagation(); /* 编辑商品：待接入（后续优化） */ }}
                       className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
                       title="编辑"
                     >
@@ -147,7 +92,7 @@ export function OpportunityListPanel({
                       </svg>
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); setDeleteTarget(item) }}
+                      onClick={(e) => { e.stopPropagation(); /* 删除监控商品：待接入（后续优化） */ }}
                       className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-600 transition-colors"
                       title="删除"
                     >
@@ -167,51 +112,6 @@ export function OpportunityListPanel({
       <div className="border-t border-gray-100 flex-shrink-0">
         <Pagination page={page} total={total} pageSize={20} onChange={onPageChange} />
       </div>
-
-      {/* 新建/编辑 Sheet */}
-      <Sheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        title={sheetMode === 'create' ? '新建商机' : '编辑源商品'}
-        width="500px"
-      >
-        <div className="p-6">
-          <OpportunityForm
-            defaultValues={editingItem ?? undefined}
-            onSubmit={(values) => {
-              if (sheetMode === 'create') {
-                onCreateOpportunity(values)
-              } else if (editingItem) {
-                onUpdateOpportunity(editingItem.id, values)
-              }
-              setSheetOpen(false)
-            }}
-            isPending={isMutating}
-            submitLabel={sheetMode === 'create' ? '创建商机' : '保存修改'}
-          />
-        </div>
-      </Sheet>
-
-      {/* 删除确认 */}
-      <ConfirmDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
-        title="删除商机"
-        description={
-          (deleteTarget?.materialCount ?? 0) > 0
-            ? `该商机下有 ${deleteTarget!.materialCount} 份素材将被一并删除，确定删除吗？`
-            : `确定要删除商机「${deleteTarget?.name ?? ''}」吗？`
-        }
-        confirmLabel="删除"
-        variant="danger"
-        loading={isMutating}
-        onConfirm={() => {
-          if (deleteTarget) {
-            onDeleteOpportunity(deleteTarget.id)
-            setDeleteTarget(null)
-          }
-        }}
-      />
     </div>
   )
 }
