@@ -65,12 +65,13 @@ export function OpportunityListPanel({
       <div className="p-3 space-y-2 border-b border-gray-100 flex-shrink-0">
         <input
           type="text"
-          placeholder="搜索商机..."
+          placeholder="搜索..."
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
         />
-        <div className="flex items-center justify-between gap-1">
+        {/* 原 商机筛选pill 和 新建按钮，弃用 */}
+        {/* <div className="flex items-center justify-between gap-1">
           <div className="flex gap-1">
             {OPPORTUNITY_STATUS_FILTER_OPTIONS.map((opt) => (
               <button
@@ -92,7 +93,7 @@ export function OpportunityListPanel({
           >
             + 新建
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* 列表 */}
@@ -104,7 +105,7 @@ export function OpportunityListPanel({
         ) : error ? (
           <ErrorBanner variant="inline" message="加载失败" onRetry={onRetry} />
         ) : opportunities.length === 0 ? (
-          <EmptyState size="sm" title="暂无商机" description="点击「+ 新建」创建第一个商机" />
+          <EmptyState size="sm" title="暂无" description="点击「+ 新建」创建" />
         ) : (
           opportunities.map((item) => {
             const isSelected = item.id === selectedOid
@@ -119,7 +120,7 @@ export function OpportunityListPanel({
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium line-clamp-1 ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
-                      {item.name || '未命名商机'}
+                      {item.name || '未命名'}
                     </p>
                   </div>
                   {isSelected && (
@@ -130,10 +131,10 @@ export function OpportunityListPanel({
                 {/* 底部信息 + 操作按钮 */}
                 <div className="flex items-center justify-between mt-1.5">
                   <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
-                    <span>📦 {item.monitoredItemCount ?? 0}</span>
+                    {/* <span>📦 {item.monitoredItemCount ?? 0}</span> */}
                     <span>📝 {item.materialCount ?? 0}</span>
                     {(item.price ?? 0) > 0 && <span>{fmtPrice(item.price!)}</span>}
-                    <StatusBadge status={item.status} config={OPPORTUNITY_STATUS_CONFIG} />
+                    {/* <StatusBadge status={item.status} config={OPPORTUNITY_STATUS_CONFIG} /> */}
                   </div>
                   <div className="flex items-center gap-0.5 flex-shrink-0">
                     <button
@@ -171,7 +172,7 @@ export function OpportunityListPanel({
       <Sheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        title={sheetMode === 'create' ? '新建商机' : '编辑商机'}
+        title={sheetMode === 'create' ? '新建商机' : '编辑源商品'}
         width="500px"
       >
         <div className="p-6">
