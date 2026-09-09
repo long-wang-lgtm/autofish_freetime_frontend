@@ -241,7 +241,7 @@ export function ItemsTab({
     },
     {
       key: 'actions',
-      header: '操作',
+      header: '上下架',
       align: 'center',
       render: (item) => (
         <div className="inline-flex items-center justify-center gap-1">
