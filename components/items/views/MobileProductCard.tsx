@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import type { ShopItem } from "@/lib/api/items"
-import { Bot, Truck, Upload, ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
+import { ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
 import type { ShipStage, ConfigField } from "../config"
 import { formatPublishTime, statusLabel, hasShipConfig } from "../config"
-import { IconToggle } from "../parts/IconToggle"
+import { AutomationToggles } from "../parts/AutomationToggles"
 import { SendCodeEditor } from "../parts/SendCodeEditor"
 import { ShelfActions } from "../parts/ShelfActions"
 
@@ -89,42 +89,7 @@ export function MobileProductCard({
         </button>
 
         <div className="flex items-center gap-0.5 flex-shrink-0">
-          <IconToggle
-            active={item.auto_ai_reply}
-            activeClass="text-purple-500 bg-purple-50"
-            title={item.auto_ai_reply ? "AI回复：开" : "AI回复：关"}
-            onClick={() => onToggle(item, "auto_ai_reply")}
-          >
-            <Bot className="w-4 h-4" />
-          </IconToggle>
-
-          <IconToggle
-            active={item.auto_ship}
-            activeClass="text-green-500 bg-green-50"
-            title={item.auto_ship ? "自动发货：开" : "自动发货：关"}
-            onClick={() => onToggle(item, "auto_ship")}
-          >
-            <Truck className="w-4 h-4" />
-          </IconToggle>
-
-          <IconToggle
-            active={item.auto_restock}
-            activeClass="text-teal-500 bg-teal-50"
-            disabled={item.account.isPro}
-            title={
-              item.account.isPro
-                ? "Pro账号无法开启自动上架"
-                : item.auto_restock
-                ? "自动上架：开"
-                : "自动上架：关"
-            }
-            onClick={() => {
-              if (item.account.isPro) return
-              onToggle(item, "auto_restock")
-            }}
-          >
-            <Upload className="w-4 h-4" />
-          </IconToggle>
+          <AutomationToggles item={item} onToggle={onToggle} />
         </div>
       </div>
 

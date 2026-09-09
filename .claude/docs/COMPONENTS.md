@@ -91,7 +91,6 @@
 ### 视图 (`items/views/`)
 | 组件 | 文件 | 用途 |
 |------|------|------|
-| `ItemRow` | `items/views/ItemRow.tsx` | 桌面端商品行（13 列） |
 | `MobileProductCard` | `items/views/MobileProductCard.tsx` | 移动端商品卡片（渐进式展开） |
 | `MobileRuleCard` | `items/views/MobileRuleCard.tsx` | 移动端规则卡片 |
 
@@ -107,6 +106,7 @@
 | 组件 | 文件 | 用途 |
 |------|------|------|
 | `IconToggle` | `items/parts/IconToggle.tsx` | 图标开关（用于开关列） |
+| `AutomationToggles` | `items/parts/AutomationToggles.tsx` | AI回复/自动发货/自动上架 紧凑按钮组（桌面「自动化」列 + 移动卡顶部共用） |
 | `PlaceholderPicker` | `items/parts/PlaceholderPicker.tsx` | 占位符选择器 |
 | `SendCodeEditor` | `items/parts/SendCodeEditor.tsx` | 发送代码编辑器 |
 | `CollapsiblePanel` | `items/parts/CollapsiblePanel.tsx` | 可折叠面板容器 |

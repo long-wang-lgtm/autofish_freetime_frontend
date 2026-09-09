@@ -2,16 +2,14 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Bot, Truck, Upload } from "lucide-react"
 import type { ShopItem, ShipByVoucher } from "@/lib/api/items"
 import { getVoucherKinds } from "@/lib/api/items"
 import type { ShipStage } from "@/components/items/config"
 import { hasShipConfig, formatPublishTime } from "@/components/items/config"
-import { ITEMS_GRID_COLS } from "@/components/items/views/ItemRow"
+import { AutomationToggles } from "@/components/items/parts/AutomationToggles"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
 import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
 import { KeywordDrawer } from "@/components/items/drawers/RulesItemsingleDrawer"
-import { IconToggle } from "@/components/items/parts/IconToggle"
 import { SendCodeEditor } from "@/components/items/parts/SendCodeEditor"
 import { ShelfActions } from "@/components/items/parts/ShelfActions"
 import { ConfigStatusCell } from "@/components/items/parts/ConfigStatusCell"
@@ -21,6 +19,9 @@ import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
+
+/** Items 表格列宽 — 11 轨：商品信息(2 轨)，自动化组(1 轨)，其余各 1 轨 */
+const ITEMS_GRID_COLS = '2fr 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
 
 interface ItemsTabProps {
   isMobile: boolean
@@ -170,33 +171,11 @@ export function ItemsTab({
       ),
     },
     {
-      key: 'auto_ai_reply',
-      header: 'AI回复',
+      key: 'automation',
+      header: '自动化',
       align: 'center',
       render: (item) => (
-        <IconToggle
-          active={item.auto_ai_reply}
-          activeClass="text-purple-500 bg-purple-50"
-          title={item.auto_ai_reply ? 'AI回复：开' : 'AI回复：关'}
-          onClick={() => onToggle(item, 'auto_ai_reply')}
-        >
-          <Bot className="w-4 h-4" />
-        </IconToggle>
-      ),
-    },
-    {
-      key: 'auto_ship',
-      header: '自动发货',
-      align: 'center',
-      render: (item) => (
-        <IconToggle
-          active={item.auto_ship}
-          activeClass="text-green-500 bg-green-50"
-          title={item.auto_ship ? '自动发货：开' : '自动发货：关'}
-          onClick={() => onToggle(item, 'auto_ship')}
-        >
-          <Truck className="w-4 h-4" />
-        </IconToggle>
+        <AutomationToggles item={item} onToggle={onToggle} />
       ),
     },
     {
@@ -264,25 +243,6 @@ export function ItemsTab({
           >
             {hasValue ? '已配置' : '未配置'}
           </button>
-        )
-      },
-    },
-    {
-      key: 'auto_restock',
-      header: '自动上架',
-      align: 'center',
-      render: (item) => {
-        const disabled = item.account.isPro
-        return (
-          <IconToggle
-            active={item.auto_restock}
-            activeClass="text-teal-500 bg-teal-50"
-            disabled={disabled}
-            title={disabled ? 'Pro 账号不支持自动上架' : item.auto_restock ? '自动上架：开' : '自动上架：关'}
-            onClick={() => { if (!disabled) onToggle(item, 'auto_restock') }}
-          >
-            <Upload className="w-4 h-4" />
-          </IconToggle>
         )
       },
     },
