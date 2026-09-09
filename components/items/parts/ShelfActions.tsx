@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { ArrowUpToLine, ArrowDownFromLine } from "lucide-react"
 import type { ShopItem } from "@/lib/api/items"
 import { ConfirmDialog } from '@/components/ui/overlay/ConfirmDialog'
 
@@ -12,14 +13,15 @@ interface ShelfActionsProps {
   onOffline: (item: ShopItem) => void
 }
 
-/** 判断上架/下架按钮可用性 */
+/** 上架/下架可用状态（取消 Pro 限制，任意账号均可操作，仅由商品当前状态决定） */
 function getShelfState(item: ShopItem) {
-  const isPro = item.account.isPro
+  const canShelve = item.status === -2 || item.status === 1
+  const canOffline = item.status === 0
   return {
-    canShelve: !isPro && (item.status === -2 || item.status === 1),
-    canOffline: !isPro && item.status === 0,
-    shelveDisabledReason: isPro ? "" : undefined,
-    offlineDisabledReason: isPro ? "" : undefined,
+    canShelve,
+    canOffline,
+    shelveDisabledReason: canShelve ? undefined : '当前商品状态不支持上架',
+    offlineDisabledReason: canOffline ? undefined : '当前商品状态不支持下架',
   }
 }
 
@@ -101,32 +103,34 @@ export function ShelfActions({ item, variant, pending, onShelve, onOffline }: Sh
   }
 
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="inline-flex items-center gap-1">
       <button
         type="button"
+        aria-label="上架"
         disabled={!state.canShelve || pending}
-        title={state.shelveDisabledReason}
+        title={state.canShelve ? "上架" : state.shelveDisabledReason}
         onClick={() => setConfirm("shelve")}
-        className={`text-xs ${
+        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
           state.canShelve
-            ? "text-green-600 dark:text-green-400 hover:underline"
-            : "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+            ? "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-950 hover:bg-green-100"
+            : "text-gray-300 bg-gray-50 dark:text-gray-600 dark:bg-gray-800 cursor-not-allowed"
         }`}
       >
-        上架
+        <ArrowUpToLine className="w-4 h-4" />
       </button>
       <button
         type="button"
+        aria-label="下架"
         disabled={!state.canOffline || pending}
-        title={state.offlineDisabledReason}
+        title={state.canOffline ? "下架" : state.offlineDisabledReason}
         onClick={() => setConfirm("offline")}
-        className={`text-xs ${
+        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
           state.canOffline
-            ? "text-green-600 dark:text-green-400 hover:underline"
-            : "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+            ? "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-950 hover:bg-green-100"
+            : "text-gray-300 bg-gray-50 dark:text-gray-600 dark:bg-gray-800 cursor-not-allowed"
         }`}
       >
-        下架
+        <ArrowDownFromLine className="w-4 h-4" />
       </button>
       {dialog}
     </span>

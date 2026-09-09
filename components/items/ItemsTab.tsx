@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { Trash2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import type { ShopItem, ShipByVoucher } from "@/lib/api/items"
 import { getVoucherKinds } from "@/lib/api/items"
@@ -20,8 +21,8 @@ import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 
-/** Items 表格列宽 — 11 轨：商品信息(2 轨)，自动化组(1 轨)，其余各 1 轨 */
-const ITEMS_GRID_COLS = '2fr 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
+/** Items 表格列宽 — 12 轨：商品信息(2 轨) + 操作列(1 轨)，其余各 1 轨 */
+const ITEMS_GRID_COLS = '2fr 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
 
 interface ItemsTabProps {
   isMobile: boolean
@@ -140,14 +141,6 @@ export function ItemsTab({
             <span title={item.account.uid} className="truncate">{item.account.name}</span>
             <span className="text-gray-300">|</span>
             <span title={String(item.gid)} className="min-w-[85px] truncate">{item.gid}</span>
-            <span className="text-gray-300">|</span>
-            <ShelfActions
-              item={item}
-              variant="desktop"
-              pending={isShelfPending(item)}
-              onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
-              onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
-            />
           </div>
         </div>
       ),
@@ -168,14 +161,6 @@ export function ItemsTab({
       align: 'center',
       render: (item) => (
         <span className="text-xs text-gray-500">{formatPublishTime(item.publishTime)}</span>
-      ),
-    },
-    {
-      key: 'automation',
-      header: '自动化',
-      align: 'center',
-      render: (item) => (
-        <AutomationToggles item={item} onToggle={onToggle} />
       ),
     },
     {
@@ -245,6 +230,38 @@ export function ItemsTab({
           </button>
         )
       },
+    },
+    {
+      key: 'automation',
+      header: '自动化',
+      align: 'center',
+      render: (item) => (
+        <AutomationToggles item={item} onToggle={onToggle} />
+      ),
+    },
+    {
+      key: 'actions',
+      header: '操作',
+      align: 'center',
+      render: (item) => (
+        <div className="inline-flex items-center justify-center gap-1">
+          <ShelfActions
+            item={item}
+            variant="desktop"
+            pending={isShelfPending(item)}
+            onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
+            onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
+          />
+          <button
+            type="button"
+            disabled
+            title="删除商品（待实现）"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 bg-gray-50 dark:text-gray-600 dark:bg-gray-800 cursor-not-allowed"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      ),
     },
     {
       key: 'sendCode',
