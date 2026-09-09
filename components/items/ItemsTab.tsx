@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { Fragment, useState, useRef, useEffect } from "react"
 import { Trash2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import type { ShopItem, ShipByVoucher } from "@/lib/api/items"
@@ -21,8 +21,15 @@ import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 
-/** Items 表格列宽 — 12 轨：商品信息(2 轨) + 操作列(1 轨)，其余各 1 轨 */
-const ITEMS_GRID_COLS = '2fr 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
+/** Items 表格列宽 — 9 轨等宽：商品信息跨 2 轨，其余列各 1 轨 */
+const ITEMS_GRID_COLS = '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
+
+/** 「发货/赠送」列内的三个子阶段（顺序：付款后发货 → 收货后赠送 → 评价后赠送） */
+const DELIVERY_STAGES: { stage: ShipStage; label: string }[] = [
+  { stage: 'shipment', label: '付款后发货' },
+  { stage: 'shipconfirm', label: '收货后赠送' },
+  { stage: 'evaluation', label: '评价后赠送' },
+]
 
 interface ItemsTabProps {
   isMobile: boolean
@@ -154,38 +161,55 @@ export function ItemsTab({
         <span className="text-orange-600 font-semibold text-xs">{item.reservePrice || '-'}</span>
       ),
     },
-
     {
-      key: 'shipment',
-      header: '付款后发货',
+      key: 'automation',
+      header: '自动化',
       align: 'center',
       render: (item) => (
-        <ConfigStatusCell
-          hasConfig={item.config ? hasShipConfig(item.config.shipment) : false}
-          onClick={() => handleConfigClick(item, 'shipment')}
-        />
+        <AutomationToggles item={item} onToggle={onToggle} />
       ),
     },
     {
-      key: 'shipconfirm',
-      header: '收货后赠送',
+      key: 'actions',
+      header: '上下架',
       align: 'center',
       render: (item) => (
-        <ConfigStatusCell
-          hasConfig={item.config ? hasShipConfig(item.config.shipconfirm) : false}
-          onClick={() => handleConfigClick(item, 'shipconfirm')}
-        />
+        <div className="inline-flex items-center justify-center gap-1">
+          <ShelfActions
+            item={item}
+            variant="desktop"
+            pending={isShelfPending(item)}
+            onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
+            onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
+          />
+          <button
+            type="button"
+            disabled
+            title="删除商品（待实现）"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 bg-gray-50 dark:text-gray-600 dark:bg-gray-800 cursor-not-allowed"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       ),
     },
     {
-      key: 'evaluation',
-      header: '评价后赠送',
+      key: 'delivery',
+      header: '发货/赠送',
       align: 'center',
       render: (item) => (
-        <ConfigStatusCell
-          hasConfig={item.config ? hasShipConfig(item.config.evaluation) : false}
-          onClick={() => handleConfigClick(item, 'evaluation')}
-        />
+        <div className="flex items-center justify-center gap-1">
+          {DELIVERY_STAGES.map(({ stage, label }, i) => (
+            <Fragment key={stage}>
+              {i > 0 && <span className="text-gray-300">/</span>}
+              <ConfigStatusCell
+                label={label}
+                hasConfig={item.config ? hasShipConfig(item.config[stage]) : false}
+                onClick={() => handleConfigClick(item, stage)}
+              />
+            </Fragment>
+          ))}
+        </div>
       ),
     },
     {
@@ -222,38 +246,6 @@ export function ItemsTab({
           </button>
         )
       },
-    },
-    {
-      key: 'automation',
-      header: '自动化',
-      align: 'center',
-      render: (item) => (
-        <AutomationToggles item={item} onToggle={onToggle} />
-      ),
-    },
-    {
-      key: 'actions',
-      header: '上下架',
-      align: 'center',
-      render: (item) => (
-        <div className="inline-flex items-center justify-center gap-1">
-          <ShelfActions
-            item={item}
-            variant="desktop"
-            pending={isShelfPending(item)}
-            onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
-            onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
-          />
-          <button
-            type="button"
-            disabled
-            title="删除商品（待实现）"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 bg-gray-50 dark:text-gray-600 dark:bg-gray-800 cursor-not-allowed"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
     },
     {
       key: 'publishTime',
