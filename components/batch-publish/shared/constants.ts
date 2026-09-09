@@ -106,6 +106,31 @@ export const MATERIALS_STATUS_FILTER_OPTIONS: { value: string; label: string }[]
 ]
 
 // ============================================================
+// 草稿箱 — 素材状态筛选选项
+// ============================================================
+
+/** 草稿箱默认范围 = 全部未发布素材（待处理 → 改写 → 封面 → 生图 → 发布失败） */
+export const DRAFT_BACKLOG_STATUS = [
+  'pending',
+  'write_success',
+  'write_failed',
+  'genimageplan_success',
+  'genimageplan_failed',
+  'genimage_success',
+  'genimage_failed',
+  'publish_failed',
+].join(',')
+
+export const DRAFT_STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: DRAFT_BACKLOG_STATUS, label: '全部草稿' },
+  { value: 'pending',            label: '待处理' },
+  { value: 'write_success,write_failed',                     label: '改写' },
+  { value: 'genimageplan_success,genimageplan_failed',       label: '封面' },
+  { value: 'genimage_success,genimage_failed',               label: '生图' },
+  { value: 'publish_failed',     label: '发布失败' },
+]
+
+// ============================================================
 // 商品监控 — 状态筛选选项
 // ============================================================
 

@@ -17,11 +17,16 @@ interface MaterialEditSheetProps {
   onClose: () => void
   /** 素材列表——从父组件传入，避免缓存 key 不匹配导致读不到数据 */
   materials: PublishMaterial[]
+  /** 素材列表缓存失效前缀——保存后 invalidate 的维度。缺省由 selectedGid 推导（工作台数据源） */
+  materialListPrefix?: unknown[]
 }
 
-export function MaterialEditSheet({ materialId, selectedGid, open, onClose, materials }: MaterialEditSheetProps) {
+export function MaterialEditSheet({ materialId, selectedGid, open, onClose, materials, materialListPrefix }: MaterialEditSheetProps) {
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
+
+  // 素材列表失效定位——默认沿用「按选中监控商品 gid」维度；草稿箱等新数据源通过 props 显式覆盖
+  const listPrefix = materialListPrefix ?? ['batch-publish', 'materials', selectedGid]
 
   const material = materialId ? materials.find(m => m.id === materialId) : null
 
@@ -55,7 +60,7 @@ export function MaterialEditSheet({ materialId, selectedGid, open, onClose, mate
     try {
       await editMaterial({ id: material.id, description: value || undefined })
       descDirtyRef.current = false
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+      queryClient.invalidateQueries({ queryKey: listPrefix })
     } catch {
       // 静默处理
     } finally {
@@ -70,7 +75,7 @@ export function MaterialEditSheet({ materialId, selectedGid, open, onClose, mate
     try {
       await editMaterial({ id: material.id, coverprompt: value || undefined })
       coverDirtyRef.current = false
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+      queryClient.invalidateQueries({ queryKey: listPrefix })
     } catch {
       // 静默处理
     } finally {
@@ -108,7 +113,7 @@ export function MaterialEditSheet({ materialId, selectedGid, open, onClose, mate
       const nextImages = [...images, uploaded as MaterialImage]
       setImages(nextImages)
       await editMaterial({ id: material.id, images: nextImages })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+      queryClient.invalidateQueries({ queryKey: listPrefix })
     } catch {
       // silent
     } finally {
@@ -122,7 +127,7 @@ export function MaterialEditSheet({ materialId, selectedGid, open, onClose, mate
     setImages(nextImages)
     try {
       await editMaterial({ id: material.id, images: nextImages.length > 0 ? nextImages : undefined })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+      queryClient.invalidateQueries({ queryKey: listPrefix })
     } catch { /* silent */ }
   }
 
@@ -136,7 +141,7 @@ export function MaterialEditSheet({ materialId, selectedGid, open, onClose, mate
     setImages(nextImages)
     try {
       await editMaterial({ id: material.id, images: nextImages })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+      queryClient.invalidateQueries({ queryKey: listPrefix })
     } catch { /* silent */ }
   }
 
@@ -150,7 +155,7 @@ export function MaterialEditSheet({ materialId, selectedGid, open, onClose, mate
     setImages(nextImages)
     try {
       await editMaterial({ id: material.id, images: nextImages })
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+      queryClient.invalidateQueries({ queryKey: listPrefix })
     } catch { /* silent */ }
   }
 

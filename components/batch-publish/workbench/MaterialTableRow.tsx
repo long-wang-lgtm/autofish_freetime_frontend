@@ -25,16 +25,24 @@ export interface MaterialTableRowProps {
   /** 当前选中的监控商品 gid（素材缓存 key 维度） */
   selectedGid: string | undefined
   materialPage: number
+  /** 素材列表完整缓存 key——行内编辑乐观更新写入的目标。缺省由 selectedGid + materialPage 推导（工作台数据源） */
+  materialListKey?: unknown[]
+  /** 素材列表缓存失效前缀——增删改/触发 AI 后 invalidate 的维度。缺省由 selectedGid 推导（工作台数据源） */
+  materialListPrefix?: unknown[]
 }
 
 export function MaterialTableRow({
   item: material, index: _index, columns, isSelected, onToggleSelect, onOpenEditor,
-  selectedGid, materialPage,
+  selectedGid, materialPage, materialListKey, materialListPrefix,
 }: MaterialTableRowProps) {
   const queryClient = useQueryClient()
   const toast = useToast()
   const [showDelete, setShowDelete] = useState(false)
   const [savingField, setSavingField] = useState<string | null>(null)
+
+  // 素材列表缓存定位——默认沿用「按选中监控商品 gid」维度；草稿箱等新数据源通过 props 显式覆盖
+  const listKey = materialListKey ?? ['batch-publish', 'materials', selectedGid, { page: materialPage }]
+  const listPrefix = materialListPrefix ?? ['batch-publish', 'materials', selectedGid]
 
   // 1. Accounts（仅 status === 1 = 正常）
   const accounts = queryClient.getQueryData<Account[]>(['accounts'])
@@ -53,7 +61,7 @@ export function MaterialTableRow({
 
   const optimisticUpdate = (field: string, value: unknown) => {
     queryClient.setQueryData<MaterialListResponse>(
-      ['batch-publish', 'materials', selectedGid, { page: materialPage }],
+      listKey,
       (old) => old ? {
         ...old,
         items: old.items.map(m => m.id === material.id ? { ...m, [field]: value } : m)
@@ -70,11 +78,11 @@ export function MaterialTableRow({
     try {
       await editMaterial({ id: material.id, [field]: value } as Parameters<typeof editMaterial>[0])
       if (field === 'to_uid') {
-        queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+        queryClient.invalidateQueries({ queryKey: listPrefix })
         queryClient.invalidateQueries({ queryKey: ['batch-publish', 'channel', material.id] })
       }
     } catch (err) {
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+      queryClient.invalidateQueries({ queryKey: listPrefix })
       toast.addToast({ title: `保存失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })
     } finally {
       setSavingField(null)
@@ -88,7 +96,7 @@ export function MaterialTableRow({
   const handleTriggerWork = async (stage: RewriteStage) => {
     try {
       await triggerWork(material.id, stage)
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+      queryClient.invalidateQueries({ queryKey: listPrefix })
       const stageLabel = stage === 'write' ? '改写' : stage === 'genimageplan' ? '封面规划' : '生图'
       toast.addToast({ title: `${stageLabel}完成`, variant: 'success' })
     } catch (err) {
@@ -99,7 +107,7 @@ export function MaterialTableRow({
   const handlePublish = async () => {
     try {
       await publishMaterial(material.id)
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+      queryClient.invalidateQueries({ queryKey: listPrefix })
       toast.addToast({ title: '发布成功', variant: 'success' })
     } catch (err) {
       toast.addToast({ title: `发布失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })
@@ -110,7 +118,7 @@ export function MaterialTableRow({
     setSavingField('delete')
     try {
       await deleteMaterial(material.id)
-      queryClient.invalidateQueries({ queryKey: ['batch-publish', 'materials', selectedGid] })
+      queryClient.invalidateQueries({ queryKey: listPrefix })
       toast.addToast({ title: '素材已删除', variant: 'success' })
     } catch (err) {
       toast.addToast({ title: `删除失败：${(err as Error)?.message || '请稍后重试'}`, variant: 'error' })

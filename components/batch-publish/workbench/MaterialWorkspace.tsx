@@ -3,9 +3,9 @@
 import { useCallback } from 'react'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { NativeTable } from '@/components/ui/data/NativeTable'
-import type { NativeTableColumn } from '@/components/ui/data/NativeTable'
 import { BatchActionBar } from '@/components/batch-publish/shared/BatchActionBar'
 import { MaterialTableRow } from './MaterialTableRow'
+import { MATERIAL_COLUMNS } from './materialColumns'
 import { PAGE_SIZE } from '@/components/batch-publish/shared/constants'
 import { fmtPrice } from '@/lib/utils/format'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -30,19 +30,6 @@ interface MaterialWorkspaceProps {
   onBackToOverview: () => void
   materialPage: number
 }
-
-/** 素材表格列定义——表头与表行的列顺序、宽度、对齐均由此单一来源控制 */
-const MATERIAL_COLUMNS: NativeTableColumn<PublishMaterial>[] = [
-  { key: 'checkbox',  width: '3%',  align: 'center', header: ' ' },
-  { key: 'cover',     width: '10%', align: 'center', header: '封面' },
-  { key: 'desc',      align: 'left',   header: '描述' },          // 弹性——与 prompt 平分剩余宽度
-  { key: 'prompt',    align: 'left',   header: '封面提示词' },      // 弹性——与 desc 平分剩余宽度
-  { key: 'price',     width: '7%',  align: 'center', header: '价格' },
-  { key: 'account',   width: '9%',  align: 'center', header: '账号' },
-  { key: 'category',  width: '9%',  align: 'center', header: '类目' },
-  { key: 'progress',  width: '10%', align: 'center', header: '进度/操作' },
-  { key: 'delete',    width: '4%',  align: 'center', header: '删除' },
-]
 
 export function MaterialWorkspace({
   item, materials, materialLoading, materialError, materialRefetch,

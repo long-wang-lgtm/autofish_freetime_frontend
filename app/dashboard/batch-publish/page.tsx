@@ -3,7 +3,7 @@
 import { Suspense } from 'react'
 import { TabBar } from '@/components/ui/navigation/TabBar'
 import { useTabRouting } from '@/hooks/useTabRouting'
-import { Search, PenTool, FileText } from 'lucide-react'
+import { Search, PenTool, FileText, Inbox } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 // 非首屏组件懒加载（遵循 frontend-performance.md）
@@ -19,6 +19,10 @@ const WorkbenchTab = dynamic(
   () => import('@/components/batch-publish/workbench/WorkbenchTab').then(m => ({ default: m.WorkbenchTab })),
   { loading: () => <TabPlaceholder text="创作台加载中..." /> }
 )
+const DraftsTab = dynamic(
+  () => import('@/components/batch-publish/drafts/DraftsTab').then(m => ({ default: m.DraftsTab })),
+  { loading: () => <TabPlaceholder text="草稿箱加载中..." /> }
+)
 
 function TabPlaceholder({ text }: { text: string }) {
   return (
@@ -28,17 +32,18 @@ function TabPlaceholder({ text }: { text: string }) {
   )
 }
 
-type TabName = 'monitor' | 'workbench' | 'materials'
+type TabName = 'monitor' | 'workbench' | 'drafts' | 'materials'
 
 const BATCH_PUBLISH_TABS: { key: TabName; label: string; icon: React.ReactNode }[] = [
   { key: 'workbench', label: '商品发布', icon: <PenTool className="w-4 h-4" /> },
+  { key: 'drafts', label: '草稿箱', icon: <Inbox className="w-4 h-4" /> },
   { key: 'materials', label: '发布记录', icon: <FileText className="w-4 h-4" /> },
   { key: 'monitor', label: '商品监控', icon: <Search className="w-4 h-4" /> },
 ]
 
 function PageContent() {
   const [activeTab, setTab] = useTabRouting<TabName>(
-    ['monitor', 'workbench', 'materials'],
+    ['monitor', 'workbench', 'drafts', 'materials'],
     'workbench'
   )
 
@@ -53,6 +58,7 @@ function PageContent() {
 
       {activeTab === 'monitor' && <MonitorTab />}
       {activeTab === 'workbench' && <WorkbenchTab />}
+      {activeTab === 'drafts' && <DraftsTab />}
       {activeTab === 'materials' && <MaterialsTab />}
     </div>
   )
