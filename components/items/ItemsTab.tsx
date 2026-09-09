@@ -22,7 +22,7 @@ import { Pagination } from '@/components/ui/data/Pagination'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 
 /** Items 表格列宽 — 12 轨：商品信息(2 轨) + 操作列(1 轨)，其余各 1 轨 */
-const ITEMS_GRID_COLS = '2fr 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
+const ITEMS_GRID_COLS = '2fr 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
 
 interface ItemsTabProps {
   isMobile: boolean
@@ -154,15 +154,7 @@ export function ItemsTab({
         <span className="text-orange-600 font-semibold text-xs">{item.reservePrice || '-'}</span>
       ),
     },
-    {
-      key: 'publishTime',
-      header: '发布时间',
-      sortable: true,
-      align: 'center',
-      render: (item) => (
-        <span className="text-xs text-gray-500">{formatPublishTime(item.publishTime)}</span>
-      ),
-    },
+
     {
       key: 'shipment',
       header: '付款后发货',
@@ -264,20 +256,29 @@ export function ItemsTab({
       ),
     },
     {
-      key: 'sendCode',
-      header: '指令码',
+      key: 'publishTime',
+      header: '发布时间',
+      sortable: true,
       align: 'center',
       render: (item) => (
-        <SendCodeEditor
-          gid={item.gid}
-          sendCode={item.config?.sendCode ?? null}
-          variant="cell"
-          onUpdateField={(gid, _field, value) =>
-            updateMutation.mutate({ gid, data: { sendCode: value } })
-          }
-        />
+        <span className="text-xs text-gray-500">{formatPublishTime(item.publishTime)}</span>
       ),
     },
+    // {
+    //   key: 'sendCode',
+    //   header: '指令码',
+    //   align: 'center',
+    //   render: (item) => (
+    //     <SendCodeEditor
+    //       gid={item.gid}
+    //       sendCode={item.config?.sendCode ?? null}
+    //       variant="cell"
+    //       onUpdateField={(gid, _field, value) =>
+    //         updateMutation.mutate({ gid, data: { sendCode: value } })
+    //       }
+    //     />
+    //   ),
+    // },
   ]
 
   return (
