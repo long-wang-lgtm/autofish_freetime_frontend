@@ -80,6 +80,19 @@ export interface ShopItemConfig {
   evaluation: ShipConfig               // 评价后赠送
 }
 
+/** 粉丝价单档（闲鱼返回的分组，price 单位：元） */
+export interface ItemFans {
+  title: string
+  price: number
+}
+
+/**
+ * fans 字段的形态 —— 后端 ItemFansPrice 是普通 BaseModel（不是 ItemSKUList 那样的
+ * RootModel），序列化出来是 { root: [...] }；但写入路径 core/im/account.py:788 传的是
+ * 裸列表，所以两种形态都可能出现，读取统一走 config.ts 的 getFansGroups。
+ */
+export type ItemFansPrice = { root: ItemFans[] } | ItemFans[]
+
 /** 商品主模型（ShopItemSchema） */
 export interface ShopItem {
   gid: number
@@ -94,6 +107,7 @@ export interface ShopItem {
   auto_ai_reply: boolean
   auto_restock: boolean
   skus: ItemSKU[] | null
+  fans: ItemFansPrice | null           // 粉丝价；仅鱼小铺（Pro）账号有
   created_at: string                   // ISO 8601 datetime
   updated_at: string                   // ISO 8601 datetime
   account: AccountName
@@ -222,6 +236,23 @@ export async function editPriceByPro(
   return fetchApi<ShopItem>("/api/items/edit.price.by.pro", {
     method: "POST",
     params: { gid, uid, price, quantity },
+  })
+}
+
+/**
+ * 设置粉丝价（仅鱼小铺 Pro 账号）— POST /api/items/edit.set.fans.price?uid=&gid=
+ *
+ * 注意这个接口的参数位置与其它不同：uid/gid 在 query，三个价格在 Body。
+ */
+export async function setFansPrice(
+  gid: number,
+  uid: string,
+  prices: { all: number; old: number; buy: number },
+): Promise<ShopItem> {
+  return fetchApi<ShopItem>("/api/items/edit.set.fans.price", {
+    method: "POST",
+    params: { uid, gid },
+    body: JSON.stringify(prices),
   })
 }
 

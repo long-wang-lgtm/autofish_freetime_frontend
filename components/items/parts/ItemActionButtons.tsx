@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Pencil, CircleDollarSign, Heart } from "lucide-react"
 import type { ShopItem } from "@/lib/api/items"
 import { RepricingDialog, type RepriceSubmit } from "./RepricingDialog"
+import { FansPriceDialog, type FansPriceSubmit } from "./FansPriceDialog"
 
 const BASE_CLASS = 'w-7 h-7 flex items-center justify-center rounded-lg transition-colors'
 
@@ -22,6 +23,7 @@ interface ItemActionButtonsProps {
   item: ShopItem
   onEdit: () => void
   onReprice: (item: ShopItem, submit: RepriceSubmit) => Promise<void>
+  onSetFansPrice: (item: ShopItem, submit: FansPriceSubmit) => Promise<void>
 }
 
 /**
@@ -30,12 +32,16 @@ interface ItemActionButtonsProps {
  * 改价的可用性判断放在这里而不是两个调用点：同一个组件被桌面表格和移动卡片复用，
  * 判断只写一份就不会漂移（ShelfActions 曾经桌面/移动各写一份，改一处另一处照旧）。
  */
-export function ItemActionButtons({ item, onEdit, onReprice }: ItemActionButtonsProps) {
-  const [dialogOpen, setDialogOpen] = useState(false)
+export function ItemActionButtons({ item, onEdit, onReprice, onSetFansPrice }: ItemActionButtonsProps) {
+  const [repriceOpen, setRepriceOpen] = useState(false)
+  const [fansPriceOpen, setFansPriceOpen] = useState(false)
 
   // 仅拦多规格：后端 Pro 接口对多规格直接 403，且列表价格显示为 "min~max" 无法作为预填值。
   // 其余「是否支持改价」（operates 字段）由后端判定，前端不预判。
   const multiSku = (item.skus?.length ?? 0) > 0
+
+  // 粉丝价只有鱼小铺接口支持；非 Pro 账号后端直接 403，前端先置灰
+  const isPro = item.account.isPro
 
   return (
     <div className="inline-flex items-center justify-center gap-1">
@@ -54,28 +60,35 @@ export function ItemActionButtons({ item, onEdit, onReprice }: ItemActionButtons
         disabled={multiSku}
         aria-label="改价"
         title={multiSku ? '暂不支持多规格商品调价' : '改价'}
-        onClick={() => setDialogOpen(true)}
+        onClick={() => setRepriceOpen(true)}
         className={`${BASE_CLASS} ${multiSku ? DISABLED_CLASS : ENABLED_CLASS}`}
       >
         <CircleDollarSign className="w-4 h-4" />
       </button>
 
-      {/* 粉丝价仍未接入 API，保持占位 */}
       <button
         type="button"
-        disabled
+        disabled={!isPro}
         aria-label="粉丝价"
-        title="粉丝价（待实现）"
-        className={`${BASE_CLASS} ${DISABLED_CLASS}`}
+        title={isPro ? '粉丝价' : '非鱼小铺账号不支持设置粉丝价'}
+        onClick={() => setFansPriceOpen(true)}
+        className={`${BASE_CLASS} ${isPro ? ENABLED_CLASS : DISABLED_CLASS}`}
       >
         <Heart className="w-4 h-4" />
       </button>
 
       <RepricingDialog
-        open={dialogOpen}
+        open={repriceOpen}
         item={item}
-        onOpenChange={setDialogOpen}
+        onOpenChange={setRepriceOpen}
         onConfirm={onReprice}
+      />
+
+      <FansPriceDialog
+        open={fansPriceOpen}
+        item={item}
+        onOpenChange={setFansPriceOpen}
+        onConfirm={onSetFansPrice}
       />
     </div>
   )

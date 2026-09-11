@@ -5,7 +5,9 @@ import { useQuery } from "@tanstack/react-query"
 import type { ShopItem, ShopItemConfigUpdate, ShipByVoucher } from "@/lib/api/items"
 import { getVoucherKinds } from "@/lib/api/items"
 import type { ShipStage } from "@/components/items/config"
-import { hasShipConfig, formatPublishTime, statusLabel, displayQuantity } from "@/components/items/config"
+import {
+  hasShipConfig, formatPublishTime, statusLabel, displayQuantity, fansPrices, FANS_GROUPS,
+} from "@/components/items/config"
 import { AutomationToggles } from "@/components/items/parts/AutomationToggles"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
 import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
@@ -15,6 +17,7 @@ import { ShelfActions } from "@/components/items/parts/ShelfActions"
 import { DeleteItemButton } from "@/components/items/parts/DeleteItemButton"
 import { ItemActionButtons } from "@/components/items/parts/ItemActionButtons"
 import type { RepriceSubmit } from "@/components/items/parts/RepricingDialog"
+import type { FansPriceSubmit } from "@/components/items/parts/FansPriceDialog"
 import { ConfigStatusCell } from "@/components/items/parts/ConfigStatusCell"
 import { ShipConfigModal } from "@/components/items/parts/ShipConfigModal"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
@@ -64,6 +67,11 @@ interface ItemsTabProps {
       gid: number; uid: string; isPro: boolean; price: number; quantity?: number
     }) => Promise<unknown>
   }
+  fansPriceMutation: {
+    mutateAsync: (args: {
+      gid: number; uid: string; all: number; old: number; buy: number
+    }) => Promise<unknown>
+  }
   shipConfigMutation: {
     mutateAsync: (args: {
       gid: number
@@ -95,6 +103,7 @@ export function ItemsTab({
   shelfMutation,
   deleteMutation,
   repriceMutation,
+  fansPriceMutation,
   shipConfigMutation,
   orderBy,
   asc,
@@ -129,6 +138,13 @@ export function ItemsTab({
   const handleReprice = async (item: ShopItem, submit: RepriceSubmit): Promise<void> => {
     await repriceMutation.mutateAsync({
       gid: item.gid, uid: item.account.uid, isPro: item.account.isPro, ...submit,
+    })
+  }
+
+  // 粉丝价：三档一次提交，同样返回 Promise 供弹窗决定关闭时机
+  const handleSetFansPrice = async (item: ShopItem, submit: FansPriceSubmit): Promise<void> => {
+    await fansPriceMutation.mutateAsync({
+      gid: item.gid, uid: item.account.uid, ...submit,
     })
   }
 
@@ -191,18 +207,35 @@ export function ItemsTab({
     },
     {
       key: 'price',
-      header: '价格/库存',
+      header: '价格/库存/粉丝价',
       sortable: true,
       align: 'center',
       render: (item) => {
         const quantity = displayQuantity(item)
+        // 三档固定顺序：全部粉丝价 | 老粉价 | 已购粉价，未设置的档位显示 -
+        // 未设置的档位是"没有"，用 gray-400（占位档）而非数值色，避免把 - 读成有效数据
+        const prices = fansPrices(item)
         return (
-          <span className="inline-flex items-center gap-1 text-xs leading-tight">
-            <span className="text-orange-600 font-semibold">{item.reservePrice || '-'}</span>
-            <span className="text-gray-300">|</span>
-            {/* 库存是有值的数字，不能用 gray-400（那是禁用/占位档），按数值列规范上 tabular-nums */}
-            <span className="text-gray-800 tabular-nums">{quantity === null ? '-' : quantity}</span>
-          </span>
+          <div className="flex flex-col items-center gap-0.5 text-xs leading-tight">
+            {/* 第一行：现价 | 库存 */}
+            <span className="inline-flex items-center gap-1">
+              <span className="text-orange-600 font-semibold">{item.reservePrice || '-'}</span>
+              <span className="text-gray-300">|</span>
+              {/* 库存是有值的数字，不能用 gray-400（那是禁用/占位档），按数值列规范上 tabular-nums */}
+              <span className="text-gray-800 tabular-nums">{quantity === null ? '-' : quantity}</span>
+            </span>
+            {/* 第二行：粉丝价三档，与上一行同为「价格」语义，故沿用同一套数值/占位配色 */}
+            <span className="inline-flex items-center gap-1 tabular-nums">
+              {prices.map((price, i) => (
+                <Fragment key={FANS_GROUPS[i].key}>
+                  {i > 0 && <span className="text-gray-300">|</span>}
+                  <span className={price === null ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'}>
+                    {price === null ? '-' : price}
+                  </span>
+                </Fragment>
+              ))}
+            </span>
+          </div>
         )
       },
     },
@@ -223,6 +256,7 @@ export function ItemsTab({
           item={item}
           onEdit={() => setEditingItem(item)}
           onReprice={handleReprice}
+          onSetFansPrice={handleSetFansPrice}
         />
       ),
     },
@@ -378,6 +412,7 @@ export function ItemsTab({
                 onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
                 onDelete={handleDelete}
                 onReprice={handleReprice}
+                onSetFansPrice={handleSetFansPrice}
                 shelfPending={isShelfPending(item)}
                 deletePending={isDeletePending(item)}
               />
