@@ -1,13 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWorkbenchFilters } from './useWorkbenchFilters'
 import { useWorkbenchData } from './useWorkbenchData'
 import { useWorkbenchMutations } from './useWorkbenchMutations'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { listAccounts, type Account } from '@/lib/api/accounts'
+import { useAccounts } from '@/hooks/useAccounts'
 
 export function useWorkbenchPage() {
   const isMobile = useIsMobile()
@@ -34,13 +33,8 @@ export function useWorkbenchPage() {
 
   const mutations = useWorkbenchMutations(filters.selectedGid)
 
-  // 全局账号列表 — 挂载时获取，长期缓存
-  const { data: accounts = [] } = useQuery<Account[]>({
-    queryKey: ['accounts'],
-    queryFn: () => listAccounts(),
-    staleTime: 10 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-  })
+  // 全局账号列表 — 挂载时获取，长期缓存（与其他页面共享 useAccounts 的 ['accounts'] 缓存）
+  const { accounts } = useAccounts()
 
   // 移动端顶层视图切换（仅控制无选中商品时显示概览还是商品列表）
   type MobileView = 'overview' | 'items'

@@ -9,6 +9,7 @@ import { MaterialEditSheet } from '@/components/batch-publish/workbench/Material
 import { MATERIAL_COLUMNS } from '@/components/batch-publish/workbench/materialColumns'
 import { DRAFT_STATUS_FILTER_OPTIONS } from '@/components/batch-publish/shared/constants'
 import { useDraftsPage } from '@/hooks/batch-publish/useDraftsPage'
+import { useAccounts } from '@/hooks/useAccounts'
 import type { PublishMaterial } from '@/lib/api/batch-publish'
 
 /**
@@ -23,11 +24,14 @@ const DRAFT_COLUMNS = MATERIAL_COLUMNS.filter((col) => col.key !== 'checkbox')
  */
 export function DraftsTab() {
   const {
-    search, status, onFilterChange,
+    search, status, toUid, onFilterChange,
     page, pageSize, total, setPage,
     data, isLoading, error, refetch,
     listQueryKey,
   } = useDraftsPage()
+
+  // 账号筛选项——列全部账号（含已停用），否则分配给停用账号的草稿将无法筛出
+  const { accounts } = useAccounts()
 
   const [editingId, setEditingId] = useState<number | null>(null)
 
@@ -63,6 +67,16 @@ export function DraftsTab() {
           onChange={(e) => onFilterChange('search', e.target.value)}
           className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 flex-1 min-w-0 max-w-xs dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
         />
+        <select
+          value={toUid}
+          onChange={(e) => onFilterChange('toUid', e.target.value)}
+          className="h-10 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
+        >
+          <option value="">全部账号</option>
+          {accounts.map((a) => (
+            <option key={a.uid} value={a.uid}>{a.name}</option>
+          ))}
+        </select>
         <select
           value={status}
           onChange={(e) => onFilterChange('status', e.target.value)}
