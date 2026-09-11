@@ -11,6 +11,7 @@ import {
   deleteItem,
   editPriceByIdle,
   editPriceByPro,
+  setFansPrice,
   PRO_DEFAULT_QUANTITY,
   updateItemShipConfig,
   type ShopItem,
@@ -109,6 +110,21 @@ export function useItemMutations() {
     },
   })
 
+  /** 粉丝价 mutation —— 仅鱼小铺（Pro）账号可用，非 Pro 后端直接 403 */
+  const fansPriceMutation = useMutation({
+    mutationFn: ({ gid, uid, all, old, buy }: {
+      gid: number; uid: string; all: number; old: number; buy: number
+    }) => setFansPrice(gid, uid, { all, old, buy }),
+    onSuccess: () => {
+      // 最终生效值由闲鱼侧决定（可能取整/归一），本地推算不可靠，直接重取列表
+      queryClient.invalidateQueries({ queryKey: ["items"] })
+      addToast({ title: "粉丝价已设置", variant: "success" })
+    },
+    onError: (e: Error) => {
+      addToast({ title: "设置粉丝价失败", description: e.message, variant: "error" })
+    },
+  })
+
   /** ShipConfig 保存 mutation */
   const shipConfigMutation = useMutation({
     mutationFn: ({ gid, stage, byEntirety, voucher }: {
@@ -167,6 +183,7 @@ export function useItemMutations() {
     shelfMutation,
     deleteMutation,
     repriceMutation,
+    fansPriceMutation,
     shipConfigMutation,
     handleToggle,
     handleRefresh,

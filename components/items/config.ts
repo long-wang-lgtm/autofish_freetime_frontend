@@ -1,4 +1,4 @@
-import type { ShipConfig, ShopItem, ShipByVoucher } from "@/lib/api/items"
+import type { ItemFans, ShipConfig, ShopItem, ShipByVoucher } from "@/lib/api/items"
 
 // ═══════════════════════════════════════════════════════════════
 // 配置字段类型
@@ -91,6 +91,46 @@ export function formatPublishTime(isoString: string | null): string {
 export function displayQuantity(item: ShopItem): number | null {
   if (!item.account.isPro) return 1
   return item.quantity ?? null
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 粉丝价
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * 粉丝价三档的固定顺序与标题。
+ * 标题必须与闲鱼返回的 fans[].title 完全一致（后端 set_fans_price 的 all/old/buy 三档），
+ * 对不上就不显示，不做「按顺序硬套」的兜底 —— 顺序套错比空着更糟。
+ */
+export const FANS_GROUPS: { key: 'all' | 'old' | 'buy'; title: string }[] = [
+  { key: 'all', title: '全部粉丝价' },
+  { key: 'old', title: '老粉价' },
+  { key: 'buy', title: '已购粉价' },
+]
+
+/** 读取 fans 分组 —— 兼容 { root: [...] } 与裸数组两种序列化形态 */
+export function getFansGroups(fans: ShopItem['fans']): ItemFans[] {
+  if (!fans) return []
+  return Array.isArray(fans) ? fans : (fans.root ?? [])
+}
+
+/** 按固定三档顺序取粉丝价，缺失为 null（表格渲染成 -） */
+export function fansPrices(item: ShopItem): (number | null)[] {
+  const groups = getFansGroups(item.fans)
+  return FANS_GROUPS.map(({ title }) => groups.find((g) => g.title === title)?.price ?? null)
+}
+
+/**
+ * 商品现价（元）—— 单规格读 reservePrice；多规格的 reservePrice 是 "min~max" 解析不出数字，
+ * 退回各 SKU 的最低价（保守取值，保证粉丝价低于任一规格）。都取不到返回 null。
+ */
+export function itemPrice(item: ShopItem): number | null {
+  if (item.skus?.length) {
+    const prices = item.skus.map((s) => s.price / 100).filter((p) => Number.isFinite(p))
+    return prices.length ? Math.min(...prices) : null
+  }
+  const price = Number(item.reservePrice)
+  return Number.isFinite(price) ? price : null
 }
 
 /** 商品状态标签 */

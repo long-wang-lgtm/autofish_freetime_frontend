@@ -4,13 +4,14 @@ import { useState } from "react"
 import type { ShopItem } from "@/lib/api/items"
 import { ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
 import type { ShipStage, ConfigField } from "../config"
-import { formatPublishTime, statusLabel, hasShipConfig, displayQuantity } from "../config"
+import { formatPublishTime, statusLabel, hasShipConfig, displayQuantity, fansPrices } from "../config"
 import { AutomationToggles } from "../parts/AutomationToggles"
 import { SendCodeEditor } from "../parts/SendCodeEditor"
 import { ShelfActions } from "../parts/ShelfActions"
 import { DeleteItemButton } from "../parts/DeleteItemButton"
 import { ItemActionButtons } from "../parts/ItemActionButtons"
 import type { RepriceSubmit } from "../parts/RepricingDialog"
+import type { FansPriceSubmit } from "../parts/FansPriceDialog"
 
 interface ConfigEntry {
   key: string
@@ -31,6 +32,7 @@ interface MobileProductCardProps {
   onOffline: (item: ShopItem) => void
   onDelete: (item: ShopItem) => void
   onReprice: (item: ShopItem, submit: RepriceSubmit) => Promise<void>
+  onSetFansPrice: (item: ShopItem, submit: FansPriceSubmit) => Promise<void>
   shelfPending: boolean
   deletePending: boolean
 }
@@ -47,6 +49,7 @@ export function MobileProductCard({
   onOffline,
   onDelete,
   onReprice,
+  onSetFansPrice,
   shelfPending,
   deletePending,
 }: MobileProductCardProps) {
@@ -117,6 +120,12 @@ export function MobileProductCard({
         <span className="text-gray-300">|</span>
         <span className="flex-shrink-0 text-gray-800 tabular-nums">{quantity === null ? '-' : quantity}</span>
         <span className="text-gray-300">|</span>
+        {/* 粉丝价三档（全部/老粉/已购）：桌面上横排数字，移动端三档拼成一个 token。
+            内层用 / 而非 | —— 信息栏本身用 | 分隔字段，内层再用 | 会分不清哪根是字段分隔符 */}
+        <span className="flex-shrink-0 tabular-nums">
+          {fansPrices(item).map((price) => (price === null ? '-' : price)).join('/')}
+        </span>
+        <span className="text-gray-300">|</span>
         <span className="flex-shrink-0">{formatPublishTime(item.publishTime)}</span>
         <ShelfActions
           item={item}
@@ -131,7 +140,12 @@ export function MobileProductCard({
           pending={deletePending}
           onDelete={onDelete}
         />
-        <ItemActionButtons item={item} onEdit={onEdit} onReprice={onReprice} />
+        <ItemActionButtons
+          item={item}
+          onEdit={onEdit}
+          onReprice={onReprice}
+          onSetFansPrice={onSetFansPrice}
+        />
       </div>
 
       <div className="border-t border-gray-100" />
