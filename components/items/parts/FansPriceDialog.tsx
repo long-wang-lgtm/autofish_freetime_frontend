@@ -35,9 +35,7 @@ interface FansPriceDialogProps {
 /**
  * 粉丝价弹窗 —— 全部粉丝价 / 老粉价 / 已购粉价。
  *
- * 三档都是可选的：留空 = 不改这一档，提交时整个省略该键（后端只把带了的档下发到闲鱼）。
  * 填了的档校验两条：格式，以及「不得高于商品现价」——粉丝价是折让，高于现价没有意义。
- * 现价取不到时（多规格且 reservePrice 解析不出、SKU 也没价）跳过这条，不阻塞提交。
  *
  * 用列表带回的 fans 预填，未设置过的档位留空。
  */
@@ -77,7 +75,6 @@ export function FansPriceDialog({ open, item, onOpenChange, onConfirm }: FansPri
 
   if (!open || !item) return null
 
-  // 逐档校验：留空 = 不改这一档，不报错；填了才查格式与现价上限
   const fields: FieldState[] = drafts.map((draft) => {
     if (draft.trim() === '') return { value: null }
     const value = parsePrice(draft)
@@ -175,7 +172,6 @@ export function FansPriceDialog({ open, item, onOpenChange, onConfirm }: FansPri
                   inputMode="decimal"
                   step="0.01"
                   min="0.01"
-                  placeholder="留空则不修改"
                   value={drafts[i]}
                   onChange={(e) =>
                     setDrafts((prev) => prev.map((d, j) => (j === i ? e.target.value : d)))
@@ -197,7 +193,7 @@ export function FansPriceDialog({ open, item, onOpenChange, onConfirm }: FansPri
           ))}
 
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            留空的档位不会被修改。已填档位须满足 全部粉丝价 ≥ 老粉价 ≥ 已购粉价
+            全部粉丝价 ≥ 老粉价 ≥ 已购粉价
             {listedPrice !== null && `，且介于商品现价的 10%（${Math.round(listedPrice * 0.1 * 100) / 100} 元）与现价 ${listedPrice} 元之间`}
           </p>
         </div>

@@ -241,10 +241,6 @@ export async function editPriceByPro(
 
 /**
  * 粉丝价提交载荷 —— 三档自 2026-09-11 起都是可选的，只提交用户实际填了的档。
- *
- * 留空的档**必须整个省略键**，不能传 null：后端校验器是 `values.get('all', 0)`，
- * 键存在但值为 null 时拿到的是 None，紧接着的 `None < old` 会抛 TypeError → 500。
- * （实测 pydantic 2.13.4；键不存在才走 default 拿到 0）
  */
 export interface FansPriceUpdate {
   all?: number
