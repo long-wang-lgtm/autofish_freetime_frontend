@@ -15,6 +15,7 @@ import {
   PRO_DEFAULT_QUANTITY,
   updateItemShipConfig,
   type ShopItem,
+  type FansPriceUpdate,
   type ShopItemConfigUpdate,
   type ShopItemListResponse,
   type ShipByVoucher,
@@ -110,11 +111,14 @@ export function useItemMutations() {
     },
   })
 
-  /** 粉丝价 mutation —— 仅鱼小铺（Pro）账号可用，非 Pro 后端直接 403 */
+  /**
+   * 粉丝价 mutation —— 仅鱼小铺（Pro）账号可用，非 Pro 后端直接 403。
+   * 三档可选，只把弹窗实际填了的档透传下去（解构出 prices 而非逐个列举，
+   * 避免未填的档带上 undefined 键混进 Body）。
+   */
   const fansPriceMutation = useMutation({
-    mutationFn: ({ gid, uid, all, old, buy }: {
-      gid: number; uid: string; all: number; old: number; buy: number
-    }) => setFansPrice(gid, uid, { all, old, buy }),
+    mutationFn: ({ gid, uid, ...prices }: { gid: number; uid: string } & FansPriceUpdate) =>
+      setFansPrice(gid, uid, prices),
     onSuccess: () => {
       // 最终生效值由闲鱼侧决定（可能取整/归一），本地推算不可靠，直接重取列表
       queryClient.invalidateQueries({ queryKey: ["items"] })

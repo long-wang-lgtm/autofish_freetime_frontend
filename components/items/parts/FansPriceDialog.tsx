@@ -1,16 +1,15 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
-import type { ShopItem } from "@/lib/api/items"
+import type { FansPriceUpdate, ShopItem } from "@/lib/api/items"
 import { FANS_GROUPS, fansPrices, itemPrice } from "../config"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 
-/** 粉丝价提交载荷 —— 三档一次提交，key 与后端 Body 参数一致 */
-export interface FansPriceSubmit {
-  all: number
-  old: number
-  buy: number
-}
+/**
+ * 粉丝价提交载荷 —— 三档都可选，留空的档不会出现在 Body 里。
+ * 形状与 lib/api/items.ts 的 FansPriceUpdate 一致（类型定义就近放在 API 模块）。
+ */
+export type FansPriceSubmit = FansPriceUpdate
 
 /** 单档价格格式校验（同改价：后端按分存储，超过两位小数会被截断） */
 function parsePrice(draft: string): number | null {
@@ -34,13 +33,13 @@ interface FansPriceDialogProps {
 }
 
 /**
- * 粉丝价弹窗 —— 三档一次提交（全部粉丝价 / 老粉价 / 已购粉价）。
+ * 粉丝价弹窗 —— 全部粉丝价 / 老粉价 / 已购粉价。
  *
- * 校验对齐后端（都 > 0 且 all >= old >= buy），另加一条后端没有的：
- * 三档都不得高于商品现价 —— 粉丝价是折让，高于现价没有意义。
+ * 三档都是可选的：留空 = 不改这一档，提交时整个省略该键（后端只把带了的档下发到闲鱼）。
+ * 填了的档校验两条：格式，以及「不得高于商品现价」——粉丝价是折让，高于现价没有意义。
  * 现价取不到时（多规格且 reservePrice 解析不出、SKU 也没价）跳过这条，不阻塞提交。
  *
- * 用列表带回的 fans 预填；未设置过的档位留空，用户需要自己填齐三档。
+ * 用列表带回的 fans 预填，未设置过的档位留空。
  */
 export function FansPriceDialog({ open, item, onOpenChange, onConfirm }: FansPriceDialogProps) {
   const baseId = useId()
@@ -78,9 +77,9 @@ export function FansPriceDialog({ open, item, onOpenChange, onConfirm }: FansPri
 
   if (!open || !item) return null
 
-  // 逐档校验：格式 → 现价上限。档位之间的顺序关系算完再补，因为要拿到三档的值
+  // 逐档校验：留空 = 不改这一档，不报错；填了才查格式与现价上限
   const fields: FieldState[] = drafts.map((draft) => {
-    if (draft.trim() === '') return { value: null, error: '请输入价格' }
+    if (draft.trim() === '') return { value: null }
     const value = parsePrice(draft)
     if (value === null) return { value: null, error: '价格格式有误，最多两位小数' }
     if (listedPrice !== null && value > listedPrice) {
@@ -89,26 +88,44 @@ export function FansPriceDialog({ open, item, onOpenChange, onConfirm }: FansPri
     return { value }
   })
 
-  const [allState, oldState, buyState] = fields
-  // all >= old >= buy：把「低于下一档」的错误挂在下调的那一档上
-  if (!allState.error && !oldState.error && allState.value! < oldState.value!) {
-    allState.error = '不能低于老粉价'
-  }
-  if (!oldState.error && !buyState.error && oldState.value! < buyState.value!) {
-    oldState.error = '不能低于已购粉价'
+  // 顺序约束只在「已填的档」之间比较 —— 留空的档不参与，这正是后端本次改动的语义。
+  // 把「低于下一档」的错误挂在档位更高（位置更靠前）的那一格上
+  const filled = fields.map((f, i) => (f.value !== null ? i : -1)).filter((i) => i >= 0)
+  for (let k = 1; k < filled.length; k++) {
+    const prev = fields[filled[k - 1]]
+    const curr = fields[filled[k]]
+    if (!prev.error && !curr.error && prev.value! < curr.value!) {
+      prev.error = `不能低于${FANS_GROUPS[filled[k]].title}`
+    }
   }
 
-  const canSubmit = fields.every((f) => !f.error) && !saving
+  // 下限：后端 route 里是 `fans.max_price() < float(item.reservePrice) * 0.1` 报 400。
+  // 镜像它的 max 语义而不是逐档比较 —— 逐档更严，会把后端本来接受的组合（如 all=50 old=1）
+  // 挡在前端，前端比后端严等于凭空砍掉一个可用操作
+  if (listedPrice !== null && filled.length > 0) {
+    const floor = Math.round(listedPrice * 0.1 * 100) / 100
+    const maxFilled = Math.max(...filled.map((i) => fields[i].value!))
+    const anchor = fields[filled[0]]
+    if (maxFilled < floor && !anchor.error) {
+      anchor.error = `不能低于商品现价的 10%（${floor} 元）`
+    }
+  }
+
+  // 至少填一档才有提交的意义：三档全空等于什么都没改，后端还会下发一个空的 fansPriceList
+  const canSubmit = filled.length > 0 && fields.every((f) => !f.error) && !saving
 
   const handleSubmit = async () => {
     if (!canSubmit) return
     setSaving(true)
+    // 只带填了的档。留空的一律省略键而不是传 null —— 后端校验器 values.get('all', 0)
+    // 在「键存在但值为 null」时拿到 None，随后 None < old 会抛 TypeError
+    const payload: FansPriceSubmit = {}
+    FANS_GROUPS.forEach(({ key }, i) => {
+      const value = fields[i].value
+      if (value !== null) payload[key] = value
+    })
     try {
-      await onConfirm(item, {
-        all: allState.value!,
-        old: oldState.value!,
-        buy: buyState.value!,
-      })
+      await onConfirm(item, payload)
       onOpenChange(false)
     } catch {
       // 错误提示由 mutation 的 onError toast 负责，这里保持弹窗打开让用户重试
@@ -158,6 +175,7 @@ export function FansPriceDialog({ open, item, onOpenChange, onConfirm }: FansPri
                   inputMode="decimal"
                   step="0.01"
                   min="0.01"
+                  placeholder="留空则不修改"
                   value={drafts[i]}
                   onChange={(e) =>
                     setDrafts((prev) => prev.map((d, j) => (j === i ? e.target.value : d)))
@@ -179,8 +197,8 @@ export function FansPriceDialog({ open, item, onOpenChange, onConfirm }: FansPri
           ))}
 
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            三档须满足 全部粉丝价 ≥ 老粉价 ≥ 已购粉价
-            {listedPrice !== null && `，且不高于商品现价 ${listedPrice} 元`}
+            留空的档位不会被修改。已填档位须满足 全部粉丝价 ≥ 老粉价 ≥ 已购粉价
+            {listedPrice !== null && `，且介于商品现价的 10%（${Math.round(listedPrice * 0.1 * 100) / 100} 元）与现价 ${listedPrice} 元之间`}
           </p>
         </div>
 

@@ -114,6 +114,20 @@ export function getFansGroups(fans: ShopItem['fans']): ItemFans[] {
   return Array.isArray(fans) ? fans : (fans.root ?? [])
 }
 
+/**
+ * 是否支持设置粉丝价 —— 只有鱼小铺（Pro）账号支持，且不支持多规格商品。
+ *
+ * 多规格没有单一的「现价」：reservePrice 是 "min~max"，价格分散在各 SKU 上，粉丝价
+ * 这一档也就没有基准可比，后端对多规格直接 403。所以多规格商品整行不展示粉丝价、
+ * 按钮置灰。
+ *
+ * 展示与可用性共用这一个判断（桌面列、移动端信息栏、按钮三处都读它），
+ * 避免各写一份而漂移 —— ShelfActions 曾经桌面/移动各写一份状态判断，改一处另一处照旧。
+ */
+export function canSetFansPrice(item: ShopItem): boolean {
+  return item.account.isPro && !item.skus?.length
+}
+
 /** 按固定三档顺序取粉丝价，缺失为 null（表格渲染成 -） */
 export function fansPrices(item: ShopItem): (number | null)[] {
   const groups = getFansGroups(item.fans)

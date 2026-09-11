@@ -5,6 +5,7 @@ import { Pencil, CircleDollarSign, Heart } from "lucide-react"
 import type { ShopItem } from "@/lib/api/items"
 import { RepricingDialog, type RepriceSubmit } from "./RepricingDialog"
 import { FansPriceDialog, type FansPriceSubmit } from "./FansPriceDialog"
+import { canSetFansPrice } from "../config"
 
 const BASE_CLASS = 'w-7 h-7 flex items-center justify-center rounded-lg transition-colors'
 
@@ -40,8 +41,12 @@ export function ItemActionButtons({ item, onEdit, onReprice, onSetFansPrice }: I
   // 其余「是否支持改价」（operates 字段）由后端判定，前端不预判。
   const multiSku = (item.skus?.length ?? 0) > 0
 
-  // 粉丝价只有鱼小铺接口支持；非 Pro 账号后端直接 403，前端先置灰
-  const isPro = item.account.isPro
+  // 粉丝价只有鱼小铺接口支持，且不支持多规格商品；后端两种情况都直接 403，前端先置灰。
+  // 判断与「粉丝价」列的展示共用 canSetFansPrice，避免按钮还亮着但列里没有这一档
+  const canFansPrice = canSetFansPrice(item)
+  const fansPriceDisabledReason = item.account.isPro
+    ? '多规格商品不支持设置粉丝价'
+    : '非鱼小铺账号不支持设置粉丝价'
 
   return (
     <div className="inline-flex items-center justify-center gap-1">
@@ -68,11 +73,11 @@ export function ItemActionButtons({ item, onEdit, onReprice, onSetFansPrice }: I
 
       <button
         type="button"
-        disabled={!isPro}
+        disabled={!canFansPrice}
         aria-label="粉丝价"
-        title={isPro ? '粉丝价' : '非鱼小铺账号不支持设置粉丝价'}
+        title={canFansPrice ? '粉丝价' : fansPriceDisabledReason}
         onClick={() => setFansPriceOpen(true)}
-        className={`${BASE_CLASS} ${isPro ? ENABLED_CLASS : DISABLED_CLASS}`}
+        className={`${BASE_CLASS} ${canFansPrice ? ENABLED_CLASS : DISABLED_CLASS}`}
       >
         <Heart className="w-4 h-4" />
       </button>

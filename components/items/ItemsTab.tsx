@@ -2,11 +2,12 @@
 
 import { Fragment, useState, useRef, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import type { ShopItem, ShopItemConfigUpdate, ShipByVoucher } from "@/lib/api/items"
+import type { ShopItem, ShopItemConfigUpdate, ShipByVoucher, FansPriceUpdate } from "@/lib/api/items"
 import { getVoucherKinds } from "@/lib/api/items"
 import type { ShipStage } from "@/components/items/config"
 import {
   hasShipConfig, formatPublishTime, statusLabel, displayQuantity, fansPrices, FANS_GROUPS,
+  canSetFansPrice,
 } from "@/components/items/config"
 import { AutomationToggles } from "@/components/items/parts/AutomationToggles"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
@@ -68,9 +69,7 @@ interface ItemsTabProps {
     }) => Promise<unknown>
   }
   fansPriceMutation: {
-    mutateAsync: (args: {
-      gid: number; uid: string; all: number; old: number; buy: number
-    }) => Promise<unknown>
+    mutateAsync: (args: { gid: number; uid: string } & FansPriceUpdate) => Promise<unknown>
   }
   shipConfigMutation: {
     mutateAsync: (args: {
@@ -224,17 +223,21 @@ export function ItemsTab({
               {/* 库存是有值的数字，不能用 gray-400（那是禁用/占位档），按数值列规范上 tabular-nums */}
               <span className="text-gray-800 tabular-nums">{quantity === null ? '-' : quantity}</span>
             </span>
-            {/* 第二行：粉丝价三档，与上一行同为「价格」语义，故沿用同一套数值/占位配色 */}
-            <span className="inline-flex items-center gap-1 tabular-nums">
-              {prices.map((price, i) => (
-                <Fragment key={FANS_GROUPS[i].key}>
-                  {i > 0 && <span className="text-gray-300">|</span>}
-                  <span className={price === null ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'}>
-                    {price === null ? '-' : price}
-                  </span>
-                </Fragment>
-              ))}
-            </span>
+            {/* 第二行：粉丝价三档，与上一行同为「价格」语义，故沿用同一套数值/占位配色。
+                多规格商品不支持设置粉丝价（后端 403），整行不渲染 —— 显示成 -/-/- 会让人
+                以为是"还没设置"，而实际是"没有这个概念" */}
+            {canSetFansPrice(item) && (
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                {prices.map((price, i) => (
+                  <Fragment key={FANS_GROUPS[i].key}>
+                    {i > 0 && <span className="text-gray-300">|</span>}
+                    <span className={price === null ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'}>
+                      {price === null ? '-' : price}
+                    </span>
+                  </Fragment>
+                ))}
+              </span>
+            )}
           </div>
         )
       },

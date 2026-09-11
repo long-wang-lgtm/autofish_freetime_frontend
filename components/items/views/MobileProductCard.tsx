@@ -4,7 +4,9 @@ import { useState } from "react"
 import type { ShopItem } from "@/lib/api/items"
 import { ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
 import type { ShipStage, ConfigField } from "../config"
-import { formatPublishTime, statusLabel, hasShipConfig, displayQuantity, fansPrices } from "../config"
+import {
+  formatPublishTime, statusLabel, hasShipConfig, displayQuantity, fansPrices, canSetFansPrice,
+} from "../config"
 import { AutomationToggles } from "../parts/AutomationToggles"
 import { SendCodeEditor } from "../parts/SendCodeEditor"
 import { ShelfActions } from "../parts/ShelfActions"
@@ -121,11 +123,17 @@ export function MobileProductCard({
         <span className="flex-shrink-0 text-gray-800 tabular-nums">{quantity === null ? '-' : quantity}</span>
         <span className="text-gray-300">|</span>
         {/* 粉丝价三档（全部/老粉/已购）：桌面上横排数字，移动端三档拼成一个 token。
-            内层用 / 而非 | —— 信息栏本身用 | 分隔字段，内层再用 | 会分不清哪根是字段分隔符 */}
-        <span className="flex-shrink-0 tabular-nums">
-          {fansPrices(item).map((price) => (price === null ? '-' : price)).join('/')}
-        </span>
-        <span className="text-gray-300">|</span>
+            内层用 / 而非 | —— 信息栏本身用 | 分隔字段，内层再用 | 会分不清哪根是字段分隔符。
+            非 Pro / 多规格商品不支持设置粉丝价，连同后面那根分隔符一起不渲染，
+            否则字段之间会多出一根悬空的 | */}
+        {canSetFansPrice(item) && (
+          <>
+            <span className="flex-shrink-0 tabular-nums">
+              {fansPrices(item).map((price) => (price === null ? '-' : price)).join('/')}
+            </span>
+            <span className="text-gray-300">|</span>
+          </>
+        )}
         <span className="flex-shrink-0">{formatPublishTime(item.publishTime)}</span>
         <ShelfActions
           item={item}
