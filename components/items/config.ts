@@ -90,6 +90,8 @@ export function statusLabel(status: number): { text: string; color: string } {
       return { text: "已下架", color: "bg-gray-100 text-gray-500" }
     case 1:
       return { text: "已售出", color: "bg-red-100 text-red-600" }
+    case -9:
+      return { text: "审核中", color: "bg-red-100 text-red-600" }
     default:
       return { text: "未知", color: "bg-gray-100 text-gray-500" }
   }

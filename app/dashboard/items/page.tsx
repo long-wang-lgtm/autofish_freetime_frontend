@@ -25,7 +25,7 @@ function ItemsPageContent() {
     keywordRules,
     rulesStats,
     itemKeywordCounts,
-    updateMutation,
+    configMutation,
     shelfMutation,
     shipConfigMutation,
     handleToggle,
@@ -84,7 +84,7 @@ function ItemsPageContent() {
           onToggle={(item, field) =>
             handleToggle(item, field as "auto_reply" | "auto_ship" | "auto_ai_reply" | "auto_restock")
           }
-          updateMutation={updateMutation}
+          configMutation={configMutation}
           shelfMutation={shelfMutation}
           shipConfigMutation={shipConfigMutation}
           orderBy={filterState.orderBy}

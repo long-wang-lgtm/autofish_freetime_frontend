@@ -4,11 +4,13 @@ import { useState, useCallback } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   updateItem,
+  updateItemConfig,
   refreshItems,
   shelvesItem,
   offlineItem,
   updateItemShipConfig,
   type ShopItem,
+  type ShopItemConfigUpdate,
   type ShopItemListResponse,
   type ShipByVoucher,
 } from "@/lib/api/items"
@@ -25,6 +27,18 @@ export function useItemMutations() {
   const updateMutation = useMutation({
     mutationFn: ({ gid, data }: { gid: number; data: Record<string, unknown> }) =>
       updateItem(gid, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["items"] })
+    },
+    onError: (e: Error) => {
+      addToast({ title: "更新失败", description: e.message, variant: "error" })
+    },
+  })
+
+  /** 商品配置字段更新（sendCode / ai_prompt / reply_default_content） */
+  const configMutation = useMutation({
+    mutationFn: ({ gid, data }: { gid: number; data: ShopItemConfigUpdate }) =>
+      updateItemConfig(gid, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["items"] })
     },
@@ -106,6 +120,7 @@ export function useItemMutations() {
 
   return {
     updateMutation,
+    configMutation,
     shelfMutation,
     shipConfigMutation,
     handleToggle,

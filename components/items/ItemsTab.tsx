@@ -3,7 +3,7 @@
 import { Fragment, useState, useRef, useEffect } from "react"
 import { Trash2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
-import type { ShopItem, ShipByVoucher } from "@/lib/api/items"
+import type { ShopItem, ShopItemConfigUpdate, ShipByVoucher } from "@/lib/api/items"
 import { getVoucherKinds } from "@/lib/api/items"
 import type { ShipStage } from "@/components/items/config"
 import { hasShipConfig, formatPublishTime } from "@/components/items/config"
@@ -44,7 +44,7 @@ interface ItemsTabProps {
   onPageChange: (page: number) => void
   onRetry: () => void
   onToggle: (item: ShopItem, field: string) => void
-  updateMutation: { mutate: (args: { gid: number; data: Record<string, unknown> }) => void }
+  configMutation: { mutate: (args: { gid: number; data: ShopItemConfigUpdate }) => void }
   shelfMutation: {
     mutate: (args: { gid: number; uid: string; action: "shelves" | "offline" }) => void
     isPending: boolean
@@ -77,7 +77,7 @@ export function ItemsTab({
   onPageChange,
   onRetry,
   onToggle,
-  updateMutation,
+  configMutation,
   shelfMutation,
   shipConfigMutation,
   orderBy,
@@ -266,7 +266,7 @@ export function ItemsTab({
           sendCode={item.config?.sendCode ?? null}
           variant="cell"
           onUpdateField={(gid, _field, value) =>
-            updateMutation.mutate({ gid, data: { sendCode: value } })
+            configMutation.mutate({ gid, data: { sendCode: value } })
           }
         />
       ),
@@ -318,7 +318,7 @@ export function ItemsTab({
                 onEdit={() => setEditingItem(item)}
                 onKeywordClick={() => setKeywordItem(item)}
                 onConfigClick={(stage) => handleConfigClick(item, stage as ShipStage)}
-                onSendCodeChange={(gid, value) => updateMutation.mutate({ gid, data: { sendCode: value } })}
+                onSendCodeChange={(gid, value) => configMutation.mutate({ gid, data: { sendCode: value } })}
                 onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
                 onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
                 shelfPending={isShelfPending(item)}

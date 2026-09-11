@@ -40,7 +40,7 @@ export function useItemsPage() {
 
   // —— 变更操作 ——
   const {
-    updateMutation,
+    configMutation,
     shelfMutation,
     shipConfigMutation,
     handleToggle,
@@ -72,7 +72,7 @@ export function useItemsPage() {
     rulesStats,
     itemKeywordCounts,
     // 变更操作
-    updateMutation,
+    configMutation,
     shelfMutation,
     shipConfigMutation,
     handleToggle,
