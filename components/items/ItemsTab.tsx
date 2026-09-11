@@ -29,7 +29,7 @@ import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 /**
 此处等宽设置，严禁修改，仅允许增加或减少列数
  */
-const ITEMS_GRID_COLS = '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
+const ITEMS_GRID_COLS = '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
 
 /** 「发货/赠送」列内的三个子阶段（顺序：付款后发货 → 收货后赠送 → 评价后赠送） */
 const DELIVERY_STAGES: { stage: ShipStage; label: string }[] = [
@@ -207,40 +207,35 @@ export function ItemsTab({
     },
     {
       key: 'price',
-      header: '价格/库存',
+      header: '价格/库存/粉丝价',
       sortable: true,
       align: 'center',
       render: (item) => {
         const quantity = displayQuantity(item)
-        return (
-          <span className="inline-flex items-center gap-1 text-xs leading-tight">
-            <span className="text-orange-600 font-semibold">{item.reservePrice || '-'}</span>
-            <span className="text-gray-300">|</span>
-            {/* 库存是有值的数字，不能用 gray-400（那是禁用/占位档），按数值列规范上 tabular-nums */}
-            <span className="text-gray-800 tabular-nums">{quantity === null ? '-' : quantity}</span>
-          </span>
-        )
-      },
-    },
-    {
-      key: 'fansPrice',
-      header: '粉丝价',
-      align: 'center',
-      render: (item) => {
         // 三档固定顺序：全部粉丝价 | 老粉价 | 已购粉价，未设置的档位显示 -
         // 未设置的档位是"没有"，用 gray-400（占位档）而非数值色，避免把 - 读成有效数据
         const prices = fansPrices(item)
         return (
-          <span className="inline-flex items-center gap-1 text-xs leading-tight tabular-nums">
-            {prices.map((price, i) => (
-              <Fragment key={FANS_GROUPS[i].key}>
-                {i > 0 && <span className="text-gray-300">|</span>}
-                <span className={price === null ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'}>
-                  {price === null ? '-' : price}
-                </span>
-              </Fragment>
-            ))}
-          </span>
+          <div className="flex flex-col items-center gap-0.5 text-xs leading-tight">
+            {/* 第一行：现价 | 库存 */}
+            <span className="inline-flex items-center gap-1">
+              <span className="text-orange-600 font-semibold">{item.reservePrice || '-'}</span>
+              <span className="text-gray-300">|</span>
+              {/* 库存是有值的数字，不能用 gray-400（那是禁用/占位档），按数值列规范上 tabular-nums */}
+              <span className="text-gray-800 tabular-nums">{quantity === null ? '-' : quantity}</span>
+            </span>
+            {/* 第二行：粉丝价三档，与上一行同为「价格」语义，故沿用同一套数值/占位配色 */}
+            <span className="inline-flex items-center gap-1 tabular-nums">
+              {prices.map((price, i) => (
+                <Fragment key={FANS_GROUPS[i].key}>
+                  {i > 0 && <span className="text-gray-300">|</span>}
+                  <span className={price === null ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'}>
+                    {price === null ? '-' : price}
+                  </span>
+                </Fragment>
+              ))}
+            </span>
+          </div>
         )
       },
     },
