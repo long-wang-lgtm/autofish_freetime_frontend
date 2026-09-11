@@ -13,6 +13,7 @@ import { KeywordDrawer } from "@/components/items/drawers/RulesItemsingleDrawer"
 import { SendCodeEditor } from "@/components/items/parts/SendCodeEditor"
 import { ShelfActions } from "@/components/items/parts/ShelfActions"
 import { DeleteItemButton } from "@/components/items/parts/DeleteItemButton"
+import { ItemActionButtons } from "@/components/items/parts/ItemActionButtons"
 import { ConfigStatusCell } from "@/components/items/parts/ConfigStatusCell"
 import { ShipConfigModal } from "@/components/items/parts/ShipConfigModal"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
@@ -21,8 +22,12 @@ import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 
-/** Items 表格列宽 — 9 轨等宽：商品信息跨 2 轨，其余列各 1 轨 */
-const ITEMS_GRID_COLS = '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
+/**
+ * Items 表格列宽 — 11 轨，按各列内容的实际宽度需求分配（非等宽）：
+ * 商品信息 2 轨 / 价格 0.8 / 自动化 0.9 / 操作 1.2 / 上下架 1.2
+ * 发货赠送 1.5 / 关键词回复 0.9 / AI提示词 0.9 / 发布时间 1 / 指令码 0.9
+ */
+const ITEMS_GRID_COLS = '1fr 1fr 0.8fr 0.9fr 1.2fr 1.2fr 1.5fr 0.9fr 0.9fr 1fr 0.9fr'
 
 /** 「发货/赠送」列内的三个子阶段（顺序：付款后发货 → 收货后赠送 → 评价后赠送） */
 const DELIVERY_STAGES: { stage: ShipStage; label: string }[] = [
@@ -189,8 +194,16 @@ export function ItemsTab({
       ),
     },
     {
+      key: 'itemActions',
+      header: '编辑/改价/粉丝价',
+      align: 'center',
+      render: (item) => (
+        <ItemActionButtons onEdit={() => setEditingItem(item)} />
+      ),
+    },
+    {
       key: 'actions',
-      header: '上下架',
+      header: '上架/下架/删除',
       align: 'center',
       render: (item) => (
         <div className="inline-flex items-center justify-center gap-1">

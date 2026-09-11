@@ -9,6 +9,7 @@ import { AutomationToggles } from "../parts/AutomationToggles"
 import { SendCodeEditor } from "../parts/SendCodeEditor"
 import { ShelfActions } from "../parts/ShelfActions"
 import { DeleteItemButton } from "../parts/DeleteItemButton"
+import { ItemActionButtons } from "../parts/ItemActionButtons"
 
 interface ConfigEntry {
   key: string
@@ -124,6 +125,7 @@ export function MobileProductCard({
           pending={deletePending}
           onDelete={onDelete}
         />
+        <ItemActionButtons onEdit={onEdit} />
       </div>
 
       <div className="border-t border-gray-100" />
