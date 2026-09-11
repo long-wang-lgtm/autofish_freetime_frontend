@@ -87,6 +87,7 @@ export interface ShopItem {
   picurl: string
   status: number
   reservePrice: string                 // 价格字符串（多 SKU 时为 "min~max"）
+  quantity: number | null              // 库存；仅鱼小铺（Pro）账号会同步真实值
   publishTime: string | null           // ISO 8601 datetime
   auto_ship: boolean
   auto_reply: boolean
@@ -196,6 +197,31 @@ export async function deleteItem(gid: number, uid: string): Promise<OperationRes
   return fetchApi<OperationResponse>("/api/items/delete", {
     method: "POST",
     params: { gid, uid },
+  })
+}
+
+/** 改价（普通账号）— POST /api/items/edit.price.by.idle?gid=&uid=&price= */
+export async function editPriceByIdle(gid: number, uid: string, price: number): Promise<ShopItem> {
+  return fetchApi<ShopItem>("/api/items/edit.price.by.idle", {
+    method: "POST",
+    params: { gid, uid, price },
+  })
+}
+
+/**
+ * 后端 /edit.price.by.pro 的 quantity 默认值。
+ * 该接口一次提交「价格 + 库存」，不传 quantity 后端就按这个值写入，
+ * 所以前端必须显式带上，避免"只想改价却顺手把库存重置了"。
+ */
+export const PRO_DEFAULT_QUANTITY = 9999
+
+/** 改价（鱼小铺 Pro 账号，同时改库存）— POST /api/items/edit.price.by.pro?gid=&uid=&price=&quantity= */
+export async function editPriceByPro(
+  gid: number, uid: string, price: number, quantity: number,
+): Promise<ShopItem> {
+  return fetchApi<ShopItem>("/api/items/edit.price.by.pro", {
+    method: "POST",
+    params: { gid, uid, price, quantity },
   })
 }
 

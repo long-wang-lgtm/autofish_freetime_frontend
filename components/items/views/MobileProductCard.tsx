@@ -4,12 +4,13 @@ import { useState } from "react"
 import type { ShopItem } from "@/lib/api/items"
 import { ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
 import type { ShipStage, ConfigField } from "../config"
-import { formatPublishTime, statusLabel, hasShipConfig } from "../config"
+import { formatPublishTime, statusLabel, hasShipConfig, displayQuantity } from "../config"
 import { AutomationToggles } from "../parts/AutomationToggles"
 import { SendCodeEditor } from "../parts/SendCodeEditor"
 import { ShelfActions } from "../parts/ShelfActions"
 import { DeleteItemButton } from "../parts/DeleteItemButton"
 import { ItemActionButtons } from "../parts/ItemActionButtons"
+import type { RepriceSubmit } from "../parts/RepricingDialog"
 
 interface ConfigEntry {
   key: string
@@ -29,6 +30,7 @@ interface MobileProductCardProps {
   onShelve: (item: ShopItem) => void
   onOffline: (item: ShopItem) => void
   onDelete: (item: ShopItem) => void
+  onReprice: (item: ShopItem, submit: RepriceSubmit) => Promise<void>
   shelfPending: boolean
   deletePending: boolean
 }
@@ -44,10 +46,12 @@ export function MobileProductCard({
   onShelve,
   onOffline,
   onDelete,
+  onReprice,
   shelfPending,
   deletePending,
 }: MobileProductCardProps) {
   const status = statusLabel(item.status)
+  const quantity = displayQuantity(item)
   const [expanded, setExpanded] = useState(false)
 
   const allConfigs: ConfigEntry[] = [
@@ -111,6 +115,8 @@ export function MobileProductCard({
         <span className="text-gray-300">|</span>
         <span className="text-orange-600 font-semibold flex-shrink-0">{item.reservePrice || '-'}</span>
         <span className="text-gray-300">|</span>
+        <span className="flex-shrink-0 text-gray-800 tabular-nums">{quantity === null ? '-' : quantity}</span>
+        <span className="text-gray-300">|</span>
         <span className="flex-shrink-0">{formatPublishTime(item.publishTime)}</span>
         <ShelfActions
           item={item}
@@ -125,7 +131,7 @@ export function MobileProductCard({
           pending={deletePending}
           onDelete={onDelete}
         />
-        <ItemActionButtons onEdit={onEdit} />
+        <ItemActionButtons item={item} onEdit={onEdit} onReprice={onReprice} />
       </div>
 
       <div className="border-t border-gray-100" />

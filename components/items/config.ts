@@ -1,4 +1,4 @@
-import type { ShipConfig, ShipByVoucher } from "@/lib/api/items"
+import type { ShipConfig, ShopItem, ShipByVoucher } from "@/lib/api/items"
 
 // ═══════════════════════════════════════════════════════════════
 // 配置字段类型
@@ -79,6 +79,18 @@ export function formatPublishTime(isoString: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   })
+}
+
+/**
+ * 库存显示值 —— 桌面表格与移动卡片共用，避免两处各写一份判断而漂移。
+ *
+ * 鱼小铺（Pro）账号后端会同步闲鱼上的真实库存；普通账号调价走 /edit.price.by.idle，
+ * 那个接口只改价格、库存不由本系统维护，后端字段停在 0，把 0 当"已售罄"展示是误导，
+ * 所以固定显示 1。返回 null 表示 Pro 账号但库存尚未同步到。
+ */
+export function displayQuantity(item: ShopItem): number | null {
+  if (!item.account.isPro) return 1
+  return item.quantity ?? null
 }
 
 /** 商品状态标签 */

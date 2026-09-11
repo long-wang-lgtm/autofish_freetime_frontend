@@ -9,6 +9,9 @@ import {
   shelvesItem,
   offlineItem,
   deleteItem,
+  editPriceByIdle,
+  editPriceByPro,
+  PRO_DEFAULT_QUANTITY,
   updateItemShipConfig,
   type ShopItem,
   type ShopItemConfigUpdate,
@@ -80,6 +83,32 @@ export function useItemMutations() {
     },
   })
 
+  /**
+   * 改价 mutation — 按账号类型分流到两个后端接口（isPro 由列表数据直接带出，无需额外请求）。
+   * 非鱼小铺走 /edit.price.by.idle，鱼小铺走 /edit.price.by.pro；两者对账号类型的校验互斥，
+   * 前端选错接口只会拿到 403，所以这里必须与 item.account.isPro 保持一致。
+   */
+  const repriceMutation = useMutation({
+    mutationFn: ({ gid, uid, price, quantity, isPro }: {
+      gid: number; uid: string; price: number; quantity?: number; isPro: boolean
+    }) =>
+      isPro
+        ? editPriceByPro(gid, uid, price, quantity ?? PRO_DEFAULT_QUANTITY)
+        : editPriceByIdle(gid, uid, price),
+    onSuccess: (_result, { price, quantity, isPro }) => {
+      // 价格列可排序（orderBy=reservePrice），改价会改变该行在列表中的位置，
+      // 按状态管理规范的决策树走 invalidateQueries 而非乐观更新
+      queryClient.invalidateQueries({ queryKey: ["items"] })
+      addToast({
+        title: isPro ? `已改价 ${price} 元，库存 ${quantity}` : `已改价为 ${price} 元`,
+        variant: "success",
+      })
+    },
+    onError: (e: Error) => {
+      addToast({ title: "改价失败", description: e.message, variant: "error" })
+    },
+  })
+
   /** ShipConfig 保存 mutation */
   const shipConfigMutation = useMutation({
     mutationFn: ({ gid, stage, byEntirety, voucher }: {
@@ -137,6 +166,7 @@ export function useItemMutations() {
     configMutation,
     shelfMutation,
     deleteMutation,
+    repriceMutation,
     shipConfigMutation,
     handleToggle,
     handleRefresh,

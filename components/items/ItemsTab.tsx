@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import type { ShopItem, ShopItemConfigUpdate, ShipByVoucher } from "@/lib/api/items"
 import { getVoucherKinds } from "@/lib/api/items"
 import type { ShipStage } from "@/components/items/config"
-import { hasShipConfig, formatPublishTime, statusLabel } from "@/components/items/config"
+import { hasShipConfig, formatPublishTime, statusLabel, displayQuantity } from "@/components/items/config"
 import { AutomationToggles } from "@/components/items/parts/AutomationToggles"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
 import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
@@ -14,6 +14,7 @@ import { SendCodeEditor } from "@/components/items/parts/SendCodeEditor"
 import { ShelfActions } from "@/components/items/parts/ShelfActions"
 import { DeleteItemButton } from "@/components/items/parts/DeleteItemButton"
 import { ItemActionButtons } from "@/components/items/parts/ItemActionButtons"
+import type { RepriceSubmit } from "@/components/items/parts/RepricingDialog"
 import { ConfigStatusCell } from "@/components/items/parts/ConfigStatusCell"
 import { ShipConfigModal } from "@/components/items/parts/ShipConfigModal"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
@@ -23,11 +24,9 @@ import { Pagination } from '@/components/ui/data/Pagination'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 
 /**
- * Items 表格列宽 — 11 轨，按各列内容的实际宽度需求分配（非等宽）：
- * 商品信息 2 轨 / 价格 0.8 / 自动化 0.9 / 操作 1.2 / 上下架 1.2
- * 发货赠送 1.5 / 关键词回复 0.9 / AI提示词 0.9 / 发布时间 1 / 指令码 0.9
+此处等宽设置，严禁修改，仅允许增加或减少列数
  */
-const ITEMS_GRID_COLS = '1fr 1fr 0.8fr 0.9fr 1.2fr 1.2fr 1.5fr 0.9fr 0.9fr 1fr 0.9fr'
+const ITEMS_GRID_COLS = '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
 
 /** 「发货/赠送」列内的三个子阶段（顺序：付款后发货 → 收货后赠送 → 评价后赠送） */
 const DELIVERY_STAGES: { stage: ShipStage; label: string }[] = [
@@ -60,6 +59,11 @@ interface ItemsTabProps {
     isPending: boolean
     variables?: { gid: number; uid: string }
   }
+  repriceMutation: {
+    mutateAsync: (args: {
+      gid: number; uid: string; isPro: boolean; price: number; quantity?: number
+    }) => Promise<unknown>
+  }
   shipConfigMutation: {
     mutateAsync: (args: {
       gid: number
@@ -90,6 +94,7 @@ export function ItemsTab({
   configMutation,
   shelfMutation,
   deleteMutation,
+  repriceMutation,
   shipConfigMutation,
   orderBy,
   asc,
@@ -118,6 +123,14 @@ export function ItemsTab({
 
   const handleDelete = (item: ShopItem) =>
     deleteMutation.mutate({ gid: item.gid, uid: item.account.uid })
+
+  // 改价：接口分流交给 mutation，这里只把账号类型一并带下去。
+  // 返回 Promise 供 RepricingDialog 决定是否关闭弹窗（成功才关）
+  const handleReprice = async (item: ShopItem, submit: RepriceSubmit): Promise<void> => {
+    await repriceMutation.mutateAsync({
+      gid: item.gid, uid: item.account.uid, isPro: item.account.isPro, ...submit,
+    })
+  }
 
   const listRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -178,12 +191,20 @@ export function ItemsTab({
     },
     {
       key: 'price',
-      header: '价格',
+      header: '价格/库存',
       sortable: true,
       align: 'center',
-      render: (item) => (
-        <span className="text-orange-600 font-semibold text-xs">{item.reservePrice || '-'}</span>
-      ),
+      render: (item) => {
+        const quantity = displayQuantity(item)
+        return (
+          <span className="inline-flex items-center gap-1 text-xs leading-tight">
+            <span className="text-orange-600 font-semibold">{item.reservePrice || '-'}</span>
+            <span className="text-gray-300">|</span>
+            {/* 库存是有值的数字，不能用 gray-400（那是禁用/占位档），按数值列规范上 tabular-nums */}
+            <span className="text-gray-800 tabular-nums">{quantity === null ? '-' : quantity}</span>
+          </span>
+        )
+      },
     },
     {
       key: 'automation',
@@ -198,7 +219,11 @@ export function ItemsTab({
       header: '编辑/改价/粉丝价',
       align: 'center',
       render: (item) => (
-        <ItemActionButtons onEdit={() => setEditingItem(item)} />
+        <ItemActionButtons
+          item={item}
+          onEdit={() => setEditingItem(item)}
+          onReprice={handleReprice}
+        />
       ),
     },
     {
@@ -352,6 +377,7 @@ export function ItemsTab({
                 onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
                 onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
                 onDelete={handleDelete}
+                onReprice={handleReprice}
                 shelfPending={isShelfPending(item)}
                 deletePending={isDeletePending(item)}
               />

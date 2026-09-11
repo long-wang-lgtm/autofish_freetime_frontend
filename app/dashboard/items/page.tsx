@@ -28,6 +28,7 @@ function ItemsPageContent() {
     configMutation,
     shelfMutation,
     deleteMutation,
+    repriceMutation,
     shipConfigMutation,
     handleToggle,
     handleRefresh,
@@ -88,6 +89,7 @@ function ItemsPageContent() {
           configMutation={configMutation}
           shelfMutation={shelfMutation}
           deleteMutation={deleteMutation}
+          repriceMutation={repriceMutation}
           shipConfigMutation={shipConfigMutation}
           orderBy={filterState.orderBy}
           asc={filterState.asc}
