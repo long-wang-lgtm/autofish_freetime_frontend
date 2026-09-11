@@ -8,6 +8,7 @@ import {
   refreshItems,
   shelvesItem,
   offlineItem,
+  deleteItem,
   updateItemShipConfig,
   type ShopItem,
   type ShopItemConfigUpdate,
@@ -63,6 +64,19 @@ export function useItemMutations() {
     },
     onError: (e: Error) => {
       addToast({ title: "操作失败", description: e.message, variant: "error" })
+    },
+  })
+
+  /** 删除商品 mutation（软删除：后端把 status 置为 -100） */
+  const deleteMutation = useMutation({
+    mutationFn: ({ gid, uid }: { gid: number; uid: string }) => deleteItem(gid, uid),
+    onSuccess: (result) => {
+      // 删除会改变列表条数与排序，按状态管理规范使用 invalidateQueries
+      queryClient.invalidateQueries({ queryKey: ["items"] })
+      addToast({ title: result.message || "删除成功", variant: "success" })
+    },
+    onError: (e: Error) => {
+      addToast({ title: "删除失败", description: e.message, variant: "error" })
     },
   })
 
@@ -122,6 +136,7 @@ export function useItemMutations() {
     updateMutation,
     configMutation,
     shelfMutation,
+    deleteMutation,
     shipConfigMutation,
     handleToggle,
     handleRefresh,

@@ -8,6 +8,7 @@ import { formatPublishTime, statusLabel, hasShipConfig } from "../config"
 import { AutomationToggles } from "../parts/AutomationToggles"
 import { SendCodeEditor } from "../parts/SendCodeEditor"
 import { ShelfActions } from "../parts/ShelfActions"
+import { DeleteItemButton } from "../parts/DeleteItemButton"
 
 interface ConfigEntry {
   key: string
@@ -26,7 +27,9 @@ interface MobileProductCardProps {
   onSendCodeChange: (gid: number, value: string) => void
   onShelve: (item: ShopItem) => void
   onOffline: (item: ShopItem) => void
+  onDelete: (item: ShopItem) => void
   shelfPending: boolean
+  deletePending: boolean
 }
 
 export function MobileProductCard({
@@ -39,7 +42,9 @@ export function MobileProductCard({
   onSendCodeChange,
   onShelve,
   onOffline,
+  onDelete,
   shelfPending,
+  deletePending,
 }: MobileProductCardProps) {
   const status = statusLabel(item.status)
   const [expanded, setExpanded] = useState(false)
@@ -112,6 +117,12 @@ export function MobileProductCard({
           pending={shelfPending}
           onShelve={onShelve}
           onOffline={onOffline}
+        />
+        <DeleteItemButton
+          item={item}
+          variant="mobile"
+          pending={deletePending}
+          onDelete={onDelete}
         />
       </div>
 

@@ -27,6 +27,7 @@ function ItemsPageContent() {
     itemKeywordCounts,
     configMutation,
     shelfMutation,
+    deleteMutation,
     shipConfigMutation,
     handleToggle,
     handleRefresh,
@@ -86,6 +87,7 @@ function ItemsPageContent() {
           }
           configMutation={configMutation}
           shelfMutation={shelfMutation}
+          deleteMutation={deleteMutation}
           shipConfigMutation={shipConfigMutation}
           orderBy={filterState.orderBy}
           asc={filterState.asc}

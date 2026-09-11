@@ -76,6 +76,7 @@ export function ItemsFilterBarMobile({
           <option value="0">在售</option>
           <option value="-2">下架</option>
           <option value="1">售出</option>
+          <option value="-100">已删除</option>
         </select>
 
         {/* 清空筛选 */}

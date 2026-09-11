@@ -1,18 +1,18 @@
 "use client"
 
 import { Fragment, useState, useRef, useEffect } from "react"
-import { Trash2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import type { ShopItem, ShopItemConfigUpdate, ShipByVoucher } from "@/lib/api/items"
 import { getVoucherKinds } from "@/lib/api/items"
 import type { ShipStage } from "@/components/items/config"
-import { hasShipConfig, formatPublishTime } from "@/components/items/config"
+import { hasShipConfig, formatPublishTime, statusLabel } from "@/components/items/config"
 import { AutomationToggles } from "@/components/items/parts/AutomationToggles"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
 import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
 import { KeywordDrawer } from "@/components/items/drawers/RulesItemsingleDrawer"
 import { SendCodeEditor } from "@/components/items/parts/SendCodeEditor"
 import { ShelfActions } from "@/components/items/parts/ShelfActions"
+import { DeleteItemButton } from "@/components/items/parts/DeleteItemButton"
 import { ConfigStatusCell } from "@/components/items/parts/ConfigStatusCell"
 import { ShipConfigModal } from "@/components/items/parts/ShipConfigModal"
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
@@ -50,6 +50,11 @@ interface ItemsTabProps {
     isPending: boolean
     variables?: { gid: number; uid: string; action: "shelves" | "offline" }
   }
+  deleteMutation: {
+    mutate: (args: { gid: number; uid: string }) => void
+    isPending: boolean
+    variables?: { gid: number; uid: string }
+  }
   shipConfigMutation: {
     mutateAsync: (args: {
       gid: number
@@ -79,6 +84,7 @@ export function ItemsTab({
   onToggle,
   configMutation,
   shelfMutation,
+  deleteMutation,
   shipConfigMutation,
   orderBy,
   asc,
@@ -101,6 +107,12 @@ export function ItemsTab({
 
   const isShelfPending = (item: ShopItem) =>
     shelfMutation.isPending && shelfMutation.variables?.gid === item.gid
+
+  const isDeletePending = (item: ShopItem) =>
+    deleteMutation.isPending && deleteMutation.variables?.gid === item.gid
+
+  const handleDelete = (item: ShopItem) =>
+    deleteMutation.mutate({ gid: item.gid, uid: item.account.uid })
 
   const listRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -136,21 +148,28 @@ export function ItemsTab({
       header: '商品信息',
       sortable: true,
       className: 'col-span-2 min-w-0',
-      render: (item) => (
-        <div className="min-w-0">
-          <span
-            className="text-left block w-full text-sm text-gray-800 dark:text-gray-200 leading-snug truncate"
-            title={item.title || '无标题'}
-          >
-            {item.title || '无标题'}
-          </span>
-          <div className="flex items-center gap-1.5 mt-0.5 text-gray-400 text-xs">
-            <span title={item.account.uid} className="truncate">{item.account.name}</span>
-            <span className="text-gray-300">|</span>
-            <span title={String(item.gid)} className="min-w-[85px] truncate">{item.gid}</span>
+      render: (item) => {
+        const status = statusLabel(item.status)
+        return (
+          <div className="min-w-0">
+            <span
+              className="text-left block w-full text-sm text-gray-800 dark:text-gray-200 leading-snug truncate"
+              title={item.title || '无标题'}
+            >
+              {item.title || '无标题'}
+            </span>
+            <div className="flex items-center gap-1.5 mt-0.5 text-gray-400 text-xs">
+              <span title={item.account.uid} className="truncate">{item.account.name}</span>
+              <span className="text-gray-300">|</span>
+              <span title={String(item.gid)} className="min-w-[85px] truncate">{item.gid}</span>
+              <span className="text-gray-300">|</span>
+              <span className={`px-1.5 py-px rounded-full text-xs font-medium flex-shrink-0 ${status.color}`}>
+                {status.text}
+              </span>
+            </div>
           </div>
-        </div>
-      ),
+        )
+      },
     },
     {
       key: 'price',
@@ -182,14 +201,12 @@ export function ItemsTab({
             onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
             onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
           />
-          <button
-            type="button"
-            disabled
-            title="删除商品（待实现）"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 bg-gray-50 dark:text-gray-600 dark:bg-gray-800 cursor-not-allowed"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <DeleteItemButton
+            item={item}
+            variant="desktop"
+            pending={isDeletePending(item)}
+            onDelete={handleDelete}
+          />
         </div>
       ),
     },
@@ -321,7 +338,9 @@ export function ItemsTab({
                 onSendCodeChange={(gid, value) => configMutation.mutate({ gid, data: { sendCode: value } })}
                 onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
                 onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
+                onDelete={handleDelete}
                 shelfPending={isShelfPending(item)}
+                deletePending={isDeletePending(item)}
               />
             ))}
           </div>

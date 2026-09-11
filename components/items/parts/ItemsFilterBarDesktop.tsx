@@ -93,6 +93,7 @@ export function ItemsFilterBarDesktop({
             <option value="-2">已下架</option>
             <option value="1">已售出</option>
             <option value="-9">审核中</option>
+            <option value="-100">已删除</option>
           </select>
 
           {/* 商品标题搜索 */}

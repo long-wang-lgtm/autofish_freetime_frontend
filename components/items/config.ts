@@ -82,6 +82,9 @@ export function formatPublishTime(isoString: string | null): string {
 }
 
 /** 商品状态标签 */
+/** 商品软删除状态（后端 delete_item 会把 status 置为该值） */
+export const ITEM_STATUS_DELETED = -100
+
 export function statusLabel(status: number): { text: string; color: string } {
   switch (status) {
     case 0:
@@ -92,6 +95,8 @@ export function statusLabel(status: number): { text: string; color: string } {
       return { text: "已售出", color: "bg-red-100 text-red-600" }
     case -9:
       return { text: "审核中", color: "bg-red-100 text-red-600" }
+    case ITEM_STATUS_DELETED:
+      return { text: "已删除", color: "bg-gray-100 text-gray-400" }
     default:
       return { text: "未知", color: "bg-gray-100 text-gray-500" }
   }

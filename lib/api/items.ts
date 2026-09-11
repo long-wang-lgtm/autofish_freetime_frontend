@@ -191,6 +191,14 @@ export async function offlineItem(gid: number, uid: string): Promise<ShopItem> {
   })
 }
 
+/** 删除商品 — POST /api/items/delete?gid=&uid= */
+export async function deleteItem(gid: number, uid: string): Promise<OperationResponse> {
+  return fetchApi<OperationResponse>("/api/items/delete", {
+    method: "POST",
+    params: { gid, uid },
+  })
+}
+
 /** 更新商品基础字段 — PUT /api/items/update.item?gid= */
 export async function updateItem(gid: number, data: ShopItemUpdate): Promise<ShopItem> {
   return fetchApi<ShopItem>("/api/items/update.item", {

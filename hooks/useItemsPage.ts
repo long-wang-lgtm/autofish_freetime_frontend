@@ -42,6 +42,7 @@ export function useItemsPage() {
   const {
     configMutation,
     shelfMutation,
+    deleteMutation,
     shipConfigMutation,
     handleToggle,
     handleRefresh: refreshFn,
@@ -74,6 +75,7 @@ export function useItemsPage() {
     // 变更操作
     configMutation,
     shelfMutation,
+    deleteMutation,
     shipConfigMutation,
     handleToggle,
     handleRefresh,
