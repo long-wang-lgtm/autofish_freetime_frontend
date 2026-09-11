@@ -13,10 +13,16 @@ interface ShelfActionsProps {
   onOffline: (item: ShopItem) => void
 }
 
-/** 上架/下架可用状态（取消 Pro 限制，任意账号均可操作，仅由商品当前状态决定） */
+/**
+ * 上架/下架可用状态（取消 Pro 限制，任意账号均可操作，仅由商品当前状态决定）
+ *
+ * 状态取值：0 在售 / 1 已售出 / -2 已下架 / -9 审核中 / -99 未知 / -100 已删除
+ * 上架：已下架(-2)、已售出(1) 可重新上架
+ * 下架：在售(0) 可下架；审核中(-9) 也允许，用于撤回审核中的商品
+ */
 function getShelfState(item: ShopItem) {
   const canShelve = item.status === -2 || item.status === 1
-  const canOffline = item.status === 0
+  const canOffline = item.status === 0 || item.status === -9
   return {
     canShelve,
     canOffline,
@@ -62,12 +68,11 @@ export function ShelfActions({ item, variant, pending, onShelve, onOffline }: Sh
   )
 
   if (variant === "mobile") {
-    const showShelve = item.status === -2 || item.status === 1
-    const showOffline = item.status === 0
-    if (!showShelve && !showOffline) return null
+    // 复用 getShelfState 的结果，避免与桌面端的状态判断各写一份而漂移
+    if (!state.canShelve && !state.canOffline) return null
     return (
       <>
-        {showShelve && (
+        {state.canShelve && (
           <button
             type="button"
             disabled={!state.canShelve || pending}
@@ -82,7 +87,7 @@ export function ShelfActions({ item, variant, pending, onShelve, onOffline }: Sh
             上架
           </button>
         )}
-        {showOffline && (
+        {state.canOffline && (
           <button
             type="button"
             disabled={!state.canOffline || pending}
