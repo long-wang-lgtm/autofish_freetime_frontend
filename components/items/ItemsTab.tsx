@@ -22,7 +22,7 @@ import { Pagination } from '@/components/ui/data/Pagination'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 
 /** Items 表格列宽 — 9 轨等宽：商品信息跨 2 轨，其余列各 1 轨 */
-const ITEMS_GRID_COLS = '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
+const ITEMS_GRID_COLS = '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
 
 /** 「发货/赠送」列内的三个子阶段（顺序：付款后发货 → 收货后赠送 → 评价后赠送） */
 const DELIVERY_STAGES: { stage: ShipStage; label: string }[] = [
@@ -256,21 +256,21 @@ export function ItemsTab({
         <span className="text-xs text-gray-500">{formatPublishTime(item.publishTime)}</span>
       ),
     },
-    // {
-    //   key: 'sendCode',
-    //   header: '指令码',
-    //   align: 'center',
-    //   render: (item) => (
-    //     <SendCodeEditor
-    //       gid={item.gid}
-    //       sendCode={item.config?.sendCode ?? null}
-    //       variant="cell"
-    //       onUpdateField={(gid, _field, value) =>
-    //         updateMutation.mutate({ gid, data: { sendCode: value } })
-    //       }
-    //     />
-    //   ),
-    // },
+    {
+      key: 'sendCode',
+      header: '指令码',
+      align: 'center',
+      render: (item) => (
+        <SendCodeEditor
+          gid={item.gid}
+          sendCode={item.config?.sendCode ?? null}
+          variant="cell"
+          onUpdateField={(gid, _field, value) =>
+            updateMutation.mutate({ gid, data: { sendCode: value } })
+          }
+        />
+      ),
+    },
   ]
 
   return (
