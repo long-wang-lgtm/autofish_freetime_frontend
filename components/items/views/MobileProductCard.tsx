@@ -11,6 +11,7 @@ import { AutomationToggles } from "../parts/AutomationToggles"
 import { SendCodeEditor } from "../parts/SendCodeEditor"
 import { ShelfActions } from "../parts/ShelfActions"
 import { DeleteItemButton } from "../parts/DeleteItemButton"
+import { RepublishButton } from "../parts/RepublishButton"
 import { ItemActionButtons } from "../parts/ItemActionButtons"
 import type { RepriceSubmit } from "../parts/RepricingDialog"
 import type { FansPriceSubmit } from "../parts/FansPriceDialog"
@@ -33,10 +34,12 @@ interface MobileProductCardProps {
   onShelve: (item: ShopItem) => void
   onOffline: (item: ShopItem) => void
   onDelete: (item: ShopItem) => void
+  onRepublish: (item: ShopItem) => void
   onReprice: (item: ShopItem, submit: RepriceSubmit) => Promise<void>
   onSetFansPrice: (item: ShopItem, submit: FansPriceSubmit) => Promise<void>
   shelfPending: boolean
   deletePending: boolean
+  republishPending: boolean
 }
 
 export function MobileProductCard({
@@ -50,10 +53,12 @@ export function MobileProductCard({
   onShelve,
   onOffline,
   onDelete,
+  onRepublish,
   onReprice,
   onSetFansPrice,
   shelfPending,
   deletePending,
+  republishPending,
 }: MobileProductCardProps) {
   const status = statusLabel(item.status)
   const quantity = displayQuantity(item)
@@ -147,6 +152,12 @@ export function MobileProductCard({
           variant="mobile"
           pending={deletePending}
           onDelete={onDelete}
+        />
+        <RepublishButton
+          item={item}
+          variant="mobile"
+          pending={republishPending}
+          onRepublish={onRepublish}
         />
         <ItemActionButtons
           item={item}

@@ -16,6 +16,7 @@ import { KeywordDrawer } from "@/components/items/drawers/RulesItemsingleDrawer"
 import { SendCodeEditor } from "@/components/items/parts/SendCodeEditor"
 import { ShelfActions } from "@/components/items/parts/ShelfActions"
 import { DeleteItemButton } from "@/components/items/parts/DeleteItemButton"
+import { RepublishButton } from "@/components/items/parts/RepublishButton"
 import { ItemActionButtons } from "@/components/items/parts/ItemActionButtons"
 import type { RepriceSubmit } from "@/components/items/parts/RepricingDialog"
 import type { FansPriceSubmit } from "@/components/items/parts/FansPriceDialog"
@@ -63,6 +64,11 @@ interface ItemsTabProps {
     isPending: boolean
     variables?: { gid: number; uid: string }
   }
+  republishMutation: {
+    mutate: (args: { gid: number; uid: string }) => void
+    isPending: boolean
+    variables?: { gid: number; uid: string }
+  }
   repriceMutation: {
     mutateAsync: (args: {
       gid: number; uid: string; isPro: boolean; price: number; quantity?: number
@@ -101,6 +107,7 @@ export function ItemsTab({
   configMutation,
   shelfMutation,
   deleteMutation,
+  republishMutation,
   repriceMutation,
   fansPriceMutation,
   shipConfigMutation,
@@ -129,8 +136,14 @@ export function ItemsTab({
   const isDeletePending = (item: ShopItem) =>
     deleteMutation.isPending && deleteMutation.variables?.gid === item.gid
 
+  const isRepublishPending = (item: ShopItem) =>
+    republishMutation.isPending && republishMutation.variables?.gid === item.gid
+
   const handleDelete = (item: ShopItem) =>
     deleteMutation.mutate({ gid: item.gid, uid: item.account.uid })
+
+  const handleRepublish = (item: ShopItem) =>
+    republishMutation.mutate({ gid: item.gid, uid: item.account.uid })
 
   // 改价：接口分流交给 mutation，这里只把账号类型一并带下去。
   // 返回 Promise 供 RepricingDialog 决定是否关闭弹窗（成功才关）
@@ -265,7 +278,7 @@ export function ItemsTab({
     },
     {
       key: 'actions',
-      header: '上架/下架/删除',
+      header: '上架/下架/删除/重发',
       align: 'center',
       render: (item) => (
         <div className="inline-flex items-center justify-center gap-1">
@@ -281,6 +294,12 @@ export function ItemsTab({
             variant="desktop"
             pending={isDeletePending(item)}
             onDelete={handleDelete}
+          />
+          <RepublishButton
+            item={item}
+            variant="desktop"
+            pending={isRepublishPending(item)}
+            onRepublish={handleRepublish}
           />
         </div>
       ),
@@ -414,10 +433,12 @@ export function ItemsTab({
                 onShelve={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "shelves" })}
                 onOffline={(it) => shelfMutation.mutate({ gid: it.gid, uid: it.account.uid, action: "offline" })}
                 onDelete={handleDelete}
+                onRepublish={handleRepublish}
                 onReprice={handleReprice}
                 onSetFansPrice={handleSetFansPrice}
                 shelfPending={isShelfPending(item)}
                 deletePending={isDeletePending(item)}
+                republishPending={isRepublishPending(item)}
               />
             ))}
           </div>

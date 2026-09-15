@@ -214,6 +214,20 @@ export async function deleteItem(gid: number, uid: string): Promise<OperationRes
   })
 }
 
+/**
+ * 重新发布商品 — POST /api/items/item.republish?gid=&uid=
+ *
+ * 后端语义为「先发布一条新商品，再删除原商品」，新商品的 gid 与原商品不同，
+ * 且新商品是发布成功后才异步重新入库的，所以返回的是操作结果而非商品对象 ——
+ * 调用方拿不到新商品，只能在稍后重新拉取列表。
+ */
+export async function republishItem(gid: number, uid: string): Promise<OperationResponse> {
+  return fetchApi<OperationResponse>("/api/items/item.republish", {
+    method: "POST",
+    params: { gid, uid },
+  })
+}
+
 /** 改价（普通账号）— POST /api/items/edit.price.by.idle?gid=&uid=&price= */
 export async function editPriceByIdle(gid: number, uid: string, price: number): Promise<ShopItem> {
   return fetchApi<ShopItem>("/api/items/edit.price.by.idle", {

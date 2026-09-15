@@ -9,6 +9,7 @@ import {
   shelvesItem,
   offlineItem,
   deleteItem,
+  republishItem,
   editPriceByIdle,
   editPriceByPro,
   setFansPrice,
@@ -21,6 +22,13 @@ import {
   type ShipByVoucher,
 } from "@/lib/api/items"
 import { useToast } from '@/components/ui/Toaster'
+
+/**
+ * 重新发布后，新商品重新入库的等待时间。
+ * 后端发布成功后要等 uniform(8, 15) 秒才去查询并写入新商品，
+ * 这里留够这个窗口，用于「操作完自动再刷一次列表」，避免用户手动刷新。
+ */
+const REPUBLISH_SETTLE_MS = 20_000
 
 /**
  * 商品管理页 — 变更操作层
@@ -82,6 +90,31 @@ export function useItemMutations() {
     },
     onError: (e: Error) => {
       addToast({ title: "删除失败", description: e.message, variant: "error" })
+    },
+  })
+
+  /**
+   * 重新发布 mutation —— 后端「先发布新商品，再删除原商品」，原商品会被删除、新商品换了 gid，
+   * 每行在列表中的身份和排序都可能变，按状态管理规范的决策树走 invalidateQueries 而非乐观更新。
+   *
+   * 后端返回时新商品还没入库（发布成功后异步等待 8~15s 才查详情落库），
+   * 所以立刻刷新只能看到原商品消失；再补一次延迟刷新，让新商品自己出现。
+   */
+  const republishMutation = useMutation({
+    mutationFn: ({ gid, uid }: { gid: number; uid: string }) => republishItem(gid, uid),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["items"] })
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["items"] })
+      }, REPUBLISH_SETTLE_MS)
+      addToast({
+        title: result.message || "重新发布成功",
+        description: "新商品稍后出现在列表中",
+        variant: "success",
+      })
+    },
+    onError: (e: Error) => {
+      addToast({ title: "重新发布失败", description: e.message, variant: "error" })
     },
   })
 
@@ -186,6 +219,7 @@ export function useItemMutations() {
     configMutation,
     shelfMutation,
     deleteMutation,
+    republishMutation,
     repriceMutation,
     fansPriceMutation,
     shipConfigMutation,
