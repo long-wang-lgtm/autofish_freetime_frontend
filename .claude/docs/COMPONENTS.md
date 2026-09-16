@@ -29,6 +29,7 @@
 | `ErrorBoundary` | `ui/feedback/ErrorBoundary.tsx` | React 渲染异常捕获（Class Component） | `children`, `fallback?` |
 | `LoadingSpinner` | `ui/feedback/LoadingSpinner.tsx` | 加载动画指示器 | `size?: 'sm' \| 'md' \| 'lg'` |
 | `StatusBadge` | `ui/feedback/StatusBadge.tsx` | 统一状态标签，配置驱动色映射 | `status`, `config`, `size?` |
+| `Switch` | `ui/feedback/Switch.tsx` | 开关（整行可点，role=switch） | `checked`, `onChange`, `label`, `disabled?`, `id?` |
 
 ### data/ — 数据展示组件
 
@@ -98,7 +99,7 @@
 | 组件 | 文件 | 用途 |
 |------|------|------|
 | `ConfigDrawer` | `items/drawers/ConfigDrawer.tsx` | 商品配置编辑抽屉 |
-| `ItemEditModal` | `items/drawers/ItemEditModal.tsx` | 商品属性编辑居中弹窗（标题/封面图/描述/发布地址/价格，编辑接口待接入） |
+| `ItemEditModal` | `items/drawers/ItemEditModal.tsx` | 商品属性编辑居中弹窗，拉 `item.edit.detail` 作草稿，保存构造请求体（保存接口待接入）。字段区见 `ItemEditFields.tsx` → `edit-sections/`，写回器见 `useItemEditMutators.ts` |
 | `RuleDrawer` | `items/drawers/RuleItemsAllDrawer.tsx` | 全部规则项抽屉（⚠ 导出名与文件名不符） |
 | `KeywordDrawer` | `items/drawers/RulesItemsingleDrawer.tsx` | 单个规则项抽屉（⚠ 文件名拼写错误，应为 RuleItemSingleDrawer） |
 

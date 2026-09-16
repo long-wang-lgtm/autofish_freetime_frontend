@@ -124,6 +124,137 @@ export interface ShopItemListResponse {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// 商品编辑物料（ItemMaterial）
+// ═══════════════════════════════════════════════════════════════
+//
+// POST /api/items/edit.detail 的响应，与保存接口的请求体同构：
+// 后端拿到的是发布器原始报文（camelCase），校验成 ItemDetailEditpublish 后
+// 取 .mat 返回 ItemMaterial；Pydantic 的字段名即报文里的键名，所以这里保持
+// camelCase，不做风格统一 —— 与 ShopItem（snake_case）不同源，别混用。
+//
+// 价格、库存的单位都由后端模型固定：价格一律「分」（ItemPrice.priceInCent），
+// 库存一律整数（多规格在 itemSkuList 上，单规格在 quantity 上）。
+
+/** 商品描述块。注意：后端读回时 title 被校验器覆盖为 desc 全文，没有独立短标题 */
+export interface ItemEditDesc {
+  title: string
+  desc: string
+  titleDescSeparate: boolean
+}
+
+/** 商品图片。major 标记封面 */
+export interface ItemEditImage {
+  url: string
+  widthSize: number | string
+  heightSize: number | string
+  major: boolean
+  labels: string[]
+  isQrCode: boolean
+  type: number
+  status: string
+  extraInfo: Record<string, boolean>
+}
+
+/** 商品分类 */
+export interface ItemEditCat {
+  catId: number | string
+  catName: string
+  channelCatId: number | string
+}
+
+/** 商品类目（带 text / properties 两个发布器需要的派生字段） */
+export interface ItemEditLabel {
+  channelCateId: number | string
+  channelCateName: string | null
+  valueId: string | number | null
+  valueName: string | null
+  tbCatId: string | number | null
+  subPropertyId: string | number | null
+  subValueId: string | number | null
+  labelType: string
+  labelId: string | number | null
+  propertyName: string
+  isUserClick: number
+  isUserCancel: string | null
+  propertyId: string | number
+  labelFrom: string
+  text: string
+  properties: string
+}
+
+/**
+ * 单规格价格。
+ *
+ * 多规格商品下后端把这两个字段置为空 dict（价格改由 itemSkuList 承载），
+ * 所以字段本身可选 —— 用 `{}` 表达「这里没有价格」比造一个联合类型更省事。
+ */
+export interface ItemEditPrice {
+  priceInCent?: number | string
+  origPriceInCent?: number | string
+}
+
+/** 多规格 SKU */
+export interface ItemEditSkuProperty {
+  propertyText: string
+  valueText: string
+}
+
+export interface ItemEditSku {
+  priceInCent: number | string
+  quantity: number | string
+  propertyList: ItemEditSkuProperty[]
+}
+
+/** 商品服务标签（enable 控制是否勾选） */
+export interface ItemEditProtocol {
+  enable: boolean
+  serviceCode: string
+}
+
+/** 运费 */
+export interface ItemEditPostFee {
+  canFreeShipping: boolean
+  supportFreight: boolean
+  onlyTakeSelf: boolean
+  postPriceInCent: number | string
+  templateId: number | string
+  idleTemplateId: number | string
+}
+
+/** 发布地址 */
+export interface ItemEditAddr {
+  area: string
+  city: string
+  divisionId: number
+  gps: string
+  prov: string
+  poiId: string | null
+  poiName: string | null
+}
+
+/**
+ * 商品编辑物料 —— edit.detail 的响应，也是保存接口的请求体。
+ *
+ * titleDescSeparate / uniqueCode / sourceId 等发布器元字段不在其中：
+ * 后端 .mat 只暴露 ItemMaterial 的字段。
+ */
+export interface ItemEditMaterial {
+  itemTextDTO: ItemEditDesc
+  imageInfoDOList: ItemEditImage[]
+  itemCatDTO: ItemEditCat
+  itemPostFeeDTO: ItemEditPostFee
+  itemLabelExtList: ItemEditLabel[]
+  userRightsProtocols: ItemEditProtocol[]
+  itemAddrDTO: ItemEditAddr
+  quantity: number | string
+  itemId?: number | string | null
+  /** 多规格：itemProperties 非空时价格/库存改由 itemSkuList 承载 */
+  itemProperties?: { root: unknown[] } | unknown[] | null
+  itemSkuList?: ItemEditSku[] | null
+  itemPriceDTO: ItemEditPrice
+}
+
+// ═══════════════════════════════════════════════════════════════
 // 更新专用类型
 // ═══════════════════════════════════════════════════════════════
 
@@ -277,6 +408,22 @@ export async function setFansPrice(
     method: "POST",
     params: { uid, gid },
     body: JSON.stringify(prices),
+  })
+}
+
+/**
+ * 拉取商品编辑物料 — POST /api/items/item.edit.detail?gid=&uid=
+ *
+ * 响应即保存接口的请求体，编辑弹窗全程以它为数据源。
+ * 后端目前返回的是本地样例报文（真实抓取被注释），契约一致。
+ */
+export async function getItemEditDetail(
+  gid: number,
+  uid: string,
+): Promise<ItemEditMaterial> {
+  return fetchApi<ItemEditMaterial>("/api/items/item.edit.detail", {
+    method: "POST",
+    params: { gid, uid },
   })
 }
 
