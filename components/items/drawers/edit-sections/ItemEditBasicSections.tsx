@@ -147,11 +147,12 @@ export function PriceStockSection({ draft, mutators }: ItemEditSectionProps) {
 }
 
 /**
- * 发布地址 —— 只读下拉。
+ * 发布地址 —— 下拉选择，选项接口待接入。
  *
- * 区划数据源（省市区列表）尚未提供，因此唯一选项就是当前地址，且不可选不可输：
- * 用 disabled 的 select 而不是文本框，是为了明确「这里将来是个选择器」，
- * 不给出「能编辑」的假象。地址的结构化字段（divisionId / gps / poiId）原样保留。
+ * 现在可点开，但只有「当前地址」这一个选项。选中它不写回 draft：显示串是从
+ * prov/city/area/poiName 拼出来的，反解不回 divisionId / gps / poiId，真去回写
+ * 等于拿一个拼出来的字符串覆盖掉结构化的地址。区划数据到位后，从这里按选中的
+ * 行政区划回写这几个字段即可。
  */
 export function AddressSection({ draft }: ItemEditSectionProps) {
   const { prov, city, area, poiName } = draft.itemAddrDTO
@@ -161,7 +162,7 @@ export function AddressSection({ draft }: ItemEditSectionProps) {
   return (
     <section className="space-y-3">
       <SectionTitle>发布地址</SectionTitle>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div>
           {/* <label className={LABEL} htmlFor="edit-addr">
             所在地
@@ -171,8 +172,8 @@ export function AddressSection({ draft }: ItemEditSectionProps) {
             value={display}
             onChange={() => {}}
             options={display ? [{ value: display, label: display }] : []}
-            placeholder="暂无地址"
-            disabled
+            // 有地址时不给占位项：占位项会变成下拉里第二个可选项，点它没有任何反应
+            placeholder={display ? undefined : "暂无地址"}
           />
           {/* <Hint>地址选项接口待接入，当前仅展示；经纬度与行政区划 ID 原样保留。</Hint> */}
         </div>

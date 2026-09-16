@@ -10,8 +10,8 @@ import { LABEL, SERVICE_LABELS, type ItemEditSectionProps } from "../item-edit-t
 /**
  * 商品类目 —— 下拉选择。
  *
- * 类目选项接口尚未提供，因此唯一选项是当前值、且置灰不可选；选项到位后只需
- * 填 options、去掉 disabled，回写逻辑无需改动。
+ * 选项接口尚未提供，因此现在只有「当前类目」这一个选项（可点开，选了等于没改）。
+ * 选项齐了之后把 options 换成真实列表即可，回写那行不用动。
  *
  * 商品分类不单独渲染：它与类目共用 channelCatId / channelCateName 这对字段
  * （分类侧叫 channelCatId，类目侧叫 channelCateId），改类目时一并回写，
@@ -26,10 +26,17 @@ export function CategorySection({ draft, mutators }: ItemEditSectionProps) {
   const current = draft.itemCatDTO.channelCatId
   const name = draft.itemCatDTO.catName
 
+  /**
+   * id 与 value 分开存：value 必须是字符串（DOM 的要求，也是将来接口回传的形状），
+   * 而回写必须用原类型 —— 拿 value 直接回写会把数字 ID 变成同值的字符串，草稿就
+   * 平白变成「有未保存改动」。选项齐了之后，id 换成该项真实的渠道类目 ID 即可。
+   */
+  const options = [{ id: current, value: String(current), label: name }]
+
   return (
     <section className="space-y-3">
       <SectionTitle>商品类目</SectionTitle>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-8 gap-4">
         <div>
           <label className={LABEL} htmlFor="edit-channel-cate">
             类目
@@ -38,12 +45,10 @@ export function CategorySection({ draft, mutators }: ItemEditSectionProps) {
             id="edit-channel-cate"
             value={String(current)}
             onChange={(v) => {
-              // 选项到位后，从选项中取名称；当前只有一个选项，回写自身不会改变内容
-              const picked = [{ value: String(current), label: name }].find((o) => o.value === v)
-              if (picked) mutators.setChannelCate(v, picked.label)
+              const picked = options.find((o) => o.value === v)
+              if (picked) mutators.setChannelCate(picked.id, picked.label)
             }}
-            options={[{ value: String(current), label: name }]}
-            disabled
+            options={options.map((o) => ({ value: o.value, label: o.label }))}
           />
           {/* <Hint>类目选项接口待接入；改动会同步「商品分类」的渠道类目与名称。</Hint> */}
         </div>
