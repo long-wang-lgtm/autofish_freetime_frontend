@@ -98,7 +98,7 @@
 | 组件 | 文件 | 用途 |
 |------|------|------|
 | `ConfigDrawer` | `items/drawers/ConfigDrawer.tsx` | 商品配置编辑抽屉 |
-| `ItemEditDrawer` | `items/drawers/ItemEditDrawer.tsx` | 商品编辑抽屉（含折叠表单区） |
+| `ItemEditModal` | `items/drawers/ItemEditModal.tsx` | 商品属性编辑居中弹窗（标题/封面图/描述/发布地址/价格，编辑接口待接入） |
 | `RuleDrawer` | `items/drawers/RuleItemsAllDrawer.tsx` | 全部规则项抽屉（⚠ 导出名与文件名不符） |
 | `KeywordDrawer` | `items/drawers/RulesItemsingleDrawer.tsx` | 单个规则项抽屉（⚠ 文件名拼写错误，应为 RuleItemSingleDrawer） |
 

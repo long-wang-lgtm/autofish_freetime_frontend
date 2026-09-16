@@ -11,7 +11,7 @@ import {
 } from "@/components/items/config"
 import { AutomationToggles } from "@/components/items/parts/AutomationToggles"
 import { MobileProductCard } from "@/components/items/views/MobileProductCard"
-import { ItemEditDrawer } from "@/components/items/drawers/ItemEditDrawer"
+import { ItemEditModal } from "@/components/items/drawers/ItemEditModal"
 import { KeywordDrawer } from "@/components/items/drawers/RulesItemsingleDrawer"
 import { SendCodeEditor } from "@/components/items/parts/SendCodeEditor"
 import { ShelfActions } from "@/components/items/parts/ShelfActions"
@@ -463,13 +463,12 @@ export function ItemsTab({
         />
       )}
 
-      {/* 编辑商品（后续适配） */}
+      {/* 编辑商品属性（封面图/描述/价格/发布地址，编辑接口待接入） */}
       {editingItem && (
-        <ItemEditDrawer
+        <ItemEditModal
           item={editingItem}
           open={!!editingItem}
           onClose={() => setEditingItem(null)}
-          onSuccess={() => setEditingItem(null)}
         />
       )}
 
