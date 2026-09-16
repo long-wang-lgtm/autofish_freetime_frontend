@@ -2,7 +2,7 @@
 
 import { Fragment, useState, useRef, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import type { ShopItem, ShopItemConfigUpdate, ShipByVoucher, FansPriceUpdate } from "@/lib/api/items"
+import type { ShopItem, ShopItemConfigUpdate, ShipByVoucher, FansPriceUpdate, ItemEditMaterial } from "@/lib/api/items"
 import { getVoucherKinds } from "@/lib/api/items"
 import type { ShipStage } from "@/components/items/config"
 import {
@@ -64,8 +64,16 @@ interface ItemsTabProps {
     isPending: boolean
     variables?: { gid: number; uid: string }
   }
+  editItemMutation: {
+    mutateAsync: (args: {
+      gid: number; uid: string; material: ItemEditMaterial
+    }) => Promise<unknown>
+    isPending: boolean
+  }
   republishMutation: {
-    mutate: (args: { gid: number; uid: string }) => void
+    mutateAsync: (args: {
+      gid: number; uid: string; material: ItemEditMaterial
+    }) => Promise<unknown>
     isPending: boolean
     variables?: { gid: number; uid: string }
   }
@@ -107,6 +115,7 @@ export function ItemsTab({
   configMutation,
   shelfMutation,
   deleteMutation,
+  editItemMutation,
   republishMutation,
   repriceMutation,
   fansPriceMutation,
@@ -117,6 +126,8 @@ export function ItemsTab({
 }: ItemsTabProps) {
   // 弹窗状态
   const [editingItem, setEditingItem] = useState<ShopItem | null>(null)
+  // 重发走的是同一个编辑弹窗，只是提交动作不同 —— 所以单独记「要重发哪一个」
+  const [republishTarget, setRepublishTarget] = useState<ShopItem | null>(null)
   const [keywordItem, setKeywordItem] = useState<ShopItem | null>(null)
 
   // ShipConfigModal 状态（统一处理单规格和多规格）
@@ -136,14 +147,11 @@ export function ItemsTab({
   const isDeletePending = (item: ShopItem) =>
     deleteMutation.isPending && deleteMutation.variables?.gid === item.gid
 
-  const isRepublishPending = (item: ShopItem) =>
-    republishMutation.isPending && republishMutation.variables?.gid === item.gid
-
   const handleDelete = (item: ShopItem) =>
     deleteMutation.mutate({ gid: item.gid, uid: item.account.uid })
 
-  const handleRepublish = (item: ShopItem) =>
-    republishMutation.mutate({ gid: item.gid, uid: item.account.uid })
+  // 重发先开弹窗（同一套商品表单），确认与提交都在弹窗里完成
+  const handleRepublish = (item: ShopItem) => setRepublishTarget(item)
 
   // 改价：接口分流交给 mutation，这里只把账号类型一并带下去。
   // 返回 Promise 供 RepricingDialog 决定是否关闭弹窗（成功才关）
@@ -298,7 +306,6 @@ export function ItemsTab({
           <RepublishButton
             item={item}
             variant="desktop"
-            pending={isRepublishPending(item)}
             onRepublish={handleRepublish}
           />
         </div>
@@ -438,7 +445,6 @@ export function ItemsTab({
                 onSetFansPrice={handleSetFansPrice}
                 shelfPending={isShelfPending(item)}
                 deletePending={isDeletePending(item)}
-                republishPending={isRepublishPending(item)}
               />
             ))}
           </div>
@@ -463,12 +469,53 @@ export function ItemsTab({
         />
       )}
 
-      {/* 编辑商品属性（封面图/描述/价格/发布地址，编辑接口待接入） */}
+      {/* 编辑商品属性（封面图/描述/价格/发布地址） */}
       {editingItem && (
         <ItemEditModal
           item={editingItem}
           open={!!editingItem}
           onClose={() => setEditingItem(null)}
+          submit={{
+            label: "保存",
+            run: (material) =>
+              editItemMutation.mutateAsync({
+                gid: editingItem.gid,
+                uid: editingItem.account.uid,
+                material,
+              }),
+            pending: editItemMutation.isPending,
+          }}
+        />
+      )}
+
+      {/* 重新发布 —— 同一个弹窗、同一套表单，只是提交动作换成重发接口。
+          弹窗里的改动同样作为请求体下发 */}
+      {republishTarget && (
+        <ItemEditModal
+          item={republishTarget}
+          open={!!republishTarget}
+          onClose={() => setRepublishTarget(null)}
+          submit={{
+            label: "重发",
+            run: (material) =>
+              republishMutation.mutateAsync({
+                gid: republishTarget.gid,
+                uid: republishTarget.account.uid,
+                material,
+              }),
+            pending: republishMutation.isPending,
+            confirm: {
+              title: "确认重新发布吗？",
+              description: (
+                <>
+                  1. 将当前商品删除后重发，当前商品不可恢复 !<br />
+                  2. 新商品 ID 与当前商品不同，当前商品的链接将失效<br />
+                  3. 新商品延迟更新，大约半分钟<br />
+                </>
+              ),
+              confirmLabel: "重新发布",
+            },
+          }}
         />
       )}
 

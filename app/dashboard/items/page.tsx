@@ -28,6 +28,7 @@ function ItemsPageContent() {
     configMutation,
     shelfMutation,
     deleteMutation,
+    editItemMutation,
     republishMutation,
     repriceMutation,
     fansPriceMutation,
@@ -91,6 +92,7 @@ function ItemsPageContent() {
           configMutation={configMutation}
           shelfMutation={shelfMutation}
           deleteMutation={deleteMutation}
+          editItemMutation={editItemMutation}
           republishMutation={republishMutation}
           repriceMutation={repriceMutation}
           fansPriceMutation={fansPriceMutation}

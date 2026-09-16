@@ -233,7 +233,7 @@ export interface ItemEditAddr {
 }
 
 /**
- * 商品编辑物料 —— edit.detail 的响应，也是保存接口的请求体。
+ * 商品编辑物料 —— edit.detail 的响应，也是保存/重发接口的请求体。
  *
  * titleDescSeparate / uniqueCode / sourceId 等发布器元字段不在其中：
  * 后端 .mat 只暴露 ItemMaterial 的字段。
@@ -348,14 +348,22 @@ export async function deleteItem(gid: number, uid: string): Promise<OperationRes
 /**
  * 重新发布商品 — POST /api/items/item.republish?gid=&uid=
  *
+ * 请求体是编辑弹窗里那份物料（与保存接口同一个形态）：重发不是「原样再发一遍」，
+ * 用户在弹窗里改过的字段要跟着新商品一起生效。
+ *
  * 后端语义为「先发布一条新商品，再删除原商品」，新商品的 gid 与原商品不同，
  * 且新商品是发布成功后才异步重新入库的，所以返回的是操作结果而非商品对象 ——
  * 调用方拿不到新商品，只能在稍后重新拉取列表。
  */
-export async function republishItem(gid: number, uid: string): Promise<OperationResponse> {
+export async function republishItem(
+  gid: number,
+  uid: string,
+  material: ItemEditMaterial
+): Promise<OperationResponse> {
   return fetchApi<OperationResponse>("/api/items/item.republish", {
     method: "POST",
     params: { gid, uid },
+    body: JSON.stringify(material),
   })
 }
 
@@ -414,8 +422,8 @@ export async function setFansPrice(
 /**
  * 拉取商品编辑物料 — POST /api/items/item.edit.detail?gid=&uid=
  *
- * 响应即保存接口的请求体，编辑弹窗全程以它为数据源。
- * 后端目前返回的是本地样例报文（真实抓取被注释），契约一致。
+ * 响应即保存/重发接口的请求体，编辑弹窗全程以它为数据源。后端读和写用的是同一个
+ * schema（ItemDetailEditpublish），所以弹窗能把响应原样回传，不需要映射层。
  */
 export async function getItemEditDetail(
   gid: number,
@@ -424,6 +432,28 @@ export async function getItemEditDetail(
   return fetchApi<ItemEditMaterial>("/api/items/item.edit.detail", {
     method: "POST",
     params: { gid, uid },
+  })
+}
+
+/**
+ * 编辑商品属性 — POST /api/items/item.edit?gid=&uid=
+ *
+ * 请求体就是 edit.detail 的响应原样回传：后端读和写用的是同一个 schema
+ * （ItemDetailEditpublish），多带的 itemTypeStr / uniqueCode / sourceId 等发布器
+ * 元字段会在解析时按默认值或重新生成，不需要前端拼。
+ *
+ * 返回的 ShopItem 是库里那条记录，与列表行同构 —— 调用方拿它替换列表里对应的那一条
+ * （见 useItemMutations 的 editItemMutation），所以这里的字段要能直接喂给列表渲染。
+ */
+export async function editItem(
+  gid: number,
+  uid: string,
+  material: ItemEditMaterial,
+): Promise<ShopItem> {
+  return fetchApi<ShopItem>("/api/items/item.edit", {
+    method: "POST",
+    params: { gid, uid },
+    body: JSON.stringify(material),
   })
 }
 

@@ -102,7 +102,7 @@
 | 组件 | 文件 | 用途 |
 |------|------|------|
 | `ConfigDrawer` | `items/drawers/ConfigDrawer.tsx` | 商品配置编辑抽屉 |
-| `ItemEditModal` | `items/drawers/ItemEditModal.tsx` | 商品属性编辑居中弹窗（桌面 2/3 视口宽，移动端满宽）。拉 `item.edit.detail` 深拷贝成「编辑副本 + 原数据」两份，改动实时落副本，保存构造请求体（保存接口待接入），可一键恢复原值。字段区见 `ItemEditFields.tsx` → `edit-sections/`，写回器见 `useItemEditMutators.ts` |
+| `ItemEditModal` | `items/drawers/ItemEditModal.tsx` | 商品属性编辑居中弹窗（桌面 2/3 视口宽，移动端满宽）。拉 `item.edit.detail` 深拷贝成「编辑副本 + 原数据」两份，改动实时落副本，提交时整包下发（`item.edit` / `item.republish` 同一个请求体），可一键恢复原值。提交到哪由 `submit: ItemEditSubmit` 决定 —— 保存与重发复用同一弹窗与表单，只有提交动作、按钮文案和二次确认不同。字段区见 `ItemEditFields.tsx` → `edit-sections/`，写回器见 `useItemEditMutators.ts` |
 | `YuanPriceInput` | `items/drawers/edit-sections/YuanPriceInput.tsx` | 价格输入：显示与输入用「元」（失焦对齐两位小数），读写 draft 用「分」，带本地文本态防止输入中的小数点被规格化 | `cents`, `onChange`, `ariaLabel`, `id?`, `disabled?` |
 | `RuleDrawer` | `items/drawers/RuleItemsAllDrawer.tsx` | 全部规则项抽屉（⚠ 导出名与文件名不符） |
 | `KeywordDrawer` | `items/drawers/RulesItemsingleDrawer.tsx` | 单个规则项抽屉（⚠ 文件名拼写错误，应为 RuleItemSingleDrawer） |

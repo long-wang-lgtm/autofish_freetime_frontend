@@ -39,7 +39,6 @@ interface MobileProductCardProps {
   onSetFansPrice: (item: ShopItem, submit: FansPriceSubmit) => Promise<void>
   shelfPending: boolean
   deletePending: boolean
-  republishPending: boolean
 }
 
 export function MobileProductCard({
@@ -58,7 +57,6 @@ export function MobileProductCard({
   onSetFansPrice,
   shelfPending,
   deletePending,
-  republishPending,
 }: MobileProductCardProps) {
   const status = statusLabel(item.status)
   const quantity = displayQuantity(item)
@@ -156,7 +154,6 @@ export function MobileProductCard({
         <RepublishButton
           item={item}
           variant="mobile"
-          pending={republishPending}
           onRepublish={onRepublish}
         />
         <ItemActionButtons
