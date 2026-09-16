@@ -36,7 +36,7 @@ export function CategorySection({ draft, mutators }: ItemEditSectionProps) {
   return (
     <section className="space-y-3">
       <SectionTitle>商品类目</SectionTitle>
-      <div className="grid grid-cols-1 sm:grid-cols-8 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
         <div>
           <label className={LABEL} htmlFor="edit-channel-cate">
             类目
