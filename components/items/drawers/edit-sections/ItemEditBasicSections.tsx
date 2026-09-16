@@ -1,8 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import { X, ImagePlus } from "lucide-react"
 import { useToast } from "@/components/ui/Toaster"
 import { Select } from "@/components/ui/data/Select"
+import { ImageLightbox } from "@/components/ui/overlay/ImageLightbox"
 import { SectionTitle, Hint } from "./Section"
 import { YuanPriceInput } from "./YuanPriceInput"
 import { INPUT, TEXTAREA, LABEL, toNumberInput, type ItemEditSectionProps } from "../item-edit-types"
@@ -39,36 +41,50 @@ export function DescSection({ draft, mutators }: ItemEditSectionProps) {
 /** 商品图片 —— 新增走图片上传接口（未接入），删除与封面标记就地改 draft */
 export function ImageSection({ draft, mutators }: ItemEditSectionProps) {
   const { addToast } = useToast()
+  // 预览哪张：存地址而不是下标，删图导致的下标漂移就不会指错图
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null)
 
   return (
     <section className="space-y-3">
       <SectionTitle>商品图片</SectionTitle>
       <div className="flex flex-wrap items-center gap-3">
-        {draft.imageInfoDOList.map((img, i) => (
-          <div key={`${img.url}-${i}`} className="relative group flex-shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={img.url}
-              alt={img.major ? "商品封面" : `商品图片 ${i + 1}`}
-              loading="lazy"
-              className="w-20 h-20 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
-            />
-            {img.major && (
-              <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-black/60 text-white">
-                封面
-              </span>
-            )}
-            <button
-              type="button"
-              aria-label={`删除第 ${i + 1} 张图片`}
-              title="删除"
-              onClick={() => mutators.removeImage(i)}
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        ))}
+        {draft.imageInfoDOList.map((img, i) => {
+          const alt = img.major ? "商品封面" : `商品图片 ${i + 1}`
+          return (
+            <div key={`${img.url}-${i}`} className="relative group flex-shrink-0">
+              {/* 缩略图用 button 包着：点击放大是这里的主要动作，键盘也该能触发 */}
+              <button
+                type="button"
+                onClick={() => setPreviewSrc(img.url)}
+                aria-label={`放大查看${alt}`}
+                className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img.url}
+                  alt={alt}
+                  loading="lazy"
+                  className="w-20 h-20 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
+                />
+              </button>
+              {img.major && (
+                // 标记压在缩略图上，点击要穿透到下面的 button
+                <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-black/60 text-white pointer-events-none">
+                  封面
+                </span>
+              )}
+              <button
+                type="button"
+                aria-label={`删除第 ${i + 1} 张图片`}
+                title="删除"
+                onClick={() => mutators.removeImage(i)}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )
+        })}
 
         <button
           type="button"
@@ -80,6 +96,9 @@ export function ImageSection({ draft, mutators }: ItemEditSectionProps) {
           <ImagePlus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
         </button>
       </div>
+
+      <ImageLightbox src={previewSrc} onClose={() => setPreviewSrc(null)} />
+
       {/* <Hint>共 {draft.imageInfoDOList.length} 张，带「封面」标记的为封面图（major）。</Hint> */}
     </section>
   )

@@ -19,6 +19,7 @@
 | `Modal` | `ui/overlay/Modal.tsx` | 居中弹窗外壳，阻断式，遮罩不关闭 | `open`, `onClose`, `title?`, `size?`, `children`, `footer?` |
 | `ConfirmDialog` | `ui/overlay/ConfirmDialog.tsx` | 统一确认弹窗，替代 window.confirm | `open`, `onOpenChange`, `title`, `description`, `onConfirm`, `variant?` |
 | `Sheet` | `ui/overlay/Sheet.tsx` | 抽屉/底部弹出容器，支持手势拖拽关闭 | `open`, `onClose`, `title?`, `subtitle?`, `width?`, `children` |
+| `ImageLightbox` | `ui/overlay/ImageLightbox.tsx` | 图片放大预览（portal 到 body，z-60 压在 Modal 之上）。点击遮罩/图片/关闭按钮或按 Esc 关闭 | `src`（null 时不渲染）, `alt?`, `onClose` |
 
 ### feedback/ — 反馈组件
 

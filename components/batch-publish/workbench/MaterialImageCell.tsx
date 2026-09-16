@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback } from 'react'
 import { uploadFileToFlare, imageDisplayUrl } from '@/lib/api/upload'
 import { editMaterial } from '@/lib/api/batch-publish'
+import { ImageLightbox } from '@/components/ui/overlay/ImageLightbox'
 import type { MaterialImage as UploadMaterialImage } from '@/lib/api/upload'
 import type { MaterialImage } from '@/lib/api/batch-publish'
 
@@ -19,7 +20,7 @@ const THUMB_SIZE = 48
 export function MaterialImageCell({ images, materialId, toUid, onImagesChange }: MaterialImageCellProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,7 +96,7 @@ export function MaterialImageCell({ images, materialId, toUid, onImagesChange }:
             alt=""
             className="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-pointer"
             style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
-            onClick={() => setLightboxIndex(i)}
+            onClick={() => setPreviewSrc(imageDisplayUrl(img as UploadMaterialImage) || null)}
             loading="lazy"
           />
           <button
@@ -142,25 +143,7 @@ export function MaterialImageCell({ images, materialId, toUid, onImagesChange }:
       )}
       </div>
 
-      {/* Lightbox */}
-      {lightboxIndex !== null && (
-        <div
-          className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center cursor-pointer"
-          onClick={() => setLightboxIndex(null)}
-        >
-          <img
-            src={imageDisplayUrl(images[lightboxIndex] as UploadMaterialImage) || undefined}
-            alt=""
-            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
-          />
-          <button
-            className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/40 rounded-full text-white text-xl flex items-center justify-center"
-            onClick={() => setLightboxIndex(null)}
-          >
-            ×
-          </button>
-        </div>
-      )}
+      <ImageLightbox src={previewSrc} onClose={() => setPreviewSrc(null)} />
     </div>
   )
 }
