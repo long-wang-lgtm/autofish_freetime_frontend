@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -29,6 +30,9 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
+  // portal 只能在挂载后做 —— SSR 阶段没有 document
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (open) {
@@ -59,9 +63,13 @@ export function ConfirmDialog({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [open, onOpenChange])
 
-  if (!open) return null
+  if (!mounted || !open) return null
 
-  return (
+  // 必须 portal 到 body：用在这类弹窗里时，调用方（如 ItemEditModal）自己是个
+  // createPortal 的 Modal，挂在 body 末尾。就地渲染的话两者同为 z-50，DOM 顺序
+  // 决定层叠，确认框会被弹窗整个盖住 —— 点了「重发」什么也看不见。
+  // 在 !open 时提前返回，portal 容器就在弹窗容器之后才创建，顺序天然正确。
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
@@ -107,6 +115,7 @@ export function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
