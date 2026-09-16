@@ -1,9 +1,4 @@
-import type {
-  ItemEditMaterial,
-  ItemEditImage,
-  ItemEditSku,
-  ItemEditLabel,
-} from "@/lib/api/items"
+import type { ItemEditMaterial, ItemEditImage, ItemEditSku } from "@/lib/api/items"
 
 // ── 样式常量 ──────────────────────────────────────────────────
 // 所有控件同高同边框，避免各行自成一派
@@ -21,19 +16,12 @@ export const LABEL = "block text-sm font-medium text-gray-700 dark:text-gray-300
 export const SERVICE_LABELS: Record<string, string> = {
   FAST_DELIVERY_24_HOUR: "24 小时内发货",
   FAST_DELIVERY_48_HOUR: "48 小时内发货",
-  NONCONFORMITY_FREE_REFUND: "描述不符包退",
+  NONCONFORMITY_FREE_REFUND: "描述不符包邮退",
 }
 
 /** 数字输入共用：undefined / null / 空串一律渲染成空串，避免出现 "undefined" */
 export const toNumberInput = (v: number | string | null | undefined) =>
   v === null || v === undefined || v === "" ? "" : String(v)
-
-/** 分 → 元，只读回显用。编辑一律在「分」上做，避免来回换算丢精度 */
-export const centsToYuan = (cents: number | string | undefined) => {
-  const n = Number(cents)
-  if (!Number.isFinite(n)) return "-"
-  return (n / 100).toFixed(2)
-}
 
 /**
  * 领域改写器集合。
@@ -48,11 +36,12 @@ export interface ItemEditMutators {
   removeImage: (index: number) => void
   patchPrice: (key: "priceInCent" | "origPriceInCent", value: string) => void
   setQuantity: (value: string) => void
-  patchAddr: (key: keyof ItemEditMaterial["itemAddrDTO"], value: string) => void
-  patchCat: (key: keyof ItemEditMaterial["itemCatDTO"], value: string) => void
-  patchLabel: (index: number, key: keyof ItemEditLabel, value: string) => void
+  /** 改类目 —— 同时回写 itemCatDTO 与 itemLabelExtList，见实现处注释 */
+  setChannelCate: (channelCateId: number | string, channelCateName: string) => void
   patchPostFee: (key: keyof ItemEditMaterial["itemPostFeeDTO"], value: string | boolean) => void
   patchProtocol: (index: number, enable: boolean) => void
+  /** 整包替换 SKU 列表 —— 规格组合重算后行数与身份都变了，逐行 patch 无从下手 */
+  setSkuList: (skus: ItemEditSku[] | null) => void
   patchSku: (index: number, key: keyof ItemEditSku, value: string) => void
 }
 

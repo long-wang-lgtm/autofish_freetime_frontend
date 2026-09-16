@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import type { ShopItem, ItemEditMaterial } from "@/lib/api/items"
 import { getItemEditDetail } from "@/lib/api/items"
@@ -24,20 +24,33 @@ interface ItemEditModalProps {
  * 与它替换掉的旧编辑抽屉是两件事：旧的是「各项自动化配置」的编辑入口，
  * 那些配置现在都在表格对应列上直接改。这里只管商品属性。
  *
- * 数据流：打开时拉 /api/items/item.edit.detail，响应即保存接口的请求体，
- * 全程以它作为 draft 的唯一数据源 —— 字段改动就地合并进 draft，保存时整包下发。
- * 这样字段没有「拉取模型 → 表单模型」的映射层，也就没有两端字段漂移的可能。
+ * 数据流：打开时拉 /api/items/item.edit.detail，把响应**深拷贝成两份** ——
+ * 一份 `draft` 作为编辑副本（也是保存接口的请求体），一份 `original` 原封不动留着。
+ * 字段改动实时合并进副本，保存时整包下发副本。这样字段没有「拉取模型 → 表单模型」
+ * 的映射层，也就没有两端字段漂移的可能；而原数据始终在手上，任何时候都能整份回去。
  *
  * 保存接口尚未提供，因此保存只构造并回显请求体，不发起请求。
  */
+/**
+ * 深拷贝一份物料。
+ *
+ * 接口返回的是 JSON，用 JSON 往返即可，且刻意不引入 structuredClone —— 它对新
+ * 运行环境有要求，而这里没有任何需要它的理由（无 Date、Map、循环引用）。
+ */
+const cloneMaterial = (m: ItemEditMaterial): ItemEditMaterial =>
+  JSON.parse(JSON.stringify(m)) as ItemEditMaterial
+
 export function ItemEditModal({ item, open, onClose }: ItemEditModalProps) {
   const { addToast } = useToast()
 
-  // draft：当前编辑值，即保存请求体
+  // draft：编辑副本，即保存请求体。所有改动只落在这份副本上
   const [draft, setDraft] = useState<ItemEditMaterial | null>(null)
-  // baseline：拉取时的原值，用于判断是否有未保存改动
-  const [baseline, setBaseline] = useState<string | null>(null)
+  // original：拉取时的原数据，独立于 draft 的另一份副本，用于「恢复原值」
+  const [original, setOriginal] = useState<ItemEditMaterial | null>(null)
+  // 每次换数据就自增，作为字段区的 key —— 强制它重挂载
+  const [draftVersion, setDraftVersion] = useState(0)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const [confirmRestore, setConfirmRestore] = useState(false)
   // 保存接口未就位，先给一个能看见请求体的出口，省得只能靠开发者工具
   const [showBody, setShowBody] = useState(false)
   const [lastBody, setLastBody] = useState<ItemEditMaterial | null>(null)
@@ -51,19 +64,27 @@ export function ItemEditModal({ item, open, onClose }: ItemEditModalProps) {
     refetchOnWindowFocus: false,
   })
 
-  // 每次打开都从缓存/接口重新起一份草稿。
+  // 每次打开都从缓存/接口重新起一份副本，原数据另存一份不动。
   // 不能只依赖 data 变化：放弃编辑后立刻重开，staleTime 内 data 是同一个引用，
   // 效果不重跑，被丢弃的草稿会原样回来。
   useEffect(() => {
     if (!open) return
     if (!data) {
       setDraft(null)
-      setBaseline(null)
+      setOriginal(null)
       return
     }
-    setDraft(data)
-    setBaseline(JSON.stringify(data))
+    setDraft(cloneMaterial(data))
+    setOriginal(cloneMaterial(data))
+    // 字段区在挂载时把数据推导成自己的本地态（价格输入文本、规格维度），
+    // 换了一份数据而不重挂载，它会拿着上一份继续编辑
+    setDraftVersion((v) => v + 1)
   }, [open, data])
+
+  const baseline = useMemo(
+    () => (original ? JSON.stringify(original) : null),
+    [original]
+  )
 
   // 稳定引用：ItemEditFields 依赖它做 useMemo，行内函数会让 mutators 每次重建
   const applyPatch = useCallback<DraftUpdater>(
@@ -113,8 +134,30 @@ export function ItemEditModal({ item, open, onClose }: ItemEditModalProps) {
     addToast({ title: "保存接口尚未接入", description: "已构造请求体", variant: "info" })
   }
 
+  /**
+   * 恢复原数据 —— 把编辑副本整个换回打开时的那一份。
+   *
+   * 只换 draft 不够：各字段区在挂载时会把数据推导成自己的本地态（价格输入框的
+   * 文本、规格维度），不重挂载就会拿着旧副本继续编辑。所以自增版本号当 key，
+   * 让整棵字段树按恢复后的数据重新挂载一次。
+   */
+  const handleRestore = () => {
+    if (!original) return
+    setDraft(cloneMaterial(original))
+    setDraftVersion((v) => v + 1)
+    setConfirmRestore(false)
+  }
+
   const footer = (
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => setConfirmRestore(true)}
+        disabled={!original || !isDirty}
+        className="mr-auto h-10 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        恢复原值
+      </button>
       <button
         type="button"
         onClick={handleClose}
@@ -135,7 +178,19 @@ export function ItemEditModal({ item, open, onClose }: ItemEditModalProps) {
 
   return (
     <>
-      <Modal open={open} onClose={handleClose} size="xl" maxHeight="85vh" footer={footer}>
+      {/*
+        宽度：字段区是 3 列网格，max-w-2xl（672px）会把每列压到 200px 以下。
+        桌面端取 2/3 视口宽，但不小于 672px —— 否则在 640~900px 这一档会比原来还窄。
+        断点写在 sm 上：小屏不加限制，满宽更接近移动端 bottomsheet 的观感。
+      */}
+      <Modal
+        open={open}
+        onClose={handleClose}
+        size="xl"
+        maxHeight="85vh"
+        className="sm:max-w-[max(672px,67vw)]"
+        footer={footer}
+      >
         <div className="space-y-4">
           {/* 商品信息 —— 只读 */}
           <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -172,7 +227,9 @@ export function ItemEditModal({ item, open, onClose }: ItemEditModalProps) {
               onRetry={() => refetch()}
             />
           ) : draft ? (
-            <ItemEditFields draft={draft} setDraft={applyPatch} />
+            // key 绑定数据版本：换数据（含「恢复原值」）时整棵树重挂载，
+            // 让各字段区按新的数据重建自己的本地态
+            <ItemEditFields key={draftVersion} draft={draft} setDraft={applyPatch} />
           ) : (
             // 重开时 data 命中缓存、isPending 为 false，而 draft 要等 effect 落地，
             // 这一帧不能空着 —— 否则弹窗会闪一下无内容
@@ -216,6 +273,17 @@ export function ItemEditModal({ item, open, onClose }: ItemEditModalProps) {
           setConfirmDiscard(false)
           onClose()
         }}
+      />
+
+      <ConfirmDialog
+        open={confirmRestore}
+        onOpenChange={setConfirmRestore}
+        title="恢复原值？"
+        description="当前的改动会被丢弃，字段回到打开弹窗时的数据。"
+        confirmLabel="恢复"
+        cancelLabel="继续编辑"
+        variant="danger"
+        onConfirm={handleRestore}
       />
     </>
   )

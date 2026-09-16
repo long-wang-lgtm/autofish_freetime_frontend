@@ -17,6 +17,9 @@ interface SwitchProps {
  *
  * 开关本身不携带「是否需要二次确认」的语义 —— 危险操作由调用方在 onChange 里弹
  * ConfirmDialog，不要在这里加确认态。
+ *
+ * 宽度取内容宽（w-fit）而非 w-full：开关是行内控件，撑满整行的按钮放进
+ * `flex flex-wrap` 的横向列表里会各自独占一行，横排根本不成立。
  */
 export function Switch({ checked, onChange, label, disabled = false, id }: SwitchProps) {
   return (
@@ -27,7 +30,7 @@ export function Switch({ checked, onChange, label, disabled = false, id }: Switc
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className="flex items-center gap-2 text-left w-full disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex w-fit items-center gap-2 text-left disabled:cursor-not-allowed disabled:opacity-50"
     >
       <span
         className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ${

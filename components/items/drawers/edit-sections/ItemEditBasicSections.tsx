@@ -2,23 +2,17 @@
 
 import { X, ImagePlus } from "lucide-react"
 import { useToast } from "@/components/ui/Toaster"
+import { Select } from "@/components/ui/data/Select"
 import { SectionTitle, Hint } from "./Section"
-import {
-  INPUT,
-  TEXTAREA,
-  LABEL,
-  toNumberInput,
-  centsToYuan,
-  hasMultiSku,
-  type ItemEditSectionProps,
-} from "../item-edit-types"
+import { YuanPriceInput } from "./YuanPriceInput"
+import { INPUT, TEXTAREA, LABEL, toNumberInput, type ItemEditSectionProps } from "../item-edit-types"
 
 /**
  * 商品描述 —— 只做 desc。
  *
  * 标题不单独开输入框：后端 ItemDesc 的校验器在**读回时**就把 title 覆盖成 desc
  * 全文（PublishItemEditDetail.py 的 validate_title），没有独立的短标题可取。
- * 保存时由 ItemEditModal 让 title 跟随 desc，避免下发一个与正文脱节的旧标题。
+ * 保存时由 ItemEditModal 让 title 跟随 desc，避免下发与正文脱节的旧标题。
  */
 export function DescSection({ draft, mutators }: ItemEditSectionProps) {
   return (
@@ -36,15 +30,13 @@ export function DescSection({ draft, mutators }: ItemEditSectionProps) {
           placeholder="商品描述"
           className={TEXTAREA}
         />
-        <Hint>正文即商品详情，发布器同时用它作为标题。</Hint>
+        {/* <Hint>正文即商品详情，发布器同时用它作为标题。</Hint> */}
       </div>
     </section>
   )
 }
 
-/**
- * 商品图片 —— 新增走图片上传接口（未接入），删除和封面标记就地改 draft。
- */
+/** 商品图片 —— 新增走图片上传接口（未接入），删除与封面标记就地改 draft */
 export function ImageSection({ draft, mutators }: ItemEditSectionProps) {
   const { addToast } = useToast()
 
@@ -88,73 +80,56 @@ export function ImageSection({ draft, mutators }: ItemEditSectionProps) {
           <ImagePlus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
         </button>
       </div>
-      <Hint>共 {draft.imageInfoDOList.length} 张，带「封面」标记的为封面图（major）。</Hint>
+      {/* <Hint>共 {draft.imageInfoDOList.length} 张，带「封面」标记的为封面图（major）。</Hint> */}
     </section>
   )
 }
 
 /**
- * 价格 —— 单位「分」。
+ * 价格与库存 —— 合在一行，且只在单规格时渲染。
  *
- * 不在元上编辑：后端 priceInCent 是整数，元/分来回换算会引入不可整除的尾数，
- * 输入框里显示 0.1 而下发 9 或 10 比直接让用户填整数更糟。旁边给只读的元换算。
+ * 两者是同一个决策的两面（卖多少钱、有多少件），分开两行会让改价时漏改库存，
+ * 所以并排放在同一格。
+ *
+ * 价格对用户显示「元」，落到 draft 仍是「分」—— 后端字段就叫 priceInCent，
+ * 换算只在输入框边界上发生一次，见 YuanPriceInput。输入框下方把分值写出来，
+ * 省得对着 0.10 猜它到底是 10 分还是 10 元。
+ *
+ * 本区不判断规格：多规格商品根本不渲染它（由 ItemEditFields 决定），
+ * 价格库存改由笛卡尔积表承载。数据不删除 —— 删光规格后这个区原样回来。
  */
-export function PriceSection({ draft, mutators }: ItemEditSectionProps) {
-  const multiSku = hasMultiSku(draft)
-
+export function PriceStockSection({ draft, mutators }: ItemEditSectionProps) {
   return (
     <section className="space-y-3">
-      <SectionTitle>价格</SectionTitle>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <SectionTitle>价格与库存</SectionTitle>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className={LABEL} htmlFor="edit-price">
-            售价（分）
+            售价（元）
           </label>
-          <input
+          <YuanPriceInput
             id="edit-price"
-            type="number"
-            inputMode="numeric"
-            value={toNumberInput(draft.itemPriceDTO.priceInCent)}
-            onChange={(e) => mutators.patchPrice("priceInCent", e.target.value)}
-            disabled={multiSku}
-            placeholder="0"
-            className={INPUT}
+            ariaLabel="售价"
+            cents={draft.itemPriceDTO.priceInCent}
+            onChange={(v) => mutators.patchPrice("priceInCent", v)}
           />
-          {!multiSku && <Hint>= ¥{centsToYuan(draft.itemPriceDTO.priceInCent)}</Hint>}
+          {/* <Hint>下发 {toNumberInput(draft.itemPriceDTO.priceInCent) || 0} 分</Hint> */}
         </div>
         <div>
           <label className={LABEL} htmlFor="edit-orig-price">
-            划线价（分）
+            划线价（元）
           </label>
-          <input
+          <YuanPriceInput
             id="edit-orig-price"
-            type="number"
-            inputMode="numeric"
-            value={toNumberInput(draft.itemPriceDTO.origPriceInCent)}
-            onChange={(e) => mutators.patchPrice("origPriceInCent", e.target.value)}
-            disabled={multiSku}
-            placeholder="0"
-            className={INPUT}
+            ariaLabel="划线价"
+            cents={draft.itemPriceDTO.origPriceInCent}
+            onChange={(v) => mutators.patchPrice("origPriceInCent", v)}
           />
-          {!multiSku && <Hint>= ¥{centsToYuan(draft.itemPriceDTO.origPriceInCent)}</Hint>}
+          {/* <Hint>下发 {toNumberInput(draft.itemPriceDTO.origPriceInCent) || 0} 分</Hint> */}
         </div>
-      </div>
-      {multiSku && <Hint>多规格商品的价格在「规格」区按 SKU 设置，此处不生效。</Hint>}
-    </section>
-  )
-}
-
-/** 库存 —— 多规格商品由后端置为 1，库存改在 itemSkuList 上 */
-export function QuantitySection({ draft, mutators }: ItemEditSectionProps) {
-  const multiSku = hasMultiSku(draft)
-
-  return (
-    <section className="space-y-3">
-      <SectionTitle>库存</SectionTitle>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL} htmlFor="edit-quantity">
-            库存数量
+            库存
           </label>
           <input
             id="edit-quantity"
@@ -162,99 +137,46 @@ export function QuantitySection({ draft, mutators }: ItemEditSectionProps) {
             inputMode="numeric"
             value={toNumberInput(draft.quantity)}
             onChange={(e) => mutators.setQuantity(e.target.value)}
-            disabled={multiSku}
             placeholder="0"
             className={INPUT}
           />
         </div>
       </div>
-      <Hint>
-        {multiSku
-          ? "多规格商品库存见「规格」区，此字段被后端置为 1。"
-          : "多规格商品的库存按 SKU 分别设置。"}
-      </Hint>
     </section>
   )
 }
 
-/** 发布地址 —— 省市/区县与行政区划 ID 需相互对应，poiId 未在此暴露 */
-export function AddressSection({ draft, mutators }: ItemEditSectionProps) {
+/**
+ * 发布地址 —— 只读下拉。
+ *
+ * 区划数据源（省市区列表）尚未提供，因此唯一选项就是当前地址，且不可选不可输：
+ * 用 disabled 的 select 而不是文本框，是为了明确「这里将来是个选择器」，
+ * 不给出「能编辑」的假象。地址的结构化字段（divisionId / gps / poiId）原样保留。
+ */
+export function AddressSection({ draft }: ItemEditSectionProps) {
+  const { prov, city, area, poiName } = draft.itemAddrDTO
+  const label = [prov, city, area].filter(Boolean).join(" ")
+  const display = poiName ? `${label} · ${poiName}` : label
+
   return (
     <section className="space-y-3">
       <SectionTitle>发布地址</SectionTitle>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className={LABEL} htmlFor="edit-prov">
-            省份
-          </label>
-          <input
-            id="edit-prov"
-            value={draft.itemAddrDTO.prov}
-            onChange={(e) => mutators.patchAddr("prov", e.target.value)}
-            className={INPUT}
+          {/* <label className={LABEL} htmlFor="edit-addr">
+            所在地
+          </label> */}
+          <Select
+            id="edit-addr"
+            value={display}
+            onChange={() => {}}
+            options={display ? [{ value: display, label: display }] : []}
+            placeholder="暂无地址"
+            disabled
           />
-        </div>
-        <div>
-          <label className={LABEL} htmlFor="edit-city">
-            城市
-          </label>
-          <input
-            id="edit-city"
-            value={draft.itemAddrDTO.city}
-            onChange={(e) => mutators.patchAddr("city", e.target.value)}
-            className={INPUT}
-          />
-        </div>
-        <div>
-          <label className={LABEL} htmlFor="edit-area">
-            区县
-          </label>
-          <input
-            id="edit-area"
-            value={draft.itemAddrDTO.area}
-            onChange={(e) => mutators.patchAddr("area", e.target.value)}
-            className={INPUT}
-          />
-        </div>
-        <div>
-          <label className={LABEL} htmlFor="edit-division">
-            行政区划 ID
-          </label>
-          <input
-            id="edit-division"
-            type="number"
-            inputMode="numeric"
-            value={toNumberInput(draft.itemAddrDTO.divisionId)}
-            onChange={(e) => mutators.patchAddr("divisionId", e.target.value)}
-            className={INPUT}
-          />
-        </div>
-        <div>
-          <label className={LABEL} htmlFor="edit-poi">
-            定位点名称
-          </label>
-          <input
-            id="edit-poi"
-            value={draft.itemAddrDTO.poiName ?? ""}
-            onChange={(e) => mutators.patchAddr("poiName", e.target.value)}
-            placeholder="如：碧桂园剑桥郡"
-            className={INPUT}
-          />
-        </div>
-        <div>
-          <label className={LABEL} htmlFor="edit-gps">
-            经纬度
-          </label>
-          <input
-            id="edit-gps"
-            value={draft.itemAddrDTO.gps}
-            onChange={(e) => mutators.patchAddr("gps", e.target.value)}
-            placeholder="纬度,经度"
-            className={INPUT}
-          />
+          {/* <Hint>地址选项接口待接入，当前仅展示；经纬度与行政区划 ID 原样保留。</Hint> */}
         </div>
       </div>
-      <Hint>省 / 市 / 区与行政区划 ID 需相互对应；定位点 ID（poiId）未在此处暴露。</Hint>
     </section>
   )
 }

@@ -29,7 +29,8 @@
 | `ErrorBoundary` | `ui/feedback/ErrorBoundary.tsx` | React 渲染异常捕获（Class Component） | `children`, `fallback?` |
 | `LoadingSpinner` | `ui/feedback/LoadingSpinner.tsx` | 加载动画指示器 | `size?: 'sm' \| 'md' \| 'lg'` |
 | `StatusBadge` | `ui/feedback/StatusBadge.tsx` | 统一状态标签，配置驱动色映射 | `status`, `config`, `size?` |
-| `Switch` | `ui/feedback/Switch.tsx` | 开关（整行可点，role=switch） | `checked`, `onChange`, `label`, `disabled?`, `id?` |
+| `Switch` | `ui/feedback/Switch.tsx` | 开关（内容宽，role=switch，可放进横向 `flex flex-wrap` 列表） | `checked`, `onChange`, `label`, `disabled?`, `id?` |
+| `RadioGroup` | `ui/feedback/RadioGroup.tsx` | 单选组（多选一，原生 radio + accent 色） | `name`, `value`, `onChange`, `options`, `disabled?`, `direction?` |
 
 ### data/ — 数据展示组件
 
@@ -39,6 +40,7 @@
 | `EditableCell` | `ui/data/EditableCell.tsx` | 可编辑表格单元格 | `value`, `type?`, `onSave`, `disabled?` |
 | `Pagination` | `ui/data/Pagination.tsx` | 统一分页控件 | `page`, `total`, `pageSize`, `onChange` |
 | `SearchToolbar` | `ui/data/SearchToolbar.tsx` | 筛选栏统一布局壳，children 自由组合 | `children`, `className?` |
+| `Select` | `ui/data/Select.tsx` | 下拉选择（原生 `<select>` 封装，含 chevron 与 disabled 态） | `value`, `onChange`, `options`, `placeholder?`, `disabled?`, `id?` |
 
 ### navigation/ — 导航组件
 
@@ -99,7 +101,8 @@
 | 组件 | 文件 | 用途 |
 |------|------|------|
 | `ConfigDrawer` | `items/drawers/ConfigDrawer.tsx` | 商品配置编辑抽屉 |
-| `ItemEditModal` | `items/drawers/ItemEditModal.tsx` | 商品属性编辑居中弹窗，拉 `item.edit.detail` 作草稿，保存构造请求体（保存接口待接入）。字段区见 `ItemEditFields.tsx` → `edit-sections/`，写回器见 `useItemEditMutators.ts` |
+| `ItemEditModal` | `items/drawers/ItemEditModal.tsx` | 商品属性编辑居中弹窗（桌面 2/3 视口宽，移动端满宽）。拉 `item.edit.detail` 深拷贝成「编辑副本 + 原数据」两份，改动实时落副本，保存构造请求体（保存接口待接入），可一键恢复原值。字段区见 `ItemEditFields.tsx` → `edit-sections/`，写回器见 `useItemEditMutators.ts` |
+| `YuanPriceInput` | `items/drawers/edit-sections/YuanPriceInput.tsx` | 价格输入：显示与输入用「元」（失焦对齐两位小数），读写 draft 用「分」，带本地文本态防止输入中的小数点被规格化 | `cents`, `onChange`, `ariaLabel`, `id?`, `disabled?` |
 | `RuleDrawer` | `items/drawers/RuleItemsAllDrawer.tsx` | 全部规则项抽屉（⚠ 导出名与文件名不符） |
 | `KeywordDrawer` | `items/drawers/RulesItemsingleDrawer.tsx` | 单个规则项抽屉（⚠ 文件名拼写错误，应为 RuleItemSingleDrawer） |
 

@@ -44,18 +44,27 @@ export function useItemEditMutators(setDraft: DraftUpdater): ItemEditMutators {
 
       setQuantity: (value) => setDraft((d) => ({ ...d, quantity: value })),
 
-      patchAddr: (key, value) =>
-        setDraft((d) => ({ ...d, itemAddrDTO: { ...d.itemAddrDTO, [key]: value } })),
-
-      patchCat: (key, value) =>
-        setDraft((d) => ({ ...d, itemCatDTO: { ...d.itemCatDTO, [key]: value } })),
-
-      patchLabel: (index, key, value) =>
+      /**
+       * 改类目 —— 一处改动要落到两个对象上。
+       *
+       * itemCatDTO.channelCatId 与 label.channelCateId 是同一个渠道类目 ID 的两种
+       * 写法（mock 里都是 202036301），catName 与 label.channelCateName 同理。发布器
+       * 两份都读，只改一份会得到自相矛盾的商品。
+       *
+       * label.properties 是拼给发布器的串（属性ID##属性名:值ID##值名），类目变了
+       * 它必须跟着变，否则发布到旧类目下 —— 所以这里一并重拼。
+       */
+      setChannelCate: (channelCateId, channelCateName) =>
         setDraft((d) => ({
           ...d,
-          itemLabelExtList: d.itemLabelExtList.map((l, i) =>
-            i === index ? { ...l, [key]: value } : l
-          ),
+          itemCatDTO: { ...d.itemCatDTO, channelCatId: channelCateId, catName: channelCateName },
+          itemLabelExtList: d.itemLabelExtList.map((l) => ({
+            ...l,
+            channelCateId,
+            channelCateName,
+            text: channelCateName,
+            properties: `${l.propertyId}##${l.propertyName}:${channelCateId}##${channelCateName}`,
+          })),
         })),
 
       patchPostFee: (key, value) =>
@@ -71,6 +80,13 @@ export function useItemEditMutators(setDraft: DraftUpdater): ItemEditMutators {
             i === index ? { ...p, enable } : p
           ),
         })),
+
+      /**
+       * 整包替换 SKU 列表 —— 规格维度或规格值一变，组合就整体重算，逐行 patch
+       * 无从下手（行数与行的身份都会变）。笛卡尔积的生成在 SkuSection 里，
+       * 这里只负责落盘。
+       */
+      setSkuList: (skus) => setDraft((d) => ({ ...d, itemSkuList: skus })),
 
       patchSku: (index, key, value) =>
         setDraft((d) => ({
