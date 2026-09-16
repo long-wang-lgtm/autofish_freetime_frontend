@@ -1,4 +1,4 @@
-import type { ItemEditSku } from "@/lib/api/items"
+import type { ItemEditProperty, ItemEditSku } from "@/lib/api/items"
 
 /** 最多两个规格维度 —— 与用户约定一致；更多维度的组合数会爆炸且闲鱼侧支持有限 */
 export const MAX_SPECS = 2
@@ -61,4 +61,27 @@ export function buildSkuList(
       propertyList,
     }
   })
+}
+
+/**
+ * 规格维度 → itemProperties，必须与 buildSkuList 用同一份 specs 同时产出。
+ *
+ * 两者是同一件事的两个视角：itemProperties 说「有哪些规格名与规格值」，itemSkuList
+ * 说「每个组合卖多少钱、还剩几件」。只写后者，请求体里就会同时带着新的组合表与旧的
+ * 规格声明 —— 新增的规格值在 itemSkuList 里，却不在 itemProperties 里，闲鱼收到的是
+ * 两份互相矛盾的数据。
+ *
+ * 不额外过滤空规格名：buildSkuList 不过滤，这里过滤就会让两边维度数对不上，
+ * 一致性比"看起来干净"重要。
+ */
+export function buildItemProperties(specs: SpecDimension[]): ItemEditProperty[] {
+  return specs.map((s) => ({
+    propertyName: s.name,
+    // 规格值配图：闲鱼支持，当前不启用，两个字段固定成不启用态
+    supportImage: false,
+    propertyValues: s.values.map((v) => ({
+      propertyValue: v,
+      propertyValueImg: null,
+    })),
+  }))
 }

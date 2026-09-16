@@ -51,8 +51,14 @@ export interface ItemEditMutators {
   setChannelCate: (channelCateId: number | string, channelCateName: string) => void
   patchPostFee: (key: keyof ItemEditMaterial["itemPostFeeDTO"], value: string | boolean) => void
   patchProtocol: (index: number, enable: boolean) => void
-  /** 整包替换 SKU 列表 —— 规格组合重算后行数与身份都变了，逐行 patch 无从下手 */
-  setSkuList: (skus: ItemEditSku[] | null) => void
+  /**
+   * 整包替换 SKU 列表 + 规格声明 —— 规格组合重算后行数与身份都变了，逐行 patch
+   * 无从下手。两件事同一份 specs 产出，所以只给这一个方法，见实现处注释。
+   *
+   * properties 的类型直接取物料上那个字段：它可能整个缺省（undefined），
+   * 恢复原值时原样写回、由 JSON.stringify 略过，才能与基线逐字节一致。
+   */
+  setSkuList: (skus: ItemEditSku[] | null, properties: ItemEditMaterial["itemProperties"]) => void
   patchSku: (index: number, key: keyof ItemEditSku, value: string) => void
 }
 

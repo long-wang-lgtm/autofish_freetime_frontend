@@ -193,6 +193,28 @@ export interface ItemEditPrice {
   origPriceInCent?: number | string
 }
 
+/**
+ * 规格值。propertyValueImg 是闲鱼侧「规格值配图」的预留字段，当前一律 null
+ * （与 supportImage: false 配套）。
+ */
+export interface ItemEditPropertyValue {
+  propertyValue: string
+  propertyValueImg: string | null
+}
+
+/**
+ * 规格维度声明 —— 有哪些规格名、每个下面有哪些规格值。
+ *
+ * 与 itemSkuList 是同一件事的两个视角：这里说「有哪些规格」，itemSkuList 说
+ * 「每个组合卖多少钱、还剩几件」。改规格必须两个一起改，只改一个，请求体里就会
+ * 同时带着新的组合表与旧的规格声明。
+ */
+export interface ItemEditProperty {
+  propertyName: string
+  supportImage: boolean
+  propertyValues: ItemEditPropertyValue[]
+}
+
 /** 多规格 SKU */
 export interface ItemEditSkuProperty {
   propertyText: string
@@ -248,8 +270,13 @@ export interface ItemEditMaterial {
   itemAddrDTO: ItemEditAddr
   quantity: number | string
   itemId?: number | string | null
-  /** 多规格：itemProperties 非空时价格/库存改由 itemSkuList 承载 */
-  itemProperties?: { root: unknown[] } | unknown[] | null
+  /**
+   * 规格维度声明。多规格商品必须与 itemSkuList 一致（两者是同一件事的两个视角），
+   * 所以它不单独改写 —— 统一走 mutators.setSkuList。单规格时为 []。
+   *
+   * 报文字段，没有 root 包装：itemSkuList 是 []，它就是 [{propertyName, ...}]。
+   */
+  itemProperties?: ItemEditProperty[] | null
   itemSkuList?: ItemEditSku[] | null
   itemPriceDTO: ItemEditPrice
 }

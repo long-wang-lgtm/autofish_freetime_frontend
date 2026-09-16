@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Plus, Trash2, X } from "lucide-react"
-import type { ItemEditSku } from "@/lib/api/items"
+import type { ItemEditMaterial, ItemEditSku } from "@/lib/api/items"
 import { SectionTitle } from "./Section"
 import { YuanPriceInput } from "./YuanPriceInput"
-import { MAX_SPECS, skuKey, buildSkuList, type SpecDimension } from "./sku-specs"
+import { MAX_SPECS, skuKey, buildSkuList, buildItemProperties, type SpecDimension } from "./sku-specs"
 import { CONTROL, INPUT, toNumberInput, type ItemEditSectionProps } from "../item-edit-types"
 
 interface SkuSectionProps extends ItemEditSectionProps {
@@ -37,6 +37,10 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
   const [dirty, setDirty] = useState(false)
   // 弹窗打开时的 itemSkuList，用于「恢复单规格」时原样还原（含 null 本身）
   const originalSkuList = useRef<ItemEditSku[] | null>(draft.itemSkuList ?? null)
+  // 同上，规格声明也要一起还原 —— 两者是一件事的两个视角，只还原一个会得到
+  // 自相矛盾的草稿。刻意不写 `?? null`：接口没给这个字段时是 undefined，原样
+  // 还原成 undefined 才会被 JSON.stringify 略过，与基线逐字节一致。
+  const originalProperties = useRef<ItemEditMaterial["itemProperties"]>(draft.itemProperties)
 
   // 每个维度的「待添加规格值」输入草稿，按维度下标存
   const [valueDrafts, setValueDrafts] = useState<Record<number, string>>({})
@@ -49,7 +53,7 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
       // 判据取原始值：写入后 itemSkuList 变成 null 或 []，长度归零即可停手，
       // 不会因为 `null` 与归一化后的 `[]` 不等而反复触发自己。
       if ((draft.itemSkuList?.length ?? 0) > 0) {
-        mutators.setSkuList(originalSkuList.current)
+        mutators.setSkuList(originalSkuList.current, originalProperties.current)
       }
       return
     }
@@ -57,10 +61,16 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
     if (!ready) return
 
     const generated = buildSkuList(specs, skuList)
+    // 规格声明从同一份 specs 产出，随组合表一起下发。只改组合表的话，新增的规格值
+    // 出现在 itemSkuList 里却不在 itemProperties 里 —— 闲鱼会收到两份矛盾的数据
+    const properties = buildItemProperties(specs)
 
     // 与当前一致就不写回，否则 effect 会被自己的写入再次触发
-    if (JSON.stringify(generated) !== JSON.stringify(skuList)) {
-      mutators.setSkuList(generated)
+    if (
+      JSON.stringify(generated) !== JSON.stringify(skuList) ||
+      JSON.stringify(properties) !== JSON.stringify(draft.itemProperties ?? null)
+    ) {
+      mutators.setSkuList(generated, properties)
     }
     // skuList 是 draft.itemSkuList 的归一化视图，跟着它变；单列它会让 Lint
     // 要求补一个每次渲染都换引用的 dep（`?? []` 的产物），反而每帧都白跑一遍

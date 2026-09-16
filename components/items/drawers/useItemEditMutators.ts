@@ -82,11 +82,16 @@ export function useItemEditMutators(setDraft: DraftUpdater): ItemEditMutators {
         })),
 
       /**
-       * 整包替换 SKU 列表 —— 规格维度或规格值一变，组合就整体重算，逐行 patch
-       * 无从下手（行数与行的身份都会变）。笛卡尔积的生成在 SkuSection 里，
-       * 这里只负责落盘。
+       * 整包替换 SKU 列表 + 规格声明 —— 规格维度或规格值一变，组合就整体重算，
+       * 逐行 patch 无从下手（行数与行的身份都会变）。笛卡尔积的生成在 SkuSection
+       * 里，这里只负责落盘。
+       *
+       * itemProperties 与 itemSkuList 必须一起落盘：前者是「有哪些规格」，后者是
+       * 「每个组合卖多少」，拆成两个方法迟早会出现「新组合表 + 旧规格声明」的请求体。
+       * 所以这里只留一个口子，单独改其中一个在类型上就办不到。
        */
-      setSkuList: (skus) => setDraft((d) => ({ ...d, itemSkuList: skus })),
+      setSkuList: (skus, properties) =>
+        setDraft((d) => ({ ...d, itemSkuList: skus, itemProperties: properties })),
 
       patchSku: (index, key, value) =>
         setDraft((d) => ({
