@@ -19,9 +19,9 @@ export function DescSection({ draft, mutators }: ItemEditSectionProps) {
     <section className="space-y-3">
       <SectionTitle>商品描述</SectionTitle>
       <div>
-        <label className={LABEL} htmlFor="edit-desc">
+        {/* <label className={LABEL} htmlFor="edit-desc">
           描述正文
-        </label>
+        </label> */}
         <textarea
           id="edit-desc"
           rows={8}
