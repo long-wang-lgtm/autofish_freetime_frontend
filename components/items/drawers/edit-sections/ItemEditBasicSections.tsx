@@ -38,11 +38,16 @@ export function DescSection({ draft, mutators }: ItemEditSectionProps) {
   )
 }
 
+/** 闲鱼侧商品图片张数上限 —— 与素材图（8 张）是两套业务，各自定义 */
+const MAX_IMAGES = 9
+
 /** 商品图片 —— 新增走图片上传接口（未接入），删除与封面标记就地改 draft */
 export function ImageSection({ draft, mutators }: ItemEditSectionProps) {
   const { addToast } = useToast()
   // 预览哪张：存地址而不是下标，删图导致的下标漂移就不会指错图
   const [previewSrc, setPreviewSrc] = useState<string | null>(null)
+
+  const canAdd = draft.imageInfoDOList.length < MAX_IMAGES
 
   return (
     <section className="space-y-3">
@@ -86,15 +91,18 @@ export function ImageSection({ draft, mutators }: ItemEditSectionProps) {
           )
         })}
 
-        <button
-          type="button"
-          aria-label="添加图片"
-          title="添加图片"
-          onClick={() => addToast({ title: "图片上传接口尚未接入", variant: "info" })}
-          className="w-20 h-20 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
-        >
-          <ImagePlus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-        </button>
+        {/* 满 9 张后不再上传：入口整个不渲染，不给点出错的余地 */}
+        {canAdd && (
+          <button
+            type="button"
+            aria-label="添加图片"
+            title="添加图片"
+            onClick={() => addToast({ title: "图片上传接口尚未接入", variant: "info" })}
+            className="w-20 h-20 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+          >
+            <ImagePlus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+          </button>
+        )}
       </div>
 
       <ImageLightbox src={previewSrc} onClose={() => setPreviewSrc(null)} />
