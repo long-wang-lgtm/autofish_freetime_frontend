@@ -105,6 +105,17 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
       prev.map((s, i) => (i === index ? { ...s, values: s.values.filter((v) => v !== value) } : s))
     )
 
+  /**
+   * 收回最后一个规格值 —— 输入框空着时按退格触发。
+   *
+   * 收的是「最后一个」而不是「光标左边那个」：标签与输入框共用一个框，但值是
+   * 顺序追加的，退格删末尾是标签式输入框的通用手感，也免得去猜用户指的是哪个。
+   */
+  const popValue = (index: number) => {
+    const last = specs[index]?.values.slice(-1)[0]
+    if (last !== undefined) removeValue(index, last)
+  }
+
   const ready = specs.length > 0 && specs.every((s) => s.name.trim() !== "" && s.values.length > 0)
 
   return (
@@ -125,7 +136,7 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
         </button>
         {/* 不用 Hint：它自带 mt-1，是为了块级说明设计的，放进横排按钮行会矮半格 */}
         <span className="text-xs text-gray-400 dark:text-gray-500">
-          最多 {MAX_SPECS} 个规格维度
+          最多 {MAX_SPECS} 个规格
         </span>
       </div>
 
@@ -157,13 +168,13 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
                     htmlFor={`spec-name-${i}`}
                     className="text-sm text-gray-500 dark:text-gray-400"
                   >
-                    规格名
+                    规格类型
                   </label>
                   <input
                     id={`spec-name-${i}`}
                     value={spec.name}
                     onChange={(e) => renameSpec(i, e.target.value)}
-                    placeholder="如：颜色"
+                    placeholder="如：颜色、尺码"
                     className={`${CONTROL} w-28`}
                   />
                 </div>
@@ -173,9 +184,9 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
                     值已经进去了；一个规格值就是一个词，为它单开一行、再配一个
                     加号按钮，两个规格就能把弹窗占满 */}
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
+                  {/* <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
                     规格值
-                  </span>
+                  </span> */}
                   <div
                     className={`flex flex-wrap items-center gap-1.5 flex-1 min-w-0 min-h-10 px-2 py-1 rounded-lg border transition-colors ${
                       nameReady
@@ -203,14 +214,23 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
                       value={valueDrafts[i] ?? ""}
                       onChange={(e) => setValueDrafts((d) => ({ ...d, [i]: e.target.value }))}
                       onKeyDown={(e) => {
+                        // 输入法组字中（中文拼音还没上屏）时，回车与退格都是在跟
+                        // 候选词打交道，交给 IME，不要抢
+                        if (e.nativeEvent.isComposing) return
                         if (e.key === "Enter") {
                           e.preventDefault()
                           addValue(i)
+                          return
+                        }
+                        // 框里还留着字的时候退格是在删字，只有空框才当作收回标签
+                        if (e.key === "Backspace" && (valueDrafts[i] ?? "") === "") {
+                          e.preventDefault()
+                          popValue(i)
                         }
                       }}
                       disabled={!nameReady}
                       aria-label={`第 ${i + 1} 个规格的规格值，输入后回车添加`}
-                      placeholder={nameReady ? "输入后回车" : "请先填写规格名"}
+                      placeholder={nameReady ? "回车确认" : "请先输入规格类型"}
                       className="flex-1 min-w-20 h-6 px-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none disabled:cursor-not-allowed disabled:text-gray-400 dark:disabled:text-gray-500"
                     />
                   </div>

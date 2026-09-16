@@ -38,9 +38,6 @@ export function CategorySection({ draft, mutators }: ItemEditSectionProps) {
       <SectionTitle>商品类目</SectionTitle>
       <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
         <div>
-          <label className={LABEL} htmlFor="edit-channel-cate">
-            类目
-          </label>
           <Select
             id="edit-channel-cate"
             value={String(current)}
