@@ -2,8 +2,19 @@ import type { ItemEditMaterial, ItemEditImage, ItemEditSku } from "@/lib/api/ite
 
 // ── 样式常量 ──────────────────────────────────────────────────
 // 所有控件同高同边框，避免各行自成一派
-export const INPUT =
-  "w-full h-10 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 dark:disabled:bg-gray-900 disabled:text-gray-400 dark:disabled:text-gray-500"
+/**
+ * 控件基础样式 —— 不含宽度。
+ *
+ * 宽度必须和使用处分开：Tailwind 把 `.w-full` 排在 `.w-28` 之后，同一个元素上
+ * 写 `` `${INPUT} w-28` `` 赢的是 `w-full`，定宽根本不生效 —— 行内的小输入框
+ * 会被撑满整行，把同行的其它字段挤到下一行去。
+ * 所以撑满容器的用 INPUT，自己定宽的用 CONTROL。
+ */
+export const CONTROL =
+  "h-10 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 dark:disabled:bg-gray-900 disabled:text-gray-400 dark:disabled:text-gray-500"
+
+/** 撑满容器的输入框 */
+export const INPUT = `w-full ${CONTROL}`
 
 export const TEXTAREA = `${INPUT} h-auto resize-vertical leading-relaxed`
 

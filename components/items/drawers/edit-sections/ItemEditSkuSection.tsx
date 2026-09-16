@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Plus, X } from "lucide-react"
+import { Plus, Trash2, X } from "lucide-react"
 import type { ItemEditSku } from "@/lib/api/items"
-import { SectionTitle, Hint } from "./Section"
+import { SectionTitle } from "./Section"
 import { YuanPriceInput } from "./YuanPriceInput"
 import { MAX_SPECS, skuKey, buildSkuList, type SpecDimension } from "./sku-specs"
-import { INPUT, LABEL, toNumberInput, type ItemEditSectionProps } from "../item-edit-types"
+import { CONTROL, INPUT, toNumberInput, type ItemEditSectionProps } from "../item-edit-types"
 
 interface SkuSectionProps extends ItemEditSectionProps {
   /** 规格维度由父级持有，因为价格与库存区的存废取决于它 */
@@ -87,6 +87,9 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
     editSpecs((prev) => prev.map((s, i) => (i === index ? { ...s, name } : s)))
 
   const addValue = (index: number) => {
+    // 规格值挂在规格名下，名字没定下来，值也无处安放。输入框本身就 disabled 了，
+    // 这里再挡一道：回车键与未来的其它入口不该绕过这条约束
+    if (!specs[index]?.name.trim()) return
     const raw = (valueDrafts[index] ?? "").trim()
     if (!raw) return
     editSpecs((prev) =>
@@ -108,119 +111,138 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
     <section className="space-y-3">
       <SectionTitle>商品规格</SectionTitle>
 
-      {specs.length === 0 ? (
-        <div className="space-y-2">
-          {/* <Hint>当前为单规格商品，价格与库存在上方「价格与库存」区编辑。</Hint> */}
-          <button
-            type="button"
-            onClick={addSpec}
-            className="inline-flex items-center gap-1.5 h-10 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            添加规格
-          </button>
-        </div>
-      ) : (
+      {/* 入口常驻顶部：规格维度会随着填写一路长高，把入口压在列表末尾，会让
+          「再加一个规格」越往后越难找 —— 而它是这一区唯一的起点 */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={addSpec}
+          disabled={specs.length >= MAX_SPECS}
+          className="inline-flex items-center gap-1.5 h-10 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Plus className="w-4 h-4" />
+          添加规格
+        </button>
+        {/* 不用 Hint：它自带 mt-1，是为了块级说明设计的，放进横排按钮行会矮半格 */}
+        <span className="text-xs text-gray-400 dark:text-gray-500">
+          最多 {MAX_SPECS} 个规格维度
+        </span>
+      </div>
+
+      {specs.length > 0 && (
         <div className="space-y-3">
-          {specs.map((spec, i) => (
-            <div key={i} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 space-y-3">
-              <div className="flex items-end gap-2">
-                <div className="flex-1 min-w-0">
-                  <label className={LABEL} htmlFor={`spec-name-${i}`}>
+          {specs.map((spec, i) => {
+            // 规格名是规格值的前提：「颜色」没定下来，填「红色」也无所依附
+            const nameReady = spec.name.trim() !== ""
+
+            return (
+              <div
+                key={i}
+                className="flex items-center gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+              >
+                {/* 删除整个规格维度放在行首：它与这一行是「整体 - 部件」的关系，
+                    跟在字段后面容易被当成「删掉前面的输入」 */}
+                <button
+                  type="button"
+                  aria-label={`删除规格 ${i + 1}`}
+                  title="删除该规格"
+                  onClick={() => removeSpec(i)}
+                  className="h-10 w-10 flex items-center justify-center flex-shrink-0 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <label
+                    htmlFor={`spec-name-${i}`}
+                    className="text-sm text-gray-500 dark:text-gray-400"
+                  >
                     规格名
                   </label>
                   <input
                     id={`spec-name-${i}`}
                     value={spec.name}
                     onChange={(e) => renameSpec(i, e.target.value)}
-                    placeholder="如：颜色 / 尺寸"
-                    className={INPUT}
+                    placeholder="如：颜色"
+                    className={`${CONTROL} w-28`}
                   />
                 </div>
-                <button
-                  type="button"
-                  aria-label={`删除规格 ${i + 1}`}
-                  title="删除该规格"
-                  onClick={() => removeSpec(i)}
-                  className="h-10 w-10 flex items-center justify-center flex-shrink-0 text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
 
-              <div>
-                <span className={LABEL}>规格值</span>
-                <div className="flex flex-wrap items-center gap-2">
-                  {spec.values.map((v) => (
-                    <span
-                      key={v}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300"
-                    >
-                      {v}
-                      <button
-                        type="button"
-                        aria-label={`删除规格值 ${v}`}
-                        onClick={() => removeValue(i, v)}
-                        className="text-gray-400 dark:text-gray-500 hover:text-red-600 transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                  <input
-                    value={valueDrafts[i] ?? ""}
-                    onChange={(e) => setValueDrafts((d) => ({ ...d, [i]: e.target.value }))}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
-                        addValue(i)
-                      }
-                    }}
-                    aria-label={`第 ${i + 1} 个规格的规格值`}
-                    placeholder="输入后回车添加"
-                    className={`${INPUT} w-40`}
-                  />
-                  <button
-                    type="button"
-                    aria-label={`为第 ${i + 1} 个规格添加规格值`}
-                    onClick={() => addValue(i)}
-                    className="h-10 w-10 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors"
+                {/* 规格值：已添加的标签与光标同在一个框里，回车即添加一个标签。
+                    标签落在输入框内部而不是飘在外面，填完一眼就能看到自己刚输的
+                    值已经进去了；一个规格值就是一个词，为它单开一行、再配一个
+                    加号按钮，两个规格就能把弹窗占满 */}
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
+                    规格值
+                  </span>
+                  <div
+                    className={`flex flex-wrap items-center gap-1.5 flex-1 min-w-0 min-h-10 px-2 py-1 rounded-lg border transition-colors ${
+                      nameReady
+                        ? "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+                        : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    }`}
                   >
-                    <Plus className="w-4 h-4" />
-                  </button>
+                    {spec.values.map((v) => (
+                      <span
+                        key={v}
+                        className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                      >
+                        {v}
+                        <button
+                          type="button"
+                          aria-label={`删除规格值 ${v}`}
+                          onClick={() => removeValue(i, v)}
+                          className="text-gray-400 dark:text-gray-500 hover:text-red-600 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <input
+                      value={valueDrafts[i] ?? ""}
+                      onChange={(e) => setValueDrafts((d) => ({ ...d, [i]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          addValue(i)
+                        }
+                      }}
+                      disabled={!nameReady}
+                      aria-label={`第 ${i + 1} 个规格的规格值，输入后回车添加`}
+                      placeholder={nameReady ? "输入后回车" : "请先填写规格名"}
+                      className="flex-1 min-w-20 h-6 px-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none disabled:cursor-not-allowed disabled:text-gray-400 dark:disabled:text-gray-500"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={addSpec}
-              disabled={specs.length >= MAX_SPECS}
-              className="inline-flex items-center gap-1.5 h-10 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus className="w-4 h-4" />
-              添加规格
-            </button>
-            <Hint>最多 {MAX_SPECS} 个规格维度</Hint>
-          </div>
+            )
+          })}
         </div>
       )}
 
       {/* 价格库存表 —— 规格齐备、组合生成之后才有内容可填 */}
       {ready && skuList.length > 0 && (
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
+        // 宽度按内容取，不撑满弹窗：撑满会把价格与库存推到最右侧，眼睛得横跨
+        // 半个弹窗去对行。规格列与价格库存各占各的宽度，余量留在右侧
+        <div className="w-fit max-w-full border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          <table className="text-sm">
             <thead className="bg-gray-100 dark:bg-gray-800">
               <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                  规格
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 w-32">
+                {/* 一个规格维度一列，表头就是用户填的规格名（颜色 / 尺寸）。
+                    统一叫「规格」的话，两个规格挤在一格里还得靠「/」猜哪个是哪个 */}
+                {specs.map((spec, i) => (
+                  <th
+                    key={i}
+                    className="w-28 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400"
+                  >
+                    {spec.name}
+                  </th>
+                ))}
+                <th className="w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                   价格（元）
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 w-28">
+                <th className="w-28 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                   库存
                 </th>
               </tr>
@@ -230,9 +252,14 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
                 const name = sku.propertyList.map((p) => p.valueText).join(" / ")
                 return (
                   <tr key={skuKey(sku.propertyList)} className="border-t border-gray-100 dark:border-gray-800">
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300 leading-tight">
-                      {name}
-                    </td>
+                    {sku.propertyList.map((p, j) => (
+                      <td
+                        key={j}
+                        className="px-3 py-2 text-gray-700 dark:text-gray-300 leading-tight break-words"
+                      >
+                        {p.valueText}
+                      </td>
+                    ))}
                     <td className="px-3 py-2">
                       <YuanPriceInput
                         ariaLabel={`${name} 的价格`}
@@ -258,13 +285,6 @@ export function SkuSection({ draft, mutators, specs, onSpecsChange }: SkuSection
           </table>
         </div>
       )}
-
-      {/* {specs.length > 0 && !ready && (
-        <Hint>
-          填完所有规格名与规格值后会自动生成价格库存表；此时上方「价格与库存」已让位，
-          删光规格即可恢复。
-        </Hint>
-      )} */}
     </section>
   )
 }
