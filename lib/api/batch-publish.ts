@@ -6,6 +6,7 @@
  */
 
 import { fetchApi, API_BASE_URL, type OperationResponse } from '@/lib/utils/api'
+import type { AliCdnImage } from './upload'
 
 const BP_BASE = `${API_BASE_URL}/api/selection`
 
@@ -98,14 +99,15 @@ export interface PublishMaterial {
   updated_at?: string | null
 }
 
-/** 素材图片 */
-export interface MaterialImage {
-  md5: string
-  filepath?: string | null
-  flare?: string | null
-  url?: string | null
-  size?: number | null
-}
+/**
+ * 素材图片 —— 就是上传链路里的闲鱼图片对象，与 uploadFileToFlare 的返回值同构。
+ *
+ * 老结构 {md5, filepath, flare, url, size} 已废弃：它描述的是「本地文件等着被传上
+ * 闲鱼」的中间态。现在后端在上传完成时就把图传上闲鱼了，前端手里只有结果，
+ * 没有也拿不到本地路径。留别名是因为 material.images 的语义是「素材的图」，
+ * 与「上传的图」不是一回事，将来若分叉也在这里分。
+ */
+export type MaterialImage = AliCdnImage
 
 /** 素材创建入参 — 以源监控商品(souItemId)为创作对象（POST /material.create.by.item，query 参数） */
 export interface MaterialCreateParams {

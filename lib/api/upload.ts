@@ -11,32 +11,38 @@ import { getAuthHeader } from './auth'
 
 // ─── 类型定义 ───────────────────────────────────────────
 
-/** 素材图片 —— 后端 ImageCDN 行，只在秒传命中（/api/image/hash）时返回 */
-export interface MaterialImage {
-  md5: string
-  filepath: string
-  flare?: string
-  url?: string
-  size?: string
-}
-
 /**
- * 闲鱼侧图片对象 —— 新上传完成（/api/image/upload/flare/complete）时返回，
- * 对应后端 freefish 的 UploadImage。
+ * 闲鱼侧图片对象 —— 后端 freefish 的 UploadImage，也是 /upload/flare/complete 的整个响应体。
  *
- * 只有闲鱼 CDN 的 url，**没有本地路径 filepath 与 R2 直链 flare** —— 后端在这一步
- * 已经把图传上闲鱼了。所以取展示地址时直接用 url，不要走 imageDisplayUrl：
- * 那条回落链会一路掉到 filepath，把「响应里根本没有 url」伪装成一张能打开的本地图。
+ * 上传链路里**只有这一种图片结构**：新上传直接返回它，秒传命中从 ImageAliCDNRecord
+ * 的 cdn 里取出来的也是它。所以 uploadFileToFlare 的返回值恒为这个形状，调用方
+ * 不必分辨手里这张图是刚传的还是早就有的。
+ *
+ * 只有闲鱼 CDN 的 url，没有本地路径、没有 R2 直链 —— 后端在这一步已经把图传上闲鱼。
+ * 发布器要的 widthSize / heightSize 来自 pix（"宽x高"）。
  */
 export interface AliCdnImage {
   url: string
-  /** "宽x高"，如 "800x800" —— 发布器的 widthSize / heightSize 就来自这里 */
+  /** "宽x高"，如 "800x800" */
   pix?: string
   size?: string
   fileId?: string
   folderId?: string
   fileName?: string
   quality?: number
+}
+
+/**
+ * /api/image/hash 的响应 —— 后端 ImageAliCDN 行，只是把闲鱼对象包了一层。
+ *
+ * 多出来的 md5 / localName / flareUrl 是后端记账用的，上传链路用不上，所以
+ * uploadFileToFlare 会当场把 cdn 拆出来，不把这个包装泄漏给调用方。
+ */
+export interface ImageAliCDNRecord {
+  md5: string
+  localName?: string | null
+  flareUrl?: string | null
+  cdn?: AliCdnImage | null
 }
 
 /** R2 预签名上传 URL 响应 */
@@ -48,17 +54,14 @@ export interface UploadURLResponse {
 // ─── 工具函数 ───────────────────────────────────────────
 
 /**
- * 图片展示 URL
+ * 图片展示地址 —— 闲鱼 CDN 直链。
  *
- * 优先级：url（闲鱼 CDN）→ flare（R2 直链）→ filepath（本地，需拼接 API_BASE_URL）
+ * 留成一个函数而不是让各处直接取 image.url，是因为这个字段改过一次名
+ * （url → cdn.url），而三个调用点都被断言盖住了，改名时没有一个地方报错。
+ * 收敛到一处，下次再改至少只有一个地方要动。
  */
-export function imageDisplayUrl(image: MaterialImage | undefined | null): string {
-  if (!image) return ''
-  if (image.url) return image.url
-  if (image.flare) return image.flare
-  if (!image.filepath) return ''
-  const filename = image.filepath.replace(/^data[\\/]/, 'api/').replace(/\\/g, '/')
-  return `${API_BASE_URL}/${filename}`
+export function imageDisplayUrl(image: AliCdnImage | null | undefined): string {
+  return image?.url ?? ''
 }
 
 /** 从文件名提取扩展名（含点），如 ".png"；无扩展名时根据 MIME 推测 */
@@ -112,17 +115,24 @@ export function computeFileMD5(file: File): Promise<string> {
 
 // ─── 秒传检测 ───────────────────────────────────────────
 
-/** 检查图片 hash 是否已在服务端存在（秒传） */
-export async function checkImageHash(md5: string): Promise<MaterialImage | null> {
+/**
+ * 秒传检测 —— 这张图服务端是否已经有了。
+ *
+ * 未命中时后端返回 404，这是**正常结果**而不是故障，单独放行成 null。
+ * 其余非 2xx 一律抛出：把 500 也当成「没传过」的话，调用方会白白重传一遍，
+ * 而真正的故障就被这一句 return null 吞掉了。
+ */
+export async function checkImageHash(md5: string): Promise<AliCdnImage | null> {
   const authHeaders = await getAuthHeader()
   const resp = await fetch(`${API_BASE_URL}/api/image/hash?md5=${encodeURIComponent(md5)}`, {
     headers: { ...authHeaders },
   })
-  if (!resp.ok) return null
+  if (resp.status === 404) return null
+  if (!resp.ok) throw new Error(`秒传检测失败：HTTP ${resp.status}`)
+
   const json = await resp.json()
-  const img: MaterialImage = json.data ?? json
-  if (img.url || img.flare || img.filepath) return img
-  return null
+  const record: ImageAliCDNRecord = json.data ?? json
+  return record.cdn ?? null
 }
 
 // ─── Cloudflare R2 预签名上传 ───────────────────────────
@@ -169,7 +179,7 @@ export async function uploadToR2(
  * @param md5 文件 MD5
  * @param suffix 文件后缀（含点），如 ".png"
  * @param uid 账号 UID。后端这个参数**没有默认值**，不传直接 422；
- *            图片也是靠它才传到闲鱼 CDN 的，所以新上传路径必须给。
+ *            图片也是靠它才传到闲鱼 CDN 的，所以必须给。
  *            签名里仍留成可选，是为了不惊动批量发布页现有的调用点。
  */
 export async function completeFlareUpload(
@@ -189,20 +199,19 @@ export async function completeFlareUpload(
  *
  * @param file 要上传的文件
  * @param uid 账号 UID
- * @returns 秒传命中 → ImageCDN 行（`MaterialImage`）；新上传 → 闲鱼图片对象（`AliCdnImage`）。
- *          **两种形状只有 `url` 是共同的**，新上传那条连 `md5` 都没有，消费方别假定拿到的是哪一个。
+ * @returns 闲鱼图片对象。**两条路径形状一致** —— 秒传命中从 hash 响应的 cdn 里拆出来，
+ *          新上传拿到的本来就是它，调用方不必分辨。
  *
  * @example
  * ```ts
- * const result = await uploadFileToFlare(file, uid)
- * // 新上传的 url 就是闲鱼 CDN 直链；秒传回落的 url 同样可用
- * console.log(result.url)
+ * const image = await uploadFileToFlare(file, uid)
+ * console.log(imageDisplayUrl(image)) // 闲鱼 CDN 直链
  * ```
  */
 export async function uploadFileToFlare(
   file: File,
   uid?: string
-): Promise<MaterialImage | AliCdnImage> {
+): Promise<AliCdnImage> {
   // 1. 计算 MD5 + 后缀
   const [md5, suffix] = await Promise.all([
     computeFileMD5(file),

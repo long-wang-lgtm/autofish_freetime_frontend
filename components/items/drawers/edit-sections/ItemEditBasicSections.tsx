@@ -51,7 +51,8 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]
  * 图片宽高。
  *
  * 优先用闲鱼返回的 pix（"800x800"）—— 它描述的一定是闲鱼侧真正存下的那张图。
- * 秒传命中的响应（ImageCDN 行）没有 pix，才退回前端加载一次读自然尺寸。
+ * 拿不到 pix 才退回前端加载一次读自然尺寸：闲鱼图片对象同时也是 material.images
+ * 的元素类型，而那边是从后端的 list[dict] 里读出来的，没有 schema 保证字段齐全。
  * 两条都拿不到就给空串：后端 ImageInfo 的 widthSize / heightSize 声明为 int | str，
  * 容得下空值，比瞎填一个数字安全。
  */
@@ -118,16 +119,11 @@ export function ImageSection({ draft, mutators, accountUid }: ImageSectionProps)
     setUploading(true)
     try {
       const uploaded = await uploadFileToFlare(file, accountUid)
-      // 新上传返回闲鱼图片对象，秒传命中返回 ImageCDN 行 —— 两者共有的只有 url。
-      // 不走 imageDisplayUrl：那条回落链会掉到本地路径，把「没有 url」这个真实
-      // 失败伪装成一张能打开的图
+      // uploadFileToFlare 保证两条路径（秒传命中 / 新上传）都返回同一个形状
       const url = uploaded.url
       if (!url) throw new Error("上传结果里没有图片地址")
 
-      const [widthSize, heightSize] = await resolveImageSize(
-        url,
-        "pix" in uploaded ? uploaded.pix : undefined
-      )
+      const [widthSize, heightSize] = await resolveImageSize(url, uploaded.pix)
 
       mutators.addImage({
         url,

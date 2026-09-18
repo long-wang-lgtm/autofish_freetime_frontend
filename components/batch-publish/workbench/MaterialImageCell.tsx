@@ -4,7 +4,6 @@ import { useRef, useState, useCallback } from 'react'
 import { uploadFileToFlare, imageDisplayUrl } from '@/lib/api/upload'
 import { editMaterial } from '@/lib/api/batch-publish'
 import { ImageLightbox } from '@/components/ui/overlay/ImageLightbox'
-import type { MaterialImage as UploadMaterialImage } from '@/lib/api/upload'
 import type { MaterialImage } from '@/lib/api/batch-publish'
 
 interface MaterialImageCellProps {
@@ -32,8 +31,7 @@ export function MaterialImageCell({ images, materialId, toUid, onImagesChange }:
     setUploading(true)
     try {
       const uploaded = await uploadFileToFlare(file, toUid ?? undefined)
-      // Cast: upload.ts MaterialImage and batch-publish.ts MaterialImage are structurally compatible
-      const newImages = [...images, uploaded as MaterialImage]
+      const newImages = [...images, uploaded]
       onImagesChange(newImages)
       await editMaterial({ id: materialId, images: newImages })
     } catch {
@@ -84,7 +82,7 @@ export function MaterialImageCell({ images, materialId, toUid, onImagesChange }:
       <div className="inline-flex items-center gap-1.5 min-w-max">
         {images.map((img, i) => (
         <div
-          key={img.md5 || i}
+          key={img.url || i}
           className="relative group flex-shrink-0"
           draggable
           onDragStart={() => handleDragStart(i)}
@@ -92,11 +90,11 @@ export function MaterialImageCell({ images, materialId, toUid, onImagesChange }:
           onDragEnd={handleDragEnd}
         >
           <img
-            src={imageDisplayUrl(img as UploadMaterialImage) || undefined}
+            src={imageDisplayUrl(img) || undefined}
             alt=""
             className="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-pointer"
             style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
-            onClick={() => setPreviewSrc(imageDisplayUrl(img as UploadMaterialImage) || null)}
+            onClick={() => setPreviewSrc(imageDisplayUrl(img) || null)}
             loading="lazy"
           />
           <button

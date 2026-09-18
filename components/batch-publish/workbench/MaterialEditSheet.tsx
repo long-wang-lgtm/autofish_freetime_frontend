@@ -7,7 +7,6 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { uploadFileToFlare, imageDisplayUrl } from '@/lib/api/upload'
 import { editMaterial } from '@/lib/api/batch-publish'
 import type { MaterialImage, PublishMaterial } from '@/lib/api/batch-publish'
-import type { MaterialImage as UploadMaterialImage } from '@/lib/api/upload'
 
 interface MaterialEditSheetProps {
   materialId: number | null
@@ -110,7 +109,7 @@ export function MaterialEditSheet({ materialId, selectedGid, open, onClose, mate
     setUploadingIndex(images.length)
     try {
       const uploaded = await uploadFileToFlare(file, material.to_uid ?? undefined)
-      const nextImages = [...images, uploaded as MaterialImage]
+      const nextImages = [...images, uploaded]
       setImages(nextImages)
       await editMaterial({ id: material.id, images: nextImages })
       queryClient.invalidateQueries({ queryKey: listPrefix })
@@ -171,9 +170,9 @@ export function MaterialEditSheet({ materialId, selectedGid, open, onClose, mate
         <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">商品图片</h4>
         <div className="flex flex-wrap gap-3">
           {images.map((img, i) => (
-            <div key={img.md5 || i} className="relative group">
+            <div key={img.url || i} className="relative group">
               <img
-                src={imageDisplayUrl(img as UploadMaterialImage) || undefined}
+                src={imageDisplayUrl(img) || undefined}
                 alt=""
                 className="w-[120px] h-[120px] object-cover rounded-lg border border-gray-200"
                 loading="lazy"
