@@ -82,7 +82,7 @@ export function MaterialImageCell({ images, materialId, toUid, onImagesChange }:
       <div className="inline-flex items-center gap-1.5 min-w-max">
         {images.map((img, i) => (
         <div
-          key={img.url || i}
+          key={img.md5 || i}
           className="relative group flex-shrink-0"
           draggable
           onDragStart={() => handleDragStart(i)}

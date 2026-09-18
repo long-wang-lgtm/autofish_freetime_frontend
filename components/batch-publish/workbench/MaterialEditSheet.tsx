@@ -170,7 +170,7 @@ export function MaterialEditSheet({ materialId, selectedGid, open, onClose, mate
         <h4 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">商品图片</h4>
         <div className="flex flex-wrap gap-3">
           {images.map((img, i) => (
-            <div key={img.url || i} className="relative group">
+            <div key={img.md5 || i} className="relative group">
               <img
                 src={imageDisplayUrl(img) || undefined}
                 alt=""

@@ -51,8 +51,8 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]
  * 图片宽高。
  *
  * 优先用闲鱼返回的 pix（"800x800"）—— 它描述的一定是闲鱼侧真正存下的那张图。
- * 拿不到 pix 才退回前端加载一次读自然尺寸：闲鱼图片对象同时也是 material.images
- * 的元素类型，而那边是从后端的 list[dict] 里读出来的，没有 schema 保证字段齐全。
+ * 拿不到 pix 才退回前端加载一次读自然尺寸：pix 来自 UploadImage，虽然后端声明它是
+ * 必填，但这里读到的是 JSONField 反序列化出来的东西，不该替后端担保字段齐全。
  * 两条都拿不到就给空串：后端 ImageInfo 的 widthSize / heightSize 声明为 int | str，
  * 容得下空值，比瞎填一个数字安全。
  */
@@ -119,11 +119,11 @@ export function ImageSection({ draft, mutators, accountUid }: ImageSectionProps)
     setUploading(true)
     try {
       const uploaded = await uploadFileToFlare(file, accountUid)
-      // uploadFileToFlare 保证两条路径（秒传命中 / 新上传）都返回同一个形状
-      const url = uploaded.url
+      // 闲鱼地址在 cdn 这一层；外层那个 md5 是素材图要的，商品图用不上
+      const url = uploaded.cdn?.url
       if (!url) throw new Error("上传结果里没有图片地址")
 
-      const [widthSize, heightSize] = await resolveImageSize(url, uploaded.pix)
+      const [widthSize, heightSize] = await resolveImageSize(url, uploaded.cdn?.pix)
 
       mutators.addImage({
         url,
