@@ -21,9 +21,11 @@ import { hasMultiSku } from "./item-edit-types"
 interface ItemEditFieldsProps {
   draft: ItemEditMaterial
   setDraft: DraftUpdater
+  /** 商品所属账号 —— 只给图片上传用（后端靠它把图传到该账号的闲鱼 CDN） */
+  accountUid: string
 }
 
-export function ItemEditFields({ draft, setDraft }: ItemEditFieldsProps) {
+export function ItemEditFields({ draft, setDraft, accountUid }: ItemEditFieldsProps) {
   const mutators = useItemEditMutators(setDraft)
 
   // 只在挂载时从数据推导一次：组件是在拿到 draft 之后才挂载的，此刻数据已就绪
@@ -35,7 +37,7 @@ export function ItemEditFields({ draft, setDraft }: ItemEditFieldsProps) {
 
   return (
     <div className="space-y-6">
-      <ImageSection draft={draft} mutators={mutators} />
+      <ImageSection draft={draft} mutators={mutators} accountUid={accountUid} />
       <DescSection draft={draft} mutators={mutators} />
       <SkuSection
         draft={draft}

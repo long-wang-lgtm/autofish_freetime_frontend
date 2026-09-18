@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { X, ImagePlus } from "lucide-react"
 import { useToast } from "@/components/ui/Toaster"
+import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner"
 import { Select } from "@/components/ui/data/Select"
 import { ImageLightbox } from "@/components/ui/overlay/ImageLightbox"
+import { uploadFileToFlare } from "@/lib/api/upload"
 import { SectionTitle, Hint } from "./Section"
 import { YuanPriceInput } from "./YuanPriceInput"
 import { INPUT, TEXTAREA, LABEL, toNumberInput, type ItemEditSectionProps } from "../item-edit-types"
@@ -41,13 +43,115 @@ export function DescSection({ draft, mutators }: ItemEditSectionProps) {
 /** 闲鱼侧商品图片张数上限 —— 与素材图（8 张）是两套业务，各自定义 */
 const MAX_IMAGES = 9
 
-/** 商品图片 —— 新增走图片上传接口（未接入），删除与封面标记就地改 draft */
-export function ImageSection({ draft, mutators }: ItemEditSectionProps) {
+/** 上传前置校验，取 .claude/rules/frontend-form.md 的阈值 */
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]
+
+/**
+ * 图片宽高。
+ *
+ * 优先用闲鱼返回的 pix（"800x800"）—— 它描述的一定是闲鱼侧真正存下的那张图。
+ * 秒传命中的响应（ImageCDN 行）没有 pix，才退回前端加载一次读自然尺寸。
+ * 两条都拿不到就给空串：后端 ImageInfo 的 widthSize / heightSize 声明为 int | str，
+ * 容得下空值，比瞎填一个数字安全。
+ */
+function resolveImageSize(
+  url: string,
+  pix?: string
+): Promise<[number | string, number | string]> {
+  const [w, h] = pix ? pix.split("x").map(Number) : []
+  // NaN 与 0 都为假，一并落到下面的兜底
+  if (w && h) return Promise.resolve([w, h])
+
+  return new Promise((resolve) => {
+    const probe = new Image()
+    probe.onload = () => resolve([probe.naturalWidth, probe.naturalHeight])
+    probe.onerror = () => resolve(["", ""])
+    probe.src = url
+  })
+}
+
+interface ImageSectionProps extends ItemEditSectionProps {
+  /** 图片要传到这个账号的闲鱼 CDN —— 后端 complete 接口的 uid 没有默认值，不传直接 422 */
+  accountUid: string
+}
+
+/**
+ * 商品图片 —— 新增走图片上传接口，删除与封面标记就地改 draft。
+ *
+ * 上传成功后只写 draft，不即时落库：弹窗的模型是「改动落在副本，提交时整包下发」，
+ * 在这里顺手存一次会让「取消」「恢复原值」两个按钮失去意义。
+ *
+ * 与批量发布页的 MaterialImageCell 有两处刻意不同：
+ * - 上传失败要 toast。那边 catch 空的写法，会让人对着一个没反应的按钮干等
+ * - 落点账号 uid 是必传项，不是可选
+ */
+export function ImageSection({ draft, mutators, accountUid }: ImageSectionProps) {
   const { addToast } = useToast()
   // 预览哪张：存地址而不是下标，删图导致的下标漂移就不会指错图
   const [previewSrc, setPreviewSrc] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const canAdd = draft.imageInfoDOList.length < MAX_IMAGES
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    // 拿到 File 对象后立刻清空：不清的话连着选同一个文件不会再触发 change。
+    // 放在这里而不是 finally —— 格式不符、超限这些提前返回的分支也走得到
+    if (fileInputRef.current) fileInputRef.current.value = ""
+    if (!file) return
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      addToast({
+        title: "图片格式不支持",
+        description: "仅支持 JPG、PNG、WebP",
+        variant: "error",
+      })
+      return
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      addToast({ title: "图片过大", description: "单张不能超过 10MB", variant: "error" })
+      return
+    }
+
+    setUploading(true)
+    try {
+      const uploaded = await uploadFileToFlare(file, accountUid)
+      // 新上传返回闲鱼图片对象，秒传命中返回 ImageCDN 行 —— 两者共有的只有 url。
+      // 不走 imageDisplayUrl：那条回落链会掉到本地路径，把「没有 url」这个真实
+      // 失败伪装成一张能打开的图
+      const url = uploaded.url
+      if (!url) throw new Error("上传结果里没有图片地址")
+
+      const [widthSize, heightSize] = await resolveImageSize(
+        url,
+        "pix" in uploaded ? uploaded.pix : undefined
+      )
+
+      mutators.addImage({
+        url,
+        widthSize,
+        heightSize,
+        // 封面归属由 addImage 判定，这里给的值会被覆盖
+        major: false,
+        labels: [],
+        isQrCode: false,
+        type: 0,
+        status: "done",
+        extraInfo: { isH: false, isT: false, raw: false },
+      })
+    } catch (err) {
+      addToast({
+        title: "图片上传失败",
+        // 后端 detail 经 fetchApi 变成了 Error.message，原样透出
+        description: err instanceof Error ? err.message : String(err),
+        variant: "error",
+      })
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
     <section className="space-y-3">
@@ -93,15 +197,31 @@ export function ImageSection({ draft, mutators }: ItemEditSectionProps) {
 
         {/* 满 9 张后不再上传：入口整个不渲染，不给点出错的余地 */}
         {canAdd && (
-          <button
-            type="button"
-            aria-label="添加图片"
-            title="添加图片"
-            onClick={() => addToast({ title: "图片上传接口尚未接入", variant: "info" })}
-            className="w-20 h-20 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
-          >
-            <ImagePlus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-          </button>
+          <>
+            <button
+              type="button"
+              aria-label="添加图片"
+              title="添加图片"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="w-20 h-20 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {uploading ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <ImagePlus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+              )}
+            </button>
+            {/* accept 与上面的白名单保持一致，让文件选择器先把不合格的挡掉；
+                真正的判定仍在 handleFile 里，accept 只是用户的便利，不是校验 */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFile}
+              className="hidden"
+            />
+          </>
         )}
       </div>
 

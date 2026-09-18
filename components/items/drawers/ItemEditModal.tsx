@@ -288,7 +288,12 @@ export function ItemEditModal({ item, open, onClose, submit }: ItemEditModalProp
           ) : draft ? (
             // key 绑定数据版本：换数据（含「恢复原值」）时整棵树重挂载，
             // 让各字段区按新的数据重建自己的本地态
-            <ItemEditFields key={draftVersion} draft={draft} setDraft={applyPatch} />
+            <ItemEditFields
+              key={draftVersion}
+              draft={draft}
+              setDraft={applyPatch}
+              accountUid={item.account.uid}
+            />
           ) : (
             // 重开时 data 命中缓存、isPending 为 false，而 draft 要等 effect 落地，
             // 这一帧不能空着 —— 否则弹窗会闪一下无内容

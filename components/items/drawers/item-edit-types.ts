@@ -44,6 +44,14 @@ export const toNumberInput = (v: number | string | null | undefined) =>
 export interface ItemEditMutators {
   setDesc: (key: "desc" | "title", value: string) => void
   patchImage: (index: number, value: Partial<ItemEditImage>) => void
+  /**
+   * 追加一张图片。
+   *
+   * 封面标记由这里定，不看调用方传了什么：列表原本为空时，新图即封面。这样
+   * 「列表非空就一定有封面」这条不变式只存在于一处，上传处不必知道封面规则。
+   */
+  addImage: (img: ItemEditImage) => void
+  /** 删图 —— 删掉的若是封面，第一张自动补位，理由见实现处注释 */
   removeImage: (index: number) => void
   patchPrice: (key: "priceInCent" | "origPriceInCent", value: string) => void
   setQuantity: (value: string) => void

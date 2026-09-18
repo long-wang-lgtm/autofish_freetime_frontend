@@ -30,11 +30,38 @@ export function useItemEditMutators(setDraft: DraftUpdater): ItemEditMutators {
           ),
         })),
 
-      removeImage: (index) =>
+      /**
+       * 追加一张图片，封面出现在这里而不是上传处 —— 列表原本为空时新图即封面。
+       *
+       * 覆盖调用方传的 major 是有意的：封面是「列表里至少有一张带标记」这个整体
+       * 性质，让每个上传点各自判断迟早会漏。addImage 是唯一的入图口，规则收在这。
+       */
+      addImage: (img) =>
         setDraft((d) => ({
           ...d,
-          imageInfoDOList: d.imageInfoDOList.filter((_, i) => i !== index),
+          imageInfoDOList: [
+            ...d.imageInfoDOList,
+            { ...img, major: d.imageInfoDOList.length === 0 },
+          ],
         })),
+
+      /**
+       * 删图 —— 删掉的若是封面，把第一张提上来。
+       *
+       * 封面标记不能随图一起消失：后端 ImageInfoList.set_major() 把封面定义为第一张，
+       * 前端留一个「没人带 major」的列表，保存出去的商品就没有封面图。
+       */
+      removeImage: (index) =>
+        setDraft((d) => {
+          const rest = d.imageInfoDOList.filter((_, i) => i !== index)
+          if (rest.length === 0 || rest.some((img) => img.major)) {
+            return { ...d, imageInfoDOList: rest }
+          }
+          return {
+            ...d,
+            imageInfoDOList: rest.map((img, i) => (i === 0 ? { ...img, major: true } : img)),
+          }
+        }),
 
       patchPrice: (key, value) =>
         setDraft((d) => ({

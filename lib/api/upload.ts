@@ -11,13 +11,32 @@ import { getAuthHeader } from './auth'
 
 // ─── 类型定义 ───────────────────────────────────────────
 
-/** 素材图片 */
+/** 素材图片 —— 后端 ImageCDN 行，只在秒传命中（/api/image/hash）时返回 */
 export interface MaterialImage {
   md5: string
   filepath: string
   flare?: string
   url?: string
   size?: string
+}
+
+/**
+ * 闲鱼侧图片对象 —— 新上传完成（/api/image/upload/flare/complete）时返回，
+ * 对应后端 freefish 的 UploadImage。
+ *
+ * 只有闲鱼 CDN 的 url，**没有本地路径 filepath 与 R2 直链 flare** —— 后端在这一步
+ * 已经把图传上闲鱼了。所以取展示地址时直接用 url，不要走 imageDisplayUrl：
+ * 那条回落链会一路掉到 filepath，把「响应里根本没有 url」伪装成一张能打开的本地图。
+ */
+export interface AliCdnImage {
+  url: string
+  /** "宽x高"，如 "800x800" —— 发布器的 widthSize / heightSize 就来自这里 */
+  pix?: string
+  size?: string
+  fileId?: string
+  folderId?: string
+  fileName?: string
+  quality?: number
 }
 
 /** R2 预签名上传 URL 响应 */
@@ -149,16 +168,18 @@ export async function uploadToR2(
  *
  * @param md5 文件 MD5
  * @param suffix 文件后缀（含点），如 ".png"
- * @param uid 可选，账号 UID（传入时后端会额外上传到闲鱼 CDN）
+ * @param uid 账号 UID。后端这个参数**没有默认值**，不传直接 422；
+ *            图片也是靠它才传到闲鱼 CDN 的，所以新上传路径必须给。
+ *            签名里仍留成可选，是为了不惊动批量发布页现有的调用点。
  */
 export async function completeFlareUpload(
   md5: string,
   suffix: string,
   uid?: string
-): Promise<MaterialImage> {
+): Promise<AliCdnImage> {
   const params = new URLSearchParams({ md5, suffix })
   if (uid) params.set('uid', uid)
-  return fetchApi<MaterialImage>(`/api/image/upload/flare/complete?${params}`)
+  return fetchApi<AliCdnImage>(`/api/image/upload/flare/complete?${params}`)
 }
 
 /**
@@ -167,19 +188,21 @@ export async function completeFlareUpload(
  * 封装了完整的 R2 上传流程，外部只需调用这一个函数即可。
  *
  * @param file 要上传的文件
- * @param uid 可选，账号 UID
- * @returns 上传结果（含 filepath 和可选的 url）
+ * @param uid 账号 UID
+ * @returns 秒传命中 → ImageCDN 行（`MaterialImage`）；新上传 → 闲鱼图片对象（`AliCdnImage`）。
+ *          **两种形状只有 `url` 是共同的**，新上传那条连 `md5` 都没有，消费方别假定拿到的是哪一个。
  *
  * @example
  * ```ts
- * const result = await uploadFileToFlare(file, 'uid_123')
- * console.log(imageDisplayUrl(result)) // CDN 可访问地址
+ * const result = await uploadFileToFlare(file, uid)
+ * // 新上传的 url 就是闲鱼 CDN 直链；秒传回落的 url 同样可用
+ * console.log(result.url)
  * ```
  */
 export async function uploadFileToFlare(
   file: File,
   uid?: string
-): Promise<MaterialImage> {
+): Promise<MaterialImage | AliCdnImage> {
   // 1. 计算 MD5 + 后缀
   const [md5, suffix] = await Promise.all([
     computeFileMD5(file),
