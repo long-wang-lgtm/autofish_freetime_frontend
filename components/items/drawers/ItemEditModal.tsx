@@ -52,14 +52,6 @@ const cloneMaterial = (m: ItemEditMaterial): ItemEditMaterial =>
   JSON.parse(JSON.stringify(m)) as ItemEditMaterial
 
 /**
- * ⚠ 临时开关：提交动作尚未开发完成，先把保存 / 重发按钮置灰。
- *
- * 只禁按钮 —— 接口接入、请求体构造、二次确认、mutation 全部原样留着，
- * 开发完成后改回 false 即可恢复，不用重新接一遍。
- */
-const SUBMIT_DISABLED = true
-
-/**
  * 商品编辑弹窗 —— 编辑商品自身属性。
  *
  * 与它替换掉的旧编辑抽屉是两件事：旧的是「各项自动化配置」的编辑入口，
@@ -180,8 +172,8 @@ export function ItemEditModal({ item, open, onClose, submit }: ItemEditModalProp
 
   const submitting = !!submit.pending
   // 不要求「先改点什么」才让点：保存与重发都是「把弹窗里这份物料发出去」，
-  // 原样下发也是一次有效请求。只挡三件事 —— 功能未开放、物料还没到、正在提交。
-  const canSubmit = !SUBMIT_DISABLED && !!draft && !submitting
+  // 原样下发也是一次有效请求。只挡两件事 —— 物料还没到、以及正在提交。
+  const canSubmit = !!draft && !submitting
 
   /**
    * 恢复原数据 —— 把编辑副本整个换回打开时的那一份。
@@ -218,8 +210,6 @@ export function ItemEditModal({ item, open, onClose, submit }: ItemEditModalProp
         type="button"
         onClick={handleSubmitClick}
         disabled={!canSubmit}
-        // 灰着的按钮说明一下原因，免得又被当成「点了没反应」
-        title={SUBMIT_DISABLED ? `${submit.label}功能尚未开发完成` : undefined}
         className="h-10 px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {submitting ? (
