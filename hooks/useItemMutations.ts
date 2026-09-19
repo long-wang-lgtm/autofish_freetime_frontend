@@ -93,12 +93,13 @@ export function useItemMutations() {
    *
    * material 是弹窗里那份物料，整包下发。
    *
-   * 成功后拿接口返回的 item 原地替换列表里的那一条，**不 invalidate**：接口返回的
-   * 是库里那条记录（后端注释就写着「暂未刷新」），数据库未必跟上了闲鱼侧的结果，
-   * 重新拉一次反而会把刚写进去的值覆盖回去。返回什么就显示什么，落库是后端的事。
+   * 成功后拿接口返回的 item 原地替换列表里的那一条，**不 invalidate**：后端返回的
+   * 就是刚写回库的那条记录（core/im/product/edit.py 的 edit —— 拿闲鱼返回的 detail
+   * 走 add_or_new 刷新入库后返回，字段与列表行同构），它已经是最新的一份，再拉一次
+   * 列表只会白跑一趟。返回什么就显示什么，落库是后端的事。
    *
-   * 注意后端把闲鱼侧的失败吞成了日志并照常返回 200（core/im/account.py 的 items.edit），
-   * 失败在前端看来就是成功 —— 只能等后端把异常抛出来，这里才谈得上区分。
+   * 失败是真会失败的：闲鱼侧报错由 edit() 抛出、接口转成 403，不再吞成日志配 200 ——
+   * 所以 onError 是真能走到的分支，别当成永远不会触发。
    */
   const editItemMutation = useMutation({
     mutationFn: ({ gid, uid, material }: { gid: number; uid: string; material: ItemEditMaterial }) =>

@@ -24,8 +24,7 @@ const BTN =
  * （同一列里两处红会让"哪个只是重发、哪个是真删除"失去区分度）。琥珀色正好落在两者之间。
  */
 export function RepublishButton({ item, variant, onRepublish }: RepublishButtonProps) {
-  // 已删除的商品没有可重新发布的源商品：取详情必然失败，而后端把发布失败吞成日志、
-  // 仍然返回成功，用户会拿到一个假的"重新发布成功"。与其误导，不如不渲染。
+  // 已删除的商品不渲染。
   if (item.status === ITEM_STATUS_DELETED) return null
 
   if (variant === "mobile") {
