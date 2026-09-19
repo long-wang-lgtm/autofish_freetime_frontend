@@ -26,13 +26,6 @@ import {
 import { useToast } from '@/components/ui/Toaster'
 
 /**
- * 重新发布后，新商品重新入库的等待时间。
- * 后端发布成功后要等 uniform(8, 15) 秒才去查询并写入新商品，
- * 这里留够这个窗口，用于「操作完自动再刷一次列表」，避免用户手动刷新。
- */
-const REPUBLISH_SETTLE_MS = 20_000
-
-/**
  * 商品管理页 — 变更操作层
  */
 export function useItemMutations() {
@@ -132,25 +125,26 @@ export function useItemMutations() {
   })
 
   /**
-   * 重新发布 mutation —— 后端「先发布新商品，再删除原商品」，原商品会被删除、新商品换了 gid，
-   * 每行在列表中的身份和排序都可能变，按状态管理规范的决策树走 invalidateQueries 而非乐观更新。
+   * 重新发布 mutation —— 后端「先发布新商品，再删除原商品」，原商品被删除、新商品换了 gid。
    *
    * material 是编辑弹窗里那份物料，会作为请求体下发 —— 重发同样按弹窗里的字段发。
    *
-   * 后端返回时新商品还没入库（发布成功后异步等待 8~15s 才查详情落库），
-   * 所以立刻刷新只能看到原商品消失；再补一次延迟刷新，让新商品自己出现。
+   * 接口直接返回已经入库的新商品，所以按请求时那个 gid 找到原行，整行换成新商品，
+   * 不再重新拉列表（与 editItemMutation 同一套做法：返回什么就显示什么）。
    */
   const republishMutation = useMutation({
     mutationFn: ({ gid, uid, material }: { gid: number; uid: string; material: ItemEditMaterial }) =>
       republishItem(gid, uid, material),
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["items"] })
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["items"] })
-      }, REPUBLISH_SETTLE_MS)
+    onSuccess: (nitem, { gid }) => {
+      // 匹配用的是请求时那个 gid（原商品），不是返回的 nitem.gid —— 新商品是另一条记录
+      queryClient.setQueriesData<ShopItemListResponse>({ queryKey: ["items"] }, (old) =>
+        old
+          ? { ...old, items: old.items.map((it) => (it.gid === gid ? nitem : it)) }
+          : old
+      )
       addToast({
-        title: result.message || "重新发布成功",
-        description: "新商品稍后出现在列表中",
+        title: "重新发布成功",
+        description: `新商品 ID：${nitem.gid}`,
         variant: "success",
       })
     },

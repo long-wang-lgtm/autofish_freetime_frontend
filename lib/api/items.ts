@@ -378,16 +378,16 @@ export async function deleteItem(gid: number, uid: string): Promise<OperationRes
  * 请求体是编辑弹窗里那份物料（与保存接口同一个形态）：重发不是「原样再发一遍」，
  * 用户在弹窗里改过的字段要跟着新商品一起生效。
  *
- * 后端语义为「先发布一条新商品，再删除原商品」，新商品的 gid 与原商品不同，
- * 且新商品是发布成功后才异步重新入库的，所以返回的是操作结果而非商品对象 ——
- * 调用方拿不到新商品，只能在稍后重新拉取列表。
+ * 后端语义为「先发布一条新商品，再删除原商品」，新商品的 gid 与原商品不同。
+ * 返回的是已经入库的新商品本身，调用方拿它替换列表里原商品那一行 ——
+ * 不需要再重新拉列表。
  */
 export async function republishItem(
   gid: number,
   uid: string,
   material: ItemEditMaterial
-): Promise<OperationResponse> {
-  return fetchApi<OperationResponse>("/api/items/item.republish", {
+): Promise<ShopItem> {
+  return fetchApi<ShopItem>("/api/items/item.republish", {
     method: "POST",
     params: { gid, uid },
     body: JSON.stringify(material),
