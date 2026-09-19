@@ -46,21 +46,9 @@ export function ShelfActions({ item, variant, pending, onShelve, onOffline }: Sh
       open={confirm !== null}
       onOpenChange={(o) => !o && setConfirm(null)}
       title={confirm === "shelve" ? "确认上架吗？" : "确认下架吗？"}
-      description={
-        confirm === "shelve"
-          ? (
-            <>
-              1. 当前功能仅支持单规格商品<br />
-              2. 可能导致上架前后不一致<br />
-            </>
-          )
-          : (
-              <>
-                1. 下架后该商品将停止售卖<br />
-                2. 再次上架时仅支持单规格商品, 可能导致上架前后不一致<br />
-              </>
-            )
-      }
+      // 不再提规格限制：上架已支持多规格。原先「仅支持单规格」「上架前后不一致」
+      // 两条都是由那个限制推导出来的，限制撤掉后前提不成立，一并不留。
+      description={confirm === "shelve" ? "上架后该商品将恢复售卖" : "下架后该商品将停止售卖"}
       confirmLabel={confirm === "shelve" ? "上架" : "下架"}
       loading={pending}
       onConfirm={handleConfirm}
