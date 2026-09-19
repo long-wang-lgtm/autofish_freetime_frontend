@@ -1,17 +1,36 @@
 "use client"
 
+import { useMemo, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Switch } from "@/components/ui/feedback/Switch"
 import { RadioGroup } from "@/components/ui/feedback/RadioGroup"
 import { ErrorBanner } from "@/components/ui/feedback/ErrorBanner"
+import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner"
 import { Select } from "@/components/ui/data/Select"
+import { getItemEditChannels } from "@/lib/api/items"
 import { SectionTitle, Hint } from "./Section"
 import { LABEL, SERVICE_LABELS, type ItemEditSectionProps } from "../item-edit-types"
 
+/** 下拉项 —— id 是回写用的原值，value 是给 DOM 的字符串，两者不能混 */
+interface CategoryOption {
+  id: number | string
+  value: string
+  label: string
+}
+
+interface CategorySectionProps extends ItemEditSectionProps {
+  /** 商品 ID 与所属账号 —— 类目候选由该账号的闲鱼接口按商品描述给出 */
+  gid: number
+  accountUid: string
+}
+
 /**
- * 商品类目 —— 下拉选择。
+ * 商品类目 —— 下拉选择，候选项来自后端。
  *
- * 选项接口尚未提供，因此现在只有「当前类目」这一个选项（可点开，选了等于没改）。
- * 选项齐了之后把 options 换成真实列表即可，回写那行不用动。
+ * 接口按商品描述推荐类目，所以先拿「打开弹窗时那份描述」问一次，把候选铺进下拉。
+ * 描述是挂载时定格的：若把实时 desc 写进 queryKey，用户在描述框里每敲一个字都会
+ * 变成一次闲鱼请求（后端每次还会 upsert 一批类目记录），而编辑描述期间看到旧候选
+ * 并无损失 —— 保存后重开弹窗，候选自然按新描述重取。
  *
  * 商品分类不单独渲染：它与类目共用 channelCatId / channelCateName 这对字段
  * （分类侧叫 channelCatId，类目侧叫 channelCateId），改类目时一并回写，
@@ -22,16 +41,52 @@ import { LABEL, SERVICE_LABELS, type ItemEditSectionProps } from "../item-edit-t
  * （properties 发布串 / text / 类目 ID）由发布器按类目定义解读，前端既无法校验
  * 也无需人工确认，摆五个只读字段只会淹没真正能改的东西。
  */
-export function CategorySection({ draft, mutators }: ItemEditSectionProps) {
+export function CategorySection({ draft, mutators, gid, accountUid }: CategorySectionProps) {
   const current = draft.itemCatDTO.channelCatId
   const name = draft.itemCatDTO.catName
 
+  const [desc] = useState(() => draft.itemTextDTO.desc.trim())
+
+  const {
+    data: channels = [],
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["itemEditChannels", accountUid, gid, desc],
+    queryFn: () => getItemEditChannels(gid, accountUid, desc),
+    // 没有描述就没有推荐依据，问了也是白问
+    enabled: desc.length > 0,
+    // 同一商品的候选短时间内不会变，来回开关弹窗不必重复问闲鱼
+    staleTime: 5 * 60 * 1000,
+  })
+
   /**
-   * id 与 value 分开存：value 必须是字符串（DOM 的要求，也是将来接口回传的形状），
-   * 而回写必须用原类型 —— 拿 value 直接回写会把数字 ID 变成同值的字符串，草稿就
-   * 平白变成「有未保存改动」。选项齐了之后，id 换成该项真实的渠道类目 ID 即可。
+   * 当前类目始终兜在列表里：接口给的是推荐结果，未必包含它，缺了它原生 select
+   * 找不到匹配项会显示成空白，看上去像「类目丢了」。
+   *
+   * 后端还会把该账号常用的类目追在推荐结果后面，与推荐项可能重复，按 ID 去重。
+   * 回写用 id（原类型）而非 value —— value 是字符串，拿它回写会把数字 ID 变成
+   * 同值的字符串，草稿就平白变成「有未保存改动」。
    */
-  const options = [{ id: current, value: String(current), label: name }]
+  const options = useMemo(() => {
+    const seen = new Set<string>()
+    const opts: CategoryOption[] = []
+
+    for (const c of channels) {
+      const value = String(c.channelCateId)
+      if (seen.has(value)) continue
+      seen.add(value)
+      opts.push({ id: c.channelCateId, value, label: c.channelCateName ?? value })
+    }
+
+    if (!seen.has(String(current))) {
+      opts.unshift({ id: current, value: String(current), label: name })
+    }
+
+    return opts
+  }, [channels, current, name])
 
   return (
     <section className="space-y-3">
@@ -47,9 +102,24 @@ export function CategorySection({ draft, mutators }: ItemEditSectionProps) {
             }}
             options={options.map((o) => ({ value: o.value, label: o.label }))}
           />
-          {/* <Hint>类目选项接口待接入；改动会同步「商品分类」的渠道类目与名称。</Hint> */}
         </div>
       </div>
+
+      {/* 拉取失败不挡住编辑：下拉里还有当前类目，保存不受影响 */}
+      {isError && (
+        <ErrorBanner
+          variant="inline"
+          message={`获取类目候选失败：${error instanceof Error ? error.message : String(error)}`}
+          onRetry={() => refetch()}
+        />
+      )}
+
+      {isFetching && (
+        <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+          <LoadingSpinner size="sm" />
+          正在按商品描述获取类目候选…
+        </div>
+      )}
     </section>
   )
 }

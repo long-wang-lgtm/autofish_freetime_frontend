@@ -463,6 +463,30 @@ export async function getItemEditDetail(
 }
 
 /**
+ * 获取渠道类目候选 — POST /api/items/item.edit.channel?uid=（gid / desc 在 Body）
+ *
+ * desc 是商品描述：闲鱼按描述推荐类目（mtop.taobao.idle.kgraph.property.recommend），
+ * 后端还会把该账号历史常用的类目一并附在后面，所以返回的列表会有重复项，去重交给调用方。
+ *
+ * 参数位置与多数接口不同：uid 在 query，gid 与 desc 在 Body。后端这两个形参都声明成
+ * str，而 pydantic 不收 JSON 里的数字，所以 gid 必须转成字符串再下发，直传数字是 422。
+ *
+ * 返回项与物料里的 itemLabelExtList 同构（同一个 ItemLabel schema，RootModel 序列化
+ * 出来是裸数组），选中项的两个字段可以直接喂给 setChannelCate。
+ */
+export async function getItemEditChannels(
+  gid: number,
+  uid: string,
+  desc: string,
+): Promise<ItemEditLabel[]> {
+  return fetchApi<ItemEditLabel[]>("/api/items/item.edit.channel", {
+    method: "POST",
+    params: { uid },
+    body: JSON.stringify({ gid: String(gid), desc }),
+  })
+}
+
+/**
  * 编辑商品属性 — POST /api/items/item.edit?gid=&uid=
  *
  * 请求体就是 edit.detail 的响应原样回传：后端读和写用的是同一个 schema

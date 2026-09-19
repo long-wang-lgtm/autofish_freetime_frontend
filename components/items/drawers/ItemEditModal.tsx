@@ -259,7 +259,7 @@ export function ItemEditModal({ item, open, onClose, submit }: ItemEditModalProp
                 {item.title || "无标题"}
               </p>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                {item.account.name} · <span className="tabular-nums">gid {item.gid}</span>
+                {item.account.name} · <span className="tabular-nums">{item.gid}</span>
               </p>
             </div>
           </div>
@@ -283,6 +283,7 @@ export function ItemEditModal({ item, open, onClose, submit }: ItemEditModalProp
               draft={draft}
               setDraft={applyPatch}
               accountUid={item.account.uid}
+              gid={item.gid}
             />
           ) : (
             // 重开时 data 命中缓存、isPending 为 false，而 draft 要等 effect 落地，
