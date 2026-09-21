@@ -18,7 +18,7 @@ const PILL_ON =
 const PILL_OFF =
   'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
 
-/** 账号筛选——pill 多选，"全部"等价于 selected 为 null */
+/** 账号筛选——pill 多选，selected 为 null 表示「全不选」＝全量 */
 export function AccountFilterBar({
   accounts,
   selected,
@@ -26,20 +26,20 @@ export function AccountFilterBar({
   onRefresh,
   loading = false,
 }: AccountFilterBarProps) {
-  const activeUids = selected ?? accounts.map((a) => a.uid)
-  const activeSet = new Set(activeUids)
-  const allActive = selected === null
+  // 默认（null）不点亮任何账号 pill，只亮「全部」
+  const activeSet = new Set(selected ?? [])
 
   function toggle(uid: string) {
-    const next = new Set(activeUids)
+    // 从当前选择起算——默认全不选时点一个账号＝只筛这一个，再点一个＝叠加
+    const next = new Set(activeSet)
     if (next.has(uid)) {
       next.delete(uid)
     } else {
       next.add(uid)
     }
     const picked = accounts.filter((a) => next.has(a.uid)).map((a) => a.uid)
-    // 全选归一化成 null，避免"全部"与"逐个选中所有"两种等价状态
-    onChange(picked.length === accounts.length ? null : picked)
+    // 全选归一化成 null（等价于「全部」）；一个不剩也回到全量，免得筛出空数据
+    onChange(picked.length === 0 || picked.length === accounts.length ? null : picked)
   }
 
   return (
@@ -52,8 +52,8 @@ export function AccountFilterBar({
           <button
             type="button"
             onClick={() => onChange(null)}
-            aria-pressed={allActive}
-            className={`${PILL_BASE} ${allActive ? PILL_ON : PILL_OFF}`}
+            aria-pressed={selected === null}
+            className={`${PILL_BASE} ${selected === null ? PILL_ON : PILL_OFF}`}
           >
             全部
           </button>
