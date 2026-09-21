@@ -12,7 +12,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        router.replace('/dashboard/accounts')
+        router.replace('/dashboard/index')
       } else {
         router.replace('/login')
       }
