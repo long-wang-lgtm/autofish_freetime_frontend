@@ -1,9 +1,10 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { EChartsOption } from 'echarts'
 import type { LineSeriesOption } from 'echarts/charts'
 import { useChart } from '@/components/ui/chart/useChart'
+import { echarts } from '@/components/ui/chart/echarts'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { fmtNumber, fmtPrice } from '@/lib/utils/format'
@@ -35,6 +36,13 @@ export function DailyTrendChart({
   height = 320,
   loading = false,
 }: DailyTrendChartProps) {
+  /** 图例筛选：null = 全不选 ＝ 全显示；点一条线＝只看它，再点＝叠加（与账号筛选栏同一套语义） */
+  const [visibleNames, setVisibleNames] = useState<string[] | null>(null)
+  const names = useMemo(() => trend.series.map((s) => s.label), [trend])
+  // 账号集合变了（上方筛选切换）才回到"全显示"；单纯刷新数据不重置用户的图例选择
+  const namesKey = names.join('|')
+  useEffect(() => setVisibleNames(null), [namesKey])
+
   const option = useMemo<EChartsOption | null>(() => {
     if (trend.series.length === 0 || trend.dates.length === 0) return null
 
@@ -68,6 +76,12 @@ export function DailyTrendChart({
       })
     }
 
+    // 图例开关显式给全：未筛时全开，否则只开命中的（归一化后不会出现空选择）
+    const legendSelected: Record<string, boolean> = {}
+    for (const name of names) {
+      legendSelected[name] = visibleNames === null || visibleNames.includes(name)
+    }
+
     return {
       grid: [
         { left: 12, right: 16, top: 40, height: '32%' },
@@ -80,7 +94,8 @@ export function DailyTrendChart({
         itemWidth: 8,
         itemHeight: 8,
         textStyle: { fontSize: 11, color: '#6b7280' },
-        data: trend.series.map((s) => s.label),
+        data: names,
+        selected: legendSelected,
       },
       axisPointer: { link: [{ xAxisIndex: 'all' }] },
       tooltip: {
@@ -92,6 +107,8 @@ export function DailyTrendChart({
           const i = trend.dates.indexOf(axisValue)
           if (i < 0) return ''
           const rows = trend.series
+            // 图例里关掉的账号也不进 tooltip——否则筛了图例、tooltip 还列着全部
+            .filter((s) => visibleNames === null || visibleNames.includes(s.label))
             .map((s) => ({ s, count: s.count[i] ?? 0, payamt: s.payamt[i] ?? 0 }))
             .sort((a, b) => b.count - a.count)
             .map(
@@ -169,9 +186,34 @@ export function DailyTrendChart({
       ],
       series,
     }
-  }, [trend])
+  }, [trend, visibleNames])
 
   const chartRef = useChart<HTMLDivElement>(option, [option])
+
+  /**
+   * 图例点击 → 与账号筛选栏同一套规则：
+   * 未筛状态点一个＝只看它（不是 ECharts 默认的"关掉它"）、已选中的再点＝取消一个、
+   * 取消到一个不剩＝回到全显示。结果以 React 状态为准，再由 legend.selected 回写。
+   */
+  useEffect(() => {
+    const host = chartRef.current
+    const inst = host ? echarts.getInstanceByDom(host) : undefined
+    if (!inst) return
+
+    const onLegendClick = (params: unknown) => {
+      const clicked = (params as { name: string }).name
+      const cur = visibleNames ?? names
+      if (cur.length === names.length) setVisibleNames([clicked])
+      else if (cur.includes(clicked)) {
+        setVisibleNames(cur.length > 1 ? cur.filter((n) => n !== clicked) : null)
+      } else setVisibleNames([...cur, clicked])
+    }
+
+    inst.on('legendselectchanged', onLegendClick)
+    return () => {
+      inst.off('legendselectchanged', onLegendClick)
+    }
+  }, [chartRef, names, visibleNames])
 
   if (loading) {
     return (
