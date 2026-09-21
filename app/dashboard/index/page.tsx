@@ -56,8 +56,8 @@ export default function DashboardPage() {
       <KpiCards kpis={kpis} loading={isLoading} />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <DailyTrendChart trend={trend} height={TIME_HEIGHT} loading={isLoading} />
         <HourlyAreaChart hourly={hourly} height={TIME_HEIGHT} loading={isLoading} />
+        <DailyTrendChart trend={trend} height={TIME_HEIGHT} loading={isLoading} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
