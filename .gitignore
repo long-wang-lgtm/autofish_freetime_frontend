@@ -21,6 +21,9 @@ npm-debug.log*
 # local env files
 .env*
 
+# 浏览器实测用的临时 token 文件（JWT 直签注入，测完即删，防误提交）
+public/_tok.txt
+
 # vercel
 .vercel
 

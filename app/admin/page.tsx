@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import * as echarts from 'echarts'
+import type { EChartsOption } from 'echarts'
+import { graphic } from 'echarts/core'
 import { useAuth } from '@/stores/auth.store'
 import { isAdminRole } from '@/lib/constants/admin'
 import {
@@ -14,13 +15,9 @@ import { ImStatusChart } from '@/components/ui/chart/ImStatusChart'
 import { AccountPieChart } from '@/components/ui/chart/AccountPieChart'
 import { useChart } from '@/components/ui/chart/useChart'
 import { Pagination } from '@/components/ui/data/Pagination'
+import { OTHER_COLOR, USER_PALETTE } from '@/lib/constants/chart-theme'
 
 // ===== 常量 =====
-const USER_PALETTE = [
-  '#5470C6', '#91CC75', '#FAC858', '#EE6666', '#73C0DE',
-  '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC', '#48C9B0',
-]
-const OTHER_COLOR = '#cccccc'
 const PAGE_SIZE = 20
 
 // ===== 工具 =====
@@ -105,7 +102,7 @@ export default function AdminPage() {
   }, [tab, accountPage, fetchAccounts])
 
   // --- 注册趋势图配置 ---
-  const trendOption = useMemo<echarts.EChartsOption | null>(() => {
+  const trendOption = useMemo<EChartsOption | null>(() => {
     if (!dashboard) return null
     return {
       tooltip: {
@@ -154,7 +151,7 @@ export default function AdminPage() {
           symbolSize: 4,
           lineStyle: { color: '#5470C6', width: 2 },
           itemStyle: { color: '#5470C6' },
-          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          areaStyle: { color: new graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: 'rgba(84,112,198,0.2)' },
             { offset: 1, color: 'rgba(84,112,198,0.02)' },
           ])},
@@ -164,7 +161,7 @@ export default function AdminPage() {
   }, [dashboard])
 
   // --- 账号注册趋势图配置 ---
-  const accountTrendOption = useMemo<echarts.EChartsOption | null>(() => {
+  const accountTrendOption = useMemo<EChartsOption | null>(() => {
     if (!dashboard?.account_registration_trend) return null
     return {
       tooltip: {
@@ -213,7 +210,7 @@ export default function AdminPage() {
           symbolSize: 4,
           lineStyle: { color: '#91CC75', width: 2 },
           itemStyle: { color: '#91CC75' },
-          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          areaStyle: { color: new graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: 'rgba(145,204,117,0.2)' },
             { offset: 1, color: 'rgba(145,204,117,0.02)' },
           ])},

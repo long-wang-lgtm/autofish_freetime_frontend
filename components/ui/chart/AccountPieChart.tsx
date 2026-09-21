@@ -1,16 +1,10 @@
 'use client'
 
 import { useMemo } from 'react'
-import * as echarts from 'echarts'
+import type { EChartsOption } from 'echarts'
 import { useChart } from './useChart'
+import { OTHER_COLOR, USER_PALETTE } from '@/lib/constants/chart-theme'
 import type { AccountByUserItem } from '@/lib/api/admin'
-
-// ===== 常量 =====
-const USER_PALETTE = [
-  '#5470C6', '#91CC75', '#FAC858', '#EE6666', '#73C0DE',
-  '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC', '#48C9B0',
-]
-const OTHER_COLOR = '#cccccc'
 
 // ===== 组件 =====
 export function AccountPieChart({
@@ -24,7 +18,7 @@ export function AccountPieChart({
 }) {
   const cardClass = `bg-white rounded-xl border border-gray-200 shadow-sm p-4 ${className || ''}`
   // --- 饼图配置 ---
-  const option = useMemo<echarts.EChartsOption | null>(() => {
+  const option = useMemo<EChartsOption | null>(() => {
     if (!data || data.length === 0) return null
 
     const sorted = [...data].sort((a, b) => (b.accountCount ?? 0) - (a.accountCount ?? 0))

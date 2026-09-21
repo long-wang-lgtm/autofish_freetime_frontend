@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import * as echarts from 'echarts'
+import type { EChartsOption } from 'echarts'
+import { graphic } from 'echarts/core'
 import { useImStatusSnapshots } from '@/hooks/useImStatusSnapshots'
 import { useChart } from './useChart'
 import type { ImStatusSnapshot } from '@/lib/api/admin'
@@ -95,7 +96,7 @@ export function ImStatusChart({
   const frame = useMemo<ChartFrame | null>(() => buildChartFrame(snapshots), [snapshots])
 
   // --- ECharts 配置 ---
-  const option = useMemo<echarts.EChartsOption | null>(() => {
+  const option = useMemo<EChartsOption | null>(() => {
     if (!frame) return null
     return {
       tooltip: {
@@ -149,7 +150,7 @@ export function ImStatusChart({
           symbolSize: 3,
           lineStyle: { color: '#22c55e', width: 2 },
           itemStyle: { color: '#22c55e' },
-          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          areaStyle: { color: new graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: 'rgba(34,197,94,0.15)' },
             { offset: 1, color: 'rgba(34,197,94,0.02)' },
           ])},
@@ -164,7 +165,7 @@ export function ImStatusChart({
           symbolSize: 3,
           lineStyle: { color: '#5470C6', width: 2 },
           itemStyle: { color: '#5470C6' },
-          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          areaStyle: { color: new graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: 'rgba(84,112,198,0.15)' },
             { offset: 1, color: 'rgba(84,112,198,0.02)' },
           ])},
@@ -179,7 +180,7 @@ export function ImStatusChart({
           symbolSize: 3,
           lineStyle: { color: '#f97316', width: 2 },
           itemStyle: { color: '#f97316' },
-          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          areaStyle: { color: new graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: 'rgba(249,115,22,0.15)' },
             { offset: 1, color: 'rgba(249,115,22,0.02)' },
           ])},
