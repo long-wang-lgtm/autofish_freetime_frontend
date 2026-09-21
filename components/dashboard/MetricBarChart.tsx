@@ -217,8 +217,10 @@ export function MetricBarChart({
     return {
       title: [
         {
+          // 贴着自己那半块绘图区的左边缘——和右侧「销售额」同一套对齐，
+          // 不再悬在行标签列上方（那看着像整列的表头）
           text: '销量',
-          left: 10,
+          left: gutter,
           top: 2,
           textStyle: { fontSize: 12, fontWeight: 'normal', color: '#6b7280' },
         },
