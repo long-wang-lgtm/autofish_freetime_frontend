@@ -49,6 +49,35 @@ export function seriesMax(values: number[]): number {
   return max
 }
 
+/** 最大值所在下标（定数据标签的关键点用；空数组 → 0） */
+export function seriesMaxIndex(values: number[]): number {
+  let best = 0
+  for (let i = 1; i < values.length; i++) if (values[i] > values[best]) best = i
+  return best
+}
+
+/**
+ * 数据标签取点：必标的关键点 + 等距中间点，密度控制就落在这个等距步长上
+ * （点数 ÷ maxMiddle 向上取整，步长至少 2）。
+ *
+ * 与关键点相邻的中间点一律丢掉——上下两个标签贴在一起必然叠字。
+ * 返回升序下标。
+ */
+export function labelIndices(
+  values: number[],
+  keys: number[],
+  maxMiddle: number,
+): number[] {
+  const n = values.length
+  if (n === 0) return []
+  const keyList = Array.from(keys.filter((i) => i >= 0 && i < n))
+  const nearKey = (i: number) => keyList.some((k) => Math.abs(k - i) <= 1)
+  const step = Math.max(2, Math.ceil((n - 1) / Math.max(1, maxMiddle)))
+  const picked = new Set(keyList)
+  for (let i = n - 1 - step; i > 0; i -= step) if (!nearKey(i)) picked.add(i)
+  return Array.from(picked).sort((a, b) => a - b)
+}
+
 /**
  * 上下子图共用的标签列宽（px）：取两张值轴里最宽的那个刻度标签。
  * 各算各的就会错位——那正是这张图要修的问题。

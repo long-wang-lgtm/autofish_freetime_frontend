@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo } from 'react'
-import { OTHER_COLOR, USER_PALETTE } from '@/lib/constants/chart-theme'
 import type { Account } from '@/lib/api/accounts'
 import type {
   AccountDayOrderDTO,
@@ -38,17 +37,19 @@ export interface SeriesPoint {
   payamt: number
 }
 
-/** 折线图：每个账号一条线，销量与销售额各一套 */
+/**
+ * 折线图：近 30 日的日聚合，一条曲线到底
+ *
+ * 由「每账号一条线」改成日聚合：账号取舍交给上方筛选栏——
+ * 全选看总量，单选某个账号就看那一个的曲线。
+ */
 export interface TrendData {
   /** x 轴：近 30 日 'MM-DD'，升序 */
   dates: string[]
-  series: {
-    key: string
-    label: string
-    color: string
-    count: number[]
-    payamt: number[]
-  }[]
+  /** 逐日销量合计 */
+  count: number[]
+  /** 逐日销售额合计 */
+  payamt: number[]
 }
 
 /**
@@ -163,10 +164,6 @@ export function useDashboardMetrics({
       ? accounts.map((a) => a.uid)
       : Array.from(new Set([...accountDay, ...accountHour].map((r) => r.uid))).sort()
     const activeUids = selectedUids ?? allUids
-    // 颜色按账号全集的下标分配，筛选切换时同一账号的颜色保持不变
-    const colorOf = new Map(
-      allUids.map((uid, i) => [uid, USER_PALETTE[i % USER_PALETTE.length]]),
-    )
     const active = new Set(activeUids)
 
     // 账号名：以账号列表为准，订单行里的名字兜底
@@ -177,8 +174,22 @@ export function useDashboardMetrics({
     const dayRows = accountDay.filter((r) => active.has(r.uid))
     const hourRows = accountHour.filter((r) => active.has(r.uid))
 
-    // 折线图窗口：近 30 日
+    // 折线图窗口：近 30 日，逐日把（已筛选的）账号合计起来
     const trendDates = tail(sortedDates(dayRows), 30)
+    const trendIndex = new Map(trendDates.map((d, i) => [d, i]))
+    const trendCount = new Array(trendDates.length).fill(0)
+    const trendPayamt = new Array(trendDates.length).fill(0)
+    for (const r of dayRows) {
+      const j = trendIndex.get(r.date)
+      if (j === undefined) continue
+      trendCount[j] += r.count
+      trendPayamt[j] += r.payamt
+    }
+    const trend: TrendData = {
+      dates: trendDates.map(shortDate),
+      count: trendCount,
+      payamt: trendPayamt,
+    }
     // 条形图/面积图窗口：近 3 日（以小时接口的覆盖范围为准）
     const days3 = tail(sortedDates(hourRows), 3)
     const barDays = days3.length ? days3 : tail(trendDates, 3)
@@ -230,29 +241,6 @@ export function useDashboardMetrics({
         days: toSeriesPoints(entry.byDate, barDays),
       }))
       .sort(byTotalDesc)
-
-    const trendIndex = new Map(trendDates.map((d, i) => [d, i]))
-    const trend: TrendData = {
-      dates: trendDates.map(shortDate),
-      series: activeUids.map((uid) => {
-        const count = new Array(trendDates.length).fill(0)
-        const payamt = new Array(trendDates.length).fill(0)
-        for (const r of dayRows) {
-          if (r.uid !== uid) continue
-          const j = trendIndex.get(r.date)
-          if (j === undefined) continue
-          count[j] += r.count
-          payamt[j] += r.payamt
-        }
-        return {
-          key: uid,
-          label: nameOf.get(uid) ?? uid,
-          color: colorOf.get(uid) ?? OTHER_COLOR,
-          count,
-          payamt,
-        }
-      }),
-    }
 
     const hourly: HourlyData = {
       hours: HOURS,

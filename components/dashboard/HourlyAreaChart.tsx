@@ -21,8 +21,10 @@ import {
   AXIS_LABEL_FONT_SIZE,
   axisAmountLabel,
   axisCountLabel,
+  labelIndices,
   niceAxisMax,
   seriesMax,
+  seriesMaxIndex,
   sharedAxisGutter,
 } from '@/lib/utils/chart-axis'
 import { markerDot, tipHeader } from '@/lib/utils/chart-tooltip'
@@ -35,6 +37,11 @@ const CARD_TITLE =
 
 /** 上下两个子图的分界 */
 const SPLIT_TOP = '54%'
+/** 数据标签：字号与值轴刻度同级、颜色用正文灰，别抢曲线的戏 */
+const MARK_LABEL_FONT_SIZE = 11
+const MARK_LABEL_COLOR = '#374151'
+/** 今日曲线的中间标签密度：24 小时里最多再挑 ~3 个等距点（24 格铺不下更多） */
+const LABEL_DENSITY = 3
 
 interface HourlyAreaChartProps {
   hourly: HourlyData
@@ -93,37 +100,88 @@ export function HourlyAreaChart({
     /** 第 d 天渲染到几点：最新一天数据到哪算哪，历史日是完整的一天 */
     const endHourOf = (d: number) => (d === last ? lastHourOf(hourly.series[last]) : 23)
 
+    // 刻度直接用补零的小时数（"00"~"23"）：比 "00:00" 窄一半多，24 个点才铺得下、不用抽稀
+    const hourLabels = hourly.hours
+
     const series: LineSeriesOption[] = []
     hourly.series.forEach((s, d) => {
       const isToday = d === last
       const countColor = dayLineColor(METRIC_ORDER_COUNT, d, last)
       const amountColor = dayLineColor(METRIC_ORDER_AMOUNT, d, last)
       const lineWidth = isToday ? TODAY_LINE_WIDTH : HISTORY_LINE_WIDTH
-      const end = endHourOf(d)
+      const cutTo = endHourOf(d)
+      // 三条曲线同小时的两个标签会叠在一起，所以历史日一上一下错开方向
+      const tint = d === 0 ? ('bottom' as const) : ('top' as const)
+
+      /**
+       * 一条日曲线的数据标签：只写数值，不带文字提示。
+       *
+       * 今日（主角）给整套 —— 首点 00 / 最高点 / 最后一个有数据的小时 + 等距中间点；
+       * 历史灰线只给最高点 —— 三条曲线同一个小时的值常常一模一样（实测 00 点三天都是 4），
+       * 每个点都标会在同一处叠三个标签；只标峰值反而正好把三天的峰值摆在一起比。
+       */
+      const markPoints = (
+        values: number[],
+        color: string,
+        fmt: (v: number) => string,
+      ) => {
+        const maxIndex = seriesMaxIndex(values)
+        const lastData = lastHourOf(s)
+        const keys = isToday ? [0, maxIndex, lastData] : [maxIndex]
+        return labelIndices(values, keys, isToday ? LABEL_DENSITY : 0).map((h) => {
+          const isEnd = isToday && h === lastData
+          return {
+            name: hourLabels[h],
+            coord: [hourLabels[h], values[h]],
+            // 今日末点空心：这一刻的数还会长
+            symbolSize: isEnd ? 8 : 7,
+            itemStyle: isEnd
+              ? { color: '#fff', borderColor: color, borderWidth: 2 }
+              : { color, borderColor: '#fff', borderWidth: 1.5 },
+            label: {
+              show: true,
+              // 首点贴左边线，'top' 会跟值轴刻度撞车 → 挪到点的右侧
+              position: isToday ? (h === 0 ? ('right' as const) : ('top' as const)) : tint,
+              distance: 6,
+              fontSize: MARK_LABEL_FONT_SIZE,
+              fontWeight: h === maxIndex ? 600 : 400,
+              color: MARK_LABEL_COLOR,
+              formatter: fmt(values[h]),
+            },
+          }
+        })
+      }
+
       series.push({
         name: s.label,
         type: 'line',
         xAxisIndex: 0,
         yAxisIndex: 0,
-        data: cutAfter(s.count, end),
+        data: cutAfter(s.count, cutTo),
         color: countColor,
         lineStyle: { color: countColor, width: lineWidth },
         itemStyle: { color: countColor },
         areaStyle: isToday
           ? { color: withAlpha(METRIC_ORDER_COUNT, TODAY_AREA_ALPHA) }
           : undefined,
+        // 拐点带弧但不糊；单调插值（'x'）保证曲线不越出两点之间的取值范围
         smooth: LINE_SMOOTH,
         smoothMonotone: 'x',
         showSymbol: false,
         symbol: 'circle',
         symbolSize: 5,
+        markPoint: {
+          symbol: 'circle',
+          data: markPoints(s.count, countColor, axisCountLabel),
+          silent: true,
+        },
       })
       series.push({
         name: s.label,
         type: 'line',
         xAxisIndex: 1,
         yAxisIndex: 1,
-        data: cutAfter(s.payamt, end),
+        data: cutAfter(s.payamt, cutTo),
         color: amountColor,
         lineStyle: { color: amountColor, width: lineWidth },
         itemStyle: { color: amountColor },
@@ -135,6 +193,11 @@ export function HourlyAreaChart({
         showSymbol: false,
         symbol: 'circle',
         symbolSize: 5,
+        markPoint: {
+          symbol: 'circle',
+          data: markPoints(s.payamt, amountColor, axisAmountLabel),
+          silent: true,
+        },
       })
     })
 
@@ -149,9 +212,6 @@ export function HourlyAreaChart({
       axisCountLabel(countAxisMax),
       axisAmountLabel(amountAxisMax),
     ])
-
-    // 刻度直接用补零的小时数（"00"~"23"）：比 "00:00" 窄一半多，24 个点才铺得下、不用抽稀
-    const hourLabels = hourly.hours
 
     return {
       grid: [

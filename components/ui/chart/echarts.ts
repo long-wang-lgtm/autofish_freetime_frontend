@@ -14,6 +14,7 @@ import {
   DataZoomComponent,
   GridComponent,
   LegendComponent,
+  MarkPointComponent,
   TitleComponent,
   TooltipComponent,
 } from 'echarts/components'
@@ -31,6 +32,7 @@ echarts.use([
   LegendComponent,
   TitleComponent,
   DataZoomComponent,
+  MarkPointComponent,
   // 渲染器
   CanvasRenderer,
 ])

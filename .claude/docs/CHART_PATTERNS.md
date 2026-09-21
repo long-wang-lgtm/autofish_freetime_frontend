@@ -17,13 +17,14 @@ import {
   LegendComponent,
   DataZoomComponent,
   TitleComponent,
+  MarkPointComponent,
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 
 echarts.use([
   LineChart, PieChart, BarChart,
   GridComponent, TooltipComponent, LegendComponent,
-  DataZoomComponent, TitleComponent,
+  DataZoomComponent, TitleComponent, MarkPointComponent,
   CanvasRenderer,
 ])
 ```
