@@ -37,13 +37,17 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5">
-      <AccountFilterBar
-        accounts={accounts}
-        selected={selectedUids}
-        onChange={setSelectedUids}
-        onRefresh={refetch}
-        loading={isLoading}
-      />
+      {/* 账号筛选常驻仪表盘顶部：滚到下面的图表也随手能切账号，不用翻回最上面。
+          背景铺成页面底色，内容滑到它下面时被盖住（同 TabBar 的 sticky 写法） */}
+      <div className="sticky top-0 z-20 bg-gray-50 py-1">
+        <AccountFilterBar
+          accounts={accounts}
+          selected={selectedUids}
+          onChange={setSelectedUids}
+          onRefresh={refetch}
+          loading={isLoading}
+        />
+      </div>
 
       {error && (
         <ErrorBanner
@@ -56,8 +60,8 @@ export default function DashboardPage() {
       <KpiCards kpis={kpis} loading={isLoading} />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <HourlyAreaChart hourly={hourly} height={TIME_HEIGHT} loading={isLoading} />
         <DailyTrendChart trend={trend} height={TIME_HEIGHT} loading={isLoading} />
+        <HourlyAreaChart hourly={hourly} height={TIME_HEIGHT} loading={isLoading} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
