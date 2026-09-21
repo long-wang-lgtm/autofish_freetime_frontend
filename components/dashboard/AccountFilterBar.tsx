@@ -49,12 +49,12 @@ export function AccountFilterBar({
   }
 
   return (
-    <div className="flex items-start gap-3 max-w-2xl p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+    <div className="flex items-center gap-2 max-w-2xl px-3 py-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
       <button
         type="button"
         onClick={onRefresh}
         disabled={loading}
-        className="h-10 px-4 shrink-0 inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+        className="h-10 px-2 shrink-0 inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
       >
         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         刷新

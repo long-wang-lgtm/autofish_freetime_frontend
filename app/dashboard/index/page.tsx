@@ -36,12 +36,12 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {/* 账号筛选 + KPI 概览常驻仪表盘顶部：滚到下面的图表也随手能切账号、看总量。
           两个独立组件并排，各自按内容宽度，右边留白（不拉满）。
           背景铺成页面底色，内容滑到它下面时被盖住（同 TabBar 的 sticky 写法） */}
-      <div className="sticky top-0 z-20 bg-gray-50 py-1">
-        <div className="flex flex-col gap-3 lg:flex-row lg:gap-5">
+      <div className="sticky top-0 z-20 bg-gray-50 py-0">
+        <div className="flex flex-col gap-3 lg:flex-row lg:gap-3">
           <AccountFilterBar
             accounts={accounts}
             selected={selectedUids}
