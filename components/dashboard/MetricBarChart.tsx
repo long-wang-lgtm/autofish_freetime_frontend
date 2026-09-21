@@ -41,6 +41,8 @@ const TODAY_LABEL_WEIGHT = 600
 const ROW_HEIGHT = 36
 /** 右侧滚动条（dataZoom slider）占的宽度：从绘图区里让出来，两个子图一起让 */
 const SCROLLBAR_WIDTH = 10
+/** 左右两块子图之间额外留的呼吸空间（不含左侧条尾数值标签自身的占宽） */
+const SUBPLOT_GAP = 24
 /** 滚轮 deltaMode 为"行"时的单行像素（Firefox 用行数报 deltaY） */
 const LINE_HEIGHT = 16
 
@@ -150,11 +152,14 @@ export function MetricBarChart({
       Math.ceil(
         Math.max(0, ...labels.map((l) => measureTextWidth(truncate(l), LABEL_FONT_SIZE))),
       ) + AXIS_LABEL_MARGIN
-    const plotBare = Math.max(1, (width - gutter - SCROLLBAR_WIDTH) / 2)
+    const plotBare = Math.max(1, (width - gutter - SCROLLBAR_WIDTH - SUBPLOT_GAP) / 2)
     const countBand = labelBand(plotBare, countSlots, countMax)
     const amountBand = labelBand(plotBare, amountSlots, amountMax)
-    const plot = Math.max(1, (width - gutter - countBand - amountBand - SCROLLBAR_WIDTH) / 2)
-    const grid1Left = gutter + plot + countBand
+    const plot = Math.max(
+      1,
+      (width - gutter - countBand - amountBand - SCROLLBAR_WIDTH - SUBPLOT_GAP) / 2,
+    )
+    const grid1Left = gutter + plot + countBand + SUBPLOT_GAP
 
     const series: BarSeriesOption[] = []
     for (let d = last; d >= 0; d--) {
