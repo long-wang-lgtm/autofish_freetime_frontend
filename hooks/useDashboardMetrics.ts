@@ -54,8 +54,8 @@ export interface TrendData {
 /**
  * 面积图：近 3 日各一条，x 轴为 0-23 时
  *
- * 不带 color——这里的颜色语义是「指标 × 新旧」，由图表组件按
- * METRIC_ORDER_* + RECENT_DAY_LINE_ALPHA 组合，不是每系列一色。
+ * 不带 color——这里的颜色语义是「指标 × 新旧」，由图表组件组合
+ * （今日＝METRIC_ORDER_* 实色，历史日＝HISTORY_DAY_LINE_COLORS 灰阶），不是每系列一色。
  */
 export interface HourlyData {
   /** x 轴：'00' ~ '23' */

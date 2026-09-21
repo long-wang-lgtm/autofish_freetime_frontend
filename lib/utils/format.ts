@@ -55,6 +55,15 @@ export function fmtNumber(v: number): string {
 }
 
 /**
+ * 金额取整——千分位、无小数（图表值轴刻度用：刻度只到元）
+ * fmtPriceInt(12345.6) → "¥12,346"
+ * fmtPriceInt(0) → "¥0"
+ */
+export function fmtPriceInt(v: number): string {
+  return `¥${fmtNumber(Math.round(v))}`
+}
+
+/**
  * 日期——统一格式 YYYY-MM-DD
  * fmtDate("2026-06-29") → "2026-06-29"
  */

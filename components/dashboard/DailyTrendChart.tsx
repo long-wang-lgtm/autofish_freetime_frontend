@@ -5,9 +5,18 @@ import type { EChartsOption } from 'echarts'
 import type { LineSeriesOption } from 'echarts/charts'
 import { useChart } from '@/components/ui/chart/useChart'
 import { echarts } from '@/components/ui/chart/echarts'
+import { LINE_SMOOTH } from '@/lib/constants/chart-theme'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { fmtNumber, fmtPrice } from '@/lib/utils/format'
+import {
+  AXIS_LABEL_FONT_SIZE,
+  axisAmountLabel,
+  axisCountLabel,
+  niceAxisMax,
+  seriesMax,
+  sharedAxisGutter,
+} from '@/lib/utils/chart-axis'
 import { markerDot, tipHeader } from '@/lib/utils/chart-tooltip'
 import type { TrendData } from '@/hooks/useDashboardMetrics'
 
@@ -57,6 +66,9 @@ export function DailyTrendChart({
         color: s.color,
         lineStyle: { color: s.color, width: 2 },
         itemStyle: { color: s.color },
+        // 拐点带弧但不糊；单调插值（'x'）保证曲线不越出两点之间的取值范围
+        smooth: LINE_SMOOTH,
+        smoothMonotone: 'x',
         showSymbol: false,
         symbol: 'circle',
         symbolSize: 5,
@@ -70,11 +82,25 @@ export function DailyTrendChart({
         color: s.color,
         lineStyle: { color: s.color, width: 2 },
         itemStyle: { color: s.color },
+        smooth: LINE_SMOOTH,
+        smoothMonotone: 'x',
         showSymbol: false,
         symbol: 'circle',
         symbolSize: 5,
       })
     }
+
+    // 两张值轴的上限与公共标签列宽：上限定死 → 最宽刻度就是上限那一个 → 量得准
+    const countAxisMax = niceAxisMax(
+      seriesMax(trend.series.flatMap((s) => s.count)),
+    )
+    const amountAxisMax = niceAxisMax(
+      seriesMax(trend.series.flatMap((s) => s.payamt)),
+    )
+    const gutter = sharedAxisGutter([
+      axisCountLabel(countAxisMax),
+      axisAmountLabel(amountAxisMax),
+    ])
 
     // 图例开关显式给全：未筛时全开，否则只开命中的（归一化后不会出现空选择）
     const legendSelected: Record<string, boolean> = {}
@@ -84,8 +110,8 @@ export function DailyTrendChart({
 
     return {
       grid: [
-        { left: 12, right: 16, top: 40, height: '32%' },
-        { left: 12, right: 16, top: SPLIT_TOP, bottom: BOTTOM_INSET },
+        { left: gutter, right: 16, top: 40, height: '32%' },
+        { left: gutter, right: 16, top: SPLIT_TOP, bottom: BOTTOM_INSET },
       ],
       legend: {
         top: 0,
@@ -143,30 +169,33 @@ export function DailyTrendChart({
           type: 'value',
           gridIndex: 0,
           minInterval: 1,
+          max: countAxisMax,
           name: '销量',
           nameGap: 8,
           nameTextStyle: { fontSize: 12, color: '#6b7280', align: 'left' },
           axisLine: { show: false },
           axisTick: { show: false },
           axisLabel: {
-            fontSize: 11,
+            fontSize: AXIS_LABEL_FONT_SIZE,
             color: '#9ca3af',
-            formatter: (v: unknown) => fmtNumber(Number(v)),
+            formatter: axisCountLabel,
           },
           splitLine: { lineStyle: { color: '#f3f4f6' } },
         },
         {
           type: 'value',
           gridIndex: 1,
+          minInterval: 1,
+          max: amountAxisMax,
           name: '销售额',
           nameGap: 8,
           nameTextStyle: { fontSize: 12, color: '#6b7280', align: 'left' },
           axisLine: { show: false },
           axisTick: { show: false },
           axisLabel: {
-            fontSize: 11,
+            fontSize: AXIS_LABEL_FONT_SIZE,
             color: '#9ca3af',
-            formatter: (v: unknown) => fmtPrice(Number(v)),
+            formatter: axisAmountLabel,
           },
           splitLine: { lineStyle: { color: '#f3f4f6' } },
         },

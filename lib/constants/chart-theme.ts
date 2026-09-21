@@ -53,11 +53,19 @@ export const ORDER_AMOUNT_RAMP = [
 ] as const
 
 /**
- * 近 3 日折线 / 面积图的透明度梯度。
+ * 面积图（近 3 日）的「今日为主角」配色。
  *
- * 线条比条形细，透明度下限不能太低，否则最早一天几乎看不见。
+ * 与条形图的 ORDER_*_RAMP 同一套语言（末位＝今日），但面积图是三条线叠在一起，
+ * 同色浅阶根本分不开今昔——所以今日用指标实色，历史日退到中性灰阶（前天浅、昨天深）。
  */
-export const RECENT_DAY_LINE_ALPHA = [0.4, 0.65, 1] as const
+export const HISTORY_DAY_LINE_COLORS = ['#cbd5e1', '#94a3b8'] as const
+
+/** 面积图线宽：今日加粗站出来，历史日退细 */
+export const TODAY_LINE_WIDTH = 2.5
+export const HISTORY_LINE_WIDTH = 1.5
+
+/** 面积填充只给今日（历史日只留线），透明度略高于「三天都有面积」那会儿 */
+export const TODAY_AREA_ALPHA = 0.18
 
 /** 趋势图通用透明色（面积图 fill） */
 export function withAlpha(hex: string, alpha: number): string {
@@ -66,3 +74,11 @@ export function withAlpha(hex: string, alpha: number): string {
   const b = parseInt(hex.slice(5, 7), 16)
   return `rgba(${r},${g},${b},${alpha})`
 }
+
+/**
+ * 折线平滑度：0＝折线，0.5＝ECharts 默认的"true"，1＝最圆。
+ *
+ * 取 0.3：拐点带弧但不糊——趋势图的读图重点是"哪天 / 哪小时冲高"，
+ * 太圆会把尖峰抹圆、看着像平滑过的连续波，反而丢了真形。两张趋势图共用。
+ */
+export const LINE_SMOOTH = 0.3

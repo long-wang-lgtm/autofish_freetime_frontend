@@ -110,3 +110,61 @@ useEffect(() => {
 ```
 
 **关键点**：事件绑定后必须在 cleanup 中 `off`，防止内存泄漏。
+
+---
+
+## 5. 上下子图共用 x 轴时的对齐（值轴刻度 + grid.left）
+
+一张图里放上下两个子图（上销量、下销售额）各自独立值轴时，两个 `grid` 的 `left` 必须同值，
+否则两条 x 轴错位——ECharts 的绘图区左边界是 `max(grid.left, 最宽刻度标签宽 + axisLabel.margin)`，
+销售额轴标签带 `¥` 更长，就会被推到更右边。两个子图的左边界实测会差 8~16px。
+
+```tsx
+import {
+  AXIS_LABEL_FONT_SIZE,
+  axisAmountLabel,
+  axisCountLabel,
+  niceAxisMax,
+  seriesMax,
+  sharedAxisGutter,
+} from '@/lib/utils/chart-axis'
+
+// 值轴上限定到整档 → 最宽的刻度就是上限那一个
+const countAxisMax = niceAxisMax(seriesMax(series.flatMap((s) => s.count)))
+const amountAxisMax = niceAxisMax(seriesMax(series.flatMap((s) => s.payamt)))
+
+// 两张轴里最宽的标签 → 公共标签列宽
+const gutter = sharedAxisGutter([
+  axisCountLabel(countAxisMax),
+  axisAmountLabel(amountAxisMax),
+])
+
+const option: EChartsOption = {
+  // 两个 grid 用同一个 left
+  grid: [
+    { left: gutter, right: 16, top: 40, height: '32%' },
+    { left: gutter, right: 16, top: '54%', bottom: 50 },
+  ],
+  yAxis: [
+    {
+      type: 'value', gridIndex: 0,
+      minInterval: 1,          // 刻度不带小数
+      max: countAxisMax,
+      axisLabel: { fontSize: AXIS_LABEL_FONT_SIZE, formatter: axisCountLabel },
+    },
+    {
+      type: 'value', gridIndex: 1,
+      minInterval: 1,
+      max: amountAxisMax,
+      axisLabel: { fontSize: AXIS_LABEL_FONT_SIZE, formatter: axisAmountLabel },
+    },
+  ],
+  series: [
+    // 拐点带弧但不糊，且不越出取值范围（单调插值）
+    { type: 'line', smooth: LINE_SMOOTH, smoothMonotone: 'x', data: [...] },
+  ],
+}
+```
+
+**关键点**：① 标签列宽用 `measureTextWidth`（canvas 量宽，与 ECharts 同一套字体度量）算，`AXIS_LABEL_FONT_SIZE` 必须与 `axisLabel.fontSize` 一致；② 上限自己定死，量宽时才知道最宽的刻度是哪一串；③ 平滑度用 `LINE_SMOOTH`（`chart-theme.ts`，0.3；`smooth: true` = 0.5 会把尖峰抹圆）并配 `smoothMonotone: 'x'`，否则曲线会越出两点之间的取值范围（谷底穿零轴、峰值越上限）。
+
