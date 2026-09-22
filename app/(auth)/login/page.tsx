@@ -8,16 +8,16 @@ import { useEffect } from 'react'
 export default function LoginPage() {
   const { login, isLoading, isAuthenticated } = useAuth()
 
-  // 已登录则跳转到账号管理页
+  // 已登录则跳转到仪表盘
   useEffect(() => {
     if (isAuthenticated) {
-      window.location.href = '/dashboard/accounts'
+      window.location.href = '/dashboard/index'
     }
   }, [isAuthenticated])
 
   const handleLogin = async (data: Parameters<typeof login>[0]) => {
     await login(data)
-    window.location.href = '/dashboard/accounts'
+    window.location.href = '/dashboard/index'
   }
 
   return (
