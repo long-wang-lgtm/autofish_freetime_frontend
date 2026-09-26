@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ClipboardList } from 'lucide-react'
 import { SidebarBase } from './SidebarBase'
 
 // 可展开的子导航配置
@@ -46,6 +47,11 @@ const navItems: NavItem[] = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
       </svg>
     ),
+  },
+  {
+    label: '订单列表',
+    path: '/dashboard/orders',
+    icon: <ClipboardList className="w-5 h-5" />,
   },
   {
     label: '商品发布',

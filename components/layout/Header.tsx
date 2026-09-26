@@ -99,7 +99,7 @@ export function Header({ children, onMenuClick }: HeaderProps) {
           {/* 待发货订单提醒 — 图标+数字，无文字；total 为 0 时整个入口隐藏 */}
           {pendingOrderCount > 0 && (
             <button
-              onClick={() => router.push('/dashboard/items?tab=orders')}
+              onClick={() => router.push('/dashboard/orders')}
               className="absolute right-0 lg:right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
               title={`${pendingOrderCount} 个待发货订单`}
             >

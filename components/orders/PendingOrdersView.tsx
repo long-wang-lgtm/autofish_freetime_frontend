@@ -4,10 +4,9 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { RefreshCw } from 'lucide-react'
-import type { AccountName } from '@/lib/api/accounts'
 import type { PendingOrder, ShipByVoucher } from '@/lib/api/items'
 import { fetchPendingOrders, getVoucherKinds, updateItemShipConfig } from '@/lib/api/items'
-import { hasShipConfig } from './config'
+import { hasShipConfig } from '@/components/items/config'
 import { fmtPrice, fmtDate } from '@/lib/utils/format'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 import { Pagination } from '@/components/ui/data/Pagination'
@@ -16,6 +15,8 @@ import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
 import { ShipConfigModal } from '@/components/items/parts/ShipConfigModal'
+import { useAccounts } from '@/hooks/useAccounts'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 /** 发货配置状态徽章配置（已配置=绿 / 未配置=红） */
 const SHIP_STATUS_CONFIG: Record<'configured' | 'unconfigured', { label: string; color: 'green' | 'red' }> = {
@@ -27,11 +28,6 @@ const SHIP_STATUS_CONFIG: Record<'configured' | 'unconfigured', { label: string;
 const PENDING_ORDERS_GRID_COLS = '8fr 8fr 16fr 8fr 8fr 6fr 8fr 7fr 6fr'
 
 const PAGE_SIZE = 20
-
-interface PendingOrdersTabProps {
-  isMobile: boolean
-  accounts: AccountName[]
-}
 
 /** 规格文本：sku 非空时 values 拼接（name:value 逗号分隔）+ ×数量；否则仅 ×数量 */
 function buildSkuText(order: PendingOrder): string {
@@ -110,8 +106,10 @@ function PendingOrderCard({
   )
 }
 
-export function PendingOrdersTab({ isMobile, accounts }: PendingOrdersTabProps) {
+export function PendingOrdersView() {
   const queryClient = useQueryClient()
+  const isMobile = useIsMobile()
+  const { accounts } = useAccounts()
 
   // 筛选 / 排序 / 分页状态
   const [uid, setUid] = useState<string | undefined>(undefined)

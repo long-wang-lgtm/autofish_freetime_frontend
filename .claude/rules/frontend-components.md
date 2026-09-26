@@ -85,6 +85,8 @@ components/
 │       └── ImStatusChart.tsx   — IM 状态图表
 ├── accounts/                   ← 账号模块业务组件
 ├── auth/                       ← 认证模块业务组件
+├── orders/                      ← 订单模块业务组件
+│   └── PendingOrdersView.tsx    — 待发货订单页内容
 ├── items/                      ← 商品模块业务组件
 │   ├── views/                  — 视图组件（列表行、卡片等）
 │   ├── drawers/                — 抽屉/弹窗组件

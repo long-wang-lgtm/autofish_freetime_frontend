@@ -47,6 +47,7 @@
 |-----|----------|------|----------|----------|----------|
 | `/dashboard/accounts` | 账号管理 | DashboardLayout | `AccountRow`, `AccountCard`, `QrLoginModal`, `LinkLoginModal`, `LinkManagement`, `TabBar` | `accounts.ts` | `?tab=accounts`（预留扩展） |
 | `/dashboard/items` | 商品管理 + 回复规则 | DashboardLayout | `ItemsTab`, `RulesTab`, `useItemsPage` hook | `items.ts`, `keywords.ts` | `?tab=items`, `?tab=rules` |
+| `/dashboard/orders` | 待发货订单 | DashboardLayout | `PendingOrdersView`, `ShipConfigModal` | `items.ts` | 无（单 Tab 栏仅充当标题） |
 | `/dashboard/batch-publish` | 批量创作 | DashboardLayout | `OpportunityListPanel`, `MaterialWorkspace`, `PendingOverviewPanel`, `MaterialEditSheet` | `batch-publish.ts` | 无 |
 | `/dashboard/settings` | 系统设置 | DashboardLayout | `AIConfigTab`, `NotificationTab` | `ai-config.ts`, `notification.ts` | `?tab=ai-config`, `?tab=notification` |
 
