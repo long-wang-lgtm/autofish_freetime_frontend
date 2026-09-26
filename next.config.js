@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  /**
+   * 构建产物目录。默认仍是 `.next`（行为不变）；用 NEXT_DIST_DIR 可指到别处，
+   * 用于在不打断运行中的 next dev（它占着 .next）的前提下做一次生产构建验证。
+   */
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   images: {
     domains: ['localhost'],
   },

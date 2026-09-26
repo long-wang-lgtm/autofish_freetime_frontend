@@ -6,6 +6,8 @@
 
 # next.js
 /.next/
+# 验证用构建产物（NEXT_DIST_DIR=.next-verify npm run build，不干扰运行中的 dev）
+/.next-verify/
 /out/
 
 # production
