@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import type { OrderStatusTab, OrdersQuery, PendingOrder, ShipByVoucher } from '@/lib/api/items'
-import { ORDER_SORTABLE_FIELDS, fetchOrders, getVoucherKinds, updateItemShipConfig } from '@/lib/api/items'
+import type { OrderStatusTab, OrdersQuery, PendingOrder, PendingOrdersResponse, ShipByVoucher } from '@/lib/api/items'
+import { ORDER_SORTABLE_FIELDS, alterOrderPrice, fetchOrders, getVoucherKinds, updateItemShipConfig } from '@/lib/api/items'
 import { hasShipConfig } from '@/components/items/config'
+import { ConfigStatusCell } from '@/components/items/parts/ConfigStatusCell'
 import { fmtPrice, fmtDateTimeRaw } from '@/lib/utils/format'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 import { Pagination } from '@/components/ui/data/Pagination'
@@ -14,16 +15,11 @@ import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
 import { OrdersFilterBar } from '@/components/orders/OrdersFilterBar'
+import { OrderRepriceDialog } from '@/components/orders/parts/OrderRepriceDialog'
 import { ShipConfigModal } from '@/components/items/parts/ShipConfigModal'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useOrdersFilters } from '@/hooks/useOrdersFilters'
-
-/** 发货配置状态徽章配置（已配置=绿 / 未配置=红） */
-const SHIP_STATUS_CONFIG: Record<'configured' | 'unconfigured', { label: string; color: 'green' | 'red' }> = {
-  configured: { label: '已配置', color: 'green' },
-  unconfigured: { label: '未配置', color: 'red' },
-}
 
 /**
  * 订单状态徽章配置（「全部订单」档的状态列用）。
@@ -64,10 +60,12 @@ function PendingOrderCard({
   order,
   tab,
   onConfig,
+  onReprice,
 }: {
   order: PendingOrder
   tab: OrderStatusTab
   onConfig: (order: PendingOrder) => void
+  onReprice: (order: PendingOrder) => void
 }) {
   const configured = hasShipConfig(order.item.config?.shipment)
 
@@ -109,8 +107,23 @@ function PendingOrderCard({
         </div>
         <div className="flex items-center justify-between">
           <span className="text-gray-400">金额</span>
-          <span className="text-gray-900 font-medium tabular-nums">{fmtPrice(order.totalPrice)}</span>
+          <span className="flex items-center gap-2">
+            <span className="text-gray-900 font-medium tabular-nums">{fmtPrice(order.totalPrice)}</span>
+            {/* 改价入口跟着金额走（只有待付款档有）*/}
+            {tab.canReprice && (
+              <button onClick={() => onReprice(order)} className="text-blue-600 hover:underline">
+                改价
+              </button>
+            )}
+          </span>
         </div>
+        {/* 发货配置：与商品管理页同款单元格（已配置 / 未配置，点击配置） */}
+        {tab.actionable && (
+          <div className="flex items-center justify-between">
+            <span className="text-gray-400">发货配置</span>
+            <ConfigStatusCell hasConfig={configured} onClick={() => onConfig(order)} />
+          </div>
+        )}
         {/* 时间行按档位配置展开（待发货 1 行、已发货 2 行、交易成功 3 行） */}
         {tab.times.map(({ label, field }) => (
           <div key={field} className="flex items-center justify-between">
@@ -121,28 +134,12 @@ function PendingOrderCard({
           </div>
         ))}
       </div>
-
-      {/* 操作区 —— 仅待处理档（待付款/待发货）需要发货配置 */}
-      {tab.actionable && (
-        <div className="px-4 pb-3 pt-2 flex items-center justify-between gap-2">
-          <StatusBadge
-            status={configured ? 'configured' : 'unconfigured'}
-            config={SHIP_STATUS_CONFIG}
-          />
-          <button
-            onClick={() => onConfig(order)}
-            className="h-11 px-4 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center shadow-sm"
-          >
-            去配置
-          </button>
-        </div>
-      )}
     </div>
   )
 }
 
 export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
-  const { state, emptyText, times, actionable, withState } = tab
+  const { state, emptyText, times, actionable, canReprice, withState } = tab
   // 默认按本档最后一个时间列（最靠后的环节）倒序；该字段不在后端白名单时退回 payment_at
   const leadTimeField = times[times.length - 1].field
   const leadSortable = (ORDER_SORTABLE_FIELDS as readonly string[]).includes(leadTimeField)
@@ -156,8 +153,9 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
   const [asc, setAsc] = useState(false)
   const [page, setPage] = useState(1)
 
-  // 发货配置弹窗
+  // 弹窗：发货配置 / 订单改价
   const [configOrder, setConfigOrder] = useState<PendingOrder | null>(null)
+  const [repriceOrder, setRepriceOrder] = useState<PendingOrder | null>(null)
 
   /** 请求条件（筛选 + 排序），一框一字段；空串一律不发给后端 */
   const ordersQuery = useMemo<OrdersQuery>(
@@ -242,6 +240,31 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
     } catch {
       // 错误已由 mutation onError toast 提示
     }
+  }
+
+  /**
+   * 订单改价：后端返回改价后的订单对象，直接替换列表里那一行即可（不必重拉列表）。
+   * 只动了这一单的金额，所以走 setQueryData 精确替换，不整表刷新。
+   */
+  const repriceMutation = useMutation({
+    mutationFn: (args: { order: PendingOrder; newPrice: number }) =>
+      alterOrderPrice(args.order.account.uid, args.order.orderId, args.newPrice),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(ordersQueryKey, (prev: PendingOrdersResponse | undefined) =>
+        prev
+          ? { ...prev, items: prev.items.map((o) => (o.orderId === updated.orderId ? updated : o)) }
+          : prev,
+      )
+      toast.success('订单价格已修改')
+    },
+    onError: (e) => {
+      toast.error(`改价失败：${e instanceof Error ? e.message : String(e)}`)
+    },
+  })
+
+  const handleReprice = async (order: PendingOrder, newPrice: number) => {
+    // 失败由 mutateAsync 抛出，弹窗据此保持打开（错误 toast 在 mutation.onError 里）
+    await repriceMutation.mutateAsync({ order, newPrice })
   }
 
   // 表头排序切换（新列→倒序，同列 desc→asc→清除）
@@ -338,7 +361,19 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
       sortable: true,
       align: 'center',
       render: (o) => (
-        <span className="text-xs text-gray-900 font-medium tabular-nums">{fmtPrice(o.totalPrice)}</span>
+        <div className="flex items-center justify-center gap-1.5">
+          <span className="text-xs text-gray-900 font-medium tabular-nums">{fmtPrice(o.totalPrice)}</span>
+          {/* 改价入口跟着金额走（只有待付款档有）*/}
+          {canReprice && (
+            <button
+              onClick={() => setRepriceOrder(o)}
+              title="修改订单价格"
+              className="text-xs text-blue-600 hover:underline"
+            >
+              改价
+            </button>
+          )}
+        </div>
       ),
     },
     // 时间列按档位配置展开（待发货 1 列、已发货 2 列、交易成功 3 列）
@@ -352,7 +387,8 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
         return <span className="text-xs text-gray-500 tabular-nums whitespace-nowrap">{t ? fmtDateTimeRaw(t) : '-'}</span>
       },
     })),
-    // 发货配置 / 操作仅「待处理」档（待付款、待发货）需要；其余状态下订单已流转完，无从下手
+    // 发货配置仅「待处理」档（待付款、待发货）需要 —— 与商品管理页同一套单元格：
+    // 已配置显示可点的「已配置」，未配置显示灰色「未配置，点击配置」，不再另设操作列
     ...(actionable
       ? ([
           {
@@ -360,23 +396,10 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
             header: '发货配置',
             align: 'center',
             render: (o: PendingOrder) => (
-              <StatusBadge
-                status={hasShipConfig(o.item.config?.shipment) ? 'configured' : 'unconfigured'}
-                config={SHIP_STATUS_CONFIG}
-              />
-            ),
-          },
-          {
-            key: 'actions',
-            header: '操作',
-            align: 'center',
-            render: (o: PendingOrder) => (
-              <button
+              <ConfigStatusCell
+                hasConfig={hasShipConfig(o.item.config?.shipment)}
                 onClick={() => setConfigOrder(o)}
-                className="h-7 px-2.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                去配置
-              </button>
+              />
             ),
           },
         ] as DataTableColumn<PendingOrder>[])
@@ -453,6 +476,7 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
                   order={order}
                   tab={tab}
                   onConfig={setConfigOrder}
+                  onReprice={setRepriceOrder}
                 />
               ))}
             </div>
@@ -477,6 +501,14 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
           onSave={handleSaveConfig}
         />
       )}
+
+      {/* 订单改价弹窗（入口只挂在待付款档） */}
+      <OrderRepriceDialog
+        order={repriceOrder}
+        isMobile={isMobile}
+        onClose={() => setRepriceOrder(null)}
+        onConfirm={handleReprice}
+      />
     </div>
   )
 }

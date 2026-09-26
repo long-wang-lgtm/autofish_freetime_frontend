@@ -87,7 +87,8 @@
 
 | 组件 | 文件 | 用途 |
 |------|------|------|
-| `PendingOrdersView` | `orders/PendingOrdersView.tsx` | 订单页内容（入参 `tab` = `ORDER_STATUS_TABS` 的一项：`state` 过滤订单状态（「全部订单」档为空 = 不筛）、`emptyText` 用于空态/错误文案、`times` 决定展示哪几个时间列（按流转环节累积：待付款 1 列 → 待发货 2 列 → 已发货 3 列 → 交易成功 4 列）、`actionable` 决定是否带发货配置与「去配置」列、`withState` 决定是否带订单状态列）。列宽由列定义推导（商品列 2 份、其余等宽 1 份），列数随档位变。含筛选栏 + 排序/分页 + DataTable 桌面表格与移动端卡片降级 + `ShipConfigModal` 发货配置 + 「同步」按钮（`sync=true`）。数据源 `fetchOrders`（`POST /api/items/orders.list`）。账号列表取自 `useAccounts()`，移动端判定用 `useIsMobile()`。页面壳见 `app/dashboard/orders/page.tsx` |
+| `PendingOrdersView` | `orders/PendingOrdersView.tsx` | 订单页内容（入参 `tab` = `ORDER_STATUS_TABS` 的一项：`state` 过滤订单状态（「全部订单」档为空 = 不筛）、`emptyText` 用于空态/错误文案、`times` 决定展示哪几个时间列（按流转环节累积：待付款 1 列 → 待发货 2 列 → 已发货 3 列 → 交易成功 4 列）、`actionable` 决定是否带发货配置与「去配置」列、`canReprice` 决定是否带「改价」按钮（只有待付款档）、`withState` 决定是否带订单状态列）。列宽由列定义推导（商品列 2 份、其余等宽 1 份），列数随档位变。含筛选栏 + 排序/分页 + DataTable 桌面表格与移动端卡片降级 + `ShipConfigModal` 发货配置 + `OrderRepriceDialog` 改价 + 「同步」按钮（`sync=true`）。数据源 `fetchOrders`（`POST /api/orders.list`）、`alterOrderPrice`（`GET /api/order.alter.price`）。账号列表取自 `useAccounts()`，移动端判定用 `useIsMobile()`。页面壳见 `app/dashboard/orders/page.tsx` |
+| `OrderRepriceDialog` | `orders/parts/OrderRepriceDialog.tsx` | 订单改价弹窗（PC `Modal` / 移动端 `BottomSheet`）：显示订单号、买家、原价，输入新价格（元，两位小数，>0，预填当前金额），`onConfirm(order, newPrice)` 失败时保持打开可重试。调用方 `PendingOrdersView` 的 `repriceMutation` 走 `alterOrderPrice`（`GET /api/order.alter.price?uid=&orderId=&newprice=`），成功用返回的订单对象精确替换列表里那一行 |
 | `OrdersFilterBar` | `orders/OrdersFilterBar.tsx` | 订单筛选栏（入口按视口分 `parts/OrdersFilterBarDesktop.tsx` / `parts/OrdersFilterBarMobile.tsx`，共用 `OrdersFilterBarProps` 与 `FilterInput`）。桌面单行 flex-wrap：同步 + 账号下拉 + 商品标题/商品ID/订单号/买家昵称/买家ID 五个文本框 + 清空筛选；移动端常驻 2 行（账号/筛选N/清空/同步 + 商品标题/商品ID），订单号、买家昵称、买家ID 收进「筛选 N」展开区。筛选状态见 `useOrdersFilters` |
 
 ## 商品管理组件 (`components/items/`)

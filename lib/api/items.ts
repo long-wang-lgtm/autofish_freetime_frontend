@@ -556,9 +556,9 @@ export async function getVoucherKinds(): Promise<VoucherKind[]> {
   return fetchApi<VoucherKind[]>("/api/items/voucher.list")
 }
 
-/** 待发货订单数量 — GET /api/items/orders.pending.count */
+/** 待发货订单数量 — GET /api/orders.pending.count */
 export async function fetchPendingOrderCount(): Promise<{ total: number }> {
-  return fetchApi<{ total: number }>("/api/items/orders.pending.count")
+  return fetchApi<{ total: number }>("/api/orders.pending.count")
 }
 
 /**
@@ -597,6 +597,8 @@ export interface OrderStatusTab {
   times: readonly OrderTimeColumn[]
   /** 是否处于「待处理」阶段 —— 只有这类状态才需要发货配置与「去配置」操作 */
   actionable: boolean
+  /** 是否可改价 —— 只有待付款档有这动作（买家还没付款，卖家才调得动价） */
+  canReprice?: boolean
   /** 是否展示「订单状态」列 —— 跨状态的档位才有必要，单状态档位该列恒为同一个值 */
   withState?: boolean
 }
@@ -617,7 +619,7 @@ export const ORDER_STATUS_TABS = [
   { key: 'all',       label: '全部订单', state: undefined,  emptyText: '订单',
     times: [ORDER_TIME_COLUMNS.created], actionable: false, withState: true },
   { key: 'notpay',    label: '待付款',   state: '待付款',   emptyText: '待付款订单',
-    times: [ORDER_TIME_COLUMNS.created], actionable: true },
+    times: [ORDER_TIME_COLUMNS.created], actionable: true, canReprice: true },
   { key: 'notship',   label: '待发货',   state: '待发货',   emptyText: '待发货订单',
     times: [ORDER_TIME_COLUMNS.created, ORDER_TIME_COLUMNS.paid], actionable: true },
   { key: 'shipped',   label: '已发货',   state: '已发货',   emptyText: '已发货订单',
@@ -657,8 +659,9 @@ export interface OrdersQuery {
 }
 
 /**
- * 订单列表 — POST /api/items/orders.list?page=&size=
+ * 订单列表 — POST /api/orders.list?page=&size=
  *
+ * 订单接口自 2026-09 起迁到 `free/user/order.py`（router prefix `/api`，不再是 `/api/items`）。
  * 分页在 query，其余条件全在后端 Body 参数里（uid/state/sync/order_by/asc）。
  * 注意这里是 POST 而非 GET：浏览器 fetch 不允许 GET 携带请求体，
  * 而 body 化的筛选参数是调不通就退化成「全量 + 默认排序」的静默错误，
@@ -672,9 +675,28 @@ export async function fetchOrders(
   page = 1,
   size = 20,
 ): Promise<PendingOrdersResponse> {
-  return fetchApi<PendingOrdersResponse>("/api/items/orders.list", {
+  return fetchApi<PendingOrdersResponse>("/api/orders.list", {
     method: "POST",
     params: { page, size },
     body: JSON.stringify(query),
+  })
+}
+
+/**
+ * 修改订单价格 — GET /api/order.alter.price?uid=&orderId=&newprice=
+ *
+ * 三个参数全在 query。`newprice` 单位是**元**（与 totalPrice 同口径），后端自己乘 100
+ * 换成闲鱼要的「分」。返回改价后的订单对象，调用方拿它替换列表里那一行即可，
+ * 不必重新拉列表。
+ *
+ * 仅待付款订单可改价（后端只在买家未付款时调得动），所以按钮只挂在这一档。
+ */
+export async function alterOrderPrice(
+  uid: string,
+  orderId: string,
+  newprice: number,
+): Promise<PendingOrder> {
+  return fetchApi<PendingOrder>("/api/order.alter.price", {
+    params: { uid, orderId, newprice },
   })
 }
