@@ -9,11 +9,14 @@ import { useTabRouting } from '@/hooks/useTabRouting'
 type OrderTabKey = typeof ORDER_STATUS_TABS[number]['key']
 
 const ORDER_TAB_KEYS = ORDER_STATUS_TABS.map((t) => t.key)
+/** 默认落在「待发货」—— 需要动手处理的一档，侧栏角标也指向它 */
 const DEFAULT_TAB: OrderTabKey = 'notship'
 
 function OrdersPageContent() {
   const [activeTab, setActiveTab] = useTabRouting<OrderTabKey>(ORDER_TAB_KEYS, DEFAULT_TAB)
-  const tab = ORDER_STATUS_TABS.find((t) => t.key === activeTab) ?? ORDER_STATUS_TABS[1]
+  const tab =
+    ORDER_STATUS_TABS.find((t) => t.key === activeTab)
+    ?? ORDER_STATUS_TABS.find((t) => t.key === DEFAULT_TAB)!
 
   return (
     <div className="flex flex-col gap-2 h-full">

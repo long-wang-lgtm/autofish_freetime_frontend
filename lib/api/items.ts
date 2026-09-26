@@ -565,7 +565,9 @@ export async function fetchPendingOrderCount(): Promise<{ total: number }> {
  * 订单列表可排序字段白名单 —— 必须与后端 /orders.list 的 SORTABLE_FIELDS 一致，
  * 不在表里的排序字段后端会静默退回 payment_at。
  */
-export const ORDER_SORTABLE_FIELDS = ['created_at', 'payment_at', 'totalPrice', 'buyNum'] as const
+export const ORDER_SORTABLE_FIELDS = [
+  'created_at', 'payment_at', 'shipped_at', 'finishd_at', 'totalPrice', 'buyNum',
+] as const
 
 /** 订单状态 Tab 配置 */
 export interface OrderStatusTab {
@@ -573,14 +575,18 @@ export interface OrderStatusTab {
   key: string
   /** Tab 文案 */
   label: string
-  /** 后端 orderStatus 字面量 */
-  state: string
+  /** 后端 orderStatus 字面量；跨状态的档位（全部订单）不传，即不按状态筛 */
+  state?: string
+  /** 空态 / 错误文案里指代本档订单的名词（「暂无X」「加载X失败」） */
+  emptyText: string
   /** 时长列（第 7 列）列头 —— 各状态的「关键时刻」叫法不同 */
   timeLabel: string
   /** 时长列取值的字段（须是 PendingOrder 的字段名） */
   timeField: 'created_at' | 'payment_at' | 'shipped_at' | 'finishd_at'
   /** 是否处于「待处理」阶段 —— 只有这类状态才需要发货配置与「去配置」操作 */
   actionable: boolean
+  /** 是否展示「订单状态」列 —— 跨状态的档位才有必要，单状态档位该列恒为同一个值 */
+  withState?: boolean
 }
 
 /**
@@ -588,22 +594,40 @@ export interface OrderStatusTab {
  *
  * 每一档的「时刻列」按订单流转阶段取字段：待付款看下单、待发货看付款、已发货看发货、
  * 交易成功看成交；退款中 / 交易关闭的流转已经终止，回落到该单最后确定发生的时点。
+ * 「全部订单」跨状态，时刻列取下单时间（任何订单都有这个时点），并额外展示状态列。
  */
 export const ORDER_STATUS_TABS = [
-  { key: 'notpay',    label: '待付款',   state: '待付款',   timeLabel: '下单时间', timeField: 'created_at', actionable: true },
-  { key: 'notship',   label: '待发货',   state: '待发货',   timeLabel: '付款时间', timeField: 'payment_at', actionable: true },
-  { key: 'shipped',   label: '已发货',   state: '已发货',   timeLabel: '发货时间', timeField: 'shipped_at', actionable: false },
-  { key: 'refunding', label: '退款中',   state: '退款中',   timeLabel: '付款时间', timeField: 'payment_at', actionable: false },
-  { key: 'finished',  label: '交易成功', state: '交易成功', timeLabel: '成交时间', timeField: 'finishd_at', actionable: false },
-  { key: 'closed',    label: '交易关闭', state: '交易关闭', timeLabel: '下单时间', timeField: 'created_at', actionable: false },
+  { key: 'all',       label: '全部订单', state: undefined,  emptyText: '订单',       timeLabel: '下单时间', timeField: 'created_at', actionable: false, withState: true },
+  { key: 'notpay',    label: '待付款',   state: '待付款',   emptyText: '待付款订单', timeLabel: '下单时间', timeField: 'created_at', actionable: true },
+  { key: 'notship',   label: '待发货',   state: '待发货',   emptyText: '待发货订单', timeLabel: '付款时间', timeField: 'payment_at', actionable: true },
+  { key: 'shipped',   label: '已发货',   state: '已发货',   emptyText: '已发货订单', timeLabel: '发货时间', timeField: 'shipped_at', actionable: false },
+  { key: 'refunding', label: '退款中',   state: '退款中',   emptyText: '退款中订单', timeLabel: '付款时间', timeField: 'payment_at', actionable: false },
+  { key: 'finished',  label: '交易成功', state: '交易成功', emptyText: '交易成功订单', timeLabel: '成交时间', timeField: 'finishd_at', actionable: false },
+  { key: 'closed',    label: '交易关闭', state: '交易关闭', emptyText: '交易关闭订单', timeLabel: '下单时间', timeField: 'created_at', actionable: false },
 ] as const satisfies readonly OrderStatusTab[]
 
-/** 订单列表查询条件（筛选/排序/同步 —— 后端全部收在请求体里） */
+/**
+ * 订单列表查询条件（筛选/排序/同步 —— 后端全部收在请求体里）。
+ *
+ * 一框一字段，每个参数只筛一个字段。匹配语义分两档（照抄后端）：
+ * - 精确：uid / orderId / gid / buyerId / state
+ * - 包含：title / buyerName
+ */
 export interface OrdersQuery {
   uid?: string
   state?: string
   /** true = 先向闲鱼拉一次最新订单再返回列表（耗时较长，由页面「同步」按钮触发） */
   sync?: boolean
+  /** 订单号，精确 */
+  orderId?: string
+  /** 商品 ID，精确 */
+  gid?: string
+  /** 商品标题，包含匹配 */
+  title?: string
+  /** 买家 ID，精确 */
+  buyerId?: string
+  /** 买家昵称，包含匹配 */
+  buyerName?: string
   order_by?: string
   asc?: boolean
 }

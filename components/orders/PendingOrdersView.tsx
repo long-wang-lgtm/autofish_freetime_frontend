@@ -1,22 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { RefreshCw } from 'lucide-react'
-import type { OrderStatusTab, PendingOrder, ShipByVoucher } from '@/lib/api/items'
+import type { OrderStatusTab, OrdersQuery, PendingOrder, ShipByVoucher } from '@/lib/api/items'
 import { ORDER_SORTABLE_FIELDS, fetchOrders, getVoucherKinds, updateItemShipConfig } from '@/lib/api/items'
 import { hasShipConfig } from '@/components/items/config'
-import { fmtPrice, fmtDate } from '@/lib/utils/format'
+import { fmtPrice, fmtDateTimeRaw } from '@/lib/utils/format'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
 import { Pagination } from '@/components/ui/data/Pagination'
 import { EmptyState } from '@/components/ui/feedback/EmptyState'
 import { ErrorBanner } from '@/components/ui/feedback/ErrorBanner'
 import { LoadingSpinner } from '@/components/ui/feedback/LoadingSpinner'
 import { StatusBadge } from '@/components/ui/feedback/StatusBadge'
+import { OrdersFilterBar } from '@/components/orders/OrdersFilterBar'
 import { ShipConfigModal } from '@/components/items/parts/ShipConfigModal'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useOrdersFilters } from '@/hooks/useOrdersFilters'
 
 /** 发货配置状态徽章配置（已配置=绿 / 未配置=红） */
 const SHIP_STATUS_CONFIG: Record<'configured' | 'unconfigured', { label: string; color: 'green' | 'red' }> = {
@@ -25,16 +26,34 @@ const SHIP_STATUS_CONFIG: Record<'configured' | 'unconfigured', { label: string;
 }
 
 /**
- * 桌面表格列宽（两套形态，按当前 Tab 是否「待处理」切换）。
+ * 订单状态徽章配置（「全部订单」档的状态列用）。
  *
- * - 待处理档（待付款/待发货）9 列：订单号/商品ID/商品/买家/规格×数量/金额/时刻/发货配置/操作
- * - 归档档（已发货/退款中/交易成功/交易关闭）7 列：订单已流转完，发货配置与「去配置」
- *   无从谈起，整列去掉，省下的宽度匀给商品与买家列。
- *
- * 两套各自成比例即可，不要求总和相等；调列宽时整套一起调。
+ * StatusBadge 只有 green/red/amber/gray 四色，故按语义归类：待办类（待付款、待发货）
+ * 共用 amber，已终止的（交易关闭、已发货）共用 gray，退款中是异常态用 red。
  */
-const ACTIONABLE_GRID_COLS = '1fr 1fr 2fr 1fr 1fr 1fr 1fr 1fr 1fr'
-const ARCHIVED_GRID_COLS = '1fr 1fr 2fr 1fr 1fr 1fr 1fr'
+const ORDER_STATUS_BADGE_CONFIG: Record<string, { label: string; color: 'green' | 'red' | 'amber' | 'gray' }> = {
+  '待付款':   { label: '待付款',   color: 'amber' },
+  '待发货':   { label: '待发货',   color: 'amber' },
+  '已发货':   { label: '已发货',   color: 'gray' },
+  '退款中':   { label: '退款中',   color: 'red' },
+  '交易成功': { label: '交易成功', color: 'green' },
+  '交易关闭': { label: '交易关闭', color: 'gray' },
+}
+
+/**
+ * 桌面表格列宽（三套形态，按当前 Tab 切换）。
+ *
+ * - 待处理档（待付款 / 待发货）9 列：订单号/商品ID/商品/买家/规格×数量/金额/时刻/发货配置/操作
+ * - 归档档（已发货 / 退款中 / 交易成功 / 交易关闭）7 列：订单已流转完，发货配置与「去配置」
+ *   无从谈起，整列去掉，省下的宽度匀给商品与买家列
+ * - 全部订单 8 列：归档档 + 订单状态列（跨状态档位不亮状态列，一行看不出是哪一档）
+ *
+ * 三套各自成比例即可，不要求总和相等。两个列各占 2 份：商品列（标题最长）与时刻列
+ * （`YYYY-MM-DD HH:mm` 十六字符，等份放不下会被折行）。调列宽时整套一起调。
+ */
+const ACTIONABLE_GRID_COLS = '1fr 1fr 2fr 1fr 1fr 1fr 2fr 1fr 1fr'
+const ARCHIVED_GRID_COLS = '1fr 1fr 2fr 1fr 1fr 1fr 2fr'
+const ALL_ORDERS_GRID_COLS = '1fr 1fr 1fr 2fr 1fr 1fr 1fr 2fr'
 
 const PAGE_SIZE = 20
 
@@ -72,7 +91,15 @@ function PendingOrderCard({
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* 标题行 */}
       <div className="px-4 pt-3 pb-2">
-        <div className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">{order.item.title || '无标题'}</div>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0 text-sm font-medium text-gray-900 line-clamp-2 leading-snug">
+            {order.item.title || '无标题'}
+          </div>
+          {/* 状态徽章仅跨状态档位（全部订单）显示 */}
+          {tab.withState && (
+            <StatusBadge status={order.orderStatus} config={ORDER_STATUS_BADGE_CONFIG} />
+          )}
+        </div>
         <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-400">
           <span className="truncate max-w-[80px]">{order.account.name}</span>
           <span className="text-gray-300">|</span>
@@ -102,7 +129,7 @@ function PendingOrderCard({
         </div>
         <div className="flex items-center justify-between">
           <span className="text-gray-400">{tab.timeLabel}</span>
-          <span className="text-gray-700 tabular-nums">{time ? fmtDate(time) : '-'}</span>
+          <span className="text-gray-700 tabular-nums">{time ? fmtDateTimeRaw(time) : '-'}</span>
         </div>
       </div>
 
@@ -126,14 +153,14 @@ function PendingOrderCard({
 }
 
 export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
-  const { state, label: stateLabel, timeLabel, timeField, actionable } = tab
+  const { state, emptyText, timeLabel, timeField, actionable, withState } = tab
   const timeSortable = (ORDER_SORTABLE_FIELDS as readonly string[]).includes(timeField)
   const queryClient = useQueryClient()
   const isMobile = useIsMobile()
   const { accounts } = useAccounts()
 
-  // 筛选 / 排序 / 分页状态
-  const [uid, setUid] = useState<string | undefined>(undefined)
+  // 筛选（输入值在 filters，防抖后落在 query）/ 排序 / 分页
+  const { filters, query, setFilter, clearFilters, activeCount } = useOrdersFilters()
   // 默认按本档「时刻」字段倒序；该字段不在后端白名单时退回后端默认的 payment_at
   const [orderBy, setOrderBy] = useState<string | null>(timeSortable ? timeField : 'payment_at')
   const [asc, setAsc] = useState(false)
@@ -142,11 +169,35 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
   // 发货配置弹窗
   const [configOrder, setConfigOrder] = useState<PendingOrder | null>(null)
 
+  /** 请求条件（筛选 + 排序），一框一字段；空串一律不发给后端 */
+  const ordersQuery = useMemo<OrdersQuery>(
+    () => ({
+      state,
+      uid: query.uid,
+      orderId: query.orderId || undefined,
+      gid: query.gid || undefined,
+      title: query.title || undefined,
+      buyerId: query.buyerId || undefined,
+      buyerName: query.buyerName || undefined,
+      order_by: orderBy ?? undefined,
+      asc,
+    }),
+    [state, query, orderBy, asc],
+  )
+
+  // 筛选条件变化 → 回到第一页（否则会停在旧结果的第 N 页）
+  useEffect(() => {
+    setPage(1)
+  }, [query])
+
   // 订单列表（按当前 Tab 的订单状态筛选）—— 同步按钮也复用这份缓存键写入
-  const ordersQueryKey = ['orders', state, uid, page, PAGE_SIZE, orderBy, asc] as const
+  const ordersQueryKey = useMemo(
+    () => ['orders', ordersQuery, page, PAGE_SIZE] as const,
+    [ordersQuery, page],
+  )
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ordersQueryKey,
-    queryFn: () => fetchOrders({ state, uid, order_by: orderBy ?? undefined, asc }, page, PAGE_SIZE),
+    queryFn: () => fetchOrders(ordersQuery, page, PAGE_SIZE),
   })
 
   // 卡种列表
@@ -161,8 +212,7 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
    * 请求本身就带回最新数据，直接写进当前页缓存，不必再多发一次查询。
    */
   const syncMutation = useMutation({
-    mutationFn: () =>
-      fetchOrders({ state, uid, sync: true, order_by: orderBy ?? undefined, asc }, page, PAGE_SIZE),
+    mutationFn: () => fetchOrders({ ...ordersQuery, sync: true }, page, PAGE_SIZE),
     onSuccess: (fresh) => {
       queryClient.setQueryData(ordersQueryKey, fresh)
       queryClient.invalidateQueries({ queryKey: ['pendingOrderCount'] })
@@ -225,6 +275,9 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
     setAsc(false)
   }
 
+  /** 列宽按档位形态取（全部订单 8 列 / 待处理 9 列 / 归档 7 列，三者互斥） */
+  const gridCols = withState ? ALL_ORDERS_GRID_COLS : actionable ? ACTIONABLE_GRID_COLS : ARCHIVED_GRID_COLS
+
   // 表格列定义
   const columns: DataTableColumn<PendingOrder>[] = [
     {
@@ -237,6 +290,19 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
         </span>
       ),
     },
+    // 订单状态列仅跨状态档位（全部订单）挂载 —— 单状态档位整列都是同一个值，摆着就是冗余
+    ...(withState
+      ? ([
+          {
+            key: 'orderStatus',
+            header: '状态',
+            align: 'center',
+            render: (o: PendingOrder) => (
+              <StatusBadge status={o.orderStatus} config={ORDER_STATUS_BADGE_CONFIG} />
+            ),
+          },
+        ] as DataTableColumn<PendingOrder>[])
+      : []),
     {
       key: 'itemGid',
       header: '商品ID',
@@ -295,7 +361,7 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
       align: 'center',
       render: (o) => {
         const t = o[timeField]
-        return <span className="text-xs text-gray-500 tabular-nums">{t ? fmtDate(t) : '-'}</span>
+        return <span className="text-xs text-gray-500 tabular-nums whitespace-nowrap">{t ? fmtDateTimeRaw(t) : '-'}</span>
       },
     },
     // 发货配置 / 操作仅「待处理」档（待付款、待发货）需要；其余状态下订单已流转完，无从下手
@@ -333,35 +399,16 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
 
   return (
     <div className="flex flex-col gap-3 flex-1 min-h-0">
-      {/* 筛选行：账号下拉（一框一字段）+ 同步 */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <select
-            value={uid ?? ''}
-            onChange={(e) => {
-              setUid(e.target.value || undefined)
-              setPage(1)
-            }}
-            className="h-8 px-2 py-0 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">全部账号</option>
-            {accounts.map((acc) => (
-              <option key={acc.uid} value={acc.uid}>
-                {acc.name}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending}
-            title="从闲鱼同步最新订单"
-            className="h-8 px-2 py-0 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-            {syncMutation.isPending ? '同步中' : '同步'}
-          </button>
-        </div>
-      </div>
+      {/* 筛选栏：账号 + 商品标题/商品ID/订单号/买家昵称/买家ID（一框一字段）+ 清空 + 同步 */}
+      <OrdersFilterBar
+        accounts={accounts}
+        filters={filters}
+        onFilterChange={setFilter}
+        activeCount={activeCount}
+        onClear={clearFilters}
+        onSync={() => syncMutation.mutate()}
+        isSyncing={syncMutation.isPending}
+      />
 
       {/* 内容卡片 */}
       <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
@@ -373,14 +420,22 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
 
         {!!error && !isLoading && (
           <ErrorBanner
-            message={`加载${stateLabel}订单失败: ${String(error)}`}
+            message={`加载${emptyText}失败: ${String(error)}`}
             variant="banner"
             onRetry={() => refetch()}
           />
         )}
 
         {!isLoading && !error && data && data.items.length === 0 && (
-          <EmptyState title={`暂无${stateLabel}订单`} description={`当前没有${stateLabel}的订单`} />
+          activeCount > 0 ? (
+            <EmptyState
+              title={`没有符合筛选的${emptyText}`}
+              description="换个条件试试，或清空筛选看本档全部订单"
+              action={{ label: '清空筛选', onClick: clearFilters }}
+            />
+          ) : (
+            <EmptyState title={`暂无${emptyText}`} description={`当前没有${emptyText}`} />
+          )
         )}
 
         {!isLoading && !error && data && data.items.length > 0 && (
@@ -391,7 +446,7 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
                 columns={columns}
                 data={data.items}
                 keyExtractor={(o) => o.orderId}
-                gridTemplateColumns={actionable ? ACTIONABLE_GRID_COLS : ARCHIVED_GRID_COLS}
+                gridTemplateColumns={gridCols}
                 stickyHeader
                 orderBy={orderBy}
                 asc={asc}

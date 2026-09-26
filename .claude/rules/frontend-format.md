@@ -15,6 +15,7 @@
 | `fmtDate(d)` | `"2026-06-29"` | `2026-06-29` | 日期（yyyy-MM-dd） |
 | `fmtDateTime(d)` | `"2026-06-29T14:30:00"` | `2026-06-29 14:30` | 日期时间（yyyy-MM-dd HH:mm） |
 | `fmtRelative(d)` | 2小时前的时间戳 | `2小时前` | 相对时间（刚刚/N分钟前/N小时前/N天前） |
+| `fmtDateTimeRaw(v)` | `"2026-07-21 08:04:23+08:00"` | `2026-07-21 08:04` | 按数据原样取「yyyy-MM-dd HH:mm」，**不做时区换算**（带业务时区的时间字符串用） |
 
 ## 使用规范
 
@@ -23,7 +24,14 @@
 所有数字格式化必须通过格式化函数，禁止在 JSX 中直接使用：
 - `.toLocaleString('zh-CN')` — 应使用 `fmtPrice` 或 `fmtNumber`
 - `.toFixed(1) + '%'` — 应使用 `fmtPercent` 或 `fmtGrowth`
-- 日期字段直接拼接 — 应使用 `fmtDate` / `fmtDateTime` / `fmtRelative`
+- 日期字段直接拼接 — 应使用 `fmtDate` / `fmtDateTime` / `fmtDateTimeRaw` / `fmtRelative`
+
+### 业务时间不换算时区（选 `fmtDateTimeRaw` 还是 `fmtDateTime`）
+
+后端存的是**带业务时区的时间文本**（如订单 `2026-07-21 08:04:23+08:00`）。这类值一律用
+`fmtDateTimeRaw`：它纯字符串取位，渲染出来的就是业务口径的时刻。用 `fmtDateTime`（内部 `new Date()`）
+会按**浏览器本地时区**换算，机器时区与业务时区不一致时时间就整体偏移——列表里的订单时间、
+按数据字段判定的「今日」都属于这一类。`fmtDateTime` 只用于「本地时刻」语义的场景。
 
 ### 禁止在组件中定义格式化函数
 

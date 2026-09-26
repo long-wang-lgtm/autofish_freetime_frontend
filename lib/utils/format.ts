@@ -108,3 +108,18 @@ export function fmtRelative(d: string | Date): string {
   if (days < 30) return `${days}天前`
   return fmtDate(date)
 }
+
+/**
+ * 后端时间文本 → 「YYYY-MM-DD HH:mm」，按数据原样切分，**不经过 Date 对象**。
+ *
+ * 订单时间在库里就是带时区的业务时间文本（`2026-07-21 08:04:23+08:00`）。走 `new Date()`
+ * 会被换算成浏览器本地时区 —— 业务时间只认数据本身的时区，不做换算，所以这里纯字符串取位。
+ * 两种分隔符都吃：`2026-07-21 08:04:23+08:00` / `2026-07-21T08:04:23+08:00`；只有日期则原样返回。
+ *
+ * 与 `fmtDateTime`（Date 版）的区别就在这：那个按浏览器时区渲染，适合「本地时刻」；
+ * 带业务时区的时间字符串一律用这个。
+ */
+export function fmtDateTimeRaw(v: string): string {
+  const [date, rest = ''] = v.trim().replace('T', ' ').split(' ')
+  return rest ? `${date} ${rest.slice(0, 5)}` : date
+}

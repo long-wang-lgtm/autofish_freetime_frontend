@@ -87,7 +87,8 @@
 
 | 组件 | 文件 | 用途 |
 |------|------|------|
-| `PendingOrdersView` | `orders/PendingOrdersView.tsx` | 订单页内容（入参 `tab` = `ORDER_STATUS_TABS` 的一项：`state` 过滤订单状态、`label` 用于空态/错误文案、`timeLabel`+`timeField` 决定第 7 列「时刻」的列头与取值、`actionable` 决定是否带发货配置与「去配置」列）。待处理档（待付款/待发货）9 列，归档档（已发货/退款中/交易成功/交易关闭）7 列。含账号筛选 + 排序/分页 + DataTable 桌面表格与移动端卡片降级 + `ShipConfigModal` 发货配置。数据源 `fetchOrders`（`/api/items/orders.list`）。账号列表取自 `useAccounts()`，移动端判定用 `useIsMobile()`。页面壳见 `app/dashboard/orders/page.tsx` |
+| `PendingOrdersView` | `orders/PendingOrdersView.tsx` | 订单页内容（入参 `tab` = `ORDER_STATUS_TABS` 的一项：`state` 过滤订单状态（「全部订单」档为空 = 不筛）、`emptyText` 用于空态/错误文案、`timeLabel`+`timeField` 决定第 7 列「时刻」的列头与取值、`actionable` 决定是否带发货配置与「去配置」列、`withState` 决定是否带订单状态列）。列形态三套：全部订单 8 列（含状态徽章）、待处理档（待付款/待发货）9 列、归档档（已发货/退款中/交易成功/交易关闭）7 列。含筛选栏 + 排序/分页 + DataTable 桌面表格与移动端卡片降级 + `ShipConfigModal` 发货配置 + 「同步」按钮（`sync=true`）。数据源 `fetchOrders`（`POST /api/items/orders.list`）。账号列表取自 `useAccounts()`，移动端判定用 `useIsMobile()`。页面壳见 `app/dashboard/orders/page.tsx` |
+| `OrdersFilterBar` | `orders/OrdersFilterBar.tsx` | 订单筛选栏（入口按视口分 `parts/OrdersFilterBarDesktop.tsx` / `parts/OrdersFilterBarMobile.tsx`，共用 `OrdersFilterBarProps` 与 `FilterInput`）。桌面单行 flex-wrap：同步 + 账号下拉 + 商品标题/商品ID/订单号/买家昵称/买家ID 五个文本框 + 清空筛选；移动端常驻 2 行（账号/筛选N/清空/同步 + 商品标题/商品ID），订单号、买家昵称、买家ID 收进「筛选 N」展开区。筛选状态见 `useOrdersFilters` |
 
 ## 商品管理组件 (`components/items/`)
 
@@ -158,6 +159,7 @@
 | `useItemsFilters` | `hooks/useItemsFilters.ts` | 商品筛选状态管理 | 筛选/排序/分页 状态 |
 | `useItemsData` | `hooks/useItemsData.ts` | 商品数据获取（React Query） | 商品列表 + 统计 |
 | `useItemMutations` | `hooks/useItemMutations.ts` | 商品变更操作 | 增删改 mutation |
+| `useOrdersFilters` | `hooks/useOrdersFilters.ts` | 订单筛选状态（复用 `useDebounce`，300ms） | `{ filters, query, setFilter, clearFilters, activeCount }` |
 
 ## Stores (`stores/`)
 
