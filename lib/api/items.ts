@@ -313,10 +313,16 @@ export interface VoucherKind {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 待发货订单
+// 订单
 // ═══════════════════════════════════════════════════════════════
 
-/** 待发货订单（ItemOrder 模型，orderStatus='待发货'，字段 snake_case 对齐后端） */
+/**
+ * 订单（ItemOrder 模型，orderStatus 覆盖待付款/待发货/已发货/交易成功/退款中/交易关闭，
+ * 字段 snake_case 对齐后端）。
+ *
+ * 三个时间字段按订单流转依次落值：created_at 一定有值，payment_at / shipped_at /
+ * finishd_at 各自在到达对应节点后才有值（老数据可能缺，渲染时按 `-` 兜底）。
+ */
 export interface PendingOrder {
   orderId: string
   orderStatus: string
@@ -325,13 +331,15 @@ export interface PendingOrder {
   buyNum: number
   totalPrice: number
   sku: ItemSKU[] | null
-  payment_at: string | null       // 可能为 null，展示用 created_at 兜底
-  created_at: string
+  created_at: string             // 下单时间
+  payment_at: string | null      // 付款时间
+  shipped_at: string | null      // 发货时间
+  finishd_at: string | null      // 成交时间（后端字段名带拼写错误，照抄）
   account: AccountName
-  item: ShopItem                  // 完整商品对象，直接喂 ShipConfigModal
+  item: ShopItem                 // 完整商品对象，直接喂 ShipConfigModal
 }
 
-/** 待发货订单分页响应 */
+/** 订单分页响应 */
 export interface PendingOrdersResponse {
   total: number
   page: number
@@ -553,15 +561,53 @@ export async function fetchPendingOrderCount(): Promise<{ total: number }> {
   return fetchApi<{ total: number }>("/api/items/orders.pending.count")
 }
 
-/** 待发货订单列表 — GET /api/items/orders.pending.list */
-export async function fetchPendingOrders(params: {
+/**
+ * 订单列表可排序字段白名单 —— 必须与后端 /orders.list 的 SORTABLE_FIELDS 一致，
+ * 不在表里的排序字段后端会静默退回 payment_at。
+ */
+export const ORDER_SORTABLE_FIELDS = ['created_at', 'payment_at', 'totalPrice', 'buyNum'] as const
+
+/** 订单状态 Tab 配置 */
+export interface OrderStatusTab {
+  /** URL ?tab= 参数值 */
+  key: string
+  /** Tab 文案 */
+  label: string
+  /** 后端 orderStatus 字面量 */
+  state: string
+  /** 时长列（第 7 列）列头 —— 各状态的「关键时刻」叫法不同 */
+  timeLabel: string
+  /** 时长列取值的字段（须是 PendingOrder 的字段名） */
+  timeField: 'created_at' | 'payment_at' | 'shipped_at' | 'finishd_at'
+  /** 是否处于「待处理」阶段 —— 只有这类状态才需要发货配置与「去配置」操作 */
+  actionable: boolean
+}
+
+/**
+ * 订单状态筛选项（顺序即 Tab 顺序）。
+ *
+ * 每一档的「时刻列」按订单流转阶段取字段：待付款看下单、待发货看付款、已发货看发货、
+ * 交易成功看成交；退款中 / 交易关闭的流转已经终止，回落到该单最后确定发生的时点。
+ */
+export const ORDER_STATUS_TABS = [
+  { key: 'notpay',    label: '待付款',   state: '待付款',   timeLabel: '下单时间', timeField: 'created_at', actionable: true },
+  { key: 'notship',   label: '待发货',   state: '待发货',   timeLabel: '付款时间', timeField: 'payment_at', actionable: true },
+  { key: 'shipped',   label: '已发货',   state: '已发货',   timeLabel: '发货时间', timeField: 'shipped_at', actionable: false },
+  { key: 'refunding', label: '退款中',   state: '退款中',   timeLabel: '付款时间', timeField: 'payment_at', actionable: false },
+  { key: 'finished',  label: '交易成功', state: '交易成功', timeLabel: '成交时间', timeField: 'finishd_at', actionable: false },
+  { key: 'closed',    label: '交易关闭', state: '交易关闭', timeLabel: '下单时间', timeField: 'created_at', actionable: false },
+] as const satisfies readonly OrderStatusTab[]
+
+/** 订单列表 — GET /api/items/orders.list（原 orders.pending.list 已弃用） */
+export async function fetchOrders(params: {
   uid?: string
+  state?: string
   page?: number
   size?: number
   order_by?: string
   asc?: boolean
 }): Promise<PendingOrdersResponse> {
-  return fetchApi<PendingOrdersResponse>("/api/items/orders.pending.list", {
+  return fetchApi<PendingOrdersResponse>("/api/items/orders.list", {
     params: params as Record<string, string | number>,
   })
 }

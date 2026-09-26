@@ -87,7 +87,7 @@
 
 | 组件 | 文件 | 用途 |
 |------|------|------|
-| `PendingOrdersView` | `orders/PendingOrdersView.tsx` | 待发货订单页内容（账号筛选 + 排序/分页 + DataTable 桌面表格与移动端卡片降级 + `ShipConfigModal` 发货配置）。账号列表取自 `useAccounts()`，移动端判定用 `useIsMobile()`，无需 props。页面壳见 `app/dashboard/orders/page.tsx` |
+| `PendingOrdersView` | `orders/PendingOrdersView.tsx` | 订单页内容（入参 `tab` = `ORDER_STATUS_TABS` 的一项：`state` 过滤订单状态、`label` 用于空态/错误文案、`timeLabel`+`timeField` 决定第 7 列「时刻」的列头与取值、`actionable` 决定是否带发货配置与「去配置」列）。待处理档（待付款/待发货）9 列，归档档（已发货/退款中/交易成功/交易关闭）7 列。含账号筛选 + 排序/分页 + DataTable 桌面表格与移动端卡片降级 + `ShipConfigModal` 发货配置。数据源 `fetchOrders`（`/api/items/orders.list`）。账号列表取自 `useAccounts()`，移动端判定用 `useIsMobile()`。页面壳见 `app/dashboard/orders/page.tsx` |
 
 ## 商品管理组件 (`components/items/`)
 

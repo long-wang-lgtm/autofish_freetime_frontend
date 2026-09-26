@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { RefreshCw } from 'lucide-react'
-import type { PendingOrder, ShipByVoucher } from '@/lib/api/items'
-import { fetchPendingOrders, getVoucherKinds, updateItemShipConfig } from '@/lib/api/items'
+import type { OrderStatusTab, PendingOrder, ShipByVoucher } from '@/lib/api/items'
+import { ORDER_SORTABLE_FIELDS, fetchOrders, getVoucherKinds, updateItemShipConfig } from '@/lib/api/items'
 import { hasShipConfig } from '@/components/items/config'
 import { fmtPrice, fmtDate } from '@/lib/utils/format'
 import { DataTable, type DataTableColumn } from '@/components/ui/data/DataTable'
@@ -24,10 +24,24 @@ const SHIP_STATUS_CONFIG: Record<'configured' | 'unconfigured', { label: string;
   unconfigured: { label: '未配置', color: 'red' },
 }
 
-/** 桌面表格列宽 — 订单号/商品ID/商品/买家/规格×数量/金额/下单时间/发货配置/操作 */
-const PENDING_ORDERS_GRID_COLS = '8fr 8fr 16fr 8fr 8fr 6fr 8fr 7fr 6fr'
+/**
+ * 桌面表格列宽（两套形态，按当前 Tab 是否「待处理」切换）。
+ *
+ * - 待处理档（待付款/待发货）9 列：订单号/商品ID/商品/买家/规格×数量/金额/时刻/发货配置/操作
+ * - 归档档（已发货/退款中/交易成功/交易关闭）7 列：订单已流转完，发货配置与「去配置」
+ *   无从谈起，整列去掉，省下的宽度匀给商品与买家列。
+ *
+ * 两套各自成比例即可，不要求总和相等；调列宽时整套一起调。
+ */
+const ACTIONABLE_GRID_COLS = '8fr 8fr 16fr 8fr 8fr 6fr 8fr 7fr 6fr'
+const ARCHIVED_GRID_COLS = '8fr 8fr 22fr 10fr 10fr 8fr 12fr'
 
 const PAGE_SIZE = 20
+
+/** 视图入参：tab = 当前订单状态档位（state/文案/时刻字段/是否待处理，见 ORDER_STATUS_TABS） */
+interface PendingOrdersViewProps {
+  tab: OrderStatusTab
+}
 
 /** 规格文本：sku 非空时 values 拼接（name:value 逗号分隔）+ ×数量；否则仅 ×数量 */
 function buildSkuText(order: PendingOrder): string {
@@ -44,12 +58,15 @@ function buildSkuText(order: PendingOrder): string {
 /** 移动端卡片视图 */
 function PendingOrderCard({
   order,
+  tab,
   onConfig,
 }: {
   order: PendingOrder
+  tab: OrderStatusTab
   onConfig: (order: PendingOrder) => void
 }) {
   const configured = hasShipConfig(order.item.config?.shipment)
+  const time = order[tab.timeField]
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -84,47 +101,53 @@ function PendingOrderCard({
           <span className="text-gray-900 font-medium tabular-nums">{fmtPrice(order.totalPrice)}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-gray-400">下单时间</span>
-          <span className="text-gray-700 tabular-nums">{fmtDate(order.payment_at ?? order.created_at)}</span>
+          <span className="text-gray-400">{tab.timeLabel}</span>
+          <span className="text-gray-700 tabular-nums">{time ? fmtDate(time) : '-'}</span>
         </div>
       </div>
 
-      {/* 操作区 */}
-      <div className="px-4 pb-3 pt-2 flex items-center justify-between gap-2">
-        <StatusBadge
-          status={configured ? 'configured' : 'unconfigured'}
-          config={SHIP_STATUS_CONFIG}
-        />
-        <button
-          onClick={() => onConfig(order)}
-          className="h-11 px-4 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center shadow-sm"
-        >
-          去配置
-        </button>
-      </div>
+      {/* 操作区 —— 仅待处理档（待付款/待发货）需要发货配置 */}
+      {tab.actionable && (
+        <div className="px-4 pb-3 pt-2 flex items-center justify-between gap-2">
+          <StatusBadge
+            status={configured ? 'configured' : 'unconfigured'}
+            config={SHIP_STATUS_CONFIG}
+          />
+          <button
+            onClick={() => onConfig(order)}
+            className="h-11 px-4 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center shadow-sm"
+          >
+            去配置
+          </button>
+        </div>
+      )}
     </div>
   )
 }
 
-export function PendingOrdersView() {
+export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
+  const { state, label: stateLabel, timeLabel, timeField, actionable } = tab
+  const timeSortable = (ORDER_SORTABLE_FIELDS as readonly string[]).includes(timeField)
   const queryClient = useQueryClient()
   const isMobile = useIsMobile()
   const { accounts } = useAccounts()
 
   // 筛选 / 排序 / 分页状态
   const [uid, setUid] = useState<string | undefined>(undefined)
-  const [orderBy, setOrderBy] = useState<string | null>('payment_at') // 默认按支付时间倒序（后端默认）
+  // 默认按本档「时刻」字段倒序；该字段不在后端白名单时退回后端默认的 payment_at
+  const [orderBy, setOrderBy] = useState<string | null>(timeSortable ? timeField : 'payment_at')
   const [asc, setAsc] = useState(false)
   const [page, setPage] = useState(1)
 
   // 发货配置弹窗
   const [configOrder, setConfigOrder] = useState<PendingOrder | null>(null)
 
-  // 待发货订单列表
+  // 订单列表（按当前 Tab 的订单状态筛选）
   const { data, isLoading, error, refetch, isFetching } = useQuery({
-    queryKey: ['pendingOrders', uid, page, PAGE_SIZE, orderBy, asc],
+    queryKey: ['orders', state, uid, page, PAGE_SIZE, orderBy, asc],
     queryFn: () =>
-      fetchPendingOrders({
+      fetchOrders({
+        state,
         uid,
         page,
         size: PAGE_SIZE,
@@ -256,38 +279,44 @@ export function PendingOrdersView() {
       ),
     },
     {
-      key: 'payment_at',
-      header: '下单时间',
-      sortable: true,
+      key: timeField,
+      header: timeLabel,
+      sortable: timeSortable,
       align: 'center',
-      render: (o) => (
-        <span className="text-xs text-gray-500 tabular-nums">{fmtDate(o.payment_at ?? o.created_at)}</span>
-      ),
+      render: (o) => {
+        const t = o[timeField]
+        return <span className="text-xs text-gray-500 tabular-nums">{t ? fmtDate(t) : '-'}</span>
+      },
     },
-    {
-      key: 'shipConfig',
-      header: '发货配置',
-      align: 'center',
-      render: (o) => (
-        <StatusBadge
-          status={hasShipConfig(o.item.config?.shipment) ? 'configured' : 'unconfigured'}
-          config={SHIP_STATUS_CONFIG}
-        />
-      ),
-    },
-    {
-      key: 'actions',
-      header: '操作',
-      align: 'center',
-      render: (o) => (
-        <button
-          onClick={() => setConfigOrder(o)}
-          className="h-7 px-2.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          去配置
-        </button>
-      ),
-    },
+    // 发货配置 / 操作仅「待处理」档（待付款、待发货）需要；其余状态下订单已流转完，无从下手
+    ...(actionable
+      ? ([
+          {
+            key: 'shipConfig',
+            header: '发货配置',
+            align: 'center',
+            render: (o: PendingOrder) => (
+              <StatusBadge
+                status={hasShipConfig(o.item.config?.shipment) ? 'configured' : 'unconfigured'}
+                config={SHIP_STATUS_CONFIG}
+              />
+            ),
+          },
+          {
+            key: 'actions',
+            header: '操作',
+            align: 'center',
+            render: (o: PendingOrder) => (
+              <button
+                onClick={() => setConfigOrder(o)}
+                className="h-7 px-2.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                去配置
+              </button>
+            ),
+          },
+        ] as DataTableColumn<PendingOrder>[])
+      : []),
   ]
 
   const total = data?.total ?? 0
@@ -333,14 +362,14 @@ export function PendingOrdersView() {
 
         {!!error && !isLoading && (
           <ErrorBanner
-            message={`加载待发货订单失败: ${String(error)}`}
+            message={`加载${stateLabel}订单失败: ${String(error)}`}
             variant="banner"
             onRetry={() => refetch()}
           />
         )}
 
         {!isLoading && !error && data && data.items.length === 0 && (
-          <EmptyState title="暂无待发货订单" description="当前没有需要处理的待发货订单" />
+          <EmptyState title={`暂无${stateLabel}订单`} description={`当前没有${stateLabel}的订单`} />
         )}
 
         {!isLoading && !error && data && data.items.length > 0 && (
@@ -351,7 +380,7 @@ export function PendingOrdersView() {
                 columns={columns}
                 data={data.items}
                 keyExtractor={(o) => o.orderId}
-                gridTemplateColumns={PENDING_ORDERS_GRID_COLS}
+                gridTemplateColumns={actionable ? ACTIONABLE_GRID_COLS : ARCHIVED_GRID_COLS}
                 stickyHeader
                 orderBy={orderBy}
                 asc={asc}
@@ -365,6 +394,7 @@ export function PendingOrdersView() {
                 <PendingOrderCard
                   key={order.orderId}
                   order={order}
+                  tab={tab}
                   onConfig={setConfigOrder}
                 />
               ))}
