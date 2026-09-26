@@ -9,8 +9,8 @@ import { useTabRouting } from '@/hooks/useTabRouting'
 type OrderTabKey = typeof ORDER_STATUS_TABS[number]['key']
 
 const ORDER_TAB_KEYS = ORDER_STATUS_TABS.map((t) => t.key)
-/** 默认落在「待发货」—— 需要动手处理的一档，侧栏角标也指向它 */
-const DEFAULT_TAB: OrderTabKey = 'notship'
+/** 默认落在「全部订单」—— 从侧栏进来先看全量流水，要处理哪一档再点对应 Tab */
+const DEFAULT_TAB: OrderTabKey = 'all'
 
 function OrdersPageContent() {
   const [activeTab, setActiveTab] = useTabRouting<OrderTabKey>(ORDER_TAB_KEYS, DEFAULT_TAB)

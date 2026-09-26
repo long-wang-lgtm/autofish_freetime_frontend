@@ -6,8 +6,9 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { fmtNumber, fmtDate } from '@/lib/utils/format'
-import { Flame, Truck } from 'lucide-react'
-import { usePendingOrderCount } from './usePendingOrderCount'
+import { Banknote, Bell, Flame, Truck, Undo2, type LucideIcon } from 'lucide-react'
+import { useOrderCounts, type OrderCounts } from './useOrderCounts'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 const TIER_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'VIP0', color: 'gray' },
@@ -15,6 +16,26 @@ const TIER_LABELS: Record<number, { label: string; color: string }> = {
   2: { label: 'VIP2', color: 'amber' },
   3: { label: 'VIP3', color: 'purple' },
 }
+
+/**
+ * 顶栏订单待办提醒 —— 三档常驻（计数为 0 也显示、也可点），点击直达订单页对应 Tab。
+ *
+ * 图标选型原则：**同一视觉重量**。原先 Clock(圆) + Truck(横) + RotateCcw(圆) 混搭，
+ * 圆的墨迹几乎顶满 24×24、Truck 纵向只占中间一截，同设 18px 时圆图标看着明显更大。
+ * 现在三个都用「横向矩形」系（钞票 / 货车 / 回退箭头），并排才齐。
+ */
+const ORDER_ALERTS: {
+  key: keyof OrderCounts
+  label: string
+  tab: string
+  icon: LucideIcon
+  iconClass?: string
+  badgeClass: string
+}[] = [
+  { key: 'notpay',    label: '待付款', tab: 'notpay',    icon: Banknote, badgeClass: 'bg-amber-500' },
+  { key: 'notship',   label: '待发货', tab: 'notship',   icon: Truck,    iconClass: '-scale-x-100', badgeClass: 'bg-red-500' },
+  { key: 'refunding', label: '退款中', tab: 'refunding', icon: Undo2,    badgeClass: 'bg-red-500' },
+]
 
 interface HeaderProps {
   /** 可选的中间区域内容，用于放置面包屑、操作按钮等 */
@@ -29,7 +50,20 @@ export function Header({ children, onMenuClick }: HeaderProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const { total: pendingOrderCount } = usePendingOrderCount()
+  const alertsRef = useRef<HTMLDivElement>(null)
+  const [alertsOpen, setAlertsOpen] = useState(false)
+  /**
+   * 订单提醒是否用「合并形态」（一个通知角标 + 下拉列表）。
+   *
+   * 判据是「窄屏 **且** 触屏」，故意不用项目的 useIsMobile（它只看 max-width:767px）：
+   * PC 上把窗口缩窄、或浏览器缩放（zoom 会压缩 CSS 视口）都会让宽度判断为真，
+   * 于是顶栏莫名其妙变成合并形态 —— 用户明确「PC 端不需要合并」。
+   * pointer: coarse 只在触屏设备成立，PC 无论多窄都保持三档图标。
+   */
+  const showCompactAlerts = useMediaQuery('(max-width: 767px) and (pointer: coarse)')
+  const orderCounts = useOrderCounts()
+  /** 移动端通知角标上的总数 = 三档之和 */
+  const totalAlerts = orderCounts.notpay + orderCounts.notship + orderCounts.refunding
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -43,6 +77,19 @@ export function Header({ children, onMenuClick }: HeaderProps) {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [dropdownOpen])
+
+  // 点击外部关闭订单提醒下拉
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (alertsRef.current && !alertsRef.current.contains(e.target as Node)) {
+        setAlertsOpen(false)
+      }
+    }
+    if (alertsOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [alertsOpen])
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
@@ -67,7 +114,7 @@ export function Header({ children, onMenuClick }: HeaderProps) {
   const displayName = user?.username || '未登录'
 
   return (
-    <header className="h-9 lg:h-10 max-lg:[@media(max-height:500px)]:h-10 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
+    <header className="relative z-30 h-9 lg:h-10 max-lg:[@media(max-height:500px)]:h-10 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
       <div className="h-full px-3 lg:px-3 max-lg:[@media(max-height:500px)]:px-3 flex items-center justify-between">
         {/* 移动端汉堡菜单 — 贴左边缘，高度跟随 header */}
         {onMenuClick && (
@@ -92,24 +139,74 @@ export function Header({ children, onMenuClick }: HeaderProps) {
           <span className="text-sm font-semibold text-gray-900">闲逸通</span>
         </div>
 
-        {/* 中间：可扩展区域（待发货提醒挂在此区右端，不挤右侧功能区） */}
+        {/* 中间：可扩展区域（订单提醒挂在此区右端，不挤右侧功能区） */}
         <div className="flex-1 flex items-center justify-center px-3 lg:px-4 max-lg:[@media(max-height:500px)]:px-1.5 relative">
           {children}
 
-          {/* 待发货订单提醒 — 图标+数字，无文字；total 为 0 时整个入口隐藏 */}
-          {pendingOrderCount > 0 && (
-            <button
-              onClick={() => router.push('/dashboard/orders')}
-              className="absolute right-0 lg:right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
-              title={`${pendingOrderCount} 个待发货订单`}
-            >
-              <span className="relative flex-shrink-0">
-                <Truck className="w-[18px] h-[18px] text-gray-600 -scale-x-100" />
-                <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center leading-none">
-                  {pendingOrderCount > 99 ? '99+' : pendingOrderCount}
-                </span>
-              </span>
-            </button>
+          {/* 订单待办提醒 — 触屏窄屏合成一个通知角标（点击展开下拉列表），PC 一律三档图标 */}
+          {showCompactAlerts ? (
+            <div ref={alertsRef} className="absolute right-0 top-1/2 -translate-y-1/2">
+              {totalAlerts > 0 && (
+                <button
+                  onClick={() => setAlertsOpen((v) => !v)}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                  title={`${totalAlerts} 个待处理订单`}
+                >
+                  <span className="relative flex-shrink-0">
+                    <Bell className="w-[18px] h-[18px] text-gray-600" />
+                    <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center leading-none">
+                      {totalAlerts > 99 ? '99+' : totalAlerts}
+                    </span>
+                  </span>
+                </button>
+              )}
+
+              {alertsOpen && (
+                <div className="absolute right-0 top-full mt-1 w-40 py-1 bg-white border border-gray-200 rounded-xl shadow-md z-50">
+                  {ORDER_ALERTS.map(({ key, label, tab }) => {
+                    const count = orderCounts[key]
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          setAlertsOpen(false)
+                          router.push(`/dashboard/orders?tab=${tab}`)
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <span>{label}</span>
+                        <span className="tabular-nums font-medium">{count}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="absolute right-0 lg:right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+              {/* 三档常驻：计数为 0 的档位照常显示、照常可点，只是不挂数字角标 */}
+              {ORDER_ALERTS.map(({ key, label, tab, icon: Icon, iconClass, badgeClass }) => {
+                const count = orderCounts[key]
+                const empty = count === 0
+                return (
+                  <button
+                    key={key}
+                    onClick={() => router.push(`/dashboard/orders?tab=${tab}`)}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                    title={empty ? `没有${label}订单` : `${count} 个${label}订单`}
+                  >
+                    <span className="relative flex-shrink-0">
+                      <Icon className={`w-[18px] h-[18px] text-gray-600 ${iconClass ?? ''}`} />
+                      {!empty && (
+                        <span className={`absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full text-white text-[10px] font-semibold flex items-center justify-center leading-none ${badgeClass}`}>
+                          {count > 99 ? '99+' : count}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           )}
         </div>
 

@@ -556,9 +556,17 @@ export async function getVoucherKinds(): Promise<VoucherKind[]> {
   return fetchApi<VoucherKind[]>("/api/items/voucher.list")
 }
 
-/** 待发货订单数量 — GET /api/orders.pending.count */
-export async function fetchPendingOrderCount(): Promise<{ total: number }> {
-  return fetchApi<{ total: number }>("/api/orders.pending.count")
+/**
+ * 订单待办计数 — GET /api/orders.waiting.count
+ *
+ * 返回 `{ 状态名: 数量 }`（如 `{'待付款': 6, '待发货': 15, '退款中': 2}`）。
+ * 后端是 group_by 出来的结果，**只包含确实有单的状态**，所以读取时一律 `?? 0` 兜底
+ * （某个状态清零时 key 会直接消失）。
+ *
+ * 原 `/orders.pending.count`（只给待发货一个总数）已弃用。
+ */
+export async function fetchWaitingOrderCount(): Promise<Record<string, number>> {
+  return fetchApi<Record<string, number>>("/api/orders.waiting.count")
 }
 
 /**

@@ -203,7 +203,7 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
     mutationFn: () => fetchOrders({ ...ordersQuery, sync: true }, page, PAGE_SIZE),
     onSuccess: (fresh) => {
       queryClient.setQueryData(ordersQueryKey, fresh)
-      queryClient.invalidateQueries({ queryKey: ['pendingOrderCount'] })
+      queryClient.invalidateQueries({ queryKey: ['orderCounts'] })
       toast.success('订单已同步')
     },
     onError: () => {
@@ -222,7 +222,7 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
     onSuccess: () => {
       toast.success('发货配置已保存')
       refetch()
-      queryClient.invalidateQueries({ queryKey: ['pendingOrderCount'] })
+      queryClient.invalidateQueries({ queryKey: ['orderCounts'] })
     },
     onError: () => {
       toast.error('保存发货配置失败')
