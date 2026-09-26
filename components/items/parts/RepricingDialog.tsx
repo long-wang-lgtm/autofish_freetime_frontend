@@ -196,7 +196,6 @@ export function RepricingDialog({ open, item, onOpenChange, onConfirm }: Reprici
                 <p className="text-sm text-red-600 dark:text-red-400">{quantityValidation.error}</p>
               ) : (
                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                  该接口一次提交价格和库存，改价会同时把库存写成此值
                 </p>
               )}
             </div>
