@@ -33,8 +33,8 @@ const SHIP_STATUS_CONFIG: Record<'configured' | 'unconfigured', { label: string;
  *
  * 两套各自成比例即可，不要求总和相等；调列宽时整套一起调。
  */
-const ACTIONABLE_GRID_COLS = '8fr 8fr 16fr 8fr 8fr 6fr 8fr 7fr 6fr'
-const ARCHIVED_GRID_COLS = '8fr 8fr 22fr 10fr 10fr 8fr 12fr'
+const ACTIONABLE_GRID_COLS = '1fr 1fr 2fr 1fr 1fr 1fr 1fr 1fr 1fr'
+const ARCHIVED_GRID_COLS = '1fr 1fr 2fr 1fr 1fr 1fr 1fr'
 
 const PAGE_SIZE = 20
 
@@ -142,18 +142,11 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
   // 发货配置弹窗
   const [configOrder, setConfigOrder] = useState<PendingOrder | null>(null)
 
-  // 订单列表（按当前 Tab 的订单状态筛选）
-  const { data, isLoading, error, refetch, isFetching } = useQuery({
-    queryKey: ['orders', state, uid, page, PAGE_SIZE, orderBy, asc],
-    queryFn: () =>
-      fetchOrders({
-        state,
-        uid,
-        page,
-        size: PAGE_SIZE,
-        order_by: orderBy ?? undefined,
-        asc,
-      }),
+  // 订单列表（按当前 Tab 的订单状态筛选）—— 同步按钮也复用这份缓存键写入
+  const ordersQueryKey = ['orders', state, uid, page, PAGE_SIZE, orderBy, asc] as const
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ordersQueryKey,
+    queryFn: () => fetchOrders({ state, uid, order_by: orderBy ?? undefined, asc }, page, PAGE_SIZE),
   })
 
   // 卡种列表
@@ -161,6 +154,23 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
     queryKey: ['voucherKinds'],
     queryFn: getVoucherKinds,
     staleTime: 5 * 60 * 1000,
+  })
+
+  /**
+   * 同步：以 sync=true 拉一次 —— 后端会先向闲鱼同步订单再返回列表，所以这一次
+   * 请求本身就带回最新数据，直接写进当前页缓存，不必再多发一次查询。
+   */
+  const syncMutation = useMutation({
+    mutationFn: () =>
+      fetchOrders({ state, uid, sync: true, order_by: orderBy ?? undefined, asc }, page, PAGE_SIZE),
+    onSuccess: (fresh) => {
+      queryClient.setQueryData(ordersQueryKey, fresh)
+      queryClient.invalidateQueries({ queryKey: ['pendingOrderCount'] })
+      toast.success('订单已同步')
+    },
+    onError: () => {
+      toast.error('订单同步失败')
+    },
   })
 
   // 保存发货配置
@@ -323,7 +333,7 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
 
   return (
     <div className="flex flex-col gap-3 flex-1 min-h-0">
-      {/* 筛选行：账号下拉（一框一字段）+ 刷新 */}
+      {/* 筛选行：账号下拉（一框一字段）+ 同步 */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-2">
         <div className="flex items-center gap-2 flex-wrap">
           <select
@@ -342,12 +352,13 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
             ))}
           </select>
           <button
-            onClick={() => refetch()}
-            disabled={isFetching}
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+            title="从闲鱼同步最新订单"
             className="h-8 px-2 py-0 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
-            刷新
+            <RefreshCw className={`w-3.5 h-3.5 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+            {syncMutation.isPending ? '同步中' : '同步'}
           </button>
         </div>
       </div>

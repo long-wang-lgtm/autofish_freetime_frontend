@@ -598,16 +598,35 @@ export const ORDER_STATUS_TABS = [
   { key: 'closed',    label: '交易关闭', state: '交易关闭', timeLabel: '下单时间', timeField: 'created_at', actionable: false },
 ] as const satisfies readonly OrderStatusTab[]
 
-/** 订单列表 — GET /api/items/orders.list（原 orders.pending.list 已弃用） */
-export async function fetchOrders(params: {
+/** 订单列表查询条件（筛选/排序/同步 —— 后端全部收在请求体里） */
+export interface OrdersQuery {
   uid?: string
   state?: string
-  page?: number
-  size?: number
+  /** true = 先向闲鱼拉一次最新订单再返回列表（耗时较长，由页面「同步」按钮触发） */
+  sync?: boolean
   order_by?: string
   asc?: boolean
-}): Promise<PendingOrdersResponse> {
+}
+
+/**
+ * 订单列表 — POST /api/items/orders.list?page=&size=
+ *
+ * 分页在 query，其余条件全在后端 Body 参数里（uid/state/sync/order_by/asc）。
+ * 注意这里是 POST 而非 GET：浏览器 fetch 不允许 GET 携带请求体，
+ * 而 body 化的筛选参数是调不通就退化成「全量 + 默认排序」的静默错误，
+ * 所以后端路由必须注册为 post。
+ *
+ * sync=true 时后端会先同步一次订单再返回，调用方（页面「同步」按钮）需自行
+ * 承担等待与失败提示。
+ */
+export async function fetchOrders(
+  query: OrdersQuery,
+  page = 1,
+  size = 20,
+): Promise<PendingOrdersResponse> {
   return fetchApi<PendingOrdersResponse>("/api/items/orders.list", {
-    params: params as Record<string, string | number>,
+    method: "POST",
+    params: { page, size },
+    body: JSON.stringify(query),
   })
 }
