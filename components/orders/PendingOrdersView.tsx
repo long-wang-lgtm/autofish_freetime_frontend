@@ -40,21 +40,6 @@ const ORDER_STATUS_BADGE_CONFIG: Record<string, { label: string; color: 'green' 
   '交易关闭': { label: '交易关闭', color: 'gray' },
 }
 
-/**
- * 桌面表格列宽（三套形态，按当前 Tab 切换）。
- *
- * - 待处理档（待付款 / 待发货）9 列：订单号/商品ID/商品/买家/规格×数量/金额/时刻/发货配置/操作
- * - 归档档（已发货 / 退款中 / 交易成功 / 交易关闭）7 列：订单已流转完，发货配置与「去配置」
- *   无从谈起，整列去掉，省下的宽度匀给商品与买家列
- * - 全部订单 8 列：归档档 + 订单状态列（跨状态档位不亮状态列，一行看不出是哪一档）
- *
- * 三套各自成比例即可，不要求总和相等。两个列各占 2 份：商品列（标题最长）与时刻列
- * （`YYYY-MM-DD HH:mm` 十六字符，等份放不下会被折行）。调列宽时整套一起调。
- */
-const ACTIONABLE_GRID_COLS = '1fr 1fr 2fr 1fr 1fr 1fr 2fr 1fr 1fr'
-const ARCHIVED_GRID_COLS = '1fr 1fr 2fr 1fr 1fr 1fr 2fr'
-const ALL_ORDERS_GRID_COLS = '1fr 1fr 1fr 2fr 1fr 1fr 1fr 2fr'
-
 const PAGE_SIZE = 20
 
 /** 视图入参：tab = 当前订单状态档位（state/文案/时刻字段/是否待处理，见 ORDER_STATUS_TABS） */
@@ -85,7 +70,6 @@ function PendingOrderCard({
   onConfig: (order: PendingOrder) => void
 }) {
   const configured = hasShipConfig(order.item.config?.shipment)
-  const time = order[tab.timeField]
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -127,10 +111,15 @@ function PendingOrderCard({
           <span className="text-gray-400">金额</span>
           <span className="text-gray-900 font-medium tabular-nums">{fmtPrice(order.totalPrice)}</span>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-gray-400">{tab.timeLabel}</span>
-          <span className="text-gray-700 tabular-nums">{time ? fmtDateTimeRaw(time) : '-'}</span>
-        </div>
+        {/* 时间行按档位配置展开（待发货 1 行、已发货 2 行、交易成功 3 行） */}
+        {tab.times.map(({ label, field }) => (
+          <div key={field} className="flex items-center justify-between">
+            <span className="text-gray-400">{label}</span>
+            <span className="text-gray-700 tabular-nums whitespace-nowrap">
+              {order[field] ? fmtDateTimeRaw(order[field]) : '-'}
+            </span>
+          </div>
+        ))}
       </div>
 
       {/* 操作区 —— 仅待处理档（待付款/待发货）需要发货配置 */}
@@ -153,16 +142,17 @@ function PendingOrderCard({
 }
 
 export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
-  const { state, emptyText, timeLabel, timeField, actionable, withState } = tab
-  const timeSortable = (ORDER_SORTABLE_FIELDS as readonly string[]).includes(timeField)
+  const { state, emptyText, times, actionable, withState } = tab
+  // 默认按本档最后一个时间列（最靠后的环节）倒序；该字段不在后端白名单时退回 payment_at
+  const leadTimeField = times[times.length - 1].field
+  const leadSortable = (ORDER_SORTABLE_FIELDS as readonly string[]).includes(leadTimeField)
   const queryClient = useQueryClient()
   const isMobile = useIsMobile()
   const { accounts } = useAccounts()
 
   // 筛选（输入值在 filters，防抖后落在 query）/ 排序 / 分页
   const { filters, query, setFilter, clearFilters, activeCount } = useOrdersFilters()
-  // 默认按本档「时刻」字段倒序；该字段不在后端白名单时退回后端默认的 payment_at
-  const [orderBy, setOrderBy] = useState<string | null>(timeSortable ? timeField : 'payment_at')
+  const [orderBy, setOrderBy] = useState<string | null>(leadSortable ? leadTimeField : 'payment_at')
   const [asc, setAsc] = useState(false)
   const [page, setPage] = useState(1)
 
@@ -275,9 +265,6 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
     setAsc(false)
   }
 
-  /** 列宽按档位形态取（全部订单 8 列 / 待处理 9 列 / 归档 7 列，三者互斥） */
-  const gridCols = withState ? ALL_ORDERS_GRID_COLS : actionable ? ACTIONABLE_GRID_COLS : ARCHIVED_GRID_COLS
-
   // 表格列定义
   const columns: DataTableColumn<PendingOrder>[] = [
     {
@@ -354,16 +341,17 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
         <span className="text-xs text-gray-900 font-medium tabular-nums">{fmtPrice(o.totalPrice)}</span>
       ),
     },
-    {
-      key: timeField,
-      header: timeLabel,
-      sortable: timeSortable,
-      align: 'center',
-      render: (o) => {
-        const t = o[timeField]
+    // 时间列按档位配置展开（待发货 1 列、已发货 2 列、交易成功 3 列）
+    ...times.map(({ label, field }) => ({
+      key: field,
+      header: label,
+      sortable: (ORDER_SORTABLE_FIELDS as readonly string[]).includes(field),
+      align: 'center' as const,
+      render: (o: PendingOrder) => {
+        const t = o[field]
         return <span className="text-xs text-gray-500 tabular-nums whitespace-nowrap">{t ? fmtDateTimeRaw(t) : '-'}</span>
       },
-    },
+    })),
     // 发货配置 / 操作仅「待处理」档（待付款、待发货）需要；其余状态下订单已流转完，无从下手
     ...(actionable
       ? ([
@@ -394,6 +382,9 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
         ] as DataTableColumn<PendingOrder>[])
       : []),
   ]
+
+  /** 列宽：商品列占 2 份（标题最长），其余一律等宽 1 份 */
+  const gridCols = columns.map((c) => (c.key === 'item' ? '2fr' : '1fr')).join(' ')
 
   const total = data?.total ?? 0
 

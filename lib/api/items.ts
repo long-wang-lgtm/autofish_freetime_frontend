@@ -569,6 +569,15 @@ export const ORDER_SORTABLE_FIELDS = [
   'created_at', 'payment_at', 'shipped_at', 'finishd_at', 'totalPrice', 'buyNum',
 ] as const
 
+/** 可展示的时间字段（须是 PendingOrder 的字段名） */
+export type OrderTimeField = 'created_at' | 'payment_at' | 'shipped_at' | 'finishd_at'
+
+/** 表格/卡片里的一个时间列 */
+export interface OrderTimeColumn {
+  label: string
+  field: OrderTimeField
+}
+
 /** 订单状态 Tab 配置 */
 export interface OrderStatusTab {
   /** URL ?tab= 参数值 */
@@ -579,10 +588,13 @@ export interface OrderStatusTab {
   state?: string
   /** 空态 / 错误文案里指代本档订单的名词（「暂无X」「加载X失败」） */
   emptyText: string
-  /** 时长列（第 7 列）列头 —— 各状态的「关键时刻」叫法不同 */
-  timeLabel: string
-  /** 时长列取值的字段（须是 PendingOrder 的字段名） */
-  timeField: 'created_at' | 'payment_at' | 'shipped_at' | 'finishd_at'
+  /**
+   * 本档要展示的时间列（按顺序排布）。
+   *
+   * 按订单流转环节累积：待付款只有下单时间 → 待发货加付款时间 → 已发货再加发货时间 →
+   * 交易成功一路到成交时间。没发生过的环节不列，整列都会是 `-`。
+   */
+  times: readonly OrderTimeColumn[]
   /** 是否处于「待处理」阶段 —— 只有这类状态才需要发货配置与「去配置」操作 */
   actionable: boolean
   /** 是否展示「订单状态」列 —— 跨状态的档位才有必要，单状态档位该列恒为同一个值 */
@@ -590,20 +602,32 @@ export interface OrderStatusTab {
 }
 
 /**
- * 订单状态筛选项（顺序即 Tab 顺序）。
- *
- * 每一档的「时刻列」按订单流转阶段取字段：待付款看下单、待发货看付款、已发货看发货、
- * 交易成功看成交；退款中 / 交易关闭的流转已经终止，回落到该单最后确定发生的时点。
- * 「全部订单」跨状态，时刻列取下单时间（任何订单都有这个时点），并额外展示状态列。
+ * 四个时间列的标签与字段 —— 各档配置直接引用，别在每档重复写字面量。
+ * 标签即业务口径：下单时间（created_at）/ 付款时间（payment_at）/ 发货时间（shipped_at）/ 成交时间（finishd_at）。
  */
+const ORDER_TIME_COLUMNS = {
+  created:  { label: '下单时间', field: 'created_at' },
+  paid:     { label: '付款时间', field: 'payment_at' },
+  shipped:  { label: '发货时间', field: 'shipped_at' },
+  finished: { label: '成交时间', field: 'finishd_at' },
+} as const satisfies Record<string, OrderTimeColumn>
+
+/** 订单状态筛选项（顺序即 Tab 顺序） */
 export const ORDER_STATUS_TABS = [
-  { key: 'all',       label: '全部订单', state: undefined,  emptyText: '订单',       timeLabel: '下单时间', timeField: 'created_at', actionable: false, withState: true },
-  { key: 'notpay',    label: '待付款',   state: '待付款',   emptyText: '待付款订单', timeLabel: '下单时间', timeField: 'created_at', actionable: true },
-  { key: 'notship',   label: '待发货',   state: '待发货',   emptyText: '待发货订单', timeLabel: '付款时间', timeField: 'payment_at', actionable: true },
-  { key: 'shipped',   label: '已发货',   state: '已发货',   emptyText: '已发货订单', timeLabel: '发货时间', timeField: 'shipped_at', actionable: false },
-  { key: 'refunding', label: '退款中',   state: '退款中',   emptyText: '退款中订单', timeLabel: '付款时间', timeField: 'payment_at', actionable: false },
-  { key: 'finished',  label: '交易成功', state: '交易成功', emptyText: '交易成功订单', timeLabel: '成交时间', timeField: 'finishd_at', actionable: false },
-  { key: 'closed',    label: '交易关闭', state: '交易关闭', emptyText: '交易关闭订单', timeLabel: '下单时间', timeField: 'created_at', actionable: false },
+  { key: 'all',       label: '全部订单', state: undefined,  emptyText: '订单',
+    times: [ORDER_TIME_COLUMNS.created], actionable: false, withState: true },
+  { key: 'notpay',    label: '待付款',   state: '待付款',   emptyText: '待付款订单',
+    times: [ORDER_TIME_COLUMNS.created], actionable: true },
+  { key: 'notship',   label: '待发货',   state: '待发货',   emptyText: '待发货订单',
+    times: [ORDER_TIME_COLUMNS.created, ORDER_TIME_COLUMNS.paid], actionable: true },
+  { key: 'shipped',   label: '已发货',   state: '已发货',   emptyText: '已发货订单',
+    times: [ORDER_TIME_COLUMNS.created, ORDER_TIME_COLUMNS.paid, ORDER_TIME_COLUMNS.shipped], actionable: false },
+  { key: 'refunding', label: '退款中',   state: '退款中',   emptyText: '退款中订单',
+    times: [ORDER_TIME_COLUMNS.created, ORDER_TIME_COLUMNS.paid], actionable: false },
+  { key: 'finished',  label: '交易成功', state: '交易成功', emptyText: '交易成功订单',
+    times: [ORDER_TIME_COLUMNS.created, ORDER_TIME_COLUMNS.paid, ORDER_TIME_COLUMNS.shipped, ORDER_TIME_COLUMNS.finished], actionable: false },
+  { key: 'closed',    label: '交易关闭', state: '交易关闭', emptyText: '交易关闭订单',
+    times: [ORDER_TIME_COLUMNS.created], actionable: false },
 ] as const satisfies readonly OrderStatusTab[]
 
 /**
