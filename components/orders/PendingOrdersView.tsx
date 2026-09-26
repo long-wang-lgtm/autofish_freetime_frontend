@@ -85,7 +85,8 @@ function PendingOrderCard({
         <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-400">
           <span className="truncate max-w-[80px]">{order.account.name}</span>
           <span className="text-gray-300">|</span>
-          <span className="tabular-nums truncate">{order.orderId}</span>
+          {/* 订单号一行完整渲染（不换行、不截断）：账号名让它，先被压缩 */}
+          <span className="tabular-nums whitespace-nowrap">{order.orderId}</span>
         </div>
       </div>
 
@@ -295,7 +296,8 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
       header: '订单号',
       className: 'min-w-0',
       render: (o) => (
-        <span className="block w-full text-xs text-gray-700 tabular-nums truncate" title={o.orderId}>
+        // 订单号 19 位，必须一行完整渲染 → 占 2 份宽度（见 gridCols）+ 不换行
+        <span className="block w-full text-xs text-gray-700 tabular-nums whitespace-nowrap">
           {o.orderId}
         </span>
       ),
@@ -314,16 +316,6 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
         ] as DataTableColumn<PendingOrder>[])
       : []),
     {
-      key: 'itemGid',
-      header: '商品ID',
-      className: 'min-w-0',
-      render: (o) => (
-        <span className="block w-full text-xs text-gray-700 tabular-nums truncate" title={String(o.item.gid)}>
-          {o.item.gid}
-        </span>
-      ),
-    },
-    {
       key: 'item',
       header: '商品',
       className: 'min-w-0',
@@ -336,6 +328,16 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
             {o.account.name}
           </span>
         </div>
+      ),
+    },
+    {
+      key: 'itemGid',
+      header: '商品ID',
+      className: 'min-w-0',
+      render: (o) => (
+        <span className="block w-full text-xs text-gray-700 tabular-nums truncate" title={String(o.item.gid)}>
+          {o.item.gid}
+        </span>
       ),
     },
     {
@@ -406,8 +408,10 @@ export function PendingOrdersView({ tab }: PendingOrdersViewProps) {
       : []),
   ]
 
-  /** 列宽：商品列占 2 份（标题最长），其余一律等宽 1 份 */
-  const gridCols = columns.map((c) => (c.key === 'item' ? '2fr' : '1fr')).join(' ')
+  /** 列宽：商品列 2 份（标题最长）、订单号列 2 份（19 位数字必须一行放得下），其余一律等宽 1 份 */
+  const gridCols = columns
+    .map((c) => (c.key === 'item' || c.key === 'orderId' ? '2fr' : '1fr'))
+    .join(' ')
 
   const total = data?.total ?? 0
 
