@@ -317,6 +317,19 @@ export interface VoucherKind {
 // ═══════════════════════════════════════════════════════════════
 
 /**
+ * 订单规格项（后端 models.SKUList）。
+ *
+ * 注意与商品侧 ItemSKU 完全不同：整单规格是**扁平**的 name/value 数组
+ * （如 `[{name:'规格', value:'一起打包带走'}]`），没有 values 嵌套，也没有
+ * skuid/price/quantity。历史上的 ItemSKU 类型张冠李戴，导致渲染读
+ * `s.values.map` 直接 TypeError。
+ */
+export interface OrderSKU {
+  name: string
+  value: string
+}
+
+/**
  * 订单（ItemOrder 模型，orderStatus 覆盖待付款/待发货/已发货/交易成功/退款中/交易关闭，
  * 字段 snake_case 对齐后端）。
  *
@@ -330,7 +343,7 @@ export interface PendingOrder {
   buyername: string | null
   buyNum: number
   totalPrice: number
-  sku: ItemSKU[] | null
+  sku: OrderSKU[] | null          // 整单规格；未选规格的单是 null 或 []
   created_at: string             // 下单时间
   payment_at: string | null      // 付款时间
   shipped_at: string | null      // 发货时间

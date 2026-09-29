@@ -43,16 +43,21 @@ interface PendingOrdersViewProps {
   tab: OrderStatusTab
 }
 
-/** 规格文本：sku 非空时 values 拼接（name:value 逗号分隔）+ ×数量；否则仅 ×数量 */
+/**
+ * 规格文本：整单规格是扁平的 {name,value} 数组，逐项拼 `name:value`（逗号分隔）+
+ * ×数量；未选规格（null / []）时仅 ×数量。
+ *
+ * 兜底：老数据 / 脏数据可能让 sku 不是数组或项里缺字段，一律降级为不显示规格，
+ * 不能让一个坏字段把整页订单列表打崩。
+ */
 function buildSkuText(order: PendingOrder): string {
   const buyNum = order.buyNum
-  if (order.sku && order.sku.length > 0) {
-    const spec = order.sku
-      .map((s) => s.values.map((v) => `${v.name}:${v.value}`).join(','))
-      .join(',')
-    return `${spec}×${buyNum}`
-  }
-  return `×${buyNum}`
+  const sku = Array.isArray(order.sku) ? order.sku : []
+  const spec = sku
+    .filter((s) => s?.name)
+    .map((s) => `${s.name}:${s.value ?? ''}`)
+    .join(',')
+  return spec ? `${spec}×${buyNum}` : `×${buyNum}`
 }
 
 /** 移动端卡片视图 */
